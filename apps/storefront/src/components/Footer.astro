@@ -57,7 +57,20 @@ const channelCandidates: Array<ChannelLink | false> = [
 const channelLinks: ChannelLink[] = channelCandidates.filter((entry): entry is ChannelLink => entry !== false);
 
 const year = new Date().getFullYear();
-const copyright = identity.copyrightNotice ?? `© ${year} ${identity.name} · Semua harga dalam Rupiah`;
+/**
+ * `landing` (`omes-web`#3, manager review): no page on this profile ever
+ * shows a price, so the fallback drops "Semua harga dalam Rupiah" rather
+ * than carrying a clause about a feature the profile does not have.
+ * `toko` keeps it unchanged (its own currently-shipped fallback, asserted
+ * nowhere by name in the test suite, but left alone to avoid touching a
+ * profile this PR has no reason to). `identity.copyrightNotice` — a real
+ * CMS value — always wins over either fallback, for every profile.
+ */
+const copyrightFallback =
+  SITE_PROFILE === "toko"
+    ? `© ${year} ${identity.name} · Semua harga dalam Rupiah`
+    : `© ${year} ${identity.name}`;
+const copyright = identity.copyrightNotice ?? copyrightFallback;
 ---
 
 <footer class="site-footer band-inverse">

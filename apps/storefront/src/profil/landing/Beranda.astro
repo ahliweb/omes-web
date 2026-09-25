@@ -269,10 +269,13 @@ const description =
         Satu perintah yang sama untuk kedua profil (server/desktop) — profil dipilih lewat flag saat pemeriksaan. Perintah ini adalah bootstrap resmi dari README OMES v0.4.0; tidak ada installer yang di-hosting ulang di sini.
       </p>
       <div class="omes-code-block">
+        <div class="omes-code-block-head">
+          <span class="omes-code-block-label is-mono">bash</span>
+          <button type="button" class="btn btn--secondary btn--sm omes-copy-btn" data-omes-copy={BOOTSTRAP_COMMAND}>
+            Salin
+          </button>
+        </div>
         <pre><code>{BOOTSTRAP_COMMAND}</code></pre>
-        <button type="button" class="btn btn--secondary btn--sm omes-copy-btn" data-omes-copy={BOOTSTRAP_COMMAND}>
-          Salin
-        </button>
       </div>
       <div class="omes-install-links">
         <a class="btn btn--quiet" href={INSTALL_DOCS} rel="noopener noreferrer" target="_blank">Panduan instalasi lengkap →</a>

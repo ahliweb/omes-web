@@ -221,6 +221,7 @@
   color: var(--text-muted);
   padding: 0.5rem 0.6rem;
   border-radius: var(--radius-s);
+  white-space: nowrap;
 }
 
 .omes-cc-sidebar-item[aria-current="true"] {
@@ -230,6 +231,7 @@
 
 .omes-cc-main {
   padding: 1.25rem;
+  min-width: 0;
 }
 
 .omes-cc-kpis {
@@ -237,6 +239,58 @@
   grid-template-columns: repeat(auto-fit, minmax(min(120px, 100%), 1fr));
   gap: 0.75rem;
   margin-bottom: 1rem;
+}
+
+/* Manager review (omes-web#7): below ~640px the sidebar-beside-content grid
+   squeezed `.omes-cc-main` down to almost nothing, which is what forced
+   hostnames to break mid-word and status text onto 3-4 lines. Below that
+   width the sidebar becomes a horizontal, scrollable tab strip ABOVE the
+   content instead of a column beside it — the same "no empty box, no
+   squeeze" fix a real Control Center would need at this width. */
+@media (max-width: 640px) {
+  .omes-cc-mock {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .omes-cc-sidebar {
+    flex-direction: row;
+    align-items: center;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--border-color);
+    padding: 0.6rem 0.75rem;
+    /* Prevents a stray inner scrollbar from adding to page width at 360px —
+       the strip scrolls internally, the page itself never does. */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .omes-cc-sidebar-item {
+    flex: none;
+  }
+
+  .omes-cc-kpis {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+
+  .omes-cc-kpi {
+    padding: 0.5rem;
+  }
+
+  .omes-cc-kpi-value {
+    font-size: var(--text-lg);
+  }
+}
+
+/* At the 360px floor even a 3-up KPI row's own minimum content (a 2-digit
+   mono value plus an uppercase label) is too tight to stay legible without
+   wrapping every label — fall to one column, per the same "1-up if 3-up
+   does not really fit" rule the manager review asked for. */
+@media (max-width: 380px) {
+  .omes-cc-kpis {
+    grid-template-columns: 1fr;
+  }
 }
 
 .omes-cc-kpi {
@@ -260,10 +314,15 @@
   margin-top: 0.25rem;
 }
 
+/* `flex-wrap: wrap` + `.omes-cc-row-host`'s own `white-space: nowrap` below
+   (manager review, omes-web#7): a narrow row now wraps the STATUS text onto
+   its own line under the hostname, rather than either squeezing the
+   hostname until it breaks mid-word or forcing the row to overflow. */
 .omes-cc-row {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.6rem;
   padding: 0.5rem 0;
   border-bottom: 1px solid var(--border-color);
   font-size: var(--text-sm);
@@ -287,12 +346,30 @@
 .omes-cc-row-host {
   font-family: var(--font-mono);
   color: var(--text-primary);
-  flex: 1;
+  /* Never break a hostname mid-word — it wraps onto the next line as a
+     whole token (the wrapping `.omes-cc-row` above), or the status meta
+     text wraps below it instead (`flex-basis: 100%` on `.omes-cc-row-meta`
+     below), whichever the available width actually needs. */
+  white-space: nowrap;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .omes-cc-row-meta {
   color: var(--text-muted);
   font-size: var(--text-xs);
+  white-space: normal;
+}
+
+/* Below ~480px there is no longer room for the hostname and its status on
+   one line without squeezing one of them — the meta text now wraps onto
+   its OWN full-width line under the hostname instead of competing for the
+   same line's remaining space (manager review, omes-web#7). Desktop/tablet
+   keep the single-line "hostname ... status" row unchanged. */
+@media (max-width: 480px) {
+  .omes-cc-row-meta {
+    flex-basis: 100%;
+  }
 }
 
 /* --- Hermes orchestration tree (illustration) -------------------------------- */
@@ -425,30 +502,47 @@
 
 /* --- Install section ---------------------------------------------------------- */
 
+/* Manager review (omes-web#7): the "Salin" button used to float, absolutely
+   positioned, over the top-right corner of the scrolling `<pre>` — at
+   390px the command text ran underneath it with nothing reserving that
+   space. The button now sits in its own header row ABOVE the code instead,
+   which makes an overlap structurally impossible rather than merely
+   unlikely at one measured width: the code area's own box is never
+   claimed by anything else. */
 .omes-code-block {
-  position: relative;
   background: var(--bg-panel-2);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-l);
   margin-top: 1rem;
-  overflow-x: auto;
+}
+
+.omes-code-block-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.omes-code-block-label {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .omes-code-block pre {
   margin: 0;
   padding: 1.25rem;
-  padding-right: 5.5rem;
   font-family: var(--font-mono);
   font-size: var(--text-sm);
   color: var(--text-primary);
   white-space: pre;
+  /* The command itself stays reachable in full by horizontal scroll on
+     THIS element — nothing above it (the button) shares this box, so
+     nothing can ever sit on top of the text at any viewport width. */
   overflow-x: auto;
-}
-
-.omes-copy-btn {
-  position: absolute;
-  top: 0.6rem;
-  right: 0.6rem;
 }
 
 .omes-install-links {

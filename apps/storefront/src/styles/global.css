@@ -133,6 +133,79 @@
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
+/* --------------------------------------------------------------------------
+ * OMES theme type system (`landing` build profile only) — self-hosted Public
+ * Sans (UI) and JetBrains Mono (data/labels), the OMES Control Center
+ * redesign's own type pair (`docs/ui-ux.md`'s "OMES theme" section,
+ * `public/fonts/LICENSE-OFL.txt`). Same-origin `/fonts/*.woff2` only, same
+ * rule as every family above — a browser only fetches one of these files
+ * once a page actually renders text in that family, and only a `landing`
+ * build ever sets `--font-sans`/`--font-mono` to these names (see the
+ * `[data-tema="omes"]` block below), so `toko`/`berita` never pay for them.
+ * -------------------------------------------------------------------------- */
+@font-face {
+  font-family: 'Public Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/public-sans-latin-400-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Public Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/public-sans-latin-500-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Public Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/public-sans-latin-600-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Public Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/public-sans-latin-700-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/jetbrains-mono-latin-400-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/jetbrains-mono-latin-500-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/jetbrains-mono-latin-600-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 :root {
   --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -281,6 +354,102 @@
     --text-on-inverse-muted: #cbd5e1;
     --border-on-inverse: #475569;
   }
+}
+
+/* --------------------------------------------------------------------------
+ * OMES theme (`landing` build profile only) — `docs/ui-ux.md`'s "OMES theme"
+ * section has the full token/contrast table this block implements.
+ *
+ * Source: `redesign/redesign-omes.zip`'s "OMES Control Center" operator-UI
+ * prototype — a dark, data-dense visual language adopted here for the
+ * PUBLIC landing site, not the admin. `BaseLayout.astro` sets
+ * `data-tema="omes"` on `<html>` only when `SITE_PROFILE=landing`
+ * (`src/config/profil.ts`), so this selector's higher specificity
+ * ([data-tema] adds an attribute selector) overrides both the light `:root`
+ * defaults above and the `prefers-color-scheme: dark` block — the OMES
+ * theme is dark regardless of the visitor's OS preference, matching the
+ * source prototype, which has no light variant. `toko`/`berita` never carry
+ * this attribute, so they keep their own light/dark-media theme unchanged.
+ *
+ * Contrast ratios actually measured (`scripts/` has no contrast checker in
+ * this app; computed via the standard WCAG relative-luminance formula —
+ * see this PR's own description for the full pairwise table):
+ *   --text-primary (#E6EDF3) on --bg-primary (#0B0F13):  16.28:1
+ *   --text-secondary (#C6D1DA) on --bg-primary:          12.39:1
+ *   --text-muted (#8B99A6) on --bg-subtle (#151A20):       6.00:1
+ *   --text-muted on the deepest card panel (#242C35):      4.85:1
+ *   --text-dim (#7A8894, large text/labels ONLY — below
+ *     AA's 4.5:1 floor on the two deepest panels) on
+ *     --bg-primary:                                        5.29:1
+ *   --accent-primary (cyan #5FC8D6) on --bg-primary:        9.82:1
+ *   --color-accent (amber #E8B44A) on --bg-primary:        10.13:1
+ *   green #6FD08C / violet #8B9CF7 / rose #E9A9A0 on
+ *     --bg-primary:                          10.14:1 / 7.51:1 / 9.75:1
+ * Every pair above clears WCAG 2.1 AA (4.5:1 normal text, 3:1 large text);
+ * `--text-dim` is restricted BY CONVENTION to large-text labels and is never
+ * used for body copy on `--bg-panel-2`/`--bg-panel-3` — see the primitives
+ * below for where each token is actually used.
+ */
+:root[data-tema="omes"] {
+  --font-sans: 'Public Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    Oxygen, Ubuntu, Cantarell, sans-serif;
+  --font-serif: var(--font-sans);
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --bg-primary: #0b0f13;
+  --bg-surface: #0e1216;
+  --bg-subtle: #151a20;
+  /* Two extra panel steps the base token set has no equivalent for — the
+     prototype's nested card/sidebar surfaces. Additive tokens, read only
+     from this theme's own primitives below. */
+  --bg-panel-2: #191f26;
+  --bg-panel-3: #1e262e;
+  --bg-panel-4: #242c35;
+
+  --text-primary: #e6edf3;
+  --text-secondary: #c6d1da;
+  --text-muted: #8b99a6;
+  /* Large-text/label-only — see contrast table above. */
+  --text-dim: #7a8894;
+
+  --border-color: #242c35;
+  --border-focus: #5fc8d6;
+
+  --accent-primary: #5fc8d6;
+  --accent-hover: #82d6e1;
+  --link-color: #5fc8d6;
+  --link-hover: #82d6e1;
+  --accent-on-inverse: #5fc8d6;
+
+  --omes-green: #6fd08c;
+  --omes-violet: #8b9cf7;
+  --omes-rose: #e9a9a0;
+
+  --danger-bg: #2a1414;
+  --danger-text: #e9a9a0;
+  --success-bg: #142a1c;
+  --success-text: #6fd08c;
+
+  --status-success-bg: #142a1c;
+  --status-success-fg: #6fd08c;
+  --status-warning-bg: #2c2211;
+  --status-warning-fg: #e8b44a;
+  --status-info-bg: #10222a;
+  --status-info-border: #1e3d49;
+  --status-info-fg: #5fc8d6;
+  --status-danger-bg: #2a1414;
+  --status-danger-fg: #e9a9a0;
+  --status-neutral-bg: #191f26;
+  --status-neutral-fg: #c6d1da;
+
+  --bg-inverse: #0b0f13;
+  --bg-inverse-2: #151a20;
+  --text-on-inverse: #e6edf3;
+  --text-on-inverse-muted: #c6d1da;
+  --border-on-inverse: #242c35;
+
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 8px 24px -6px rgba(0, 0, 0, 0.55);
 }
 
 *, *::before, *::after {
@@ -901,6 +1070,16 @@ main {
 
 .site-footer-lang {
   margin-left: auto;
+}
+
+/* `landing` build profile only (Footer.astro) — the OMES trademark/
+   independence disclaimer README.md carries; kept out of the main grid so
+   it reads as a footnote, not a fifth column. */
+.omes-footer-disclaimer {
+  max-width: 60rem;
+  padding-block: 0.5rem 1rem;
+  font-size: var(--text-xs);
+  color: var(--text-on-inverse-muted);
 }
 
 /* --- Portable Text content (issue #24 — `/halaman/[slug]`) --------------- */

@@ -36,7 +36,7 @@ import { getSiteIdentity } from "../lib/awcms/profil";
 import { listStaticPages } from "../lib/awcms/pages";
 import { readEnv } from "../lib/env";
 import { readGaMeasurementId } from "../lib/ga";
-import { GROUP_STYLESHEET_HREFS, PRIMARY_FEED } from "../config/profil";
+import { GROUP_STYLESHEET_HREFS, PRIMARY_FEED, SITE_PROFILE } from "../config/profil";
 import type { MetaTag, OgType } from "../lib/meta-sosial";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
@@ -132,7 +132,7 @@ function jsonForScript(value: unknown): string {
 ---
 
 <!doctype html>
-<html lang="id">
+<html lang="id" data-tema={SITE_PROFILE === "landing" ? "omes" : undefined}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />

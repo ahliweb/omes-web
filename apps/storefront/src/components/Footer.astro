@@ -35,7 +35,7 @@
 import type { SiteIdentity } from "../lib/awcms/profil";
 import type { StaticPageSummary } from "../lib/awcms/pages";
 import { ROUTES } from "../config/routes";
-import { FOOTER_PAGE_LINKS, SEARCH_SURFACE, isRouteActive } from "../config/profil";
+import { FOOTER_PAGE_LINKS, SEARCH_SURFACE, isRouteActive, SITE_PROFILE } from "../config/profil";
 
 interface Props {
   identity: SiteIdentity;
@@ -117,7 +117,32 @@ const copyright = identity.copyrightNotice ?? `© ${year} ${identity.name} · Se
         </ul>
       </div>
     )}
+
+    {SITE_PROFILE === "landing" && (
+      <div class="site-footer-column">
+        <h2>Proyek</h2>
+        <ul class="footer-page-links">
+          <li><a href="https://github.com/ahliweb/omes" rel="noopener noreferrer" target="_blank">Repositori GitHub</a></li>
+          <li><a href="https://github.com/ahliweb/omes/blob/main/docs/installation.md" rel="noopener noreferrer" target="_blank">Dokumentasi instalasi</a></li>
+          <li><a href="https://github.com/ahliweb/omes/blob/main/LICENSE" rel="noopener noreferrer" target="_blank">Lisensi MIT</a></li>
+        </ul>
+      </div>
+    )}
   </div>
+
+  {SITE_PROFILE === "landing" && (
+    <div class="container">
+      <p class="omes-footer-disclaimer">
+        OMES adalah proyek independen berlisensi MIT. Terinspirasi oleh alur kerja
+        Omarchy, tetapi bukan Omarchy resmi, dan tidak berafiliasi dengan,
+        didukung, atau disponsori oleh proyek Omarchy, Canonical (Ubuntu),
+        proyek Linux Mint, Docker, Inc., Telegram, atau Nous Research. Hermes
+        Agent adalah produk Nous Research; OMES berintegrasi dengannya
+        sebagai dependensi eksternal dan tidak mengembangkan atau
+        memeliharanya.
+      </p>
+    </div>
+  )}
 
   <div class="container site-footer-bottom">
     <p>{copyright}</p>

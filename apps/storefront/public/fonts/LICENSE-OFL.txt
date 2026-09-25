@@ -23,4 +23,16 @@ every family below:
   Copyright 2017 IBM Corp.
   https://github.com/IBM/plex
 
+- Public Sans — weights 400, 500, 600, 700 (normal)
+  Copyright 2018 United States General Services Administration
+  https://github.com/uswds/public-sans
+
+- JetBrains Mono — weights 400, 500, 600 (normal)
+  Copyright 2020 JetBrains s.r.o.
+  https://github.com/JetBrains/JetBrainsMono
+
+Public Sans and JetBrains Mono are the OMES theme's own type system (the
+`landing` build profile, `docs/ui-ux.md`'s "OMES theme" section) — the other
+four families above remain BjekMart's (`toko`/`berita`).
+
 Full licence text: https://openfontlicense.org/open-font-license-official-text/

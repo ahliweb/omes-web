@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](AGENTS.md)
 
-<!-- i18n-source-hash: sha256:5966aa7852f81cbeebea296c1e57c519bc173bea0f2c150309b6d1d07d9d1d27 -->
+<!-- i18n-source-hash: sha256:57a62b58e23be1eaa6e60afa3e98bc91067976a164219ade506a30e29cae66fe -->
 
 # AGENTS.md — kontrak kerja awcms-one
 
@@ -28,7 +28,7 @@ Tata letak workspace, mekanisme gerbang, dan konvensi changeset dokumen ini diad
 | --- | --- |
 | Remote upstream | `awcms` → `https://github.com/ahliweb/awcms.git`, fetch refspec dipersempit ke `+refs/heads/main:refs/remotes/awcms/main`, dan `tagOpt` diset `--no-tags` |
 | Titik sematan | `ahliweb/awcms` v10.3.0, commit `749404d4963af1dfaf8a5cf8b229299b29556ce2` (`git subtree add` awal) |
-| Sinkronisasi terakhir | `main` upstream pada commit `2d29a446fbe162efbc015284f3883f2af0be15fc` (14 commit di depan titik sinkronisasi sebelumnya — modul domain `omes_control`, penyempitan least-privilege `awcms_worker`, enkripsi/manifest/uji-pulih backup PostgreSQL, alur Graphify/Obsidian yang diperkeras, dan kenaikan versi dependency), ditarik oleh PR awcms-one untuk issue #210 dengan merge commit; sinkronisasi sebelumnya `8c64528d` (awcms PR #813, issue #170) |
+| Sinkronisasi terakhir | `main` upstream pada commit `0d6c0dfef92c1d1708f21ad2211687cb0f207788` (6 commit di depan titik sinkronisasi sebelumnya — layar admin OMES Control Center di `src/pages/admin/omes/`, API worker enroll/poll/result/heartbeat, dan migrasi `sql/159`), di-pull untuk issue #2 dengan merge commit, setelah merge silsilah satu-kali yang dijelaskan di bawah; sinkronisasi sebelumnya adalah `2d29a446` (issue awcms-one #210) |
 | Perintah sinkron | `git subtree pull --prefix=apps/cms awcms main` |
 
 Set keduanya saat menambahkan remote:
@@ -38,6 +38,8 @@ git remote add awcms https://github.com/ahliweb/awcms.git
 git config remote.awcms.fetch '+refs/heads/main:refs/remotes/awcms/main'
 git config remote.awcms.tagOpt --no-tags
 ```
+
+**Repositori yang dibuat dari template tidak punya silsilah subtree.** Salinan template GitHub membawa berkas-berkas `apps/cms` tetapi tidak membawa riwayat upstream yang dibutuhkan `git subtree pull` untuk menemukan merge base, sehingga pull pertama gagal atau merosot menjadi merge riwayat-tak-berkaitan. Catat silsilah itu sekali dengan merge tanpa perubahan dari commit `awcms` yang cocok dengan `apps/cms`, sebelum `git subtree pull` pertama — pastikan dulu kecocokannya (`git rev-parse HEAD:apps/cms` sama dengan tree `apps/cms` milik template itu sendiri, yang sinkronisasi terakhirnya disebut di baris "Sinkronisasi terakhir" milik template itu sendiri), lalu `git merge -s ours --allow-unrelated-histories <commit awcms itu>`. Merge itu tidak mengubah berkas apa pun; ia hanya memulihkan silsilahnya, dan setiap sinkronisasi berikutnya menjadi merge tiga-arah biasa. Repo ini melakukan persis itu untuk issue #2 (`2d29a446`, titik sinkronisasi yang dibawa template).
 
 **Kenapa fetch remote-nya dipersempit hanya ke `main`:** menambahkan remote tanpa mempersempit refspec-nya menyeret setiap branch upstream, termasuk branch dependabot — tujuh di antaranya, saat remote ini pertama kali ditambahkan di sini. Sinkronisasi subtree hanya pernah butuh `main`.
 
@@ -63,7 +65,7 @@ Sumber `apps/cms` sendiri adalah pohon milik upstream, dibawa ke sini untuk alas
 
 - `apps/cms/src/layouts/AdminLayout.astro` dan `apps/cms/src/modules/_shared/module-contract.ts` / `module-management/domain/sidebar-menu.ts` — `requiredFeature` dari issue #118 pada entri navigasi sidebar (toggle fitur `commerce` yang menyembunyikan tautan). `badgeCount` milik upstream sendiri (awcms PR #813) tiba di baris yang sama; sinkronisasi #170 mempertahankan KEDUA field, dalam urutan itu. `sidebar-menu.ts` juga membawa label/ikon sidebar milik modul `commerce` sendiri (setiap kunci `admin.layout.nav_commerce*` di `SIDEBAR_LABELS`/`DEFAULT_SIDEBAR_ICONS`, termasuk `nav_commerce_dashboard` milik issue #171) — tambahan platform ini sendiri ke tabel yang juga ditulisi baris oleh upstream, diselesaikan dengan mempertahankan kedua lini keturunan saat konflik, sama seperti entri lain dalam daftar ini.
 - `apps/cms/src/styles/admin-screens.css` — 11 baris yang ditambahkan layar inbox issue #111.
-- `apps/cms/scripts/client-asset-budget.ts` — `APP_BUDGET_BYTES` dinaikkan oleh setiap layar admin commerce sejak issue #23 (upstream berada di 226.000 setelah PR #813; embed ini di 259.000 setelah issue #171 — 254.500 saat sinkronisasi #170 = 246.500 miliknya sendiri ditambah delta chrome +8.000 milik upstream), setiap kenaikan tercatat di docblock konstanta itu sendiri. Selesaikan konflik di sini dengan mempertahankan kedua silsilah docblock dan menambahkan delta upstream ke angka repo ini.
+- `apps/cms/scripts/client-asset-budget.ts` — `APP_BUDGET_BYTES` dinaikkan oleh setiap layar admin commerce sejak issue #23 (upstream berada di 226.000 setelah PR #813; embed ini di 263.400 setelah sinkronisasi subtree #2 — 259.000 setelah issue #171 ditambah +4.357 B layar OMES Control Center milik upstream di `0d6c0dfe`, sementara upstream sendiri tetap di 226.000; sebelumnya, 254.500 saat sinkronisasi #170 = 246.500 miliknya sendiri ditambah delta chrome +8.000 milik upstream), setiap kenaikan tercatat di docblock konstanta itu sendiri. Selesaikan konflik di sini dengan mempertahankan kedua silsilah docblock dan menambahkan delta upstream ke angka repo ini.
 
 Versi satu-butir daftar ini ditulis setelah increment 2 dan sudah basi sejak increment 5; sinkronisasi subtree #170 (21 September 2026) menemukan tiga butir di atas lewat konflik dan lewat `git diff awcms/main:<path> HEAD:apps/cms/<path>`, perintah yang harus dijalankan sebelum mengklaim daftar ini lengkap. Semua hal lain yang pernah ditambahkan modul `commerce` adalah pekerjaan modul aditif biasa di dalam disiplin admission `apps/cms` sendiri.
 

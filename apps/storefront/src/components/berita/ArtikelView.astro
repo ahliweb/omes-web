@@ -1,0 +1,234 @@
+---
+/**
+ * The shared article body for `/berita/[slug]` and `/video/[slug]` (issue
+ * #28) — one component so a video post's page (which is also just a post,
+ * rendered through the exact same Portable Text renderer) never drifts from
+ * an ordinary article's markup. `parentLabel`/`parentPath` is the only
+ * difference the two callers need to supply (the breadcrumb's hub —
+ * "Berita" vs "Video").
+ *
+ * Issue #47 — two changes, both load-bearing:
+ *
+ * 1. **Hero block** (the only markup addition — every other section is
+ *    unchanged): a hero `<figure>` renders right after the byline row when
+ *    `post.image` resolved (`src/lib/berita.ts`, from `featuredMediaId`),
+ *    with a `<figcaption>` combining the media's `alt` text and its credit
+ *    (`creditLine`/`sourceName` — `null` unless the CMS has verified the
+ *    rights, per `src/lib/awcms/media.ts`'s own docblock). No hero renders
+ *    for a post with no `featuredMediaId`, or one whose id did not
+ *    resolve — never a broken `<img>`. The article BODY's own images (a
+ *    gallery block) are unrelated to this hero and are resolved by
+ *    `renderPortableText` itself, via the `resolvedMedia` map this
+ *    component now passes it.
+ * 2. **`videoMode` prop, threaded straight through to `renderPortableText`**
+ *    — a review finding, not a markup change: this component is SHARED by
+ *    `/berita/[slug]` and `/video/[slug]`, but only the latter mounts
+ *    `video-facade.ts`. Rendering the click-to-load facade unconditionally
+ *    here would ship an inert button (and, worse, an RSS feed that reuses
+ *    this same renderer would ship a dead button into `content:encoded`).
+ *    Defaults to `"link"` (`renderPortableText`'s own safe default) so a
+ *    caller that does not pass it renders exactly the pre-#47 shape;
+ *    `src/profil/berita/pages/video/[slug].astro` is the one caller that passes
+ *    `"facade"`.
+ *
+ * Issue #169 (2026-09 redesign): a lede paragraph (`post.excerpt`, when the
+ * CMS has one) and decorative avatar initials beside the byline — both
+ * markup-only additions, no new data fetch (`post.excerpt` already exists
+ * on `PostSummary`/`PostDetail`, `src/lib/berita.ts`). Typography
+ * (Lora title/body, the byline's mono dates, the pull-quote) is
+ * `src/styles/berita.css`'s own change, not this file's.
+ *
+ * Issue #49 — the layout column: the whole article (header, hero, body,
+ * tags, share, related, the three in-article ad slots) now sits in the
+ * main column of ONE `.container > .layout-with-sidebar` grid
+ * (`src/styles/berita.css`), with `Sidebar.astro` beside it — the same
+ * shape seputarborneo's `berita/berita.php` uses (`<h1>` inside
+ * `.sb-utama`, `sidebar.php` a sibling), and the same grid `/berita` and
+ * every archive page render. The former per-block `.container` wrappers
+ * became plain blocks: a `.container` nested inside a grid column would
+ * re-apply its own horizontal padding and inset the article against the
+ * sidebar. The inner blocks are deliberately NOT re-indented in this
+ * change — issue #51 (A5) is rewriting the share block of this same file
+ * in parallel, and a whole-file re-indent would conflict with every line
+ * of it.
+ */
+import ArtikelCard from "./ArtikelCard.astro";
+import TagCloud from "./TagCloud.astro";
+import IklanSlot from "./IklanSlot.astro";
+import Sidebar from "./Sidebar.astro";
+import BarisBagikan from "./BarisBagikan.astro";
+import LogoInstansi from "./LogoInstansi.astro";
+import PemutarDengar from "./PemutarDengar.astro";
+import { ROUTES } from "../../config/routes";
+import { absoluteUrl } from "../../config/site";
+import { renderPortableText, type VideoRenderMode } from "../../lib/portable-text";
+import {
+  formatTanggalWaktuWIB,
+  toDatetimeAttr,
+  pernahDiperbaruiSetelahTerbit
+} from "../../lib/tanggal";
+import { AD_SLOTS } from "../../lib/awcms/iklan";
+import {
+  estimasiWaktuBacaMenit,
+  getResolvedMedia,
+  type PostDetail,
+  type PostSummary
+} from "../../lib/berita";
+
+interface Props {
+  post: PostDetail;
+  related: PostSummary[];
+  daerahLainnyaPosts: PostSummary[];
+  canonicalPath: string;
+  parentLabel: string;
+  parentPath: string;
+  /** `"facade"` only from a caller that also mounts `video-facade.ts` — see this file's own docblock. Defaults to `"link"`. */
+  videoMode?: VideoRenderMode;
+}
+
+const {
+  post,
+  related,
+  daerahLainnyaPosts,
+  canonicalPath,
+  parentLabel,
+  parentPath,
+  videoMode = "link"
+} = Astro.props;
+
+const resolvedMedia = await getResolvedMedia();
+const bodyHtml = renderPortableText(post.bodyPortableText, resolvedMedia, { videoMode });
+const readingMinutes = estimasiWaktuBacaMenit(bodyHtml);
+const wasUpdated = pernahDiperbaruiSetelahTerbit(post.publishedAt, post.updatedAt);
+const absoluteShareUrl = absoluteUrl(canonicalPath);
+
+// --- Hero block (issue #47) -------------------------------------------------
+// `alt` (the media's own description) and its credit
+// (`creditLine`/`sourceName`, joined when both exist), separated by " · " —
+// `null` pieces are simply omitted, never rendered as an empty segment.
+function joinNonEmpty(parts: Array<string | null | undefined>, separator: string): string {
+  return parts.filter((part): part is string => Boolean(part && part.length > 0)).join(separator);
+}
+
+const heroCredit = joinNonEmpty([post.image?.creditLine, post.image?.sourceName], " — ");
+const heroCaption = joinNonEmpty([post.image?.alt ?? null, heroCredit || null], " · ");
+
+// Byline avatar initials (issue #169, mockup line 792) — the first letter
+// of up to the first two words of `authorByline`; decorative (`aria-hidden`
+// below), the byline's own text is still the accessible name.
+const avatarInitials = (post.authorByline ?? "")
+  .trim()
+  .split(/\s+/)
+  .filter(Boolean)
+  .slice(0, 2)
+  .map((word) => word.charAt(0).toUpperCase())
+  .join("");
+
+const breadcrumbItems = [
+  { name: "Beranda", path: ROUTES.home },
+  { name: parentLabel, path: parentPath },
+  ...(post.rubric ? [{ name: post.rubric.name, path: ROUTES.rubric(post.rubric.slug) }] : [])
+];
+---
+
+<div class="container">
+<div class="layout-with-sidebar">
+<article class="article-column">
+<div class="article-header">
+  <nav class="breadcrumb" aria-label="Remah roti">
+    {breadcrumbItems.map((item) => (
+      <>
+        <a href={item.path}>{item.name}</a>
+        <span aria-hidden="true">/</span>
+      </>
+    ))}
+    <span aria-current="page">{post.title}</span>
+  </nav>
+
+  {post.rubric && <p class="card-eyebrow">{post.rubric.name}</p>}
+  <h1>{post.title}</h1>
+
+  {post.excerpt && <p class="article-lede">{post.excerpt}</p>}
+
+  <p class="article-byline">
+    {post.authorByline && (
+      <span class="article-byline__avatar" aria-hidden="true">{avatarInitials || "•"}</span>
+    )}
+    {post.authorByline && <strong>{post.authorByline}</strong>}
+    {post.region && <span>{post.region.name}</span>}
+    <time datetime={toDatetimeAttr(post.publishedAt)}>{formatTanggalWaktuWIB(post.publishedAt)}</time>
+    {wasUpdated && (
+      <span>Diperbarui <time datetime={toDatetimeAttr(post.updatedAt)}>{formatTanggalWaktuWIB(post.updatedAt)}</time></span>
+    )}
+    <span>{readingMinutes} menit membaca</span>
+  </p>
+
+  {post.image && (
+    <figure class="article-hero">
+      <img
+        class="article-hero-image"
+        src={post.image.publicUrl}
+        alt={post.image.alt ?? ""}
+        loading="lazy"
+        decoding="async"
+        width={post.image.width ?? 1200}
+        height={post.image.height ?? 675}
+      />
+      {heroCaption && <figcaption>{heroCaption}</figcaption>}
+    </figure>
+  )}
+</div>
+
+{/* Issue #52: the read-aloud player, between the header and the body exactly as seputarborneo places it. Never on a video post — there is nothing to read aloud beside a video the reader is already watching. */}
+{!post.isVideo && (
+  <div class="container">
+    <PemutarDengar judul={post.title} />
+  </div>
+)}
+
+<IklanSlot placement={AD_SLOTS.articleTop} />
+
+<div class="article-body">
+  {/* Issue #59: the institution's emblem, floated beside the opening paragraph — `LogoInstansi.astro` renders nothing at all when the post's institutions have none. The wrapper keeps issue #49's class (no `container`: this column already sits inside `.container > .layout-with-sidebar`). */}
+  <LogoInstansi institutions={post.institutions} />
+  <Fragment set:html={bodyHtml} />
+</div>
+
+<div>
+  <IklanSlot placement={AD_SLOTS.articleMiddle} />
+
+  {post.tags.length > 0 && (
+    <div class="article-tags">
+      <p class="article-tags-heading">Tag</p>
+      <TagCloud tags={post.tags} ariaLabel="Tag artikel ini" />
+    </div>
+  )}
+
+  {/* Issue #51: FB/X/WA/Threads share links, Instagram via Web Share API, TikTok/YouTube follow links — see `BarisBagikan.astro`. */}
+  <BarisBagikan url={absoluteShareUrl} title={post.title} />
+
+  {related.length > 0 && (
+    <div class="article-related">
+      <h2>Berita {post.rubric?.name} Lainnya</h2>
+      <ul class="grid-cards">
+        {related.map((item) => <ArtikelCard post={item} />)}
+      </ul>
+    </div>
+  )}
+
+  {daerahLainnyaPosts.length > 0 && post.region && (
+    <div class="article-related">
+      <h2>Berita {post.region.name} Lainnya</h2>
+      <ul class="grid-cards">
+        {daerahLainnyaPosts.map((item) => <ArtikelCard post={item} />)}
+      </ul>
+    </div>
+  )}
+
+  <IklanSlot placement={AD_SLOTS.articleBottom} />
+</div>
+</article>
+
+<Sidebar />
+</div>
+</div>

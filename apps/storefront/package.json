@@ -1,0 +1,31 @@
+{
+  "name": "@awcms-one/storefront",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "description": "borneojek-mart's public storefront: catalog listing and product detail. Static output, fetched from awcms at BUILD time only — see GitHub issue #5 for the rationale and docs/awcms-astro (the template this app is modelled on) for the pattern.",
+  "scripts": {
+    "dev": "bun --bun astro dev",
+    "build": "bun run check && bun --bun astro build && bun run build:build-id && bun run build:penyaji",
+    "build:build-id": "bun scripts/write-build-id.mjs",
+    "build:penyaji": "bun build server/penyaji.mjs --target=bun --outfile dist/server/penyaji.mjs",
+    "check": "bun --bun astro check",
+    "serve": "bun dist/server/penyaji.mjs",
+    "start": "bun run serve",
+    "preview": "bun run serve",
+    "test:e2e": "bun --bun playwright test",
+    "screenshots:readme": "bun scripts/screenshots-readme.mjs"
+  },
+  "dependencies": {
+    "@astrojs/node": "^11.1.5",
+    "@awcms-one/kontrak": "workspace:*",
+    "astro": "^7.3.1"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.63.0",
+    "@types/bun": "^1.4.0",
+    "typescript": "^6.0.3"
+  }
+}

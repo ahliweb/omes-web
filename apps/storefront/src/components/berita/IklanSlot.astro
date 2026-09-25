@@ -1,0 +1,125 @@
+---
+/**
+ * One ad placement slot (issue #28, `<img>` added by issue #47) —
+ * "render nothing when no placement" is simply this component rendering
+ * nothing when `getAdSlot` answers `[]`.
+ *
+ * `PublicAdPlacement.mediaPublicUrl` (`src/lib/awcms/blog.ts`) is a real,
+ * already-resolved absolute URL — issue #28 could not render it because
+ * this app's CSP (`img-src 'self'`, `server/penyaji.mjs`) had no exemption
+ * for the CMS's media origin. Issue #47 widens `img-src` with that origin
+ * (`src/pages/csp.json.ts`, from `GET /api/v1/media/public-origin`), so the
+ * creative now renders as a real `<img>` — re-verified as an absolute
+ * `http(s)` URL here regardless (never trust a string from the network into
+ * a `src` attribute unchecked), falling back to the original name/link text
+ * for anything that does not parse. The editorial-disclosure label is
+ * unchanged either way.
+ *
+ * ## The popup trigger attributes (issue #53, A7)
+ *
+ * A creative that rendered as an `<img>` is also a popup trigger for
+ * `src/scripts/iklan-popup.ts` (mounted once by `BeritaLayout.astro`):
+ * `data-iklan-popup` marks it, `data-iklan-nama` carries the advertiser's
+ * name and `data-iklan-label` the disclosure label the popup shows (the
+ * content-class label when there is one, else this slot's own `label` —
+ * "Iklan"). On a LINKED creative these are attributes on the existing
+ * anchor and nothing else changes: with no JavaScript the anchor navigates
+ * exactly as before. An UNLINKED creative has no anchor to decorate, and
+ * the popup's own "no destination" state ("Iklan ini belum memiliki tautan
+ * tujuan") is an acceptance criterion of #53 — so that one branch wraps the
+ * image in a `<button type="button">` (a real, keyboard-operable control,
+ * never an `<img tabindex>`), which with no JavaScript is as inert as the
+ * bare image it replaces. A text-only ad (no resolvable image) is never a
+ * trigger — there is no creative to enlarge.
+ */
+import { getAdSlot } from "../../lib/awcms/iklan";
+import type { AdPlacementKey } from "../../lib/awcms/blog";
+
+interface Props {
+  placement: AdPlacementKey;
+  /** The visible section label — "Iklan" by default, matching every disclosure convention this app otherwise renders in Indonesian. */
+  label?: string;
+}
+
+const { placement, label = "Iklan" } = Astro.props;
+const ads = await getAdSlot(placement);
+
+const disclosureLabel = {
+  standard: null,
+  advertorial: "Advertorial",
+  sponsored: "Konten Bersponsor"
+} as const;
+
+/** `mediaPublicUrl` re-checked as a real `http(s)` absolute URL — see this file's own docblock. */
+function creativeImageUrl(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" || parsed.protocol === "http:" ? url : null;
+  } catch {
+    return null;
+  }
+}
+---
+
+{ads.length > 0 && (
+  <div class="ad-slot" data-placement={placement}>
+    <p class="ad-slot-label">{label}</p>
+    <ul class="ad-slot-list">
+      {ads.map((ad) => {
+        const imageUrl = creativeImageUrl(ad.mediaPublicUrl);
+        const popupLabel = disclosureLabel[ad.contentClass] ?? label;
+        return (
+          <li class="ad-slot-item">
+            {ad.linkUrl ? (
+              <a
+                href={ad.linkUrl}
+                rel="noopener noreferrer sponsored"
+                target="_blank"
+                data-iklan-popup={imageUrl ? "" : undefined}
+                data-iklan-nama={imageUrl ? ad.name : undefined}
+                data-iklan-label={imageUrl ? popupLabel : undefined}
+              >
+                {imageUrl ? (
+                  <img
+                    src={imageUrl}
+                    alt={ad.mediaAltText ?? ad.name}
+                    loading="lazy"
+                    decoding="async"
+                    width="300"
+                    height="250"
+                    class="ad-slot-image"
+                  />
+                ) : (
+                  ad.name
+                )}
+              </a>
+            ) : imageUrl ? (
+              <button
+                type="button"
+                class="ad-slot-trigger"
+                data-iklan-popup
+                data-iklan-nama={ad.name}
+                data-iklan-label={popupLabel}
+              >
+                <img
+                  src={imageUrl}
+                  alt={ad.mediaAltText ?? ad.name}
+                  loading="lazy"
+                  decoding="async"
+                  width="300"
+                  height="250"
+                  class="ad-slot-image"
+                />
+              </button>
+            ) : (
+              <span>{ad.name}</span>
+            )}
+            {disclosureLabel[ad.contentClass] && (
+              <span class="ad-slot-disclosure">{disclosureLabel[ad.contentClass]}</span>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  </div>
+)}

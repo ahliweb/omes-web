@@ -1,0 +1,305 @@
+---
+/**
+ * The page shell every route renders through: `<head>` metadata, the skip
+ * link, header, `<main>` landmark, and footer. A page never writes its own
+ * `<html>`/`<head>` — this is the one place that happens, so every page gets
+ * the same accessibility and SEO surface for free.
+ *
+ * One `<h1>` per page is a contract this file does NOT fulfil — it renders
+ * no heading of its own, on purpose, so the page inside `<slot />` can own
+ * the single `<h1>` without this shell competing with it.
+ *
+ * ## Issue #24 additions
+ *
+ * - Site identity (`identity.name`/`identity.description`) now comes from
+ *   `getSiteIdentity()` — a build-time CMS fetch, memoized, so calling it
+ *   from every page's layout costs one request for the whole build, not one
+ *   per page. `title`'s "is this the homepage" check compares against
+ *   `identity.name` for the same reason it used to compare against
+ *   `siteConfig.name`: the homepage passes its own name as `title` and must
+ *   not render "BjekMart — BjekMart".
+ * - `<main id="konten">` — not `#main-content` — per this issue's own
+ *   accessibility naming; the skip link below points at the same id.
+ * - `theme-tokens.css` (CMS-driven `--color-primary/secondary/accent`) and
+ *   `favicon.svg` are linked here, once, for every page.
+ *
+ * ## Issue #54 (A8) additions
+ *
+ * - `ogType` and `meta` props — see their own docblocks on `Props` below
+ *   and the render block after the fixed Open Graph tags. Both are
+ *   optional and default to "render exactly what this layout rendered
+ *   before", so every store page's `<head>` is unchanged; the news pages
+ *   pass what `src/lib/meta-sosial.ts` builds for them.
+ */
+import { absoluteUrl } from "../config/site";
+import { getSiteIdentity } from "../lib/awcms/profil";
+import { listStaticPages } from "../lib/awcms/pages";
+import { readEnv } from "../lib/env";
+import { readGaMeasurementId } from "../lib/ga";
+import { GROUP_STYLESHEET_HREFS, PRIMARY_FEED } from "../config/profil";
+import type { MetaTag, OgType } from "../lib/meta-sosial";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+  description?: string;
+  /** Site-relative, e.g. `/` or `/product/produk-x`. Resolved against `siteConfig.siteUrl` for the canonical link and Open Graph `url`. */
+  canonicalPath: string;
+  /** Page-specific JSON-LD (e.g. `Product`). Omitted entirely means no `<script type="application/ld+json">` at all. */
+  schema?: Record<string, unknown>;
+  /**
+   * Issue #54 (A8): the value of the `og:type` tag below — `website` (the
+   * default, and what every store page keeps), `article` (`/berita/[slug]`)
+   * or `video.other` (`/video/[slug]`). Only these three: Open Graph's
+   * structured properties are namespaced by type, and a page that sets one
+   * of the non-default values is expected to pass that namespace's tags via
+   * `meta` (`src/lib/meta-sosial.ts` builds both together so they cannot
+   * disagree).
+   */
+  ogType?: OgType;
+  /**
+   * Issue #54 (A8): page-specific `<meta>` tags rendered AFTER the fixed
+   * Open Graph block below — `og:image` (+ width/height/alt), `article:*`,
+   * `video:*`, `twitter:*` — each entry keyed by EITHER `property` (RDFa,
+   * Open Graph) or `name` (Twitter cards). Omitted or empty renders
+   * nothing, so a page that passes nothing (every store page) produces the
+   * exact `<head>` it produced before this prop existed. A `<link>` (e.g.
+   * `rel="prev"/"next"`) is NOT modelled here — that is what the `head`
+   * slot at the end of `<head>` is for.
+   */
+  meta?: readonly MetaTag[];
+}
+
+const { title, description, canonicalPath, schema, ogType = "website", meta = [] } = Astro.props;
+
+const identity = await getSiteIdentity();
+const staticPages = await listStaticPages();
+
+const canonicalUrl = absoluteUrl(canonicalPath);
+const fullTitle = title === identity.name ? title : `${title} — ${identity.name}`;
+const metaDescription = (description ?? identity.description).slice(0, 160);
+
+/**
+ * Issue #56 (A10): the same `AWCMS_TENANT_CODE` `src/lib/awcms/theme.ts`
+ * already reads for brand colors, baked into `<body data-analytics-tenant-
+ * code>` below so `src/scripts/analitik.ts` (a browser bundle, which cannot
+ * read a non-`PUBLIC_` variable — see `src/lib/env.ts`) has the one value
+ * `POST /api/v1/analytics/collect` needs without this app introducing a
+ * second, redundant `PUBLIC_`-prefixed tenant variable an operator would
+ * have to keep in sync with the first. Unset renders an empty attribute;
+ * `analitik.ts` treats that as "nothing configured" and sends nothing —
+ * the same degrade-not-fail posture `theme.ts` already uses for the same
+ * variable.
+ */
+const analyticsTenantCode = readEnv("AWCMS_TENANT_CODE") ?? "";
+
+/**
+ * GA4 (issue #56, A10) — entirely OFF unless `PUBLIC_GA_ID` is configured
+ * and shaped like a real GA4 Measurement ID (`src/lib/ga.ts`). `gaId` is
+ * `undefined` in the default build, so the whole block below renders
+ * nothing and this app ships with no Google origin anywhere.
+ */
+const gaId = readGaMeasurementId();
+
+/**
+ * JSON that is safe to write inside a `<script>` element.
+ *
+ * `JSON.stringify` escapes quotes and backslashes but NOT `<`, and the HTML
+ * *parser* — not the JavaScript engine — ends a `<script>` element at the
+ * first `</script>` byte sequence it meets, regardless of what `type` says.
+ * `schema` here is built from CMS-supplied strings (`product.name`,
+ * `product.description`, `category.name`, via `src/profil/toko/pages/product/[slug].astro`), so
+ * a product named `…</script><script>alert(1)</script>` would otherwise
+ * close this data block early and turn the text that follows into real,
+ * executing markup — a stored-XSS surface that only the CSP in
+ * `server/penyaji.mjs` (`script-src 'self'`) would be standing between it
+ * and running. That CSP is real protection, but a page must not depend on
+ * it as the ONLY protection.
+ *
+ * Replacing `<`, `>`, and `&` with their `\uXXXX` JSON escapes is the
+ * standard fix: none of the three is meaningful inside a JSON string, so
+ * the escaped form parses back to the byte-identical value, while giving
+ * the HTML parser no `<` to ever start a tag with.
+ */
+function jsonForScript(value: unknown): string {
+  return JSON.stringify(value)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026");
+}
+---
+
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={metaDescription} />
+
+    {/* Self-hosted type system (issue #166, 2026-09 redesign) — only the
+        faces rendered above the fold on a typical page are preloaded: the
+        sans's body (400) and semibold (600) weights, and the serif's medium
+        (500) weight (news headlines/pull quotes use it at that weight).
+        Every other declared `@font-face` (700/800 sans, serif 600/400
+        italic, both mono weights) loads lazily, on demand, with
+        `font-display: swap` (`src/styles/global.css`) — no CSP change,
+        since every font is already same-origin `/fonts/*.woff2`. */}
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/plus-jakarta-sans-latin-400-normal.woff2" crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/plus-jakarta-sans-latin-600-normal.woff2" crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/lora-latin-500-normal.woff2" crossorigin />
+
+    {/* GA4 (issue #56, A10) — the ONLY third-party script this app ever
+        loads, and only when `gaId` is configured (`src/lib/ga.ts`); the
+        default build renders nothing here at all.
+        Only THIS tag is `is:inline`: it has no body, just a `src=`, so it
+        does exactly one thing — load Google's own `gtag.js` from an origin
+        `src/pages/csp.json.ts`'s GA branch widens `script-src` for
+        (`server/penyaji.mjs`'s `buildCsp`). The standard `dataLayer`/`gtag`
+        bootstrap Google's own snippet normally inlines right after this tag
+        is deliberately NOT inlined here — an inline `<script>` body is
+        blocked by THIS app's CSP regardless of what `script-src` allows
+        (widening a directive with a host-source never grants
+        `'unsafe-inline'`, and this static site has no per-request nonce to
+        offer instead). `src/scripts/ga-init.ts`, mounted with the beacon
+        near `</body>`, is that bootstrap as an ordinary same-origin bundled
+        module instead — reading the id back from
+        `data-ga-measurement-id` below, the same pattern
+        `data-analytics-tenant-code` already uses. */}
+    {gaId && (
+      <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}></script>
+    )}
+
+    <link rel="canonical" href={canonicalUrl} />
+    {/* Issue #137: `/product-labels.css` is generated by a `toko`-group
+        endpoint, so it is linked only when that group is in this build
+        (`src/config/profil.ts`'s `GROUP_STYLESHEET_HREFS`); `/theme-tokens.css`
+        is shared and always linked. */}
+    {GROUP_STYLESHEET_HREFS.map((href) => (
+      <link rel="stylesheet" href={href} />
+    ))}
+    <link rel="stylesheet" href="/theme-tokens.css" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    {/* Issue #137: the profile's primary feed — `/feed.xml` (products) for
+        `toko`, `/berita/feed.xml` for `berita`, nothing for `landing`. */}
+    {PRIMARY_FEED && (
+      <link rel="alternate" type="application/rss+xml" title={identity.name} href={PRIMARY_FEED.href} />
+    )}
+
+    {/* Open Graph. `og:type` stays "website" on a product page: Open
+        Graph's "product" type is only valid alongside the product
+        namespace prefix and `product:price:*` meta tags, neither of which
+        this app declares — issue #5 asks for the structured price/
+        availability data as `Product` JSON-LD (below), not as OG meta, so
+        adding a half-implemented product type here would be less correct,
+        not more. Issue #54 (A8) makes the type a prop so `/berita/[slug]`
+        (`article`) and `/video/[slug]` (`video.other`) can declare theirs;
+        no store page passes one. No og:image in THIS block either: a
+        product DTO carries no photo field this block could point at, and a
+        news page's image arrives through `meta` below instead. */}
+    <meta property="og:type" content={ogType} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={metaDescription} />
+    <meta property="og:site_name" content={identity.name} />
+    <meta property="og:locale" content="id_ID" />
+
+    {/* Page-specific meta (issue #54, A8): `og:image` and its dimensions,
+        `article:*`/`video:*`, `twitter:*` — built by
+        `src/lib/meta-sosial.ts`, passed by the page, rendered here one tag
+        per entry. Every `content` value is CMS text (an alt text, a rubrik
+        or tag name, a description) and reaches the page ONLY through
+        Astro's attribute rendering — the same HTML attribute escaping the
+        six OG tags above already rely on for `og:title`/`og:description`
+        (`"`, `&`, `<`, `>` become entities before the HTML parser sees
+        them). Nothing here uses `set:html`, so no value can close the
+        attribute or the tag it sits in. `jsonForScript` below is the
+        separate, script-context escaping for the JSON-LD block and is
+        deliberately NOT applied to attribute text: `<`-style JSON
+        escapes are not HTML escapes and would render literally here. */}
+    {meta.map((tag) =>
+      "property" in tag ? (
+        <meta property={tag.property} content={tag.content} />
+      ) : (
+        <meta name={tag.name} content={tag.content} />
+      )
+    )}
+
+    {/* JSON-LD is a DATA block, not a script: `type="application/ld+json"` is
+        not a JavaScript MIME type, so the browser never executes this as
+        code, and `script-src` (server/penyaji.mjs) does not apply to it —
+        no CSP exemption needed for this to render. That does NOT make raw
+        `JSON.stringify` output safe to write here: the HTML parser closes a
+        `<script>` element at the first `</script>` it meets no matter what
+        `type` says, so CMS-supplied text (a product name, a description)
+        could still break out of this block as MARKUP and start a new,
+        executing `<script>` after it. `jsonForScript` above is what
+        actually prevents that; see its docblock. `is:inline` stops Astro
+        from treating this as a module it should process. */}
+    {schema && (
+      <script is:inline type="application/ld+json" set:html={jsonForScript({
+        "@context": "https://schema.org",
+        ...schema
+      })} />
+    )}
+
+    {/* The one extension point in `<head>` (issue #27). A page that needs a
+        head tag this layout does not model — `robots`/`noindex` on a page
+        that must not be indexed, `rel="prev"`/`rel="next"` on a paginated
+        archive, an `article:published_time` on a news article — puts it
+        here instead of this layout growing a prop per tag, or a page
+        re-implementing the whole `<head>`.
+
+        Deliberately the LAST thing in `<head>`: everything this layout
+        itself declares (charset, viewport, canonical, Open Graph, the
+        stylesheet) is already set when a page's own tags arrive, so a page
+        can OVERRIDE one by declaring it again — later wins for most of
+        them — without being able to accidentally displace the charset
+        declaration, which browsers only honour in the first 1024 bytes.
+
+        A script here would escape the `script-src 'self'` guarantee this
+        app's CSP rests on, so nothing in this repository may place one in
+        this slot; `src/pages/*.astro` use it for meta/link tags only. */}
+    <slot name="head" />
+  </head>
+  <body data-analytics-tenant-code={analyticsTenantCode} data-ga-measurement-id={gaId ?? ""}>
+    <a class="skip-link" href="#konten">Lewati ke konten utama</a>
+
+    {/* Named slots, store chrome as the DEFAULT content — issue #48 fills these with the news chrome on every `/berita/**` page while every other page keeps this fallback, with no change to its own rendered HTML (a named slot with no filler renders its default verbatim). */}
+    <slot name="header"><Header identity={identity} /></slot>
+
+    <main id="konten">
+      <slot />
+    </main>
+
+    <slot name="footer"><Footer identity={identity} staticPages={staticPages} /></slot>
+
+    {/* Referral capture (issue #93, S3 of #32) — mounted on EVERY page, the
+        same "external module, mounted once from a layout" rule the read-
+        aloud player and the Daerah panel already established (see
+        `src/scripts/afiliasi-tangkap.ts`'s own docblock): a `?ref=CODE`
+        link can land a shopper on any page of this site, not just `/`, so
+        this cannot be scoped to a single page the way `checkout.ts`'s
+        affiliate READ is. A no-op on a page with no `?ref=` at all. */}
+    <script>import "../scripts/afiliasi-tangkap";</script>
+
+    {/* The first-party visitor beacon (issue #56, A10) — every page, store
+        and news alike, an external module (`script-src 'self'`) exactly
+        like every other client script in this app. See
+        `src/scripts/analitik.ts`'s own docblock for the payload, the
+        privacy posture, and why this reads the `data-analytics-tenant-code`
+        attribute above rather than an env variable of its own. */}
+    <script>import "../scripts/analitik";</script>
+
+    {/* GA4's `dataLayer`/`gtag` bootstrap (issue #56, A10) — see the
+        `<head>` block above for why this is a same-origin bundled module
+        rather than the inline `<script>` Google's own snippet normally
+        uses. A no-op (imports, checks `data-ga-measurement-id`, finds it
+        empty, returns) whenever GA is off, so it is always mounted rather
+        than conditioned on `gaId` here too. */}
+    <script>import "../scripts/ga-init";</script>
+  </body>
+</html>

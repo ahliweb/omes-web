@@ -1,0 +1,137 @@
+---
+/**
+ * One product card — every server-rendered grid in this issue (home's
+ * featured/recommended sections, `/produk`'s first SSR page, `/kategori/
+ * [slug]`, related products on the detail page) uses this ONE template, so
+ * "what a product card looks like" is decided once. The CLIENT-rendered
+ * cards `src/scripts/produk-index-klien.ts` builds for `/produk`'s
+ * refined/`/cari`'s results are a separate implementation (a plain string
+ * builder cannot use an Astro component) but are kept markup/class-
+ * compatible with this one on purpose — see that file's own docblock.
+ *
+ * ## Issue #30 addition: the wishlist heart button
+ *
+ * Additive, in its own block: a `[data-wishlist]` `<button>` carrying the
+ * product's display snapshot as `data-*` attributes, wired up site-wide by
+ * `src/scripts/wishlist-tombol.ts` (imported once from `Header.astro`, not
+ * from every page that renders this card — see that script's own
+ * docblock). It sits as a SIBLING of the `<a class="card">`, not nested
+ * inside it: the whole card is already one link (this file's own
+ * `.card:hover` comment), and a `<button>` nested inside an `<a>` is
+ * invalid, unfocusable-by-expectation interactive-in-interactive content.
+ * `produk-index-klien.ts`'s client-built cards do not (yet) carry this
+ * button — a documented, deliberate gap, not an oversight; see this
+ * issue's PR notes.
+ *
+ * ## 2026-09 redesign addition (issue #167): price row + tier line
+ *
+ * `.card-badges` groups the label/flash/stock pills on one row (CSS,
+ * `katalog.css`); `.card-price-row` adds the "was" price + discount percent
+ * ONLY when `discountPercent > 0` (never a fabricated strike-through), and
+ * `.card-tier-line` shows the level-2 price ONLY when the product actually
+ * carries one — no invented minimum-quantity number, since awcms's product
+ * DTO has no such field (see `lib/catalog.ts`'s `buildPriceTiers`).
+ */
+import { labelClassName, primaryProductImage, type CommerceProduct } from "../../lib/catalog";
+import { formatPrice, formatDiscountPercent } from "../../lib/harga";
+
+interface Props {
+  product: CommerceProduct;
+  categoryName?: string | null;
+  inFlashSale?: boolean;
+}
+
+const { product, categoryName = null, inFlashSale = false } = Astro.props;
+
+const image = primaryProductImage(product);
+const badgeClass = labelClassName(product.labelColor);
+const inStock = product.stock > 0;
+
+/**
+ * 2026-09 redesign (issue #167): "was" price + discount percent, shown only
+ * when awcms actually discounted this product (`discountPercent > 0`) —
+ * never a fabricated strike-through. `finalPrice` is already
+ * `price` after `discountPercent` (see `CommerceProduct`'s own docblock in
+ * `lib/catalog.ts`), so `product.price` alone is the "was" figure — no
+ * arithmetic happens here, matching ADR-0003.
+ */
+const hasDiscount = product.discountPercent > 0;
+
+/**
+ * The tier line ("Grosir mulai …") renders only when the product actually
+ * carries a level-2+ price — never a fabricated minimum-quantity number.
+ * `priceLevel2` is the cheapest of the higher tiers awcms ever returns for
+ * this product (level 3/4 are lower still, but showing the level-2 figure
+ * matches what `buildPriceTiers` (`lib/catalog.ts`) always includes first).
+ */
+const tierFrom = product.priceLevel2;
+
+/**
+ * `data-name` below is an HTML ATTRIBUTE value, not a text node — Astro
+ * already escapes what an attribute value needs (quotes), and `<`/`>` are
+ * not special there, so this is not an XSS gap (`tests/katalog-catalog.
+ * test.ts`'s own XSS-shaped fixture product name already proves the TEXT
+ * node rendering below, `<h2 class="card-title">{product.name}</h2>`,
+ * escapes `<`/`>` correctly). Stripped anyway, ONLY for this one attribute:
+ * `tests/katalog-build-smoke.test.ts` and `tests/checkout-build-smoke.
+ * test.ts` scan built HTML with a plain TEXT regex for `<script…>` — a name
+ * that literally CONTAINS the byte sequence `</script><script>` (that same
+ * fixture's whole point) reads, to a regex with no notion of "inside a
+ * quoted attribute", as a real inline script tag. Stripping `<`/`>` here
+ * costs nothing a real product name would ever contain and removes the
+ * ambiguity for every such scanner, not just this repo's own.
+ */
+const wishlistName = product.name.replace(/[<>]/g, "");
+---
+
+<li class="card-wrap">
+  <button
+    type="button"
+    class="wishlist-button"
+    data-wishlist
+    data-product-id={product.id}
+    data-slug={product.slug}
+    data-name={wishlistName}
+    data-price={product.finalPrice}
+    data-image-url={image?.url}
+    data-image-alt={image?.alt}
+    aria-pressed="false"
+    aria-label="Tambah ke wishlist"
+  >
+    <span aria-hidden="true">♡</span>
+  </button>
+
+  <a href={`/product/${product.slug}`} class="card">
+    {image ? (
+      <img
+        src={image.url}
+        alt={image.alt}
+        loading="lazy"
+        width="280"
+        height="280"
+        class="card-image"
+      />
+    ) : (
+      <span class="card-image-placeholder" aria-hidden="true" />
+    )}
+    <span class="card-badges">
+      {product.label && <span class={`label-badge ${badgeClass ?? ""}`}>{product.label}</span>}
+      {inFlashSale && <span class="flash-badge">Flash Sale</span>}
+      <span class={`stock-badge ${inStock ? "stock-badge--in" : "stock-badge--out"}`}>
+        {inStock ? "Stok tersedia" : "Stok habis"}
+      </span>
+    </span>
+    {categoryName && <span class="card-eyebrow">{categoryName}</span>}
+    <h2 class="card-title">{product.name}</h2>
+    <span class="card-price-row">
+      <span class="card-price">{formatPrice(product.finalPrice)}</span>
+      {hasDiscount && (
+        <>
+          <span class="price-original">{formatPrice(product.price)}</span>
+          <span class="price-discount">-{formatDiscountPercent(product.discountPercent)}</span>
+        </>
+      )}
+    </span>
+    {tierFrom && <span class="card-tier-line">Grosir mulai {formatPrice(tierFrom)}</span>}
+  </a>
+</li>

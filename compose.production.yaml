@@ -1,0 +1,380 @@
+# compose.production.yaml — issue #150, ADR-0019.
+#
+# A reproducible production topology for awcms-one: `apps/cms` (the system of
+# record), `apps/storefront` (a static build served by its own tiny Bun
+# process — never dynamic, ADR-0002/D1 below), PostgreSQL, and a `jobs`
+# sidecar built from the SAME `apps/cms` image as `cms` but running the
+# `jobs` target (apps/cms/Dockerfile.production, upstream, never edited
+# here — see AGENTS.md's subtree rule).
+#
+# ## The two-role database model (ADR-0019 D2)
+#
+# THREE distinct database identities are in play, and this file is careful to
+# never let the wrong one reach a running container:
+#
+#   - `awcms_setup` (or the Postgres superuser) — the MIGRATION-OWNER
+#     connection. Used ONLY by the one-shot `migrate` service below
+#     (`profiles: [migrate]`, never started by a plain `docker compose up`).
+#   - `awcms_app` — the CMS runtime's own least-privilege role
+#     (sql/019_awcms_db_role_separation.sql). `cms`'s `DATABASE_URL` MUST
+#     resolve to this role — never the owner, never a superuser. This is
+#     exactly the invariant `bun run commerce:deploy:preflight` checks.
+#   - `awcms_worker` — the background-job role (sql/022). `jobs`'s
+#     `DATABASE_URL` MUST resolve to this role.
+#
+# `docker/postgres-init/01-create-least-privilege-roles.sh` (already used by
+# the local/CI-only `compose.yaml`) activates LOGIN + a real password for all
+# three roles the FIRST time the `postgres` volume is empty; the migrations
+# themselves (sql/019, sql/022) create the roles NOLOGIN/passwordless, on
+# purpose (see that script's own header for why).
+#
+# ## Using a managed/external PostgreSQL instead
+#
+# The `postgres` service below is a convenience for a self-hosted deployment.
+# To use a managed instance (RDS, Cloud SQL, a hosted Postgres) instead:
+# delete the `postgres` service and its volume entirely, point every
+# `DATABASE_URL`/`WORKER_DATABASE_URL`/`SETUP_DATABASE_URL` at the managed
+# instance's own three least-privilege roles (create them there with the same
+# SQL `docker/postgres-init/01-create-least-privilege-roles.sh` runs, adapted
+# to that provider's own bootstrap mechanism), and remove every `depends_on:
+# postgres` below.
+#
+# ## Secrets
+#
+# No secret value is written in this file. `cms`/`jobs`/`migrate` read their
+# credentials from `apps/cms/.env` via `env_file:` — the same file
+# `apps/cms/.env.example` documents, never committed (see `.gitignore`).
+# `postgres` reads NO `env_file:` at all: every `${VAR:?...}` on it is
+# interpolated by `docker compose` itself from the root `.env` (or the
+# shell) — the SAME source `compose.yaml`'s own local/CI postgres service
+# already reads — so the database container never sees a single
+# `apps/cms`-only secret (Midtrans, WhatsApp, …) it has no reason to hold.
+# `apps/storefront`'s `AWCMS_API_TOKEN` is a third, BUILD-time-only shape —
+# passed through BuildKit's `--secret` flag when the image is built
+# (`apps/storefront/Dockerfile`'s own header), and never appears in this file
+# or in the running `storefront` container's environment at all.
+#
+# ## Image names (issue #187, ADR-0020)
+#
+# `migrate`/`cms`/`jobs` all read their `image:` from an env var with
+# TODAY's local-build name as its default — `${AWCMS_ONE_CMS_IMAGE:-awcms-one/cms:latest}`
+# and `${AWCMS_ONE_CMS_JOBS_IMAGE:-awcms-one/cms-jobs:latest}` — rather than a
+# hardcoded literal. This is backward compatible (an operator who sets
+# neither variable gets the exact same local-build behaviour this file
+# always had: `docker compose ... build` tags the image under that default
+# name) AND lets an operator who has pulled the images
+# `.github/workflows/images.yml` publishes to GHCR on a version tag point
+# these services at `ghcr.io/<owner>/<repo>-cms:<tag>` /
+# `ghcr.io/<owner>/<repo>-cms-jobs:<tag>` instead of building locally — see
+# docs/deployment.md's "Published images" for the exact pull/verify steps.
+# The `build:` block on every service stays, unconditionally: `docker
+# compose` only builds when the named image is not already present (or when
+# `--build` is passed), so leaving it in costs a pre-pull deployment
+# nothing and keeps a from-source deployment working exactly as before.
+# `apps/storefront`'s own `image:` is NOT part of this — ADR-0020 deliberately
+# does not publish it (it bakes content at build time; see that ADR).
+name: awcms-one-production
+
+services:
+  postgres:
+    image: postgres:18.4
+    container_name: awcms-one-postgres
+    restart: unless-stopped
+    # No `env_file:` here on purpose (issue #150 review) — every `${VAR:?...}`
+    # below is interpolated by `docker compose` itself from the root `.env`
+    # (or the shell), the SAME source `compose.yaml`'s own local/CI postgres
+    # service already reads (see root `.env.example`'s "Local PostgreSQL"
+    # section). Pointing this service's `env_file:` at `apps/cms/.env` would
+    # hand the DATABASE container every `apps/cms`-only secret (the Midtrans
+    # server key, WhatsApp tokens, …) for no reason — this service never
+    # reads any of them.
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required — the migration-owner/superuser, never used by cms/jobs at runtime}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      AWCMS_APP_PASSWORD: ${AWCMS_APP_PASSWORD:?AWCMS_APP_PASSWORD is required}
+      AWCMS_WORKER_PASSWORD: ${AWCMS_WORKER_PASSWORD:?AWCMS_WORKER_PASSWORD is required}
+      AWCMS_SETUP_PASSWORD: ${AWCMS_SETUP_PASSWORD:?AWCMS_SETUP_PASSWORD is required}
+    # No `ports:` — this database is reachable only from other services on
+    # this compose project's own network, never from the host or the public
+    # internet. An operator who genuinely needs host access (a one-off
+    # `psql`) uses `docker compose exec postgres psql ...` instead of
+    # publishing a port.
+    volumes:
+      - awcms-one-production-pgdata:/var/lib/postgresql
+      - ./docker/postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # One-shot migration runner — the ONLY service in this file that connects
+  # as the privileged owner/setup role. `docker compose --profile migrate run
+  # --rm migrate` (never started by a plain `up`). Run this BEFORE `cms`'s
+  # first start on a fresh database, and before starting `cms` again after a
+  # release that ships new migrations — see docs/deployment.md's "Production
+  # runbook" for the full ordering.
+  migrate:
+    build:
+      context: apps/cms
+      dockerfile: Dockerfile.production
+      target: jobs
+    image: ${AWCMS_ONE_CMS_JOBS_IMAGE:-awcms-one/cms-jobs:latest}
+    profiles: ["migrate"]
+    env_file:
+      - apps/cms/.env
+    environment:
+      # Overrides whatever apps/cms/.env sets for DATABASE_URL: migrations
+      # run as the OWNER/SETUP role, never the runtime awcms_app role — see
+      # apps/cms's own docs/awcms/deployment-profiles.md "Model dua-peran
+      # basis data" for why this split exists.
+      DATABASE_URL: ${SETUP_DATABASE_URL:?SETUP_DATABASE_URL (the migration-owner DSN) is required to run migrate}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["bun", "run", "db:migrate"]
+
+  cms:
+    build:
+      context: apps/cms
+      dockerfile: Dockerfile.production
+      target: runtime
+    image: ${AWCMS_ONE_CMS_IMAGE:-awcms-one/cms:latest}
+    container_name: awcms-one-cms
+    restart: unless-stopped
+    env_file:
+      - apps/cms/.env
+    environment:
+      # The RUNTIME role — awcms_app, least-privilege, never the owner/setup
+      # role above. `bun run commerce:deploy:preflight` (run against this
+      # exact DSN, with `--live`) is what verifies this is true rather than
+      # merely documented.
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL (the awcms_app runtime DSN) is required}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      # Liveness, deliberately — see Dockerfile.production's own comment on
+      # why /api/v1/health (not the database-pool-health endpoint) is the
+      # right question for a probe that RESTARTS containers.
+      test: ["CMD", "bun", "-e", "fetch('http://localhost:4321/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+    # No host port published by default — put a reverse proxy (this file
+    # does not ship one; see docs/deployment.md's "Production runbook") in
+    # front and let IT publish 443, terminating TLS. Uncomment for a bare,
+    # no-proxy deployment only:
+    # ports:
+    #   - "4321:4321"
+
+  # Background/scheduled commerce + AWCMS jobs. This service is NOT a
+  # long-running scheduler by itself — `profiles: [jobs]` keeps it out of a
+  # plain `docker compose up`, and it is invoked ON A SCHEDULE by
+  # `ops/run-job-compose.sh` (this repo's own thin wrapper around `docker
+  # compose ... run --rm jobs bun run <target>`), which a host crontab
+  # generated by `bun run jobs:crontab:generate`
+  # (`apps/cms/ops/awcms-jobs.crontab`, with `AWCMS_RUN_JOB` pointed at
+  # `ops/run-job-compose.sh`) calls per job — see docs/deployment.md's
+  # "Production runbook" for the exact installation steps. This keeps the
+  # SAME generated-from-the-module-registry schedule as every other
+  # deployment shape; nothing here hand-copies a cron list.
+  jobs:
+    build:
+      context: apps/cms
+      dockerfile: Dockerfile.production
+      target: jobs
+    image: ${AWCMS_ONE_CMS_JOBS_IMAGE:-awcms-one/cms-jobs:latest}
+    profiles: ["jobs"]
+    env_file:
+      - apps/cms/.env
+    environment:
+      # The WORKER role — awcms_worker, distinct from both awcms_app (cms)
+      # and the owner/setup role (migrate) above.
+      DATABASE_URL: ${WORKER_DATABASE_URL:?WORKER_DATABASE_URL (the awcms_worker runtime DSN) is required}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  storefront:
+    build:
+      context: .
+      dockerfile: apps/storefront/Dockerfile
+      args:
+        SITE_PROFILE: ${SITE_PROFILE:-toko}
+        SITE_URL: ${SITE_URL:?SITE_URL is required}
+        AWCMS_API_URL: ${AWCMS_API_URL:?AWCMS_API_URL is required}
+        PUBLIC_AWCMS_ORIGIN: ${PUBLIC_AWCMS_ORIGIN:?PUBLIC_AWCMS_ORIGIN is required}
+        PUBLIC_GA_ID: ${PUBLIC_GA_ID:-}
+      # AWCMS_API_TOKEN is a BUILD secret, not a build arg — see
+      # apps/storefront/Dockerfile's own header. `docker compose build` reads
+      # this from BuildKit's secret store; the value never appears in this
+      # file, in an image layer, or in the running container's own
+      # environment (the runtime stage carries no such variable at all).
+      secrets:
+        - awcms_api_token
+    image: awcms-one/storefront:${SITE_PROFILE:-toko}
+    container_name: awcms-one-storefront
+    restart: unless-stopped
+    # No env_file / environment / secrets at RUNTIME — the built artefact
+    # already carries everything it needs (ADR-0002); a static site's
+    # runtime process has no CMS credential to hold.
+    healthcheck:
+      test: ["CMD", "bun", "-e", "fetch('http://localhost:8080/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+    # No host port published by default — same reverse-proxy note as `cms`.
+    # ports:
+    #   - "8080:8080"
+
+  # ---------------------------------------------------------------------
+  # Backup assurance (issue #213) — a THIN wrapper around upstream's own
+  # apps/cms/deploy/backup/*.sh, bind-mounted read-only below. Nothing here
+  # reimplements backup/restore/manifest/off-site logic; see
+  # apps/cms/deploy/backup/README.md and
+  # docs/adr/0123-backup-encryption-manifest-authentication.md (apps/cms) for
+  # what the scripts themselves do and why. `docker/backup/Dockerfile` adds
+  # only the binaries (`age`, `rsync`, `openssh-client`) those scripts'
+  # own header comments say a runner image needs on top of the SAME
+  # `postgres:18.4` the `postgres` service above runs (pg_dump/pg_restore
+  # must be version-matched). See docs/deployment.md's "Backup assurance"
+  # section for the full operator runbook this wires into.
+  #
+  # ## Database identity (issue #213 scope item 1)
+  #
+  # `backup` and `restore-drill` both connect with `SETUP_DATABASE_URL` — the
+  # SAME migration-owner DSN `migrate` above uses, NOT `awcms_app` (`cms`) or
+  # `awcms_worker` (`jobs`). Two independent reasons, both structural:
+  #   - `pg_dump` has to read every table; a least-privilege runtime role is
+  #     deliberately denied ownership/broad SELECT on tables it never queries
+  #     (sql/019/021), so it CANNOT produce a complete dump.
+  #   - `restore-postgres.sh`'s drill mode creates and drops its own scratch
+  #     database (`CREATE DATABASE`/`DROP DATABASE`), which needs a role with
+  #     CREATEDB — again the owner/setup role, never the runtime roles.
+  # This is the same "owner-only" boundary `migrate` already draws in this
+  # file; `backup`/`restore-drill` never touch `awcms_app`'s or
+  # `awcms_worker`'s DSN.
+  #
+  # ## Why restore here can NEVER hit production (issue #213 safety rule)
+  #
+  # `restore-drill` has a HARD-CODED command — `restore-drill.sh`, always,
+  # never `restore-postgres.sh` directly and never with a `--target` flag
+  # anywhere in this file. `restore-drill.sh` itself has no `--target`
+  # code path at all (see its own header). That means there is no
+  # environment variable, compose profile, or argument this file could be
+  # given that would make this service destructive — it is structurally a
+  # drill, not a policy this file merely documents. A REAL disaster-recovery
+  # restore into a live database is deliberately NOT a compose service here:
+  # it is the manual, confirmed `docker run ... restore-postgres.sh <dump>
+  # --target=<db> --yes` runbook step in docs/deployment.md's "Production
+  # runbook" — one step further away from an accidental `docker compose up`
+  # or a copy-pasted cron line than a service definition would be.
+  backup:
+    build:
+      context: docker/backup
+    image: ${AWCMS_ONE_BACKUP_IMAGE:-awcms-one/backup-tools:latest}
+    profiles: ["backup"]
+    volumes:
+      - awcms-one-production-backups:/backup
+      - ./apps/cms/deploy/backup:/scripts:ro
+    secrets:
+      - backup_age_recipients
+      - backup_hmac_key
+    environment:
+      DATABASE_URL: ${SETUP_DATABASE_URL:?SETUP_DATABASE_URL (the migration-owner DSN) is required to run backup — pg_dump has to read every table, which awcms_app/awcms_worker are deliberately denied}
+      BACKUP_DIR: /backup
+      BACKUP_LABEL: ${BACKUP_LABEL:-awcms-one}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+      # Compose `secrets:` mounts each one read-only at /run/secrets/<name>
+      # — the SAME mechanism `storefront`'s `awcms_api_token` above already
+      # uses, so neither file's bytes ever appear in this file, an image
+      # layer, or `docker inspect`'s own environment listing.
+      BACKUP_AGE_RECIPIENTS_FILE: /run/secrets/backup_age_recipients
+      BACKUP_HMAC_KEY_FILE: /run/secrets/backup_hmac_key
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["bash", "/scripts/backup-postgres.sh"]
+
+  restore-drill:
+    build:
+      context: docker/backup
+    image: ${AWCMS_ONE_BACKUP_IMAGE:-awcms-one/backup-tools:latest}
+    profiles: ["restore-drill"]
+    volumes:
+      - awcms-one-production-backups:/backup
+      - ./apps/cms/deploy/backup:/scripts:ro
+    secrets:
+      # `restore_age_identity` is the PRIVATE age key — deliberately a
+      # DIFFERENT secret from `backup`'s own `backup_age_recipients` (public).
+      # Never put the private identity in `backup`'s secret list above: a
+      # compromised backup-producing container must not be able to decrypt
+      # its own output (ADR-0123's whole point).
+      - restore_age_identity
+      - backup_hmac_key
+    environment:
+      DATABASE_URL: ${SETUP_DATABASE_URL:?SETUP_DATABASE_URL (the migration-owner DSN) is required to run restore-drill — the drill's scratch database needs CREATEDB}
+      BACKUP_DIR: /backup
+      BACKUP_LABEL: ${BACKUP_LABEL:-awcms-one}
+      RESTORE_SCRATCH_DB: ${RESTORE_SCRATCH_DB:-awcms_restore_drill}
+      RESTORE_AGE_IDENTITY_FILE: /run/secrets/restore_age_identity
+      BACKUP_HMAC_KEY_FILE: /run/secrets/backup_hmac_key
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["bash", "/scripts/restore-drill.sh"]
+
+  offsite-copy:
+    build:
+      context: docker/backup
+    image: ${AWCMS_ONE_BACKUP_IMAGE:-awcms-one/backup-tools:latest}
+    profiles: ["offsite-copy"]
+    volumes:
+      - awcms-one-production-backups:/backup
+      - ./apps/cms/deploy/backup:/scripts:ro
+    secrets:
+      - offsite_ssh_key
+    environment:
+      OFFSITE_SSH_TARGET: ${OFFSITE_SSH_TARGET:?OFFSITE_SSH_TARGET (user@host:/absolute/path) is required to run offsite-copy}
+      OFFSITE_SSH_KEY_FILE: /run/secrets/offsite_ssh_key
+      OFFSITE_SSH_PORT: ${OFFSITE_SSH_PORT:-22}
+      BACKUP_DIR: /backup
+      BACKUP_LABEL: ${BACKUP_LABEL:-awcms-one}
+    # select-and-offsite-copy.sh (docker/backup/, baked into the image built
+    # above — see its own header) selects the newest eligible artifact plus
+    # its verifiable sidecars and hands them to offsite-copy.sh unmodified. A
+    # local-only backup with no eligible artifact, or a transfer that
+    # ultimately fails after retries, exits non-zero — see offsite-copy.sh's
+    # own header: it never deletes the local copy and never reports a failed
+    # transfer as a success.
+    command: ["/usr/local/bin/select-and-offsite-copy.sh"]
+
+secrets:
+  # A BuildKit build secret, sourced from a file this repo never commits
+  # (listed in .gitignore alongside every other real `.env`). Create it with,
+  # e.g.: `printf '%s' "$AWCMS_API_TOKEN" > .secrets/awcms_api_token`.
+  awcms_api_token:
+    file: ${AWCMS_API_TOKEN_FILE:-.secrets/awcms_api_token}
+  # Backup assurance (issue #213) — five files this repo never commits
+  # (`.gitignore`'s own `.secrets/` rule already covers this directory).
+  # See docs/deployment.md's "Backup assurance" section for how to generate
+  # each one; apps/cms/deploy/backup/README.md's step 1 is the canonical
+  # source for the age-keygen/openssl invocations themselves.
+  backup_age_recipients:
+    file: ${BACKUP_AGE_RECIPIENTS_FILE:-.secrets/backup-age-recipients.txt}
+  backup_hmac_key:
+    file: ${BACKUP_HMAC_KEY_FILE:-.secrets/backup-hmac.key}
+  restore_age_identity:
+    file: ${RESTORE_AGE_IDENTITY_FILE:-.secrets/restore-age-identity.key}
+  offsite_ssh_key:
+    file: ${OFFSITE_SSH_KEY_FILE:-.secrets/offsite-ssh-key}
+
+volumes:
+  awcms-one-production-pgdata:
+    name: awcms-one-production-pgdata
+  awcms-one-production-backups:
+    name: awcms-one-production-backups

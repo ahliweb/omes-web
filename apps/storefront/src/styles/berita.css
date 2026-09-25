@@ -1,0 +1,560 @@
+/**
+ * Styles for the news surface (issue #28) — a NEW file, imported only by
+ * `src/layouts/BeritaLayout.astro`, per this issue's own file-ownership
+ * instructions: `src/styles/global.css` (issue #5/#24) is not restructured
+ * or appended to here, and no page in this issue uses an inline `<style>`
+ * block (`style-src 'self'`, `server/penyaji.mjs`, forbids it regardless).
+ *
+ * Reuses `global.css`'s tokens (`--bg-*`, `--text-*`, `--border-color`,
+ * `--radius-*`, `--shadow-*`, `--color-primary` etc. from `theme-tokens.css`)
+ * rather than declaring a second palette — this file only adds the CLASSES
+ * the news pages need, none of the variables underneath them.
+ */
+
+/* --- Post cards: extends global.css's .card with what a news card needs
+   beyond a product card (an excerpt, a publish date + region) ------------ */
+
+/* Issue #47: a card's thumbnail — the SAME fixed-aspect-ratio/object-fit
+   pattern `src/styles/katalog.css`'s `.card-image`/`.card-image-placeholder`
+   already established for product cards, restated here under its own name
+   because that stylesheet is imported only by catalog pages, never by the
+   news layout (see this file's own header). */
+.card-thumb,
+.card-thumb-placeholder {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+}
+
+.card-excerpt {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* Mono meta (issue #169, 2026-09 redesign) — the publish date/reading-time
+   line under a card or headline reads as data, not prose; `berita.css` is
+   imported ONLY by `BeritaLayout.astro`, so this cascades to news cards
+   alone, never a product card's own `.post-meta`-less markup. */
+.post-meta {
+  margin-top: auto;
+  padding-top: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.post-meta-region {
+  font-weight: 600;
+}
+
+/* News card typography (issue #169) — Lora titles, an uppercase sky
+   rubric eyebrow, matching the mockup's grid cards (lines 735-742).
+   `.card-title`/`.card-eyebrow` are `global.css`'s own generic classes
+   (issue #5/#24), shared with product cards; overriding them here is safe
+   ONLY because this file loads exclusively on the news layout — see this
+   file's own header. */
+.grid-cards .card-title,
+.berita-hero .card-title {
+  font-family: var(--font-serif);
+  font-weight: 600;
+}
+
+.grid-cards .card-eyebrow,
+.berita-hero .card-eyebrow {
+  color: var(--link-color);
+}
+
+/* The headline block's own "HEADLINE" tag (`HalamanDepanBerita.astro`,
+   mockup line 726) — an inverse-band pill overlaid on the hero card. */
+.berita-hero {
+  position: relative;
+}
+
+.berita-hero__lencana {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 1;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg-inverse);
+  color: var(--text-on-inverse);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.berita-hero .card-title {
+  font-size: 1.75rem; /* 28px */
+  line-height: 1.25;
+}
+
+/* --- Article header / byline -------------------------------------------- */
+
+.article-header {
+  max-width: 42rem;
+}
+
+/* Article title (issue #169) — Lora 32px, matching the mockup's article
+   template (line 787); scoped to `.article-header h1` so this file's
+   cascade never touches any OTHER page's plain `global.css` `h1`. */
+.article-header h1 {
+  font-family: var(--font-serif);
+  font-size: 2rem; /* 32px */
+  line-height: 1.22;
+  letter-spacing: -0.015em;
+}
+
+/* The lede (issue #169) — `post.excerpt`, when the CMS has one; the same
+   field `ArtikelCard.astro` already renders as `.card-excerpt`, read here
+   for the FIRST time on the article page itself. Sans, not serif — the
+   mockup sets the lede in the UI sans while the title and body are Lora. */
+.article-lede {
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.article-byline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  margin-block: 0.75rem;
+  padding-block: 0.8rem;
+  border-block: 1px solid var(--border-color);
+}
+
+.article-byline strong {
+  color: var(--text-secondary);
+}
+
+/* Avatar initials (issue #169, mockup line 792) — decorative; the byline's
+   own text already carries the accessible name. */
+.article-byline__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.article-byline time,
+.article-byline > span:last-child {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+.article-body {
+  max-width: 42rem;
+  margin-top: 1.5rem;
+  font-family: var(--font-serif);
+  font-size: 1rem; /* 16px */
+  line-height: 1.85;
+  color: var(--text-primary);
+}
+
+.article-body :is(h2, h3, h4) {
+  margin-top: 1.5rem;
+}
+
+.article-body p {
+  margin-block: 0.75rem;
+}
+
+.article-body ul,
+.article-body ol {
+  margin-block: 0.75rem;
+  padding-left: 1.5rem;
+  color: var(--text-secondary);
+}
+
+/* Pull-quote (issue #169, mockup lines 806-809) — a 3px `--color-primary`
+   left rule (the CMS-driven brand color, deliberately, unlike the news
+   accent everywhere else in this file: a pull-quote is editorial
+   emphasis inside the STORE's own brand-colored content, the same rule
+   this file already applied pre-redesign) with a subtle background and
+   an italic Lora quote. */
+.article-body blockquote {
+  border-left: 3px solid var(--color-primary, #10b981);
+  padding: 0.9rem 1.1rem;
+  background: var(--bg-subtle);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  font-style: italic;
+  font-size: 1.0625rem;
+  color: var(--text-primary);
+  margin-block: 1.25rem;
+}
+
+.article-tags {
+  margin-top: 1.5rem;
+}
+
+.article-tags-heading {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.article-related {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.article-share {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.article-share a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* --- Article hero figure (src/components/berita/ArtikelView.astro, issue
+   #47) ---------------------------------------------------------------- */
+
+.article-hero {
+  margin-block: 1rem;
+}
+
+.article-hero-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--radius-lg);
+}
+
+.article-hero figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* --- Portable Text object blocks (src/lib/portable-text.ts) -------------- */
+
+.content-figure {
+  margin-block: 1rem;
+}
+
+.content-figure-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 16 / 9;
+  background: var(--bg-subtle);
+  border-radius: var(--radius-md);
+}
+
+/* A resolved gallery item's real `<img>` (issue #47) — the placeholder
+   `<span>` above stays untouched for the unresolved/legacy case. */
+.content-figure img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+}
+
+.content-figure figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.content-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
+  gap: 1rem;
+  margin-block: 1rem;
+}
+
+.content-video {
+  margin-block: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  background: var(--bg-surface);
+}
+
+/* Issue #47: `.content-video-link` now styles a real <button> (the
+   click-to-load facade), not an <a> — reset the browser's default button
+   chrome so it still reads as the exact same flex row `src/lib/portable-
+   text.ts`'s original semantic link rendered. */
+.content-video-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  background: none;
+  border: none;
+  padding: 0;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.content-video-poster {
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+/* The <iframe> `src/scripts/video-facade.ts` swaps in on click. */
+.content-video-frame {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  border-radius: var(--radius-md);
+}
+
+.content-video-play {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  border-radius: 999px;
+  background: var(--color-primary, #10b981);
+  color: var(--color-primary-foreground, #000000);
+  flex-shrink: 0;
+}
+
+.content-video figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.content-video-caption {
+  margin-top: 0.35rem;
+  font-size: 0.9rem;
+}
+
+/* --- Rubrik / front page sections ---------------------------------------- */
+
+.rubrik-section {
+  margin-block: 2rem;
+}
+
+.rubrik-section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.rubrik-index-link {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.berita-hero {
+  margin-bottom: 2rem;
+}
+
+.berita-hero .card {
+  min-height: 8rem;
+}
+
+.layout-with-sidebar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2rem;
+}
+
+@media (min-width: 900px) {
+  .layout-with-sidebar {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.sidebar > section {
+  margin-bottom: 2rem;
+}
+
+.sidebar h2 {
+  font-size: 1.1rem;
+}
+
+/* --- Tags ----------------------------------------------------------------- */
+
+.tag-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  list-style: none;
+}
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding-inline: 0.75rem;
+  border-radius: 999px;
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.tag-chip:hover {
+  background: var(--border-color);
+  text-decoration: none;
+}
+
+/* --- Ad slots (issue #28; the creative <img> added by issue #47 — see
+   src/components/berita/IklanSlot.astro's own docblock) ------------------ */
+
+.ad-slot-image {
+  display: block;
+  width: 100%;
+  max-width: 300px;
+  aspect-ratio: 300 / 250;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  margin-block: 0.25rem;
+}
+
+.ad-slot {
+  margin-block: 1.5rem;
+  padding: 1rem;
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+.ad-slot-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.ad-slot-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ad-slot-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.ad-slot-disclosure {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+}
+
+/* --- Video / Daerah / Mitra strips and archives --------------------------- */
+
+.video-strip,
+.mitra-strip,
+.daerah-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
+  gap: 1rem;
+  list-style: none;
+  margin-block: 1rem;
+}
+
+.mitra-header {
+  max-width: 42rem;
+  margin-bottom: 1.5rem;
+}
+
+.mitra-header .card-eyebrow {
+  text-transform: capitalize;
+}
+
+.archive-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* --- Search (issue #28's /cari-berita) ------------------------------------ */
+
+.search-hint {
+  color: var(--text-muted);
+}
+
+/* --- Institution emblem beside the opening paragraph (issue #59) ---------
+   No background, border or padding: an emblem is nearly always a
+   transparent PNG/SVG, and upstream's own 2.3.2 release removed exactly
+   those decorations for that reason. Floated so the first paragraph wraps
+   beside it (`sb_artikel_logo()`'s placement), and dropped to a block on a
+   narrow screen where a 96px float leaves too little room for the text. */
+.logo-instansi {
+  float: left;
+  margin: 0 1rem 0.5rem 0;
+  max-width: 112px;
+}
+
+.logo-instansi img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@media (max-width: 480px) {
+  .logo-instansi {
+    float: none;
+    margin: 0 0 1rem;
+    max-width: 88px;
+  }
+}
+
+/* The same emblem on the institution's own landing page (issue #59) —
+   block-level and larger there: it is the page's own subject, not a mark
+   beside someone else's paragraph. */
+.mitra-logo {
+  display: block;
+  width: auto;
+  max-width: 140px;
+  height: auto;
+  margin: 0 0 0.75rem;
+}

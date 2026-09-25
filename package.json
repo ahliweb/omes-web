@@ -1,0 +1,51 @@
+{
+  "name": "awcms-one",
+  "type": "module",
+  "version": "0.12.0",
+  "private": true,
+  "description": "awcms-one — the borneojek-mart commerce platform on the AWCMS stack. Bun workspace root: apps/storefront is the public Astro storefront, apps/cms is ahliweb/awcms embedded via git subtree, packages/config and packages/gerbang are the shared presets and audit gates, packages/kontrak carries the type-only DTO contract the storefront imports from the CMS.",
+  "homepage": "https://mart.borneojek.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ahliweb/awcms-one.git"
+  },
+  "license": "MIT",
+  "packageManager": "bun@1.4.2",
+  "engines": {
+    "bun": ">=1.4.2"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "cd apps/storefront && bun run dev",
+    "build": "cd apps/storefront && bun run build",
+    "check": "cd apps/storefront && bun run check",
+    "check:lockfile": "bun tools/cek-lockfile.mjs",
+    "check:cms": "cd apps/cms && bun run check",
+    "deploy:preflight": "bun tools/deploy-preflight.mjs",
+    "audit:dokumen": "bun packages/gerbang/audit-dokumen.mjs",
+    "audit:rilis": "bun packages/gerbang/audit-rilis.mjs",
+    "audit:translation": "bun packages/gerbang/check-docs-translation.mjs",
+    "audit:graf": "bun packages/gerbang/audit-graf.mjs",
+    "knowledge:check": "bun run audit:graf",
+    "knowledge:graph:update": "bun tools/knowledge-graph-update.mjs",
+    "knowledge:graph:combine": "bun tools/knowledge-graph-combine.mjs",
+    "knowledge:obsidian:export": "bun tools/knowledge-obsidian-export.mjs",
+    "docs:i18n:stamp": "bun tools/docs-i18n-stamp.mjs",
+    "db:up": "docker compose up -d --wait",
+    "db:down": "docker compose down",
+    "db:reset": "docker compose down -v && docker compose up -d --wait",
+    "db:migrate:cms": "cd apps/cms && bun run db:migrate",
+    "db:seed:cms": "bun tools/seed-cms.ts",
+    "db:seed:cms:profil": "bun tools/seed-cms.ts --profil",
+    "import:seputarborneo": "bun tools/import-seputarborneo.ts",
+    "template:init": "bun tools/template-init.ts",
+    "test": "bun test",
+    "serve": "cd apps/storefront && bun run serve",
+    "start": "bun run serve",
+    "preview": "bun run serve",
+    "release": "bun tools/rilis.mjs"
+  }
+}

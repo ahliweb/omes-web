@@ -1,0 +1,29 @@
+{
+  "extends": ["astro/tsconfigs/strict", "../../packages/config/tsconfig.base.json"],
+  "compilerOptions": {
+    /**
+     * `astro check` (this workspace's `check` script) type-checks
+     * `tests/*.test.ts` and every `.astro` file's client `<script>` blocks
+     * alongside the rest of the app — issue #24 is the first change to add
+     * `bun:test`/global `Bun` usage inside either (previously only
+     * `src/lib/env.ts` read `process.env`, which needs no ambient type at
+     * all). Without this, TypeScript cannot find `bun:test`'s module
+     * declaration or the global `Bun` namespace, even though `@types/bun`
+     * is an installed devDependency — the automatic `@types/*` inclusion
+     * astro's own base tsconfig relies on does not reach it here.
+     */
+    "types": ["bun"],
+    /**
+     * `@profil/beranda` (issue #137) is a Vite alias `integrations/profil.mjs`
+     * points at the active profile's `src/profil/<profile>/Beranda.astro`
+     * at build time. TypeScript cannot follow a build-time alias, so
+     * `astro check` is given ONE variant to type `src/pages/index.astro`'s
+     * import against; the three variants share the same (empty) Props, so
+     * whichever profile a `check` runs under the typing is the same.
+     */
+    "baseUrl": ".",
+    "paths": {
+      "@profil/beranda": ["./src/profil/toko/Beranda.astro"]
+    }
+  }
+}

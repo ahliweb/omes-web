@@ -1,0 +1,167 @@
+---
+/**
+ * The site header (issue #24): brand mark, primary nav, search, cart count.
+ *
+ * ## Mobile nav needs no JavaScript
+ *
+ * The nav list lives inside a native `<details>`/`<summary>` disclosure.
+ * `global.css` shows/hides the `<summary>` toggle and the nav's layout by
+ * viewport width — the browser's own disclosure widget does the opening and
+ * closing, keyboard included (`Enter`/`Space` on a focused `<summary>`), with
+ * nothing in this file's own `<script>` block touching it at all.
+ *
+ * ## No `<img>` logo — see `src/lib/awcms/profil.ts`
+ *
+ * `identity.logoMediaId` is surfaced but never resolved to a URL in this
+ * issue (documented deviation — this app carries no media-object client).
+ * The brand mark is the store NAME, styled as the wordmark.
+ *
+ * ## Cart count needs a script, and that script is never inline
+ *
+ * `script-src 'self'` (`server/penyaji.mjs`) refuses `is:inline`/handler
+ * attributes. This `<script>` tag is a normal ES module Astro bundles into
+ * an external, content-hashed file under `_astro/` — satisfying the CSP by
+ * construction, the same way `astro.config.mjs`'s `inlineStylesheets:
+ * "never"` does for CSS.
+ *
+ * Issue #27 replaces this block's logic (it used to read a bare `"cart"`
+ * array key increment-1 invented as a placeholder) with the real cart
+ * contract: `src/lib/keranjang-kontrak.ts` (key `awcms-one:keranjang:v1`,
+ * `{id, lines, updatedAt}` shape) and `src/scripts/keranjang-hitung.ts` (the
+ * actual logic — kept an EXTERNAL module, imported here, rather than grown
+ * inline in this file, so it stays unit-testable and this block stays a
+ * one-line `import`). It re-counts on load, on the `keranjang:berubah`
+ * `CustomEvent` `src/lib/keranjang-klien.ts` dispatches after every write on
+ * this tab, and on the native `storage` event for a write from another tab.
+ *
+ * Issue #30 adds the wishlist link and `src/scripts/wishlist-tombol.ts` —
+ * the SAME "imported once here, loaded on every page via `BaseLayout.astro`"
+ * pattern, so every `[data-wishlist]` heart button anywhere in the site
+ * (`ProductCard.astro`) works without every page that renders one having to
+ * remember to import a script for it.
+ *
+ * Issue #88 adds the account link the same way again:
+ * `[data-akun-tautan]` renders "Masuk" → `ROUTES.login` server-side (works
+ * with no JavaScript at all — a visitor with JS off simply sees the sign-in
+ * link), and `src/scripts/akun-header.ts` swaps its text to the account's
+ * first name and its `href` to `ROUTES.account` when `bacaSesi()`
+ * (`src/lib/akun-sesi.ts`) finds a session, re-checking on `akun:berubah`
+ * (login/logout/profile-edit, this tab) and the native `storage` event
+ * (another tab).
+ *
+ * ## Issue #137: the header renders only what the build profile has
+ *
+ * `src/config/profil.ts` is the single source: the primary nav comes from
+ * `getPrimaryNav()` (`src/lib/navigasi-profil.ts` — the profile's static
+ * list plus its dynamic entries), the search form from `SEARCH_SURFACE`
+ * (products for `toko`, news for `berita`, none for `landing`), and the
+ * wishlist/cart/account tools render only when the `toko` group is active
+ * — a `berita` or `landing` deployment has no `/keranjang` to link to. In
+ * the default `toko` profile every condition is true and this file's
+ * rendered HTML is exactly what it was before this issue.
+ *
+ * ## Issue #166 (2026-09 redesign): the utility bar and brand tile
+ *
+ * A dark `.band-inverse` utility bar sits above the header proper, per the
+ * mockup (`redesign/…/publik.template.html` lines 24-34): "Lacak pesanan"
+ * (order tracking, `toko` only), "Berita" (only when the `berita` group is
+ * ALSO active in this build — i.e. today's default `toko` profile, which
+ * composes `toko` + `berita`; a `toko`-only template-init choice with news
+ * turned off has no `/berita` to link to), and "Akun saya" pointing at
+ * whatever `data-akun-tautan already resolves (Masuk vs the account link,
+ * `src/scripts/akun-header.ts`). The mockup's free-shipping notice slot is
+ * deliberately NOT rendered: it is store-settings-driven copy
+ * (`shippingSettings.freeShipping`, `src/lib/awcms/pemasaran.ts`) this
+ * issue does not wire the header's build-time fetch to — inventing the
+ * Indonesian copy instead would be exactly the "no invented copy" mistake
+ * `AGENTS.md`/this issue's own rules warn against.
+ *
+ * The brand tile (site name's first letter, `aria-hidden`, on
+ * `--color-primary`) replaces the previous bare-text wordmark link with the
+ * same link, just with a mark beside it — `identity.name` is still the
+ * only accessible name `.site-brand` carries.
+ */
+import type { SiteIdentity } from "../lib/awcms/profil";
+import { ROUTES } from "../config/routes";
+import { SEARCH_SURFACE, isGroupActive } from "../config/profil";
+import { getPrimaryNav } from "../lib/navigasi-profil";
+import SearchForm from "./SearchForm.astro";
+
+interface Props {
+  identity: SiteIdentity;
+}
+
+const { identity } = Astro.props;
+
+const primaryNav = await getPrimaryNav();
+const tokoAktif = isGroupActive("toko");
+const beritaAktif = isGroupActive("berita");
+const brandInitial = identity.name.trim().charAt(0).toUpperCase() || "•";
+---
+
+{tokoAktif && (
+  <div class="utility-bar band-inverse">
+    <div class="container utility-bar-inner">
+      <div class="utility-bar-spacer" />
+      <a href={ROUTES.orderTracking}>Lacak pesanan</a>
+      {beritaAktif && <a href={ROUTES.news}>Berita</a>}
+      <a href={ROUTES.login} class="utility-bar-akun" data-akun-tautan>
+        <span data-akun-label>Akun saya</span>
+      </a>
+    </div>
+  </div>
+)}
+
+<header class="site-header">
+  <div class="container site-header-inner">
+    <a href="/" class="site-brand">
+      <span class="site-brand-tile" aria-hidden="true">{brandInitial}</span>
+      {identity.name}
+    </a>
+
+    <details class="mobile-nav-toggle">
+      <summary aria-label="Buka menu navigasi">
+        <span aria-hidden="true">☰</span>
+        <span class="visually-hidden">Menu</span>
+      </summary>
+
+      <nav aria-label="Navigasi utama">
+        {primaryNav.map((item) => (
+          <a href={item.href}>{item.label}</a>
+        ))}
+      </nav>
+    </details>
+
+    <div class="site-header-tools">
+      {SEARCH_SURFACE && <SearchForm idPrefix="header-search" />}
+
+      {tokoAktif && (
+        <a href={ROUTES.wishlist} class="wishlist-link">
+          <span aria-hidden="true">♡</span>
+          Wishlist
+        </a>
+      )}
+
+      {tokoAktif && (
+        <a href={ROUTES.cart} class="cart-link">
+          <span aria-hidden="true">🛒</span>
+          Keranjang
+          <span class="cart-count" data-cart-count aria-live="polite">0</span>
+        </a>
+      )}
+
+      {tokoAktif && (
+        <a href={ROUTES.login} class="akun-link" data-akun-tautan>
+          <span aria-hidden="true">👤</span>
+          <span data-akun-label>Masuk</span>
+        </a>
+      )}
+    </div>
+  </div>
+</header>
+
+<script>
+  import "../scripts/keranjang-hitung";
+  import "../scripts/wishlist-tombol";
+  import "../scripts/akun-header";
+</script>

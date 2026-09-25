@@ -1,0 +1,52 @@
+---
+/**
+ * `/wishlist` (issue #30) — a purely client-side, `localStorage`-backed
+ * list of products a shopper starred via the heart button
+ * (`ProductCard.astro`'s `[data-wishlist]` button, wired up site-wide by
+ * `src/scripts/wishlist-tombol.ts`). No CMS call at all: everything shown
+ * here is the DISPLAY SNAPSHOT captured at add-time (`wishlist-kontrak.ts`'s
+ * own docblock explains why that may drift from the live catalog, and why
+ * that is an acceptable trade for a bookmark rather than a cart).
+ *
+ * `noindex, follow` — no content of this page's own to index, the same
+ * reasoning `/cari`'s own comment gives.
+ */
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import "../../../styles/katalog.css";
+import "../../../styles/toko.css";
+---
+
+<BaseLayout title="Wishlist" description="Produk yang Anda simpan." canonicalPath="/wishlist">
+  <meta slot="head" name="robots" content="noindex, follow" />
+
+  <noscript>
+    <div class="container">
+      <div class="toko-banner toko-banner--info">
+        Wishlist memerlukan JavaScript aktif di peramban Anda, karena daftar ini disimpan langsung di
+        peramban Anda sendiri.
+      </div>
+    </div>
+  </noscript>
+
+  <div class="container" data-wishlist-root>
+    <div class="page-heading">
+      <h1>Wishlist</h1>
+    </div>
+
+    <div class="toko-banner toko-banner--info" role="note">
+      Perubahan disimpan di peramban ini, dan disinkronkan ke akun Anda saat masuk. Bila jaringan gagal,
+      wishlist tetap tersimpan di peramban ini.
+    </div>
+
+    <div class="empty-state" data-wishlist-empty hidden>
+      <p>Belum ada produk disimpan</p>
+      <a class="btn btn--primary" href="/produk">Jelajahi katalog</a>
+    </div>
+
+    <ul class="grid-cards" data-wishlist-items aria-live="polite"></ul>
+  </div>
+
+  <script>
+    import "../../../scripts/wishlist";
+  </script>
+</BaseLayout>

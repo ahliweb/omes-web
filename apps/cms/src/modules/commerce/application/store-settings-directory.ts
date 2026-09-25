@@ -1,0 +1,469 @@
+import { recordAuditEvent } from "../../logging/application/audit-log";
+import type { MediaLibraryPort } from "../../_shared/ports/media-library-port";
+import { normalizeMoney } from "../domain/price-calculation";
+import {
+  DEFAULT_CUSTOMER_LEVEL_NAMES,
+  STORE_SETTINGS_SCHEMA_VERSION,
+  type StoreSettingsData
+} from "../domain/store-settings-validation";
+import {
+  DEFAULT_COMMERCE_FEATURES,
+  type CommerceFeatures
+} from "../domain/commerce-features";
+
+const AUDIT_MODULE_KEY = "commerce";
+const AUDIT_RESOURCE_TYPE = "store_settings";
+
+/**
+ * A tenant that has never opened the settings screen has no row at all — a
+ * singleton table is created lazily, on first `PUT`, rather than by a
+ * migration-time `INSERT ... SELECT FROM awcms_tenants` (which would only
+ * cover tenants that already existed when this migration ran — the same
+ * limitation every permission-seed migration in this repo already accepts,
+ * stated rather than worked around). `fetchStoreSettings` therefore returns
+ * this fully-defaulted shape, with `storeName` falling back to the tenant's
+ * own `awcms_tenants.tenant_name`, so `GET`/`GET .../public` never 404 —
+ * a blank settings screen is a valid state, not an error.
+ */
+function buildDefaultStoreSettings(storeName: string): StoreSettingsData {
+  return {
+    schemaVersion: STORE_SETTINGS_SCHEMA_VERSION,
+    storeName,
+    tagline: null,
+    logoMediaObjectId: null,
+    faviconMediaObjectId: null,
+    address: null,
+    phone: null,
+    whatsapp: null,
+    email: null,
+    mapsEmbedUrl: null,
+    faqs: [],
+    social: {
+      facebook: null,
+      instagram: null,
+      tiktok: null,
+      x: null,
+      youtube: null,
+      linkedin: null
+    },
+    customerLevels: [1, 2, 3, 4].map((level) => ({
+      level,
+      name: DEFAULT_CUSTOMER_LEVEL_NAMES[level - 1]!,
+      type: "percentage",
+      value: "0.00"
+    })),
+    shipping: {
+      alternativeServices: [],
+      selfPickup: false,
+      courierEnabled: false,
+      pinpointEnabled: false,
+      freeShipping: { active: false, minOrder: "0.00", maxDiscount: "0.00" },
+      originCityName: null,
+      originSubdistrictName: null,
+      courier: { enabled: false, originDestinationId: null, couriers: [] }
+    },
+    payment: {
+      manualBank: { active: false, accounts: [] },
+      manualQris: { active: false, mediaObjectId: null },
+      downPayment: { active: false, percent: 0 },
+      tax: { active: false, percent: 0 },
+      insurance: { active: false, ratePercent: "0.0", minFee: "0.00" },
+      gateway: { enabled: false }
+    },
+    orders: { expiryHours: 24 },
+    promoSection: { active: false, items: [] },
+    meta: {
+      home: { title: null, description: null },
+      contact: { title: null, description: null }
+    }
+  };
+}
+
+/**
+ * `awcms_commerce_store_settings.affiliate_commission_rate` — Issue #92
+ * (contract #86's D5). A real COLUMN, not part of the `settings` jsonb blob
+ * (`sql/921`'s header explains why) — `null` means the affiliate program is
+ * OFF for this tenant. A tenant with no settings row at all (never opened
+ * the settings screen) reads as `null` — same "no row = defaults" answer
+ * `fetchStoreSettings` gives, and a RESET row (`deleted_at IS NOT NULL`)
+ * reads the same way too.
+ */
+export async function fetchAffiliateCommissionRate(
+  tx: Bun.SQL,
+  tenantId: string
+): Promise<string | null> {
+  const rows = (await tx`
+    SELECT affiliate_commission_rate
+    FROM awcms_commerce_store_settings
+    WHERE tenant_id = ${tenantId} AND deleted_at IS NULL
+  `) as { affiliate_commission_rate: string | null }[];
+
+  const raw = rows[0]?.affiliate_commission_rate ?? null;
+  return raw === null ? null : normalizeMoney(raw);
+}
+
+/**
+ * `PUT /api/v1/commerce/store-settings`'s own `affiliateCommissionRate`
+ * field — called AFTER `saveStoreSettings` in the same request, so the
+ * singleton row this UPDATEs already exists (created/refreshed by that
+ * upsert moments earlier in the same transaction).
+ */
+export async function saveAffiliateCommissionRate(
+  tx: Bun.SQL,
+  tenantId: string,
+  rate: string | null
+): Promise<void> {
+  await tx`
+    UPDATE awcms_commerce_store_settings
+    SET affiliate_commission_rate = ${rate}, updated_at = now()
+    WHERE tenant_id = ${tenantId}
+  `;
+}
+
+async function fetchTenantName(tx: Bun.SQL, tenantId: string): Promise<string> {
+  const rows = (await tx`
+    SELECT tenant_name FROM awcms_tenants WHERE id = ${tenantId}
+  `) as { tenant_name: string }[];
+  return rows[0]?.tenant_name ?? "";
+}
+
+/** The OWNER shape — everything, including bank accounts / the QRIS media id. Never returned by a public route (see `toPublicRecord` below). */
+export async function fetchStoreSettings(
+  tx: Bun.SQL,
+  tenantId: string
+): Promise<StoreSettingsData> {
+  // A RESET row (`deleted_at IS NOT NULL`, sql/910's header) reads as "no
+  // settings saved" — the same answer a tenant that never saved any gets —
+  // rather than as the stale blob it still carries until the retention
+  // engine purges it.
+  const rows = (await tx`
+    SELECT settings
+    FROM awcms_commerce_store_settings
+    WHERE tenant_id = ${tenantId} AND deleted_at IS NULL
+  `) as { settings: StoreSettingsData }[];
+
+  if (rows[0]) return rows[0].settings;
+
+  return buildDefaultStoreSettings(await fetchTenantName(tx, tenantId));
+}
+
+/**
+ * `DELETE /api/v1/commerce/store-settings` — "reset to defaults". Stamps
+ * `deleted_at` rather than removing the row (sql/910's header): the
+ * singleton keeps its primary key, the next `PUT` clears the stamp, and the
+ * stamped row is what `commerce/module.ts`'s `dataLifecycle` descriptor
+ * eventually purges. Answers `true` when a live row was reset and `false`
+ * when there was nothing to reset (already defaults) — the route maps both
+ * to 204, since the end state is identical, but the audit trail only gets a
+ * line when something actually changed.
+ */
+export async function resetStoreSettings(
+  tx: Bun.SQL,
+  tenantId: string,
+  actorTenantUserId: string,
+  correlationId?: string
+): Promise<boolean> {
+  const rows = (await tx`
+    UPDATE awcms_commerce_store_settings
+    SET deleted_at = now(), updated_at = now()
+    WHERE tenant_id = ${tenantId} AND deleted_at IS NULL
+    RETURNING tenant_id
+  `) as { tenant_id: string }[];
+
+  if (rows.length === 0) return false;
+
+  await recordAuditEvent(tx, {
+    tenantId,
+    actorTenantUserId,
+    moduleKey: AUDIT_MODULE_KEY,
+    action: "delete",
+    resourceType: AUDIT_RESOURCE_TYPE,
+    resourceId: tenantId,
+    message: "Store settings reset to defaults.",
+    attributes: {},
+    correlationId
+  });
+
+  return true;
+}
+
+/** Which top-level sections differ between two settings objects — the audit trail's own message names sections, never raw field values (see `voucher.ts`-adjacent masking discipline: bank account numbers/QRIS payloads must never reach a log line). */
+function changedSections(
+  before: StoreSettingsData,
+  after: StoreSettingsData
+): string[] {
+  const sections: (keyof StoreSettingsData)[] = [
+    "storeName",
+    "tagline",
+    "logoMediaObjectId",
+    "faviconMediaObjectId",
+    "address",
+    "phone",
+    "whatsapp",
+    "email",
+    "mapsEmbedUrl",
+    "faqs",
+    "social",
+    "customerLevels",
+    "shipping",
+    "payment",
+    "promoSection",
+    "meta"
+  ];
+  return sections.filter(
+    (section) =>
+      JSON.stringify(before[section]) !== JSON.stringify(after[section])
+  );
+}
+
+/** Full-replace upsert — `PUT /api/v1/commerce/store-settings`. */
+export async function saveStoreSettings(
+  tx: Bun.SQL,
+  tenantId: string,
+  actorTenantUserId: string,
+  input: StoreSettingsData,
+  correlationId?: string
+): Promise<StoreSettingsData> {
+  const before = await fetchStoreSettings(tx, tenantId);
+
+  const rows = (await tx`
+    INSERT INTO awcms_commerce_store_settings (tenant_id, settings)
+    VALUES (${tenantId}, ${input}::jsonb)
+    ON CONFLICT (tenant_id) DO UPDATE
+      SET settings = EXCLUDED.settings, updated_at = now(), deleted_at = NULL
+    RETURNING settings
+  `) as { settings: StoreSettingsData }[];
+
+  const saved = rows[0]!.settings;
+
+  await recordAuditEvent(tx, {
+    tenantId,
+    actorTenantUserId,
+    moduleKey: AUDIT_MODULE_KEY,
+    action: "update",
+    resourceType: AUDIT_RESOURCE_TYPE,
+    resourceId: tenantId,
+    message: "Store settings updated.",
+    attributes: { sections: changedSections(before, saved) },
+    correlationId
+  });
+
+  return saved;
+}
+
+export type StoreSettingsPublicRecord = {
+  storeName: string;
+  tagline: string | null;
+  logo: {
+    url: string;
+    alt: string;
+    width: number | null;
+    height: number | null;
+  } | null;
+  favicon: { url: string } | null;
+  address: string | null;
+  phone: string | null;
+  whatsapp: string | null;
+  email: string | null;
+  mapsEmbedUrl: string | null;
+  faqs: { question: string; answer: string }[];
+  social: StoreSettingsData["social"];
+  customerLevels: { level: number; name: string }[];
+  shipping: {
+    alternativeServices: { id: string; name: string; cost: string }[];
+    selfPickup: boolean;
+    courierEnabled: boolean;
+    pinpointEnabled: boolean;
+    freeShipping: { active: boolean; minOrder: string; maxDiscount: string };
+    originCityName: string | null;
+    originSubdistrictName: string | null;
+  };
+  /**
+   * Issue #107 — never re-derives `couriers`/`originDestinationId` on the
+   * public read model: those are owner-configuration, not something an
+   * anonymous shopper needs to see. `courierEnabled` above is the ONE public
+   * signal, and it is `true` only when the owner turned courier rates on
+   * AND this deployment has a configured `ShippingRateProvider`.
+   */
+  payment: {
+    manualBank: { active: boolean; banks: { bankName: string }[] };
+    manualQris: { active: boolean };
+    downPayment: { active: boolean; percent: number };
+    tax: { active: boolean; percent: number };
+    insurance: { active: boolean; ratePercent: string; minFee: string };
+    /**
+     * Issue #29 — whether the public payment-proof upload path
+     * (`POST …/orders/{code}/payment-proof/upload-sessions`) is usable on
+     * this deployment. `toPublicRecord` below always answers `false`: this
+     * increment's public upload-session flow could not be built without a
+     * principal the anonymous surface does not have (see
+     * `application/order-directory.ts`'s header for the full reasoning) —
+     * a confirmation without a proof is still accepted, so the storefront
+     * simply hides the "attach proof" control when this is `false`.
+     */
+    proofUpload: boolean;
+    /**
+     * Issue #110 (contract #106 D3) — whether hosted-checkout (Midtrans
+     * Snap) is usable on this deployment: `true` only when the owner turned
+     * it on AND a `PaymentGatewayProvider` is actually configured
+     * (`isPaymentGatewayProviderConfigured()`), mirroring
+     * `shipping.courierEnabled`'s own derivation exactly.
+     */
+    gatewayEnabled: boolean;
+  };
+  orders: StoreSettingsData["orders"];
+  promoSection: StoreSettingsData["promoSection"];
+  meta: StoreSettingsData["meta"];
+  /**
+   * Issue #92 — whether the affiliate program is on at all. The RATE itself
+   * (`affiliate_commission_rate`) never crosses into this public shape —
+   * only whether it is configured, mirroring the same masking discipline
+   * `payment.manualBank`/`manualQris` already apply to bank
+   * account/QRIS details.
+   */
+  affiliateProgramEnabled: boolean;
+  /**
+   * Issue #118 (contract #106 D10) — `commerce`'s own feature toggles,
+   * composed the same way `shipping.courierEnabled`/`payment.gatewayEnabled`
+   * already are: `gatewayEnabled`/`courierEnabled` above ALSO now require
+   * `features.gateway`/`features.courier` (see their own call sites in
+   * `toPublicRecord` below) — this pair, `inboxEnabled` and
+   * `campaignsEnabled`, have no separate "owner turned it on" store-setting
+   * to AND against (unlike gateway/courier, which layer a feature flag on
+   * top of an existing settings toggle), so they are the raw feature flag
+   * verbatim. `whatsappOtpEnabled` is not a `features.*` flag at all — it
+   * depends only on whether a `WhatsappProvider` is actually configured for
+   * this deployment (`isWhatsappProviderConfigured()`), the storefront's own
+   * `masuk.astro`/`daftar.astro` (`ahliweb/awcms-one` `apps/storefront`)
+   * already reading it at this exact top-level key name.
+   */
+  inboxEnabled: boolean;
+  campaignsEnabled: boolean;
+  whatsappOtpEnabled: boolean;
+};
+
+/**
+ * `GET /api/v1/commerce/store-settings/public` — the public subset (contract
+ * `commerce-public-read-models.md`). `logo`/`favicon` resolve
+ * `logoMediaObjectId`/`faviconMediaObjectId` through `MediaLibraryPort`,
+ * exactly how `product-directory.ts` resolves a product's images — `null`
+ * until an owner sets one (this platform's own logo management; the
+ * site-profile schema has no logo field). Bank account numbers, account
+ * holder names, and the QRIS media id NEVER appear here — only
+ * `banks[].bankName` and `manualQris.active` cross into this shape, per the
+ * contract's own note.
+ */
+export async function toPublicRecord(
+  tx: Bun.SQL,
+  tenantId: string,
+  settings: StoreSettingsData,
+  mediaPort: MediaLibraryPort,
+  /**
+   * Issue #92 — the caller's own `fetchAffiliateCommissionRate(tx,
+   * tenantId) !== null` result, passed in rather than queried again here:
+   * `tx` above is used ONLY for media reference resolution (a caller
+   * exercising this function with a fake `MediaLibraryPort` and no real
+   * `Bun.SQL`, as `tests/commerce-marketing-domain.test.ts` does, must keep
+   * working without a live database handle).
+   */
+  affiliateProgramEnabled: boolean = false,
+  /**
+   * Issue #107 — `resolveShippingRateProvider(...) !== null`, passed in
+   * rather than resolved here for the same reason `affiliateProgramEnabled`
+   * is a boolean parameter: provider resolution reads `process.env`, and
+   * this function must keep working against a fake `MediaLibraryPort` and
+   * no live environment in tests.
+   */
+  courierProviderConfigured: boolean = false,
+  /** Issue #110 — `isPaymentGatewayProviderConfigured() !== null`, passed in for the same reason `courierProviderConfigured` is. */
+  gatewayProviderConfigured: boolean = false,
+  /** Issue #118 — `resolveCommerceFeatures(...)`'s result, passed in for the same "no live settings lookup inside a pure-ish function" reason every other `*Configured` parameter here is. Defaults to every flag ON (`DEFAULT_COMMERCE_FEATURES`) — a caller that never adopts this parameter (an existing test literal) keeps computing the SAME `gatewayEnabled`/`courierEnabled` it always did. */
+  features: CommerceFeatures = DEFAULT_COMMERCE_FEATURES,
+  /** Issue #118 — `isWhatsappProviderConfigured()`, passed in for the same reason. */
+  whatsappProviderConfigured: boolean = false
+): Promise<StoreSettingsPublicRecord> {
+  const mediaIds = [
+    settings.logoMediaObjectId,
+    settings.faviconMediaObjectId
+  ].filter((id): id is string => id !== null);
+  const resolved =
+    mediaIds.length > 0
+      ? await mediaPort.resolveMediaReferences(tx, tenantId, mediaIds)
+      : new Map<
+          string,
+          {
+            publicUrl: string;
+            altText: string | null;
+            width: number | null;
+            height: number | null;
+          }
+        >();
+
+  const logoResolved = settings.logoMediaObjectId
+    ? resolved.get(settings.logoMediaObjectId)
+    : undefined;
+  const faviconResolved = settings.faviconMediaObjectId
+    ? resolved.get(settings.faviconMediaObjectId)
+    : undefined;
+
+  return {
+    storeName: settings.storeName,
+    tagline: settings.tagline,
+    logo: logoResolved
+      ? {
+          url: logoResolved.publicUrl,
+          alt: logoResolved.altText ?? settings.storeName,
+          width: logoResolved.width,
+          height: logoResolved.height
+        }
+      : null,
+    favicon: faviconResolved ? { url: faviconResolved.publicUrl } : null,
+    address: settings.address,
+    phone: settings.phone,
+    whatsapp: settings.whatsapp,
+    email: settings.email,
+    mapsEmbedUrl: settings.mapsEmbedUrl,
+    faqs: settings.faqs,
+    social: settings.social,
+    customerLevels: settings.customerLevels.map((level) => ({
+      level: level.level,
+      name: level.name
+    })),
+    shipping: {
+      alternativeServices: settings.shipping.alternativeServices,
+      selfPickup: settings.shipping.selfPickup,
+      courierEnabled:
+        settings.shipping.courier.enabled &&
+        features.courier &&
+        courierProviderConfigured,
+      pinpointEnabled: settings.shipping.pinpointEnabled,
+      freeShipping: settings.shipping.freeShipping,
+      originCityName: settings.shipping.originCityName,
+      originSubdistrictName: settings.shipping.originSubdistrictName
+    },
+    payment: {
+      manualBank: {
+        active: settings.payment.manualBank.active,
+        banks: settings.payment.manualBank.accounts.map((account) => ({
+          bankName: account.bankName
+        }))
+      },
+      manualQris: { active: settings.payment.manualQris.active },
+      downPayment: settings.payment.downPayment,
+      tax: settings.payment.tax,
+      insurance: settings.payment.insurance,
+      proofUpload: false,
+      gatewayEnabled:
+        settings.payment.gateway.enabled &&
+        features.gateway &&
+        gatewayProviderConfigured
+    },
+    orders: settings.orders,
+    promoSection: settings.promoSection,
+    meta: settings.meta,
+    affiliateProgramEnabled,
+    inboxEnabled: features.inbox,
+    campaignsEnabled: features.campaigns,
+    whatsappOtpEnabled: whatsappProviderConfigured
+  };
+}

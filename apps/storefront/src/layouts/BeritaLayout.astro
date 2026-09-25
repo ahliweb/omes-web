@@ -1,0 +1,170 @@
+---
+/**
+ * The page shell for every news-surface page (issue #28's page family;
+ * issue #48 gives it real news chrome). Wraps `BaseLayout.astro` — which
+ * owns `<head>`, `<main id="konten">`, and every other page's SEO/
+ * accessibility surface — and fills its `header`/`footer` named slots with
+ * the news chrome instead of the store's `Header`/`Footer`.
+ *
+ * ## Why named slots, not a duplicated `<head>`
+ *
+ * An earlier version of this file stopped wrapping `BaseLayout.astro`
+ * entirely and re-implemented `<html>/<head>/<body>` itself, because
+ * `BaseLayout.astro` hard-coded `<Header>`/`<Footer>` with nothing to swap
+ * either. That traded one real problem for a worse one: issue #54 (A8) adds
+ * OG/Twitter meta to `BaseLayout.astro`'s `<head>` and issue #56 (A10) mounts
+ * the visitor-analytics beacon there, and a second, hand-duplicated `<head>`
+ * in this file would silently never receive either — exactly the
+ * "two copies to keep in sync by hand" trap this repo's docblock culture
+ * warns about. `BaseLayout.astro`'s `header`/`footer` named slots (added by
+ * this issue, see that file's own two-line change) default to the store
+ * `Header`/`Footer` when a caller fills nothing — every non-news page's
+ * rendered HTML is unaffected — and this file fills them with the news
+ * chrome instead, while `<head>`/`<main id="konten">` stay the single,
+ * shared implementation every page gets.
+ *
+ * `identity` is fetched here independently of `BaseLayout.astro`'s own copy
+ * (`getSiteIdentity()`, `src/lib/awcms/profil.ts`) rather than threaded
+ * through as a prop — that function is memoized per build
+ * (`identityCache`), so this costs no second network request, the same way
+ * `Ticker.astro`/`BilahUtilitas.astro`/`FooterBerita.astro` already fetch
+ * their own data independently rather than receiving it from a parent.
+ *
+ * ## The footer newsletter box (issue #49)
+ *
+ * `FooterBerita.astro`'s `<slot name="buletin" />` is filled from HERE, for
+ * every news page, with issue #50's `<FormBuletin variant="footer" />` —
+ * and its script, `src/scripts/buletin.ts`, is mounted from here too, once,
+ * so the footer form works on every news page without each page importing
+ * it. On a page that also renders `src/components/berita/Sidebar.astro`
+ * the form therefore appears TWICE — the sidebar's box and the footer's —
+ * exactly as seputarborneo renders it (`sidebar.php` and
+ * `layout_footer.php` each carry one). That is safe only because
+ * `buletin.ts`'s `wireBuletinForms` wires EVERY `[data-buletin-form]` on
+ * the page with its own state (an earlier `document.querySelector` version
+ * wired the first form only, which would have left the footer's form
+ * submitting nowhere — see that function's own docblock, and
+ * `tests/buletin-forms.test.ts`).
+ *
+ * `toko.css` is imported here for the form's `.toko-field`/`.toko-field-
+ * hint`/`.toko-banner` classes — the same stylesheet `/buletin` and the
+ * two token pages already import for the identical markup; 3 kB, every
+ * selector class-scoped, no effect on anything else on a news page.
+ *
+ * ## `akun-header.ts`, mounted here too (issue #169)
+ *
+ * `BilahUtilitas.astro`'s "Akun" link (rendered only when the `toko` group
+ * is active) reuses `Header.astro`'s own `[data-akun-tautan]` swap —
+ * `src/scripts/akun-header.ts` already updates EVERY matching element via
+ * `querySelectorAll` (see that script's own docblock), so mounting it a
+ * second time, here, is what makes the news chrome's own "Akun" link
+ * behave identically to the store header's, on a page where
+ * `Header.astro` itself never renders.
+ */
+import BaseLayout from "./BaseLayout.astro";
+import BilahUtilitas from "../components/berita/BilahUtilitas.astro";
+import NavBerita from "../components/berita/NavBerita.astro";
+import Ticker from "../components/berita/Ticker.astro";
+import FooterBerita from "../components/berita/FooterBerita.astro";
+import FormBuletin from "../components/berita/FormBuletin.astro";
+import { getSiteIdentity } from "../lib/awcms/profil";
+import { resolveOneMedia } from "../lib/awcms/media";
+import { listingSocialMeta, type MetaTag, type OgType } from "../lib/meta-sosial";
+import "../styles/berita.css";
+import "../styles/berita-chrome.css";
+import "../styles/toko.css";
+import "../styles/iklan-popup.css";
+
+interface Props {
+  title: string;
+  description?: string;
+  canonicalPath: string;
+  schema?: Record<string, unknown>;
+  /** Issue #54 (A8): forwarded to `BaseLayout.astro` unchanged — see that file's `Props`. */
+  ogType?: OgType;
+  /**
+   * Issue #54 (A8): forwarded to `BaseLayout.astro`. When a page passes
+   * NOTHING (every news LISTING page — the front page, a rubrik/daerah/
+   * mitra/tag/penulis/arsip archive, `/video`), this layout substitutes the
+   * site logo as `og:image` (`src/lib/meta-sosial.ts`'s `listingSocialMeta`)
+   * so a shared listing link previews with the brand mark. Resolved here,
+   * in the one shell every news page renders through, rather than in each
+   * listing page (and NOT in `BaseLayout.astro`, so a store page's OG block
+   * stays exactly as it was). An article/video page passes its own `meta`
+   * and never sees the fallback. An `identity.logoMediaId` that does not
+   * resolve (none configured, or an id `media_library` does not answer)
+   * emits nothing. The stub's fixture logo DOES resolve
+   * (`tests/fixtures/awcms/media-objects.json`), which is what lets
+   * `tests/meta-sosial-build-smoke.test.ts` assert this path end to end.
+   */
+  meta?: readonly MetaTag[];
+}
+
+const { title, description, canonicalPath, schema, ogType } = Astro.props;
+
+const identity = await getSiteIdentity();
+
+// `resolveOneMedia` is memoized per id for the whole build (`src/lib/awcms/
+// media.ts`), so resolving the logo from every listing page costs one
+// request total, not one per page — the same reason `identity` above is
+// re-fetched here instead of threaded through as a prop.
+const meta: readonly MetaTag[] =
+  Astro.props.meta ?? listingSocialMeta(await resolveOneMedia(identity.logoMediaId));
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  canonicalPath={canonicalPath}
+  schema={schema}
+  ogType={ogType}
+  meta={meta}
+>
+  {/* Issue #54 (A8): the `head` slot transferred through to `BaseLayout.astro`'s own — a rubrik page's `rel="prev"/"next"` links ride on it (see `src/profil/berita/pages/rubrik/[slug]/**`). Same one-line "transferring slots" pattern the `buletin` slot below already uses. */}
+  <slot name="head" slot="head" />
+  <BilahUtilitas identity={identity} slot="header" />
+  <NavBerita identity={identity} currentPath={canonicalPath} slot="header" />
+  <Ticker slot="header" />
+
+  <slot />
+
+  {/*
+    Issue #50's newsletter script, mounted once for every news page — placed
+    INSIDE the default slot (not after `</BaseLayout>`, which would render
+    the module tag after `</html>`); Astro bundles it as an external module
+    wherever the tag sits, and it wires every subscribe form on the page.
+  */}
+  <script>
+    import "../scripts/buletin";
+    // Issue #169: `BilahUtilitas.astro`'s "Akun" link reuses `Header.astro`'s
+    // own `[data-akun-tautan]` contract — mounted here so it works on a
+    // news page too (`Header.astro` itself never renders on this layout).
+    import "../scripts/akun-header";
+  </script>
+
+  {/*
+    Transferring a slot: `<slot name="buletin" />` receives whatever this
+    layout's OWN caller passed as `<Fragment slot="buletin">`, and
+    `slot="buletin"` on that same element re-targets it into
+    `FooterBerita.astro`'s own `<slot name="buletin" />` — Astro's documented
+    "transferring slots" pattern. Its FALLBACK content (issue #49) is what
+    every page actually gets today: the footer form.
+  */}
+  <FooterBerita identity={identity} slot="footer">
+    <slot name="buletin" slot="buletin">
+      <FormBuletin variant="footer" />
+    </slot>
+  </FooterBerita>
+</BaseLayout>
+
+{/*
+  The ad popup (issue #53, A7) — mounted ONCE here, the shell every
+  news-surface page renders through, because ad slots appear on article
+  pages, `/berita`'s header/sidebar, and any page aside (issue #49's
+  `Sidebar.astro`): one document-level delegated listener covers every
+  slot, present or future, and no page needs to know the module exists. An
+  ordinary Astro-bundled external module (`script-src 'self'`), the same
+  pattern as `BaseLayout.astro`'s `analitik.ts` mount. Its stylesheet is
+  `src/styles/iklan-popup.css`, imported above with the other two.
+*/}
+<script>import "../scripts/iklan-popup";</script>

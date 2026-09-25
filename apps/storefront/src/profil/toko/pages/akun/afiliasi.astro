@@ -1,0 +1,199 @@
+---
+/**
+ * `/akun/afiliasi` — the affiliate program, from the shopper's side (issue
+ * #93, S3 of #32; the CMS/staff side is issue #92). `affiliateProgramEnabled`
+ * is read from the PUBLIC store settings at BUILD time
+ * (`apps/storefront/src/lib/awcms/pemasaran.ts`'s `getStoreSettings`,
+ * defaulting to `false` when an older awcms does not send the field yet) —
+ * when it is `false`, this page renders a short explanation and NO
+ * enrol/link/stats controls at all, a build-time decision this page does not
+ * re-check client-side (a program a tenant has not turned on has no `/account/
+ * affiliate` behaviour worth calling). When it is `true`, `src/scripts/
+ * akun-afiliasi.ts` decides between the guest/enrol/enrolled views exactly
+ * the way every other `/akun/*` page decides between guest/signed-in
+ * (`bacaSesi()`, then a live fetch — never the stale build-time value alone).
+ *
+ * `noindex, follow` — the `/akun` prefix already covers this in
+ * `robots.txt.ts`'s `Disallow` list (verified, not assumed — see that
+ * file's own docblock, which already lists `/akun` as covering every child
+ * route as S2/S3 add them).
+ */
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import { getSiteIdentity } from "../../../../lib/awcms/profil";
+import { getStoreSettings } from "../../../../lib/awcms/pemasaran";
+import { ROUTES } from "../../../../config/routes";
+import "../../../../styles/toko.css";
+import "../../../../styles/akun.css";
+
+const identity = await getSiteIdentity();
+const storeSettings = await getStoreSettings();
+const whatsappNumber = storeSettings.whatsapp ?? identity.whatsappNumber ?? "";
+const affiliateProgramEnabled = storeSettings.affiliateProgramEnabled ?? false;
+
+/** The `/akun*` side navigation (issue #168) — see `akun/index.astro`'s own
+ * copy of this constant for why it is duplicated rather than factored into
+ * a shared partial. */
+const SIDENAV_ITEMS = [
+  { key: "ringkasan", href: ROUTES.account, label: "Ringkasan" },
+  { key: "pesanan", href: ROUTES.accountOrders, label: "Pesanan" },
+  { key: "alamat", href: ROUTES.accountAddresses, label: "Alamat" },
+  { key: "pesan", href: ROUTES.accountMessages, label: "Pesan" },
+  { key: "ulasan", href: ROUTES.accountReviews, label: "Ulasan" },
+  { key: "afiliasi", href: ROUTES.accountAffiliate, label: "Afiliasi" }
+] as const;
+const SIDENAV_ACTIVE = "afiliasi";
+---
+
+<BaseLayout title="Program Afiliasi" description="Ikuti program afiliasi dan dapatkan komisi." canonicalPath="/akun/afiliasi">
+  <meta slot="head" name="robots" content="noindex, follow" />
+
+  <div class="container">
+    <div class="page-heading">
+      <h1>Program Afiliasi</h1>
+      <p>Bagikan tautan, dapat komisi dari pesanan yang selesai.</p>
+    </div>
+
+    {
+      !affiliateProgramEnabled && (
+        <div class="akun-card">
+          <p>
+            Program afiliasi belum tersedia di toko ini. Pantau terus halaman ini — kami akan
+            mengumumkan di sini saat program afiliasi dibuka.
+          </p>
+        </div>
+      )
+    }
+
+    {
+      affiliateProgramEnabled && (
+        <div class="akun-layout">
+          <nav class="akun-sidenav" aria-label="Menu akun">
+            {
+              SIDENAV_ITEMS.map((item) => (
+                <a
+                  class="akun-sidenav-item"
+                  href={item.href}
+                  aria-current={item.key === SIDENAV_ACTIVE ? "page" : undefined}
+                >
+                  <span class="akun-sidenav-item-label">{item.label}</span>
+                </a>
+              ))
+            }
+          </nav>
+
+          <div
+            class="akun-content"
+            data-akun-afiliasi-root
+            data-whatsapp-number={whatsappNumber}
+            data-store-name={identity.name}
+          >
+            <noscript>
+              <div class="toko-banner toko-banner--info">
+                Halaman afiliasi memerlukan JavaScript aktif di peramban Anda. Anda tetap bisa
+                menghubungi kami langsung melalui WhatsApp:
+                {whatsappNumber && (
+                  <a class="toko-wa-fallback" href={`https://wa.me/${whatsappNumber.replace(/\D/g, "")}`}>
+                    Hubungi WhatsApp
+                  </a>
+                )}
+              </div>
+            </noscript>
+
+            <div data-status class="toko-banner toko-banner--info" role="status" aria-live="polite" hidden></div>
+            <div data-submit-error class="toko-banner toko-banner--danger" hidden>
+              <p data-submit-error-message></p>
+              <div class="toko-actions">
+                <a data-wa-fallback-link class="toko-wa-fallback" hidden>Hubungi via WhatsApp</a>
+              </div>
+            </div>
+
+            <div data-guest-view class="akun-card" hidden>
+              <p>Masuk terlebih dahulu untuk bergabung dengan program afiliasi.</p>
+              <div class="akun-actions">
+                <a href={ROUTES.login} class="btn btn--primary btn--sm">Masuk</a>
+              </div>
+            </div>
+
+            <div data-enrol-view class="akun-card" hidden>
+              <p>
+                Anda belum bergabung dengan program afiliasi. Bergabung sekarang untuk mendapatkan
+                tautan referral dan komisi dari setiap pesanan yang berhasil melalui tautan Anda.
+              </p>
+              <div class="akun-actions">
+                <button type="button" class="btn btn--primary btn--sm" data-afiliasi-gabung>
+                  Gabung program afiliasi
+                </button>
+              </div>
+            </div>
+
+            <div data-enrolled-view hidden aria-live="polite">
+              <div class="akun-card">
+                <div class="akun-affiliate-status-row">
+                  <span class="pill pill--success" data-afiliasi-status></span>
+                  <span class="akun-affiliate-terms">komisi <span data-afiliasi-rate></span></span>
+                </div>
+                <div class="toko-field akun-afiliasi-link-field">
+                  <label for="afiliasi-link" class="field-label">Bagikan tautan ini</label>
+                  <div class="akun-afiliasi-link-row">
+                    <div class="akun-affiliate-link-box">
+                      <input
+                        type="text"
+                        id="afiliasi-link"
+                        class="is-mono akun-affiliate-link-input"
+                        data-afiliasi-link
+                        readonly
+                      />
+                    </div>
+                    <button type="button" class="btn btn--primary btn--sm" data-afiliasi-copy>Salin</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="akun-stat-grid">
+                <div class="akun-stat-card">
+                  <span class="akun-stat-label">Pesanan direferensikan</span>
+                  <div class="akun-stat-value" data-afiliasi-referred-orders></div>
+                </div>
+                <div class="akun-stat-card">
+                  <span class="akun-stat-label">Komisi menunggu</span>
+                  <div class="akun-stat-value" data-afiliasi-pending></div>
+                </div>
+                <div class="akun-stat-card">
+                  <span class="akun-stat-label">Komisi disetujui</span>
+                  <div class="akun-stat-value" data-afiliasi-approved></div>
+                </div>
+                <div class="akun-stat-card">
+                  <span class="akun-stat-label">Komisi dibayar</span>
+                  <div class="akun-stat-value" data-afiliasi-paid></div>
+                </div>
+              </div>
+
+              <div class="akun-commission-table">
+                <div class="akun-commission-head">Riwayat komisi</div>
+                <p class="empty-state" data-komisi-empty hidden>Belum ada komisi.</p>
+                <ul class="akun-nav-grid" data-komisi-list aria-live="polite"></ul>
+                <div class="akun-commission-more">
+                  <button type="button" class="btn btn--secondary btn--sm" data-load-more hidden>
+                    Muat lebih banyak
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+    }
+  </div>
+
+  {/* Always mounted, like every other `/akun/*` page's script — when the
+      program is disabled at build time, `[data-akun-afiliasi-root]` simply
+      is not in the document (see above), and `akun-afiliasi.ts`'s own
+      top-level `if (root)` guard (the same pattern `akun.ts`/`akun-
+      pesanan.ts` already use) makes this an immediate no-op rather than a
+      script conditionally bundled by a build-time boolean, which Astro's
+      script hoisting is not guaranteed to honour the same way `is:inline`
+      GA4 tag above does. */}
+  <script>
+    import "../../../../scripts/akun-afiliasi";
+  </script>
+</BaseLayout>

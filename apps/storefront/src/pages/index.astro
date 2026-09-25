@@ -1,0 +1,30 @@
+---
+/**
+ * The home page — `/` — is the one route every build profile serves whose
+ * CONTENT differs per profile (issue #137, ADR-0018 D3: "`index` stays
+ * shared, with a per-profile variant"):
+ *
+ * - `toko`    → `src/profil/toko/Beranda.astro`: the commerce + news front
+ *               page this file WAS before this issue (issue #27), moved
+ *               there unchanged.
+ * - `berita`  → `src/profil/berita/Beranda.astro`: a news front page built
+ *               from the same components `/berita` uses.
+ * - `landing` → `src/profil/landing/Beranda.astro`: a hero, the published
+ *               static pages, and a contact section.
+ *
+ * `@profil/beranda` is not a real directory: `integrations/profil.mjs`
+ * resolves it (a Vite alias set in `astro:config:setup`) to the active
+ * profile's variant, so exactly ONE variant is in this page's module graph
+ * — a static import of all three would put every variant's stylesheet
+ * into every profile's `<head>` (Astro collects a page's CSS from
+ * everything it imports, whether or not it renders), which would change
+ * the `toko` build this file must keep byte-for-byte.
+ *
+ * Each variant renders its own layout (`BaseLayout`/`BeritaLayout`), owns
+ * its single `<h1>`, and keeps every landmark/skip-link contract those
+ * layouts provide; this file only delegates.
+ */
+import Beranda from "@profil/beranda";
+---
+
+<Beranda />

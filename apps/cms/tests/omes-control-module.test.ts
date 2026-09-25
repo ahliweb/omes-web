@@ -25,7 +25,10 @@ describe("omes_control module descriptor", () => {
     expect(mod?.key).toBe("omes_control");
     expect(mod?.name).toBe("OMES Control Center");
     expect(mod?.type).toBe("domain");
-    expect(mod?.status).toBe("experimental");
+    // "active" as of Issue ahliweb/omes#201 — all eight planned
+    // /admin/omes/* screens now exist (see module.ts's own comment for the
+    // ADR-0021/push_delivery reasoning).
+    expect(mod?.status).toBe("active");
     // Deliberately NOT "workflow" — see module.ts's own comment and
     // tests/module-boundary.test.ts's DOCUMENTED_EXCEPTIONS entry for
     // "omes_control -> workflow" (Issue ahliweb/omes#198): a hard
@@ -34,10 +37,41 @@ describe("omes_control module descriptor", () => {
     expect(mod?.dependencies).toEqual(["tenant_admin", "identity_access"]);
   });
 
-  test("omits navigation until physical admin screens land in staged issues", () => {
-    // Matches the pattern established by push_delivery (ADR-0074) — admin-navigation-registry
-    // enforces that every declared navigation path resolves to a physical page file.
-    expect(omesControlModule.navigation).toBeUndefined();
+  test("declares navigation for all nine screens ahliweb/omes#200, #201, and #233 landed", () => {
+    // Was `toBeUndefined()` while the physical pages were staged work
+    // (ahliweb/omes#196/#197/#198) — matching the push_delivery (ADR-0074)
+    // precedent that a descriptor must not declare a path with no page
+    // behind it (`tests/admin-navigation-registry.test.ts` enforces this in
+    // both directions). ahliweb/omes#200 landed the first five; #201 added
+    // health, backups, and audit; #233 adds the ninth, enrollments.
+    const nav = omesControlModule.navigation ?? [];
+    expect(nav.map((entry) => entry.path).sort()).toEqual(
+      [
+        "/admin/omes",
+        "/admin/omes/servers",
+        "/admin/omes/deployments",
+        "/admin/omes/operations",
+        "/admin/omes/jobs",
+        "/admin/omes/health",
+        "/admin/omes/backups",
+        "/admin/omes/audit",
+        "/admin/omes/enrollments"
+      ].sort()
+    );
+
+    // Every requiredPermission must be one of the 13 permissions this same
+    // descriptor declares below — a nav entry gated on a permission nothing
+    // seeds denies even `owner` (this repo's own recorded failure mode).
+    const declared = new Set(
+      (omesControlModule.permissions ?? []).map(
+        (permission) =>
+          `omes_control.${permission.activityCode}.${permission.action}`
+      )
+    );
+    for (const entry of nav) {
+      expect(entry.requiredPermission).toBeDefined();
+      expect(declared.has(entry.requiredPermission as string)).toBe(true);
+    }
   });
 
   test("defines 13 granular least-privilege permissions", () => {
@@ -62,9 +96,11 @@ describe("omes_control module descriptor", () => {
     expect(permKeys).toContain("omes_control.enrollments.manage");
   });
 
-  test("defines dataLifecycle descriptors for all 8 domain tables", () => {
+  test("defines dataLifecycle descriptors for all 10 domain tables", () => {
+    // 8 original (#196) + awcms_omes_worker_nonces + awcms_omes_worker_results
+    // (ahliweb/omes#199, sql/159).
     const lifecycles = omesControlModule.dataLifecycle ?? [];
-    expect(lifecycles.length).toBe(8);
+    expect(lifecycles.length).toBe(10);
 
     const keys = lifecycles.map((l) => l.key);
     expect(keys).toContain(OMES_HEALTH_SNAPSHOTS_LIFECYCLE_KEY);

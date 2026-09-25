@@ -628,8 +628,14 @@ export const READER_BUDGET_BYTES = 24_000;
  * "measured + small margin" convention as every raise above; re-measure on
  * the next commerce screen and tighten if the real total sits well below
  * this.
+ *
+ * **Raised to 263,400 B for the #2 subtree sync (26 September 2026,
+ * `2d29a446` → `0d6c0dfe`):** upstream's OMES Control Center screens add
+ * +4,357 B (upstream measured 221,626 → 225,983 B under its unchanged
+ * 226,000 limit); carried here as 259,000 → 263,400 per AGENTS.md's
+ * divergence rule. Measured on the merged tree: 263,184 B.
  */
-export const APP_BUDGET_BYTES = 259_000;
+export const APP_BUDGET_BYTES = 263_400;
 
 /**
  * Largest file at baseline 16,800 B (2026-08-05) + 25% was 21,000 B.

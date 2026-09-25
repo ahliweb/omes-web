@@ -208,6 +208,21 @@ msgstr "Notifikasi push"
 msgid "Sync & storage"
 msgstr "Sinkronisasi & penyimpanan"
 
+msgid "OMES overview"
+msgstr "Ikhtisar OMES"
+
+msgid "OMES servers"
+msgstr "Server OMES"
+
+msgid "OMES deployments"
+msgstr "Deployment OMES"
+
+msgid "OMES operations"
+msgstr "Operasi OMES"
+
+msgid "OMES jobs"
+msgstr "Job OMES"
+
 msgid "Profiles"
 msgstr "Profil"
 
@@ -5359,6 +5374,95 @@ msgstr "Buat token, tempel URL hasilnya ke pengaturan webhook Midtrans. Token di
 
 msgid "Label"
 msgstr "Label"
+msgid "Architecture"
+msgstr "Arsitektur"
+
+msgid "Backup freshness"
+msgstr "Kesegaran backup"
+
+msgid "Close evidence panel"
+msgstr "Tutup panel bukti"
+
+msgid "Decommission"
+msgstr "Nonaktifkan permanen"
+
+msgid "Deployment drift"
+msgstr "Drift deployment"
+
+msgid "Deployments"
+msgstr "Deployment"
+
+msgid "Desired and observed state are always shown separately on these screens — an observed value is never presented as the desired one, and stale or missing evidence is shown explicitly rather than as healthy."
+msgstr "Status yang diinginkan dan status teramati selalu ditampilkan terpisah di layar ini — nilai teramati tidak pernah disajikan sebagai nilai yang diinginkan, dan bukti yang basi atau hilang ditampilkan secara eksplisit, bukan seolah sehat."
+
+msgid "Enrolled"
+msgstr "Terdaftar"
+
+msgid "Enrolled OMES host servers: platform and OMES fleet evidence, enrollment/trust status, and heartbeat staleness. No raw enrollment key material is ever rendered — only a fingerprint."
+msgstr "Server host OMES yang terdaftar: bukti platform dan armada OMES, status pendaftaran/kepercayaan, dan kebasian heartbeat. Materi kunci pendaftaran mentah tidak pernah ditampilkan — hanya sidik jarinya."
+
+msgid "Enrolled OMES servers."
+msgstr "Server OMES yang terdaftar."
+
+msgid "Enrolled servers"
+msgstr "Server terdaftar"
+
+msgid "Enrollment & trust evidence"
+msgstr "Bukti pendaftaran & kepercayaan"
+
+msgid "Evidence"
+msgstr "Bukti"
+
+msgid "Fleet health distribution, job state summary, backup freshness, and drift, aggregated directly from OMES control state — never from a reporting projection."
+msgstr "Distribusi kesehatan armada, ringkasan status job, kesegaran backup, dan drift, diagregasi langsung dari status kendali OMES — tidak pernah dari proyeksi pelaporan."
+
+msgid "Fresh"
+msgstr "Segar"
+
+msgid "Heartbeat"
+msgstr "Heartbeat"
+
+msgid "IP (optional)"
+msgstr "IP (opsional)"
+
+msgid "Job state summary"
+msgstr "Ringkasan status job"
+
+msgid "Jobs"
+msgstr "Job"
+
+msgid "No enrollments"
+msgstr "Belum ada pendaftaran"
+
+msgid "No heartbeat within the staleness window"
+msgstr "Tidak ada heartbeat dalam jendela kebasian"
+
+msgid "No servers"
+msgstr "Belum ada server"
+
+msgid "OS"
+msgstr "OS"
+
+msgid "OS version"
+msgstr "Versi OS"
+
+msgid "Platform"
+msgstr "Platform"
+
+msgid "Public key fingerprint (SHA-256)"
+msgstr "Sidik jari kunci publik (SHA-256)"
+
+msgid "Records registration intent only. The server becomes reachable only after its OMES pull worker completes enrollment."
+msgstr "Hanya mencatat niat pendaftaran. Server baru dapat dijangkau setelah pull worker OMES-nya menyelesaikan pendaftaran."
+
+msgid "Register"
+msgstr "Daftarkan"
+
+msgid "Register a server"
+msgstr "Daftarkan server"
+
+msgid "Register a server above, or wait for one to self-register."
+msgstr "Daftarkan server di atas, atau tunggu server mendaftar sendiri."
 
 msgid "Revoked"
 msgstr "Dicabut"
@@ -5973,3 +6077,471 @@ msgstr "Anda tidak memiliki izin untuk melihat pesanan ini."
 msgid "Commerce overview"
 msgstr "Ringkasan komersial"
 
+msgid "Screens"
+msgstr "Layar"
+
+msgid "Server health distribution"
+msgstr "Distribusi kesehatan server"
+
+msgid "Servers"
+msgstr "Server"
+
+msgid "Servers (this page)"
+msgstr "Server (halaman ini)"
+
+msgid "Stale"
+msgstr "Basi"
+
+msgid "Stale (this page)"
+msgstr "Basi (halaman ini)"
+
+msgid "That server could not be found."
+msgstr "Server tersebut tidak ditemukan."
+
+msgid "The OMES overview could not be loaded right now. This is a problem reading it, not a healthy silence — please try again later."
+msgstr "Ikhtisar OMES tidak dapat dimuat saat ini. Ini masalah membacanya, bukan keheningan yang sehat — silakan coba lagi nanti."
+
+msgid "The OMES servers console could not be loaded right now. This is a problem reading it, not a healthy silence — please try again later."
+msgstr "Konsol server OMES tidak dapat dimuat saat ini. Ini masalah membacanya, bukan keheningan yang sehat — silakan coba lagi nanti."
+
+msgid "This server has not completed worker enrollment yet."
+msgstr "Server ini belum menyelesaikan pendaftaran worker."
+
+msgid "View evidence"
+msgstr "Lihat bukti"
+
+msgid "Worker"
+msgstr "Worker"
+
+msgid "Worker enrollments for this server, newest first."
+msgstr "Pendaftaran worker untuk server ini, terbaru lebih dulu."
+
+msgid "You do not have permission to view OMES servers."
+msgstr "Anda tidak memiliki izin untuk melihat server OMES."
+
+msgid "You do not have permission to view the OMES overview."
+msgstr "Anda tidak memiliki izin untuk melihat ikhtisar OMES."
+
+msgid "decommissioned"
+msgstr "dinonaktifkan permanen"
+
+msgid "stale"
+msgstr "basi"
+
+msgid "{count} deployment(s) stale or unreconciled"
+msgstr "{count} deployment basi atau belum direkonsiliasi"
+
+msgid "{count} stale (no recent heartbeat)"
+msgstr "{count} basi (tanpa heartbeat terbaru)"
+
+
+msgid "Operations"
+msgstr "Operasi"
+
+msgid "AWCMS never dispatches this to a host directly — the OMES pull worker is the only reader that turns an approved request into host execution."
+msgstr "AWCMS tidak pernah mengirimkan ini langsung ke host — pull worker OMES adalah satu-satunya pembaca yang mengubah permintaan yang disetujui menjadi eksekusi host."
+
+msgid "Any state"
+msgstr "Status apa saja"
+
+msgid "Approval"
+msgstr "Persetujuan"
+
+msgid "Approve retry"
+msgstr "Setujui percobaan ulang"
+
+msgid "Correlation"
+msgstr "Korelasi"
+
+msgid "Deployment ID (optional)"
+msgstr "ID deployment (opsional)"
+
+msgid "Deployments (this page)"
+msgstr "Deployment (halaman ini)"
+
+msgid "Desired state"
+msgstr "Status yang diinginkan"
+
+msgid "Desired vs observed deployment state, shown as two separate columns — the observed value is never presented as the desired one — with last reconciliation time, staleness, and error evidence."
+msgstr "Status deployment yang diinginkan vs teramati, ditampilkan sebagai dua kolom terpisah — nilai teramati tidak pernah disajikan sebagai nilai yang diinginkan — beserta waktu rekonsiliasi terakhir, kebasian, dan bukti kesalahan."
+
+msgid "Error evidence"
+msgstr "Bukti kesalahan"
+
+msgid "Failed (this page)"
+msgstr "Gagal (halaman ini)"
+
+msgid "Go to Operations"
+msgstr "Buka Operasi"
+
+msgid "Job"
+msgstr "Job"
+
+msgid "Jobs (this page)"
+msgstr "Job (halaman ini)"
+
+msgid "Last reconciled"
+msgstr "Terakhir direkonsiliasi"
+
+msgid "Lease"
+msgstr "Sewa (lease)"
+
+msgid "No deployments"
+msgstr "Belum ada deployment"
+
+msgid "No jobs"
+msgstr "Belum ada job"
+
+msgid "No operation requests"
+msgstr "Belum ada permintaan operasi"
+
+msgid "Not destructive — no approval required"
+msgstr "Tidak destruktif — tidak perlu persetujuan"
+
+msgid "Nothing matches this filter, or no deployment has been created yet."
+msgstr "Tidak ada yang cocok dengan filter ini, atau belum ada deployment yang dibuat."
+
+msgid "Nothing matches this filter, or none has been dispatched yet."
+msgstr "Tidak ada yang cocok dengan filter ini, atau belum ada yang dikirim."
+
+msgid "Nothing matches this filter, or none has been submitted yet."
+msgstr "Tidak ada yang cocok dengan filter ini, atau belum ada yang diajukan."
+
+msgid "OMES deployments, desired and observed state shown separately."
+msgstr "Deployment OMES, status yang diinginkan dan teramati ditampilkan terpisah."
+
+msgid "OMES operation requests, newest first."
+msgstr "Permintaan operasi OMES, terbaru lebih dulu."
+
+msgid "OMES worker jobs, newest first."
+msgstr "Job worker OMES, terbaru lebih dulu."
+
+msgid "Observed state"
+msgstr "Status teramati"
+
+msgid "Operation"
+msgstr "Operasi"
+
+msgid "Operation requests"
+msgstr "Permintaan operasi"
+
+msgid "Reconciliation"
+msgstr "Rekonsiliasi"
+
+msgid "Reconciliation status"
+msgstr "Status rekonsiliasi"
+
+msgid "Request"
+msgstr "Permintaan"
+
+msgid "Server"
+msgstr "Server"
+
+msgid "Server ID"
+msgstr "ID server"
+
+msgid "Stale or unreconciled (this page)"
+msgstr "Basi atau belum direkonsiliasi (halaman ini)"
+
+msgid "Submit"
+msgstr "Kirim"
+
+msgid "Submit an operation"
+msgstr "Kirim operasi"
+
+msgid "Submit and review OMES operation requests, limited to the OMES-owned safe-operation allowlist. Destructive operations (stop, rollback) require an approved workflow decision on the Approvals screen before dispatch."
+msgstr "Ajukan dan tinjau permintaan operasi OMES, dibatasi pada daftar izin operasi aman milik OMES. Operasi destruktif (stop, rollback) memerlukan keputusan alur kerja yang disetujui di layar Persetujuan sebelum dikirim."
+
+msgid "The OMES deployments console could not be loaded right now. This is a problem reading it, not a healthy silence — please try again later."
+msgstr "Konsol deployment OMES tidak dapat dimuat saat ini. Ini masalah membacanya, bukan keheningan yang sehat — silakan coba lagi nanti."
+
+msgid "The OMES jobs console could not be loaded right now. This is a problem reading it, not a healthy silence — please try again later."
+msgstr "Konsol job OMES tidak dapat dimuat saat ini. Ini masalah membacanya, bukan keheningan yang sehat — silakan coba lagi nanti."
+
+msgid "The OMES operations console could not be loaded right now. This is a problem reading it, not a healthy silence — please try again later."
+msgstr "Konsol operasi OMES tidak dapat dimuat saat ini. Ini masalah membacanya, bukan keheningan yang sehat — silakan coba lagi nanti."
+
+msgid "The OMES worker dispatch queue: state, correlation and idempotency identifiers, lease ownership, retry count, and sanitized evidence."
+msgstr "Antrean dispatch worker OMES: status, identifier korelasi dan idempotensi, kepemilikan sewa (lease), jumlah percobaan ulang, dan bukti yang disanitasi."
+
+msgid "To change a deployment's state (apply, update, reconcile, roll back), submit an operation on the Operations screen — this screen is read-only."
+msgstr "Untuk mengubah status deployment (apply, update, reconcile, roll back), ajukan operasi di layar Operasi — layar ini hanya untuk membaca."
+
+msgid "View desired state"
+msgstr "Lihat status yang diinginkan"
+
+msgid "View error evidence"
+msgstr "Lihat bukti kesalahan"
+
+msgid "View in Approvals"
+msgstr "Lihat di Persetujuan"
+
+msgid "View observed state"
+msgstr "Lihat status teramati"
+
+msgid "You do not have permission to view OMES deployments."
+msgstr "Anda tidak memiliki izin untuk melihat deployment OMES."
+
+msgid "You do not have permission to view OMES jobs."
+msgstr "Anda tidak memiliki izin untuk melihat job OMES."
+
+msgid "You do not have permission to view OMES operations."
+msgstr "Anda tidak memiliki izin untuk melihat operasi OMES."
+
+msgid "destructive — requires approval"
+msgstr "destruktif — memerlukan persetujuan"
+
+
+msgid "Back to fleet-wide health"
+msgstr "Kembali ke kesehatan armada"
+
+msgid "Backup"
+msgstr "Backup"
+
+msgid "Backup artifact metadata — recovery class, integrity checksum, age, and status. Never the raw backup contents. Restore is always destructive and always routes through the canonical approval workflow before it can dispatch."
+msgstr "Metadata artefak backup — kelas pemulihan, checksum integritas, usia, dan status. Tidak pernah konten backup mentah. Restore selalu destruktif dan selalu melalui alur kerja persetujuan kanonis sebelum dapat dikirim."
+
+msgid "Backup catalog"
+msgstr "Katalog backup"
+
+msgid "Backups (this page)"
+msgstr "Backup (halaman ini)"
+
+msgid "Captured"
+msgstr "Direkam"
+
+msgid "Checks (source-attributed)"
+msgstr "Pemeriksaan (beratribusi sumber)"
+
+msgid "Checksum (SHA-256)"
+msgstr "Checksum (SHA-256)"
+
+msgid "Control-plane actor/action events"
+msgstr "Peristiwa aktor/aksi control-plane"
+
+msgid "{count} check(s)"
+msgstr "{count} pemeriksaan"
+
+msgid "Every restore is always destructive and requires an approved workflow decision before the OMES pull worker will ever act on it."
+msgstr "Setiap restore selalu destruktif dan memerlukan keputusan alur kerja yang disetujui sebelum worker pull OMES akan pernah menindaklanjutinya."
+
+msgid "Every snapshot below is omes-host evidence, reported by the OMES pull worker running on that host. Stale or missing evidence is shown explicitly, in its own badge, and never presented as healthy."
+msgstr "Setiap snapshot di bawah ini adalah bukti omes-host, dilaporkan oleh worker pull OMES yang berjalan di host tersebut. Bukti yang basi atau hilang ditampilkan secara eksplisit, dalam lencananya sendiri, dan tidak pernah disajikan sebagai sehat."
+
+msgid "Health history"
+msgstr "Riwayat kesehatan"
+
+msgid "Latest health per server"
+msgstr "Kesehatan terbaru per server"
+
+msgid "Manifest"
+msgstr "Manifest"
+
+msgid "No backups"
+msgstr "Tidak ada backup"
+
+msgid "No control-plane events"
+msgstr "Tidak ada peristiwa control-plane"
+
+msgid "No fresh health evidence within the staleness window"
+msgstr "Tidak ada bukti kesehatan segar dalam jendela kebasian"
+
+msgid "No health evidence"
+msgstr "Tidak ada bukti kesehatan"
+
+msgid "No omes_control actor/action event has been recorded yet."
+msgstr "Belum ada peristiwa aktor/aksi omes_control yang tercatat."
+
+msgid "No reconciliation evidence"
+msgstr "Tidak ada bukti rekonsiliasi"
+
+msgid "No restore requests"
+msgstr "Tidak ada permintaan restore"
+
+msgid "No server has reported a health snapshot yet, or none matches this filter."
+msgstr "Belum ada server yang melaporkan snapshot kesehatan, atau tidak ada yang cocok dengan filter ini."
+
+msgid "None has been submitted yet."
+msgstr "Belum ada yang diajukan."
+
+msgid "Not fresh (this page)"
+msgstr "Tidak segar (halaman ini)"
+
+msgid "Nothing matches this filter, or no backup has been captured yet."
+msgstr "Tidak ada yang cocok dengan filter ini, atau belum ada backup yang direkam."
+
+msgid "Nothing matches this filter, or no host has reported yet."
+msgstr "Tidak ada yang cocok dengan filter ini, atau belum ada host yang melapor."
+
+msgid "OMES audit"
+msgstr "Audit OMES"
+
+msgid "OMES audit evidence could not be loaded right now. This is a problem reading it, not a healthy silence — please try again later."
+msgstr "Bukti audit OMES tidak dapat dimuat saat ini. Ini adalah masalah membacanya, bukan keheningan yang sehat — silakan coba lagi nanti."
+
+msgid "OMES backup restore requests, newest first."
+msgstr "Permintaan restore backup OMES, terbaru dahulu."
+
+msgid "OMES backup snapshots, newest first."
+msgstr "Snapshot backup OMES, terbaru dahulu."
+
+msgid "OMES backups & recovery"
+msgstr "Backup & pemulihan OMES"
+
+msgid "OMES control-plane actor/action audit events, newest first."
+msgstr "Peristiwa audit aktor/aksi control-plane OMES, terbaru dahulu."
+
+msgid "OMES health & readiness"
+msgstr "Kesehatan & kesiapan OMES"
+
+msgid "OMES health evidence could not be loaded right now. This is a problem reading it, not a healthy silence — please try again later."
+msgstr "Bukti kesehatan OMES tidak dapat dimuat saat ini. Ini adalah masalah membacanya, bukan keheningan yang sehat — silakan coba lagi nanti."
+
+msgid "OMES health snapshots. Source attributed per row and per check; stale evidence is shown explicitly."
+msgstr "Snapshot kesehatan OMES. Sumber diatribusikan per baris dan per pemeriksaan; bukti basi ditampilkan secara eksplisit."
+
+msgid "Older than the 24h freshness window, or its capture failed"
+msgstr "Lebih tua dari jendela kesegaran 24 jam, atau perekamannya gagal"
+
+msgid "Overall status"
+msgstr "Status keseluruhan"
+
+msgid "Recorded"
+msgstr "Direkam"
+
+msgid "Recovery class"
+msgstr "Kelas pemulihan"
+
+msgid "Remote OMES execution & reconciliation evidence"
+msgstr "Bukti eksekusi & rekonsiliasi OMES jarak jauh"
+
+msgid "Remote OMES host execution and reconciliation audit evidence, newest first."
+msgstr "Bukti audit eksekusi dan rekonsiliasi host OMES jarak jauh, terbaru dahulu."
+
+msgid "Restore requests"
+msgstr "Permintaan restore"
+
+msgid "Servers with a snapshot"
+msgstr "Server dengan snapshot"
+
+msgid "Snapshot history for server {serverId}."
+msgstr "Riwayat snapshot untuk server {serverId}."
+
+msgid "Source event"
+msgstr "Peristiwa sumber"
+
+msgid "Source: awcms_audit_events, the same canonical control-plane log rendered on the Audit trail screen, narrowed to the omes_control module."
+msgstr "Sumber: awcms_audit_events, log control-plane kanonis yang sama yang ditampilkan pada layar Jejak audit, dipersempit ke modul omes_control."
+
+msgid "Source: awcms_omes_audit_projections — omes-host evidence reported through the pull worker bridge, a SEPARATE feed from the control-plane events above. Never merged into one list."
+msgstr "Sumber: awcms_omes_audit_projections — bukti omes-host yang dilaporkan melalui jembatan worker pull, umpan TERPISAH dari peristiwa control-plane di atas. Tidak pernah digabung menjadi satu daftar."
+
+msgid "Stale snapshots"
+msgstr "Snapshot basi"
+
+msgid "The OMES backup catalog could not be loaded right now. This is a problem reading it, not a healthy silence — please try again later."
+msgstr "Katalog backup OMES tidak dapat dimuat saat ini. Ini adalah masalah membacanya, bukan keheningan yang sehat — silakan coba lagi nanti."
+
+msgid "Two separate, source-labelled feeds: what an operator did in AWCMS (control-plane actor/action events), and what the host itself reported doing (remote OMES execution and reconciliation evidence). They are never merged into one undifferentiated list."
+msgstr "Dua umpan terpisah berlabel sumber: apa yang dilakukan operator di AWCMS (peristiwa aktor/aksi control-plane), dan apa yang dilaporkan host itu sendiri (bukti eksekusi dan rekonsiliasi OMES jarak jauh). Keduanya tidak pernah digabung menjadi satu daftar yang tidak terbedakan."
+
+msgid "View history"
+msgstr "Lihat riwayat"
+
+msgid "View history for server ID"
+msgstr "Lihat riwayat untuk ID server"
+
+msgid "View manifest"
+msgstr "Lihat manifest"
+
+msgid "View server enrollment & trust evidence"
+msgstr "Lihat bukti pendaftaran & kepercayaan server"
+
+msgid "View the full cross-module audit trail"
+msgstr "Lihat jejak audit lintas modul lengkap"
+
+msgid "You do not have permission to view OMES audit evidence."
+msgstr "Anda tidak memiliki izin untuk melihat bukti audit OMES."
+
+msgid "You do not have permission to view OMES backups."
+msgstr "Anda tidak memiliki izin untuk melihat backup OMES."
+
+msgid "You do not have permission to view OMES health evidence."
+msgstr "Anda tidak memiliki izin untuk melihat bukti kesehatan OMES."
+
+msgid "not fresh"
+msgstr "tidak segar"
+
+msgid "source: {source}"
+msgstr "sumber: {source}"
+
+msgid "Health"
+msgstr "Kesehatan"
+
+msgid "Backups & recovery"
+msgstr "Backup & pemulihan"
+
+msgid "Audit"
+msgstr "Audit"
+
+msgid "OMES health"
+msgstr "Kesehatan OMES"
+
+msgid "OMES backups"
+msgstr "Backup OMES"
+
+msgid "OMES enrollment tokens"
+msgstr "Token pendaftaran OMES"
+
+msgid "Issue and revoke one-time OMES worker enrollment tokens. A token is shown exactly once at issuance and never again — only its SHA-256 hash is ever stored, never logged, and never re-displayable."
+msgstr "Terbitkan dan cabut token pendaftaran worker OMES sekali pakai. Token ditampilkan tepat satu kali saat diterbitkan dan tidak pernah lagi — hanya hash SHA-256-nya yang pernah disimpan, tidak pernah dicatat log, dan tidak pernah bisa ditampilkan ulang."
+
+msgid "You do not have permission to manage OMES enrollment tokens."
+msgstr "Anda tidak memiliki izin untuk mengelola token pendaftaran OMES."
+
+msgid "The OMES enrollment-token console could not be loaded right now. This is a problem reading it, not a healthy silence — please try again later."
+msgstr "Konsol token pendaftaran OMES tidak dapat dimuat saat ini. Ini adalah masalah membacanya, bukan keheningan yang sehat — silakan coba lagi nanti."
+
+
+
+
+
+msgid "Issue a token"
+msgstr "Terbitkan token"
+
+msgid "Only servers registered but not yet enrolled (status “offline”) are eligible — a server with a live worker already has valid credentials, and re-issuing one would let two worker identities exist for the same host."
+msgstr "Hanya server yang sudah terdaftar tetapi belum terdaftar penuh (status “offline”) yang memenuhi syarat — server dengan worker yang sudah aktif sudah memiliki kredensial yang valid, dan menerbitkan ulang token akan membuat dua identitas worker ada untuk host yang sama."
+
+msgid "No server is eligible for a new token"
+msgstr "Tidak ada server yang memenuhi syarat untuk token baru"
+
+msgid "Register a server on the Servers screen first, or wait for an existing one to become eligible."
+msgstr "Daftarkan server di layar Server terlebih dahulu, atau tunggu hingga salah satu yang ada menjadi memenuhi syarat."
+
+msgid "Servers eligible for a new enrollment token."
+msgstr "Server yang memenuhi syarat untuk token pendaftaran baru."
+
+msgid "Issue token"
+msgstr "Terbitkan token"
+
+msgid "Enrollment tokens"
+msgstr "Token pendaftaran"
+
+msgid "OMES worker enrollment tokens, newest first."
+msgstr "Token pendaftaran worker OMES, terbaru lebih dulu."
+
+msgid "Challenge expires"
+msgstr "Tantangan kedaluwarsa"
+
+msgid "No enrollment tokens"
+msgstr "Tidak ada token pendaftaran"
+
+msgid "Issue one above, or wait for a worker to complete enrollment."
+msgstr "Terbitkan satu di atas, atau tunggu worker menyelesaikan pendaftaran."
+
+msgid "not yet presented"
+msgstr "belum disajikan"
+
+
+msgid "Enrollments"
+msgstr "Pendaftaran"

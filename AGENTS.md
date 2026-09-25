@@ -26,7 +26,7 @@ This document's own workspace layout, gate mechanism, and changeset convention a
 | --- | --- |
 | Upstream remote | `awcms` → `https://github.com/ahliweb/awcms.git`, fetch refspec narrowed to `+refs/heads/main:refs/remotes/awcms/main`, and `tagOpt` set to `--no-tags` |
 | Embed point | `ahliweb/awcms` v10.3.0, commit `749404d4963af1dfaf8a5cf8b229299b29556ce2` (initial `git subtree add`) |
-| Last sync | upstream `main` at commit `2d29a446fbe162efbc015284f3883f2af0be15fc` (14 commits ahead of the previous sync point — the `omes_control` domain module, a least-privilege narrowing of `awcms_worker`, PostgreSQL backup encryption/manifests/restore drills, a hardened Graphify/Obsidian workflow, and dependency bumps), pulled by awcms-one PR for issue #210 with a merge commit; the previous sync was `8c64528d` (awcms PR #813, issue #170) |
+| Last sync | upstream `main` at commit `0d6c0dfef92c1d1708f21ad2211687cb0f207788` (6 commits ahead of the previous sync point — the OMES Control Center admin screens under `src/pages/admin/omes/`, the worker enroll/poll/result/heartbeat API, and migration `sql/159`), pulled for issue #2 with a merge commit, after the one-time ancestry merge described below; the previous sync was `2d29a446` (awcms-one issue #210) |
 | Sync command | `git subtree pull --prefix=apps/cms awcms main` |
 
 Set both when adding the remote:
@@ -36,6 +36,8 @@ git remote add awcms https://github.com/ahliweb/awcms.git
 git config remote.awcms.fetch '+refs/heads/main:refs/remotes/awcms/main'
 git config remote.awcms.tagOpt --no-tags
 ```
+
+**A repository created from the template has no subtree ancestry.** GitHub's template copy carries `apps/cms`'s files but not the upstream history `git subtree pull` needs a merge base in, so the first pull fails or degrades into an unrelated-histories merge. Record it once with a no-change merge of the `awcms` commit `apps/cms` matches, before the first `git subtree pull` — confirm the match first (`git rev-parse HEAD:apps/cms` equals the template's own `apps/cms` tree, whose last sync is named in the template's own "Last sync" row), then `git merge -s ours --allow-unrelated-histories <that awcms commit>`. That merge changes no file; it only restores the ancestry, and every later sync is an ordinary three-way merge. This repo did exactly that for issue #2 (`2d29a446`, the sync point the template carried).
 
 **Why the remote's fetch is narrowed to `main` only:** adding the remote without narrowing its refspec drags in every upstream branch, including dependabot branches — seven of them, the first time this remote was added here. A subtree sync only ever wants `main`.
 
@@ -61,7 +63,7 @@ Every other PR in this repo is now also merged with a merge commit — GitHub of
 
 - `apps/cms/src/layouts/AdminLayout.astro` and `apps/cms/src/modules/_shared/module-contract.ts` / `module-management/domain/sidebar-menu.ts` — issue #118's `requiredFeature` on a sidebar navigation entry (a `commerce` feature toggle that hides a link). Upstream's own `badgeCount` (awcms PR #813) arrived on the same lines; the #170 sync keeps BOTH fields, in that order. `sidebar-menu.ts` also carries the `commerce` module's own sidebar labels/icons (every `admin.layout.nav_commerce*` key in `SIDEBAR_LABELS`/`DEFAULT_SIDEBAR_ICONS`, including issue #171's `nav_commerce_dashboard`) — this platform's own additions to a table upstream also writes rows into, resolved by keeping both lineages on conflict, same as the other entries in this list.
 - `apps/cms/src/styles/admin-screens.css` — 11 lines issue #111's inbox screen added.
-- `apps/cms/scripts/client-asset-budget.ts` — `APP_BUDGET_BYTES` raised by every commerce admin screen since issue #23 (upstream sits at 226,000 after PR #813; this embed at 259,000 after issue #171 — 254,500 at the #170 sync = its own 246,500 plus upstream's +8,000 chrome delta), each raise recorded in the constant's own docblock. Resolve a conflict here by keeping both docblock lineages and adding upstream's delta to this repo's figure.
+- `apps/cms/scripts/client-asset-budget.ts` — `APP_BUDGET_BYTES` raised by every commerce admin screen since issue #23 (upstream sits at 226,000 after PR #813; this embed at 263,400 after the #2 subtree sync — 259,000 after issue #171 plus upstream's +4,357 B OMES Control Center screens at `0d6c0dfe`, upstream itself unchanged at 226,000; earlier, 254,500 at the #170 sync = its own 246,500 plus upstream's +8,000 chrome delta), each raise recorded in the constant's own docblock. Resolve a conflict here by keeping both docblock lineages and adding upstream's delta to this repo's figure.
 
 The one-item version of this list was written after increment 2 and was already stale by increment 5; the #170 subtree sync (21 September 2026) found the three items above by conflict and by `git diff awcms/main:<path> HEAD:apps/cms/<path>`, which is the command to run before claiming this list is complete. Everything else the `commerce` module ever added was ordinary additive module work inside `apps/cms`'s own admission discipline.
 

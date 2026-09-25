@@ -143,7 +143,7 @@ const PROFILE_DEFAULTS: Record<ProfileKey, ProfileDefaults> = {
 type Cli = { profil: ProfileKey; dryRun: boolean; help: boolean };
 
 function parseArgs(argv: string[]): Cli {
-  let profil = "contoh:borneojek-mart";
+  let profil = "landing";
   let dryRun = false;
   let help = false;
 

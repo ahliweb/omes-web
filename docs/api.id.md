@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](api.md)
 
-<!-- i18n-source-hash: sha256:7d801f2ad48067267061cb118fad62de6c9e687f2880e756a76ace4571f51347 -->
+<!-- i18n-source-hash: sha256:e4321820891b50f059bd35e3fc746cad83c9512778daf1dbeeedd9a376af4fa0 -->
 
 # API
 
@@ -301,7 +301,7 @@ Semua di sini milik `apps/cms` sendiri, dimiliki modul-modul yang dibawa subtree
 | `POST /api/v1/analytics/collect`                           | **peramban pembaca**      | anonim, terikat Origin ([ADR-0012](adr/0012-first-party-visitor-analytics-with-an-opt-in-ga4-switch.md))                                                                                                                                                                                                             |
 | `POST /api/v1/newsletter/{subscribe,confirm,unsubscribe}`  | **peramban pembaca**      | anonim, terikat Origin; path konfirmasi/berhenti adalah **kontrak CMS** (`NEWSLETTER_CONFIRM_PATH`/`NEWSLETTER_UNSUBSCRIBE_PATH` di `apps/cms/src/modules/newsletter/domain/newsletter-mail.ts`), itulah sebabnya aplikasi ini menyajikan `/newsletter/confirm` dan `/newsletter/unsubscribe` persis dengan nama itu |
 
-Himpunan permission kredensial build di-seed oleh `tools/seed-borneojek-mart.ts`; mengubahnya di sana **merotasi** kredensial pada seed run berikutnya, sehingga `AWCMS_API_TOKEN` yang masih memegang rahasia lama mulai gagal dengan 401 (langkah rekonsiliasi issue #57 mencetak penggantinya).
+Himpunan permission kredensial build di-seed oleh tools/seed-borneojek-mart.ts; mengubahnya di sana **merotasi** kredensial pada seed run berikutnya, sehingga `AWCMS_API_TOKEN` yang masih memegang rahasia lama mulai gagal dengan 401 (langkah rekonsiliasi issue #57 mencetak penggantinya).
 
 ## Belum dibangun
 

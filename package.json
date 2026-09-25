@@ -1,13 +1,13 @@
 {
-  "name": "awcms-one",
+  "name": "omes",
   "type": "module",
-  "version": "0.12.0",
+  "version": "0.1.0",
   "private": true,
-  "description": "awcms-one — the borneojek-mart commerce platform on the AWCMS stack. Bun workspace root: apps/storefront is the public Astro storefront, apps/cms is ahliweb/awcms embedded via git subtree, packages/config and packages/gerbang are the shared presets and audit gates, packages/kontrak carries the type-only DTO contract the storefront imports from the CMS.",
-  "homepage": "https://mart.borneojek.com",
+  "description": "OMES — dibuat dari template awcms-one.",
+  "homepage": "https://omes.ahlikoding.com",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ahliweb/awcms-one.git"
+    "url": "git+https://github.com/GANTI-ORG/omes.git"
   },
   "license": "MIT",
   "packageManager": "bun@1.4.2",
@@ -38,14 +38,17 @@
     "db:down": "docker compose down",
     "db:reset": "docker compose down -v && docker compose up -d --wait",
     "db:migrate:cms": "cd apps/cms && bun run db:migrate",
-    "db:seed:cms": "bun tools/seed-cms.ts",
+    "db:seed:cms": "bun tools/seed-cms.ts --profil landing",
     "db:seed:cms:profil": "bun tools/seed-cms.ts --profil",
-    "import:seputarborneo": "bun tools/import-seputarborneo.ts",
     "template:init": "bun tools/template-init.ts",
     "test": "bun test",
     "serve": "cd apps/storefront && bun run serve",
     "start": "bun run serve",
     "preview": "bun run serve",
     "release": "bun tools/rilis.mjs"
+  },
+  "awcmsOne": {
+    "templateVersion": "0.12.0",
+    "initializedAt": "2026-09-26"
   }
 }

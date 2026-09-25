@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](0018-awcms-one-is-a-template-with-build-profiles-and-an-idempotent-init.md)
 
-<!-- i18n-source-hash: sha256:dbf1b40b058e9504e731f514d26a38833ea5599f8172da258e46f5ca09fe53d9 -->
+<!-- i18n-source-hash: sha256:f8ea6af1808009b5617bc14a405adbb4297287166bfb5b1ea217903814d3f0e3 -->
 
 # ADR-0018 — awcms-one adalah sebuah template, dengan profil build dan `template:init` yang idempoten
 
@@ -105,7 +105,7 @@ Ditolak: (b), karena `site.ts` SUDAH menjadi permukaan config-merek tunggal untu
 
 ### D5 — `template:init`: CLI idempoten di atas permukaan merek D4
 
-`bun run template:init --nama --slug --domain --profil --warna-primer [--warna-sekunder] [--warna-aksen] --kontak-email [--kontak-telepon] [--alamat] [--dry-run] [--yes]` menulis ulang persis permukaan bernama D4, menghapus artefak khusus BjekMart (seed BjekMart dan importer seputarborneo beserta tesnya — target pemindahan #139 sendiri), mereset `CHANGELOG.md` ke `0.1.0` dengan entri "created from awcms-one vX.Y.Z," membersihkan `.changesets/*.md`, mereset `graphify-out/`/`knowledge/generated/` ke keadaan kosong terdokumentasi, menulis field `awcmsOne.templateVersion` ke root `package.json`, lalu menjalankan `docs:i18n:stamp`/`bun install`/gerbang audit sehingga commit pertama repo turunan sudah hijau. Ia meminta interaktif untuk flag wajib yang hilang saat stdin adalah TTY, kalau tidak keluar dengan kode `2` menamai apa yang hilang. Jalan kedua dengan flag identik adalah no-op (keluar `0`, "nothing to do"); flag berbeda menulis ulang lagi; `--dry-run` mencetak rencana dan tidak menyentuh apa pun; working tree yang kotor menolak berjalan kecuali `--yes`. **`apps/cms/**` tidak pernah disentuh**, sesuai D4.
+`bun run template:init --nama --slug --domain --profil --warna-primer [--warna-sekunder] [--warna-aksen] --kontak-email [--kontak-telepon] [--alamat] [--dry-run] [--yes]` menulis ulang persis permukaan bernama D4, menghapus artefak khusus BjekMart (seed BjekMart dan importer seputarborneo beserta tesnya — target pemindahan #139 sendiri), mereset `CHANGELOG.md` ke `0.1.0` dengan entri "created from awcms-one vX.Y.Z," membersihkan `.changesets/*.md`, mereset graphify-out//knowledge/generated/ ke keadaan kosong terdokumentasi, menulis field `awcmsOne.templateVersion` ke root `package.json`, lalu menjalankan `docs:i18n:stamp`/`bun install`/gerbang audit sehingga commit pertama repo turunan sudah hijau. Ia meminta interaktif untuk flag wajib yang hilang saat stdin adalah TTY, kalau tidak keluar dengan kode `2` menamai apa yang hilang. Jalan kedua dengan flag identik adalah no-op (keluar `0`, "nothing to do"); flag berbeda menulis ulang lagi; `--dry-run` mencetak rencana dan tidak menyentuh apa pun; working tree yang kotor menolak berjalan kecuali `--yes`. **`apps/cms/**` tidak pernah disentuh**, sesuai D4.
 
 | Dimensi | **(a) CLI lokal yang idempoten, `bun run template:init` (dipilih)** | (b) Wizard interaktif satu kali tanpa kontrak idempotensi | (c) Layanan inisialisasi ter-hosting/jarak jauh |
 | --- | --- | --- | --- |
@@ -124,7 +124,7 @@ Ditolak: (b), karena inisialisator template yang tidak bisa dijalankan ulang den
 
 ### D6 — Seed contoh per profil; seed BjekMart sendiri menjadi contoh referensi
 
-Konten contoh netral dan fiktif dikirim per profil (`tools/seed-data/profil/{toko,berita,landing}/*`, #139) — cukup kecil untuk disemai cepat (≤ 20 produk, ≤ 15 pos, ≤ 6 halaman), tanpa orang nyata, nomor telepon, e-mail, atau nama merek. Konten seed BjekMart sendiri pindah ke `tools/seed-data/contoh/borneojek-mart/**`, secara eksplisit diberi label ulang sebagai **contoh referensi** — konten senilai deployment nyata dan lengkap, disimpan dan didokumentasikan khusus agar pembaca bisa melihat seperti apa deployment produksi yang selesai dari template ini, alih-alih dihapus sebagai "sekadar data uji."
+Konten contoh netral dan fiktif dikirim per profil (`tools/seed-data/profil/{toko,berita,landing}/*`, #139) — cukup kecil untuk disemai cepat (≤ 20 produk, ≤ 15 pos, ≤ 6 halaman), tanpa orang nyata, nomor telepon, e-mail, atau nama merek. Konten seed BjekMart sendiri pindah ke tools/seed-data/contoh/borneojek-mart/**, secara eksplisit diberi label ulang sebagai **contoh referensi** — konten senilai deployment nyata dan lengkap, disimpan dan didokumentasikan khusus agar pembaca bisa melihat seperti apa deployment produksi yang selesai dari template ini, alih-alih dihapus sebagai "sekadar data uji."
 
 | Dimensi | **(a) Seed profil netral + BjekMart dipertahankan sebagai contoh referensi berlabel (dipilih)** | (b) Tanpa data seed sama sekali — repo turunan mulai kosong | (c) Satu seed generik yang dibagi ke semua profil |
 | --- | --- | --- | --- |
@@ -257,7 +257,7 @@ Setiap file di bawah `apps/storefront/src/pages/**` (52 file, per ADR ini) ditem
 - `apps/storefront/src/config/profil.ts` (#137) menjadi satu tempat setiap konsumen sadar-profil (`routes.ts`, navigasi, `sitemap-sources.ts`, `robots.txt.ts`, `feed.xml.ts`, `csp.json.ts`/`astro.config.mjs`) dibaca — perubahan halaman mana yang termasuk profil mana dibuat di sana, sekali.
 - `apps/storefront/integrations/profil.mjs` (#137) adalah integrasi Astro saat-build baru; ia tidak punya komponen runtime dan tidak mengirim apa pun ke `dist/` di luar halaman yang diperintahkan untuk disuntikkan.
 - `bun run template:init` (#138) adalah skrip root-level baru dengan test suite-nya sendiri (`tests/template-init.test.mjs`) dan job CI-nya sendiri (`template-init-smoke`, dimatriks-kan atas profil) — ia tidak pernah menyentuh `apps/cms/**`.
-- `tools/seed-cms.ts --profil {toko,berita,landing,contoh:borneojek-mart}` (#139) menggantikan `tools/seed-borneojek-mart.ts` sebagai titik masuk seeder; `db:seed:cms` tetap menyemai konten BjekMart sendiri secara default sehingga alur kerja deployment referensi tidak berubah.
+- `tools/seed-cms.ts --profil {toko,berita,landing,contoh:borneojek-mart}` (#139) menggantikan tools/seed-borneojek-mart.ts sebagai titik masuk seeder; `db:seed:cms` tetap menyemai konten BjekMart sendiri secara default sehingga alur kerja deployment referensi tidak berubah.
 - Job CI `Check` milik storefront menjadi matriks 3-leg (#137, D7); status `check`/`check-cms` sendiri tetap wajib pada `main` persis seperti yang sudah didokumentasikan `AGENTS.md` — matriks bersifat aditif terhadap job itu, bukan pemeriksaan wajib baru untuk dikonfigurasi terpisah.
 - Increment ini merilis **v0.8.0** (D8); flag GitHub *template repository* sudah diatur di #140, setelah #137–#139 di-merge dan matriks profil serta daftar file ADR ini cocok persis dengan pohonnya.
 - `docs/template.md` (deliverable saudara ADR ini) membawa matriks profil ke depan sebagai salinan hidup yang dijaga sinkron #137 dengan tata letak `src/profil/**` yang sebenarnya; salinan ADR ini sendiri adalah kontrak wave-0, tidak diperbarui halaman-demi-halaman seiring #137 landing (baris Status-nya mencatat PR yang menutup celah, sesuai konvensi "Status" ADR-0017 sendiri).
@@ -293,7 +293,7 @@ Setiap keputusan di bawah ini sudah landing, kode yang berjalan, diverifikasi te
 | D3 `src/profil/<group>/pages/**` + integrasi Astro | #137 | #143 | `apps/storefront/integrations/profil.mjs` (`injectRoute`), 42 halaman dipindah sesuai matriks, tes `profil-routes`/`profil-integrasi`/`profil-build-smoke` |
 | D4 Merek hidup di env + `site.ts` | #138 | #144 | `DEFAULT_IDENTITY`, `DEFAULT_THEME_COLORS`, `SITE_NAME`/`SITE_URL`/`SITE_DESCRIPTION`, daftar permukaan merek bernama yang ditulis-ulang `template:init` |
 | D5 `template:init` | #138 | #144 | `tools/template-init.ts` + `tools/template-init/**`, `tests/template-init.test.mjs`, `.github/workflows/template-init-smoke.yml` |
-| D6 Seed contoh per profil | #139 | #142 | `tools/seed-cms.ts --profil`, `tools/seed-data/profil/{toko,berita,landing}/**`; seed BjekMart sendiri dipindah ke `tools/seed-data/contoh/borneojek-mart/**` |
+| D6 Seed contoh per profil | #139 | #142 | `tools/seed-cms.ts --profil`, `tools/seed-data/profil/{toko,berita,landing}/**`; seed BjekMart sendiri dipindah ke tools/seed-data/contoh/borneojek-mart/** |
 | D7 Matriks CI | #137 | #143 | Matriks 3-leg `Check (toko|berita|landing)` di `ci.yml`, status check wajib di `main` |
 | D8 Penomoran versi (v0.8.0) | #140 | (rilis) | Increment ini merilis **v0.8.0**; jalan `template:init` repo turunan mereset `CHANGELOG.md`/versinya sendiri ke **0.1.0** |
 

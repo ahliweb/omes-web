@@ -17,12 +17,12 @@
 # varies by worktree/clone path) so `docker compose` commands are stable
 # wherever this repo lives, and so container names get the documented
 # `awcms-one-` prefix regardless.
-name: awcms-one
+name: omes
 
 services:
   postgres:
     image: postgres:18.4
-    container_name: awcms-one-postgres
+    container_name: omes-postgres
     restart: unless-stopped
     environment:
       # The four required env vars below have no defaults here — see
@@ -53,7 +53,7 @@ services:
       # mount-point boundary to work with later). Verified empirically: this
       # compose file failed its own healthcheck with exactly that error
       # before this comment was written to explain the fix.
-      - awcms-one-pgdata:/var/lib/postgresql
+      - omes-pgdata:/var/lib/postgresql
       # Read-only: this container writes nothing back into the repo.
       - ./docker/postgres-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
@@ -66,5 +66,5 @@ volumes:
   # Named explicitly (rather than left to Compose's own
   # "<project>_<service>" default) so `docker volume ls` reads the same
   # `awcms-one-` prefix as the container itself.
-  awcms-one-pgdata:
-    name: awcms-one-pgdata
+  omes-pgdata:
+    name: omes-pgdata

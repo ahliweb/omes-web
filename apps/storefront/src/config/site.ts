@@ -23,8 +23,8 @@ const siteUrl = readEnvOr("SITE_URL", "http://localhost:4321").replace(
 );
 
 export const siteConfig = {
-  name: readEnvOr("SITE_NAME", "Borneojek Mart"),
-  description: readEnvOr("SITE_DESCRIPTION", "Katalog produk borneojek-mart."),
+  name: readEnvOr("SITE_NAME", "OMES"),
+  description: readEnvOr("SITE_DESCRIPTION", "Profil resmi OMES."),
   siteUrl,
   domain: new URL(siteUrl).host
 };
@@ -49,9 +49,9 @@ export function absoluteUrl(path: string): string {
  * directly.
  */
 export const DEFAULT_IDENTITY = {
-  name: "BjekMart",
-  description: "Belanja online hemat, mudah, dan terpercaya di BjekMart",
-  contactEmail: "borneojekpangkalanbun@gmail.com",
+  name: "OMES",
+  description: "Solusi tepercaya dari OMES",
+  contactEmail: "admin@ahlikoding.com",
   contactPhone: "0851-2868-8885",
   address: "Jl. Ahmad Wongso RT 19 Kelurahan Madurejo, Kotawaringin Barat"
 } as const;
@@ -64,7 +64,7 @@ export const DEFAULT_IDENTITY = {
  * `secondary` in particular has no CMS equivalent to override it with.
  */
 export const DEFAULT_THEME_COLORS = {
-  primary: "#10b981",
-  secondary: "#0f766e",
-  accent: "#f59e0b"
+  primary: "#5FC8D6",
+  secondary: "#151A20",
+  accent: "#E8B44A"
 } as const;

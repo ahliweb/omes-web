@@ -261,7 +261,7 @@ objects?ids=` (chunked at 100 ids per call, verified against that route's
 own `MAX_IDS`), and reading `GET /api/v1/media/public-origin` for the media
 host `apps/storefront/src/pages/csp.json.ts` widens `img-src` with. The build credential
 needs `media_library.media.read` for both — added to the seed's storefront
-token permission set (`tools/seed-borneojek-mart.ts`'s
+token permission set (tools/seed-borneojek-mart.ts's
 `MACHINE_CREDENTIAL_PERMISSION_KEYS`). A non-uuid-shaped id (a pre-migration
 or hand-authored row) is filtered out BEFORE it is ever sent: the route
 400s the WHOLE request over one malformed id rather than reporting just
@@ -364,7 +364,7 @@ keep their full-width layout and have no sidebar.
 - **"Terpopuler" is real.** `apps/storefront/src/lib/awcms/analitik.ts` reads
   `GET /api/v1/analytics/pages?range=7d` (`apps/cms/src/pages/api/v1/analytics/pages.ts`,
   permission `visitor_analytics.dashboard.read` — added by name to the
-  seed's storefront token permission set, `tools/seed-borneojek-mart.ts`'s
+  seed's storefront token permission set, tools/seed-borneojek-mart.ts's
   `MACHINE_CREDENTIAL_PERMISSION_KEYS`; **that changes the credential's
   scope, so the seed's scope-reconcile (issue #57) revokes and reissues the
   live storefront credential on its next run against an already-seeded

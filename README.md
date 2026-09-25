@@ -4,17 +4,7 @@
 
 # awcms-one
 
-**awcms-one** is a Bun/Astro/PostgreSQL commerce-and-news platform, and a [GitHub template](#use-this-as-a-template) other applications start from. Its own live deployment re-platforms the borneojek-mart commerce store — PHP/Laravel/MySQL/React-Inertia — onto Bun, Astro, and PostgreSQL under row-level security, a genuine re-platform rather than a refactor (no Laravel code carried over; the source schema is read from the live `commerce_bj_mart` MySQL database and re-expressed as AWCMS module tables — see [issue #1](https://github.com/ahliweb/awcms-one/issues/1)).
-
-## Screenshots
-
-An above-the-fold crop of the home page, one per build profile — the same three `SITE_PROFILE` shapes [`docs/template.md`](docs/template.md) documents in full.
-
-| `toko` — commerce + news | `berita` — news portal only | `landing` — company profile |
-| --- | --- | --- |
-| [![The toko profile's home page: a dark storefront header with search, wishlist, and cart, above a promotional catalog slider](docs/assets/readme-toko.webp)](docs/assets/readme-toko.webp) | [![The berita profile's home page: a news masthead with a "Terkini" ticker, an ad slot, and a headline/sidebar layout](docs/assets/readme-berita.webp)](docs/assets/readme-berita.webp) | [![The landing profile's home page: a plain header above a hero heading, call-to-action buttons, a pages grid, and contact cards](docs/assets/readme-landing.webp)](docs/assets/readme-landing.webp) |
-
-Every image is served from `docs/assets/`, converted to WebP at quality 80; the three together weigh about 72 KB, well inside this document's own 600 KB budget for added image weight, and are rendered against this repo's own stub CMS fixture rather than a seeded one, so their content and branding are placeholder — a real deployment's own content and brand come from its CMS. Regenerated with `apps/storefront`'s own e2e harness (issue #183) — see [`docs/pengujian.md`](docs/pengujian.md#playwright-e2e-a-fourth-tier-its-own-command-its-own-ci-workflow-issue-183) for the exact `bun run screenshots:readme` invocations and the conversion command.
+**OMES** is a deployment created from the [awcms-one](https://github.com/ahliweb/awcms-one) template — Bun, Astro, and PostgreSQL under row-level security. Its build profile is `landing` and its canonical domain is `omes.ahlikoding.com` (see [`docs/template.md`](docs/template.md)).
 
 ## Where this sits in the AWCMS family
 
@@ -30,24 +20,7 @@ The commerce module this platform needs cannot stand on its own — it depends o
 
 ## Use this as a template
 
-`awcms-one` runs as the BjekMart reference deployment **and** as a template other applications start from: a build-time `SITE_PROFILE` picks which pages a deployment ships, and an idempotent `bun run template:init` rewrites the brand surface (name, domain, colours, contact) for a repository created from GitHub's own **"Use this template"** button.
-
-1. Click **"Use this template"** on `ahliweb/awcms-one` to create a new, historyless repository — not a fork. Clone it, then `bun install`.
-2. Run `bun run template:init`, answering the prompts (or passing every flag non-interactively) — see [`docs/template.md`](docs/template.md#templateinit--cli-reference) for the full flag reference, including `--profil`, the colours, and the contact fields.
-3. `cp .env.example .env` and `cp apps/cms/.env.example apps/cms/.env`, filling in what `template:init` did not already set (database credentials, any provider keys — see [ADR-0017](docs/adr/0017-external-providers-are-commerce-owned-ports-with-env-credentials-and-token-addressed-webhooks.md)).
-4. `bun run db:up` — a local PostgreSQL via `docker compose`.
-5. `bun run db:migrate:cms` — runs `apps/cms`'s own migration chain.
-6. `bun run db:seed:cms:profil <toko|berita|landing>` — the neutral sample content matching your chosen profile.
-7. `bun run dev` — starts `apps/cms` and `apps/storefront`, the storefront built against the `SITE_PROFILE` from step 2.
-8. Deploy per [`docs/deployment.md`](docs/deployment.md) — nothing about being a derived repo changes that mechanism.
-
-| Profile | Composition | What it is |
-| --- | --- | --- |
-| `toko` (default) | shared + toko + berita | Today's BjekMart shape — commerce and news together |
-| `berita` | shared + berita | A news portal only, no commerce |
-| `landing` | shared only | A company profile / landing site — pages, contact, SEO chrome; no commerce, no news |
-
-See [ADR-0018](docs/adr/0018-awcms-one-is-a-template-with-build-profiles-and-an-idempotent-init.md) for the decisions behind the template mechanism and [`docs/template.md`](docs/template.md) for the full walkthrough, the `template:init` CLI reference, the profile matrix, and the per-profile seed sets.
+This repository was created from the [`ahliweb/awcms-one`](https://github.com/ahliweb/awcms-one) template using its own `bun run template:init` — see that repository's [`docs/template.md`](https://github.com/ahliweb/awcms-one/blob/main/docs/template.md) for the walkthrough and [ADR-0018](https://github.com/ahliweb/awcms-one/blob/main/docs/adr/0018-awcms-one-is-a-template-with-build-profiles-and-an-idempotent-init.md) for the design decisions behind it.
 
 ## Documentation
 
@@ -133,7 +106,7 @@ A live, provisioned PostgreSQL exists for local development and CI (`compose.yam
 | `bun run audit:dokumen` | Dead relative links in markdown; an ADR index incomplete in either direction or carrying a duplicate row; a file path named in backticks that does not exist in this repo; an `ADR-NNNN` citation that resolves to nothing; a spelled-out number that disagrees with the set it claims to count |
 | `bun run audit:rilis` | The waiting `.changesets/` backlog crossing its bound — 20 files or 14 days old |
 | `bun run audit:translation` | An Indonesian mirror (`<name>.id.md`) whose recorded source hash no longer matches its English source, or a governance document with no mirror at all |
-| `bun run audit:graf` (alias: `knowledge:check`) | The root knowledge-graph corpus (`graphify-out/`) describing itself honestly, including that the corpus has not drifted more than `MAX_STALE_FILES` (40) files from the tree it describes — see [`knowledge/README.md`](knowledge/README.md) |
+| `bun run audit:graf` (alias: `knowledge:check`) | The root knowledge-graph corpus (graphify-out/) describing itself honestly, including that the corpus has not drifted more than `MAX_STALE_FILES` (40) files from the tree it describes — see [`knowledge/README.md`](knowledge/README.md) |
 | `bun test` | The root gate test suite — `tests/*.test.mjs` — plus `apps/storefront`'s own unit/build-smoke/route tests |
 | `check-cms` (CI job) | `apps/cms`'s own ~53-step `bun run check` chain, then its `tests/integration/` suite against a real, migrated PostgreSQL |
 

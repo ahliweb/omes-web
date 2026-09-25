@@ -1,22 +1,12 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](README.md)
 
-<!-- i18n-source-hash: sha256:192aecb4748f1b929893b1c76f55b38a81d3bfe32a311c4d97d0b1729d2be18e -->
+<!-- i18n-source-hash: sha256:5f140aacd2afa01fc5645a99437f82d61d47f82d81dcd9b63c1ef3f42815bcab -->
 
 [![CI](https://github.com/ahliweb/awcms-one/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ahliweb/awcms-one/actions/workflows/ci.yml) [![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE) [![runtime](https://img.shields.io/badge/runtime-Bun-blue?logo=bun&logoColor=white)](https://bun.sh)
 
 # awcms-one
 
-**awcms-one** adalah platform commerce-dan-berita berbasis Bun/Astro/PostgreSQL, dan sebuah [template GitHub](#gunakan-sebagai-template) yang menjadi titik awal aplikasi lain. Deployment hidupnya sendiri me-re-platform toko komersial borneojek-mart — PHP/Laravel/MySQL/React-Inertia — ke Bun, Astro, dan PostgreSQL di bawah row-level security, sebuah re-platform sungguhan, bukan refactor (tidak ada kode Laravel yang dibawa; skema sumber dibaca dari basis data MySQL `commerce_bj_mart` yang hidup dan diekspresikan ulang sebagai tabel modul AWCMS — lihat [issue #1](https://github.com/ahliweb/awcms-one/issues/1)).
-
-## Tangkapan layar
-
-Potongan above-the-fold dari halaman beranda, satu per profil build — tiga bentuk `SITE_PROFILE` yang sama seperti yang didokumentasikan lengkap di [`docs/template.md`](docs/template.id.md).
-
-| `toko` — commerce + berita | `berita` — portal berita saja | `landing` — profil perusahaan |
-| --- | --- | --- |
-| [![Halaman beranda profil toko: header storefront gelap dengan pencarian, wishlist, dan keranjang, di atas slider katalog promosi](docs/assets/readme-toko.webp)](docs/assets/readme-toko.webp) | [![Halaman beranda profil berita: masthead berita dengan ticker "Terkini", slot iklan, dan tata letak headline/sidebar](docs/assets/readme-berita.webp)](docs/assets/readme-berita.webp) | [![Halaman beranda profil landing: header polos di atas judul hero, tombol ajakan bertindak, grid halaman, dan kartu kontak](docs/assets/readme-landing.webp)](docs/assets/readme-landing.webp) |
-
-Setiap gambar disajikan dari `docs/assets/`, dikonversi ke WebP pada kualitas 80; ketiganya bersama-sama seberat sekitar 72 KB, jauh di bawah anggaran 600 KB dokumen ini untuk bobot gambar tambahan, dan dirender terhadap fixture CMS stub milik repo ini sendiri, bukan CMS yang sudah di-seed, sehingga konten dan brandingnya adalah placeholder — konten dan brand deployment sungguhan berasal dari CMS-nya sendiri. Diregenerasi dengan harness e2e `apps/storefront` sendiri (issue #183) — lihat [`docs/pengujian.md`](docs/pengujian.id.md#playwright-e2e-tingkat-keempat-perintahnya-sendiri-workflow-ci-nya-sendiri-issue-183) untuk pemanggilan `bun run screenshots:readme` yang persis dan perintah konversinya.
+**OMES** adalah deployment yang dibuat dari template [awcms-one](https://github.com/ahliweb/awcms-one) — Bun, Astro, dan PostgreSQL dengan row-level security. Profil build-nya adalah `landing` dan domain kanoniknya adalah `omes.ahlikoding.com` (lihat [`docs/template.md`](docs/template.id.md)).
 
 ## Letak repo ini di keluarga AWCMS
 
@@ -32,24 +22,7 @@ Modul commerce yang dibutuhkan platform ini tidak bisa berdiri sendiri — ia be
 
 ## Gunakan sebagai template
 
-`awcms-one` berjalan sebagai deployment referensi BjekMart **dan** sebagai template yang menjadi titik awal aplikasi lain: `SITE_PROFILE` saat build memilih halaman mana yang dikirim sebuah deployment, dan `bun run template:init` yang idempoten menulis ulang permukaan merek (nama, domain, warna, kontak) untuk repo yang dibuat lewat tombol **"Use this template"** milik GitHub.
-
-1. Klik **"Use this template"** di `ahliweb/awcms-one` untuk membuat repo baru tanpa riwayat — bukan fork. Klon, lalu `bun install`.
-2. Jalankan `bun run template:init`, menjawab prompt-nya (atau memberikan semua flag secara non-interaktif) — lihat [`docs/template.md`](docs/template.id.md#templateinit--referensi-cli) untuk referensi flag lengkap, termasuk `--profil`, warna, dan kolom kontak.
-3. `cp .env.example .env` dan `cp apps/cms/.env.example apps/cms/.env`, mengisi apa yang belum diatur `template:init` (kredensial basis data, kunci provider mana pun — lihat [ADR-0017](docs/adr/0017-external-providers-are-commerce-owned-ports-with-env-credentials-and-token-addressed-webhooks.id.md)).
-4. `bun run db:up` — PostgreSQL lokal lewat `docker compose`.
-5. `bun run db:migrate:cms` — menjalankan rantai migrasi `apps/cms` sendiri.
-6. `bun run db:seed:cms:profil <toko|berita|landing>` — konten contoh netral sesuai profil pilihan Anda.
-7. `bun run dev` — menyalakan `apps/cms` dan `apps/storefront`, storefront dibangun dengan `SITE_PROFILE` dari langkah 2.
-8. Deploy sesuai [`docs/deployment.md`](docs/deployment.id.md) — tidak ada yang berubah dari mekanisme itu hanya karena ini "repo turunan".
-
-| Profil | Komposisi | Apa itu |
-| --- | --- | --- |
-| `toko` (default) | shared + toko + berita | Bentuk BjekMart hari ini — commerce dan berita bersama |
-| `berita` | shared + berita | Portal berita saja, tanpa commerce |
-| `landing` | shared saja | Profil perusahaan / situs landing — halaman, kontak, chrome SEO; tanpa commerce, tanpa berita |
-
-Lihat [ADR-0018](docs/adr/0018-awcms-one-is-a-template-with-build-profiles-and-an-idempotent-init.id.md) untuk keputusan di balik mekanisme template dan [`docs/template.md`](docs/template.id.md) untuk panduan lengkapnya, referensi CLI `template:init`, matriks profil, dan set seed per profil.
+Repositori ini dibuat dari template [`ahliweb/awcms-one`](https://github.com/ahliweb/awcms-one) menggunakan `bun run template:init` milik template itu sendiri — lihat [`docs/template.md`](https://github.com/ahliweb/awcms-one/blob/main/docs/template.md) repositori tersebut untuk panduannya dan [ADR-0018](https://github.com/ahliweb/awcms-one/blob/main/docs/adr/0018-awcms-one-is-a-template-with-build-profiles-and-an-idempotent-init.md) untuk keputusan desain di baliknya.
 
 ## Dokumentasi
 
@@ -135,7 +108,7 @@ PostgreSQL hidup dan tersedia ada untuk pengembangan lokal dan CI (`compose.yaml
 | `bun run audit:dokumen` | Tautan markdown mati; indeks ADR yang tidak lengkap di salah satu arah atau membawa baris duplikat; jalur berkas dalam backtick yang tidak ada di repo ini; kutipan `ADR-NNNN` yang tidak menuju ke mana pun; angka yang dieja yang tidak cocok dengan set yang diklaimnya dihitung |
 | `bun run audit:rilis` | Backlog `.changesets/` yang menunggu melewati batasnya — 20 berkas atau 14 hari |
 | `bun run audit:translation` | Cermin Indonesia (`<nama>.id.md`) yang hash sumber tercatatnya tidak lagi cocok dengan sumber Inggrisnya, atau dokumen governance tanpa cermin sama sekali |
-| `bun run audit:graf` (alias: `knowledge:check`) | Korpus graf pengetahuan akar (`graphify-out/`) menggambarkan dirinya sendiri secara jujur, termasuk bahwa korpus tidak melenceng lebih dari `MAX_STALE_FILES` (40) berkas dari pohon yang digambarkannya — lihat [`knowledge/README.md`](knowledge/README.md) |
+| `bun run audit:graf` (alias: `knowledge:check`) | Korpus graf pengetahuan akar (graphify-out/) menggambarkan dirinya sendiri secara jujur, termasuk bahwa korpus tidak melenceng lebih dari `MAX_STALE_FILES` (40) berkas dari pohon yang digambarkannya — lihat [`knowledge/README.md`](knowledge/README.md) |
 | `bun test` | Rangkaian tes gerbang akar — `tests/*.test.mjs` — plus tes unit/build-smoke/route milik `apps/storefront` sendiri |
 | `check-cms` (job CI) | Rangkaian `bun run check` ~53 langkah `apps/cms` sendiri, lalu rangkaian `tests/integration/`-nya terhadap PostgreSQL hidup yang termigrasi sungguhan |
 

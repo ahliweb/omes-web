@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](kamus-data.md)
 
-<!-- i18n-source-hash: sha256:e8c8ba5ee52bf90907d2eba2eeeb1cd0940066a4a177f1f36c0074a822246cb0 -->
+<!-- i18n-source-hash: sha256:1cc0af95121b8d2c9537687bce6cc23a9c20e5669ab1e169f0a8404f24063ec5 -->
 
 # Kamus data
 
@@ -82,7 +82,7 @@ Keduanya adalah tabel AWCMS baru yang meneruskan konsep milik tabel lawas: gamba
 
 ## seputarborneo.com → `blog_content` / `seo_distribution` (issue #58)
 
-Pemetaan kolom untuk `tools/import-seputarborneo.ts` (`bun run import:seputarborneo`), yang membaca arsip MariaDB lama seputarborneo dan meng-EXPORT-nya ke pipeline operator milik `apps/cms` sendiri (`bun run blog:legacy:import`, Issue #599/ADR-0114 in upstream awcms) — lihat bagian "Mengimpor seputarborneo" di `docs/deployment.md` untuk runbook lengkap. Tidak pernah mem-port daftar kolom lawas apa adanya ke tabel baru: skema `blog_content` (isi Portable Text, klasifikasi term/instansi) sudah ada dan mendahului exporter ini.
+Pemetaan kolom untuk tools/import-seputarborneo.ts (`bun run import:seputarborneo`), yang membaca arsip MariaDB lama seputarborneo dan meng-EXPORT-nya ke pipeline operator milik `apps/cms` sendiri (`bun run blog:legacy:import`, Issue #599/ADR-0114 in upstream awcms) — lihat bagian "Mengimpor seputarborneo" di `docs/deployment.md` untuk runbook lengkap. Tidak pernah mem-port daftar kolom lawas apa adanya ke tabel baru: skema `blog_content` (isi Portable Text, klasifikasi term/instansi) sudah ada dan mendahului exporter ini.
 
 ### `berita_red` → `tools/out/seputarborneo/posts.ndjson`, satu `LegacyImportRecord` per baris
 

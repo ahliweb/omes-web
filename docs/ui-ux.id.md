@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](ui-ux.md)
 
-<!-- i18n-source-hash: sha256:a1772073b7fb609f329dc1ca70489248f093993eb8a0c90b5f26b769014e62ef -->
+<!-- i18n-source-hash: sha256:db6feea343c98abea132624f6bb2c83a648bcb4f176c7ca349fca0267713d641 -->
 
 # UI / UX
 
@@ -225,3 +225,57 @@ Dibangun di atas token/primitif di atas — tidak ada perubahan pada `apps/store
 Satu divergensi sengaja dari bentuk literal mockup: layar POS (`/admin/commerce-pos`) mempertahankan grid dua-panel `.pos-layout` sendiri alih-alih mengadopsi primitive generik `.admin-two-pane`, karena sisi keranjangnya butuh kontrol khusus POS (stepper kuantitas, pembacaan jumlah-dibayar/kembalian, blok resi `@media print`) yang tak dimodelkan primitive generik — penilaian "restyle, jangan paksa-cocokkan" yang sama yang diambil issue #167 untuk step-pill checkout di atas.
 
 Belum ada layar galeri media commerce khusus hari ini — gambar produk/slider/testimoni dikelola inline per record, bukan lewat galeri berdiri sendiri — sehingga `.admin-media-grid` tidak dipakai issue ini; ia tetap tersedia di `admin.css` untuk layar mana pun yang mengadopsinya berikutnya.
+
+## Tema OMES (hanya profil build `landing`, `omes-web`#3)
+
+Deployment ini (`omes.ahlikoding.com`, `SITE_PROFILE=landing`) membawa tema gelapnya sendiri untuk situs produk publik OMES — [`ahliweb/omes`](https://github.com/ahliweb/omes), proyek terpisah dan independen yang disajikan storefront ini; bukan permukaan admin/operator, yang sesungguhnya adalah OMES Control Center di `https://omes-cms.ahlikoding.com/admin/omes`. Sumber: prototipe UI operator "OMES Control Center" dari `redesign/redesign-omes.zip` (9 layar, peta layar `github.md` sendiri) — diadopsi di sini sebagai bahasa visual situs PUBLIK, bukan salinan UI admin itu sendiri. Diimplementasikan lewat mekanisme theming APLIKASI INI YANG SUDAH ADA (custom property CSS, config identitas/warna `template:init` sendiri) — tak ada sistem tema paralel, tak ada langkah build baru. `toko`/`berita` tidak terpengaruh: setiap aturan khusus OMES di bawah digerbangi oleh `[data-tema="omes"]`, atribut yang diset `BaseLayout.astro` pada `<html>` hanya ketika `SITE_PROFILE=landing` (`SITE_PROFILE` milik `apps/storefront/src/config/profil.ts`), dan komponen halaman khusus OMES (`apps/storefront/src/styles/omes-beranda.css`) hanya diimpor dari `apps/storefront/src/profil/landing/Beranda.astro` — tak pernah ikut dibundel ke profil lain.
+
+### Sistem tipe kedua, di-self-host dengan cara yang sama
+
+| Token | Keluarga | Bobot yang di-vendor |
+| --- | --- | --- |
+| `--font-sans` (khusus tema OMES) | Public Sans | 400, 500, 600, 700 |
+| `--font-mono` (khusus tema OMES) | JetBrains Mono | 400, 500, 600 |
+
+Aturan sama seperti sistem tipe dasar di atas: hanya `/fonts/*.woff2` same-origin (`apps/storefront/public/fonts/LICENSE-OFL.txt` menyebut kedua keluarga, SIL OFL, versi paket `@fontsource` 5.3.0 — mirror CDN yang sama tempat empat keluarga dasar di-vendor), `font-display: swap`, tanpa Google Fonts, tanpa origin CSP baru. `toko`/`berita` tak pernah menyetel `--font-sans`/`--font-mono` ke nama ini, jadi build salah satu dari keduanya tak punya teks yang cocok untuk memicu fetch kedua keluarga ini sama sekali.
+
+### Token (blok `:root[data-tema="omes"]` milik `global.css`)
+
+Gelap, tanpa syarat — prototipe sumber tak punya varian terang, jadi tema ini tak mengikuti `prefers-color-scheme`; spesifisitas selectornya (selector atribut) mengalahkan default `:root` terang maupun blok `prefers-color-scheme: dark` untuk elemen mana pun yang membawa atribut tersebut.
+
+| Kelompok | Nilai |
+| --- | --- |
+| Permukaan | `--bg-primary #0b0f13`, `--bg-surface #0e1216`, `--bg-subtle #151a20`, plus tiga langkah panel khusus OMES tanpa padanan token dasar: `--bg-panel-2 #191f26`, `--bg-panel-3 #1e262e`, `--bg-panel-4 #242c35` |
+| Teks | `--text-primary #e6edf3`, `--text-secondary #c6d1da`, `--text-muted #8b99a6`, `--text-dim #7a8894` (khusus teks besar/label — lihat tabel kontras di bawah) |
+| Aksen | `--accent-primary`/`--link-color` sian `#5fc8d6`, plus tiga aksen status khusus OMES tanpa nama token dasar: `--omes-green #6fd08c`, `--omes-violet #8b9cf7`, `--omes-rose #e9a9a0` |
+
+### Kontras, terukur (rumus luminansi relatif WCAG 2.1, bukan sekadar diperkirakan mata)
+
+Catatan desain redesign sendiri mencatat bahwa warna caption paling redup (`#7a8894`) perlu dinaikkan agar lolos AA di panel gelap — tema ini mempertahankan warna itu tetapi membatasi di mana ia dipakai, alih-alih menaikkannya lebih jauh, karena angka di bawah menunjukkan ia sudah gagal di dua panel kartu paling dalam:
+
+| Pasangan | Rasio | AA (4.5:1 teks normal / 3:1 teks besar) |
+| --- | --- | --- |
+| `--text-primary` di atas `--bg-primary` | 16.28:1 | Lolos |
+| `--text-secondary` di atas `--bg-primary` | 12.39:1 | Lolos |
+| `--text-muted` di atas `--bg-subtle` | 6.00:1 | Lolos |
+| `--text-muted` di atas panel kartu paling dalam (`--bg-panel-4`) | 4.85:1 | Lolos |
+| `--text-dim` di atas `--bg-primary` | 5.29:1 | Lolos (khusus teks besar/label — konvensi token ini sendiri) |
+| `--text-dim` di atas `--bg-panel-3`/`--bg-panel-4` | 4.21:1 / 3.89:1 | **Khusus teks besar** — tak pernah dipakai untuk isi teks di dua panel ini |
+| `--accent-primary` (sian) di atas `--bg-primary` | 9.82:1 | Lolos |
+| `--color-accent` (amber, dari CMS) di atas `--bg-primary` | 10.13:1 | Lolos |
+| `--omes-green` / `--omes-violet` / `--omes-rose` di atas `--bg-primary` | 10.14:1 / 7.51:1 / 9.75:1 | Lolos |
+
+Blok `[data-tema="omes"]` milik `global.css` sendiri membawa tabel yang sama ini di komentar header-nya, di sebelah token yang didokumentasikannya.
+
+### Komponen halaman beranda (`apps/storefront/src/styles/omes-beranda.css`, `apps/storefront/src/profil/landing/Beranda.astro`)
+
+Strip siklus (Bootstrap → Check → Diff → Apply → Verify → Rollback), grid kemampuan, tabel platform, dan blok kode instalasi memakai ulang primitive yang sudah ada di aplikasi ini (permukaan sejenis `.card`, `.btn`, `.is-mono`) di atas token OMES baru — tak ada pola interaksi baru. Dua bagian secara eksplisit dilabeli sebagai ilustrasi STATIS dengan data contoh, tak pernah tangkapan layar dan tak pernah PNG milik zip redesign sendiri (yang membawa chrome UI chat pihak ketiga yang sama sekali tak ada hubungannya dengan situs OMES ini):
+
+- **Pratinjau Control Center** (`.omes-cc-mock`) — mock sidebar + KPI-tile dari layar overview armada, `role="img"` dengan `aria-label` deskriptif penuh, dan label "◇ Ilustrasi" yang terlihat di prosa di atasnya.
+- **Orkestrasi Hermes** (`.omes-hermes`) — pohon planner → agent → subagent (`.omes-tree`, `role="img"`) plus contoh log activity-stream; kursor berkedip pada log adalah satu-satunya animasi di halaman ini dan dibekukan (bukan sekadar diperlambat) di bawah `prefers-reduced-motion: reduce`.
+
+### Defek template lama yang ditemukan dan diperbaiki oleh pekerjaan ini: nav utama desktop tak terlihat
+
+Nav utama `Header.astro` hidup di dalam `<details class="mobile-nav-toggle">` agar pengunjung tanpa JavaScript tetap bisa membuka/menutupnya di bawah 720px (disclosure tanpa-JS milik issue #24 sendiri). Aturan desktop `global.css` (`.mobile-nav-toggle nav { display: flex }`) ditulis dengan asumsi bahwa override `display` dari penulis membuat konten non-`<summary>` milik elemen `<details>` yang TERTUTUP tetap dirender di atas breakpoint mobile. Diverifikasi terhadap build Chromium, Firefox, dan WebKit nyata dan terkini (Playwright): asumsi itu salah di ketiganya — `<details>` yang tertutup menyembunyikan konten non-`<summary>`-nya tanpa syarat, dan tak ada override CSS penulis yang mengubah itu. Efek praktisnya, di **setiap profil build**, bukan hanya `landing`: seluruh nav utama (dan, karena `.mobile-nav-toggle summary` juga `display: none` di atas 720px, tombol untuk membukanya) tak terjangkau oleh mouse, keyboard, atau screen reader di viewport lebar desktop mana pun, tanpa ada yang menangkapnya di test suite aplikasi ini yang sudah ada (test bergaya `profil-build-smoke` menegaskan pada string HTML yang dibangun, bukan pada visibilitas yang dirender browser nyata).
+
+Diperbaiki oleh `apps/storefront/src/scripts/nav-desktop-buka.ts` (dipasang dari blok `<script>` `Header.astro` yang sudah ada, modul eksternal seperti setiap skrip lain di sana — `script-src 'self'`): listener `matchMedia` menyetel/menghapus atribut `open` milik elemen `<details>` itu sendiri pada breakpoint 720px yang sama yang sudah dipakai `global.css`, dinamai sebagai satu konstanta agar keduanya tak bisa diam-diam berbeda lagi. Perilaku disclosure tanpa-JS di mobile sama sekali tak berubah — pengunjung dengan JavaScript mati tetap mendapat toggle `<summary>` yang berfungsi di bawah 720px, persis seperti yang sudah dideskripsikan docblock `Header.astro` sendiri; hanya kasus desktop, yang memang sejak awal dimaksudkan tak butuh interaksi apa pun, yang berubah.

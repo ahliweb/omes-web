@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](responsif.md)
 
-<!-- i18n-source-hash: sha256:3a741be488045396b39bc19a4c928a53be4a2c4cb71684d6c0c13100459a422d -->
+<!-- i18n-source-hash: sha256:57950950c7327dcc10ad5b5e9fbbf3b1e9c2ed82e6e6c57173a948ecd17a28e4 -->
 
 # Desain responsif
 
@@ -41,6 +41,12 @@ Setiap kontrol interaktif yang ditambahkan untuk keranjang/checkout/wishlist (to
 ## Chrome redesign 2026-09 (issue #166)
 
 Utility bar (`Header.astro`) dan kolom "Kanal" baru pada footer (`Footer.astro`) sama-sama memakai pola fluid yang sudah didokumentasikan di atas — `flex-wrap: wrap` dengan `gap`, tanpa breakpoint baru. Grid footer (`.site-footer-grid`, `grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr))` tidak berubah) sekadar mendapat kolom kelima yang mungkin (Kanal, di samping kolom Informasi yang digerbangi profil) dan mengalir ulang persis seperti empat kolom yang sudah ada. `.stepper`/`.radio-card`/`.segmented` (primitif baru, `global.css`) semuanya adalah baris flex berukuran intrinsik tanpa breakpoint sendiri — sikap "fluid sampai ada alasan nyata untuk berubah bentuk" yang sama yang sudah dijelaskan dokumen ini.
+
+## Tema OMES (hanya profil build `landing`, `omes-web`#3)
+
+`apps/storefront/src/styles/omes-beranda.css` (hanya diimpor `apps/storefront/src/profil/landing/Beranda.astro`, tak pernah ikut dibundel ke `toko`/`berita`) mengikuti sikap fluid-dulu yang sama dengan dokumen ini: strip siklus, grid kemampuan, dan baris KPI pratinjau Control Center semuanya grid `repeat(auto-fit/auto-fill, minmax(min(Npx, 100%), 1fr))` tanpa breakpoint sendiri, mengalir ulang ke satu kolom di lebar ponsel dengan cara yang sama seperti grid katalog/berita yang sudah ada. Satu breakpoint eksplisit yang ditambahkan stylesheet ini adalah `min-width: 900px` pada `.omes-lifecycle` (6 kolom sama besar di atasnya; `auto-fit` di bawahnya), mengikuti konvensi desktop-up `berita.css` sendiri alih-alih mengarang yang baru. Tabel platform (`.omes-table-wrap`) di-scroll horizontal saat overflow (`overflow-x: auto`) alih-alih mengalir ulang — pola tabel responsif standar untuk tabel data dengan beberapa kolom prosa.
+
+Pekerjaan ini juga memperbaiki defek nyata yang sudah ada sebelumnya, ditemukan lewat tinjauan tangkapan layar 390px manual pada deskripsi PR ini sendiri: nav utama `Header.astro` tak terlihat bukan hanya di mobile tetapi di viewport lebar desktop mana pun juga, di setiap mesin browser terkini — lihat bagian "Defek template lama" milik [`docs/ui-ux.md`](ui-ux.md) untuk penjelasan dan perbaikan lengkapnya (`apps/storefront/src/scripts/nav-desktop-buka.ts`). Pemeriksaan overflow `apps/storefront/tests/e2e/responsif.e2e.ts` sendiri tak akan menangkap ini, karena nav yang tak terlihat-tapi-lebar-nol tak pernah menghasilkan scroll horizontal — defek ini ditemukan lewat tinjauan tangkapan layar browser nyata, celah yang sama yang sudah disebutkan bagian "Apa yang tak diperiksa" dokumen ini sendiri untuk regresi visual secara umum.
 
 ## Apa yang diverifikasi, dan bagaimana
 

@@ -83,7 +83,7 @@
  */
 import type { SiteIdentity } from "../lib/awcms/profil";
 import { ROUTES } from "../config/routes";
-import { SEARCH_SURFACE, isGroupActive } from "../config/profil";
+import { SEARCH_SURFACE, isGroupActive, SITE_PROFILE } from "../config/profil";
 import { getPrimaryNav } from "../lib/navigasi-profil";
 import SearchForm from "./SearchForm.astro";
 
@@ -97,6 +97,28 @@ const primaryNav = await getPrimaryNav();
 const tokoAktif = isGroupActive("toko");
 const beritaAktif = isGroupActive("berita");
 const brandInitial = identity.name.trim().charAt(0).toUpperCase() || "•";
+
+/**
+ * OMES theme (`landing` build profile only): the home page's own in-page
+ * sections (Fitur, Siklus, Control Center, Instalasi — `Beranda.astro`) plus
+ * a real, external GitHub repository link, spliced into the resolved nav
+ * right after "Beranda" and before any CMS-published static page /
+ * "Kontak" — `src/lib/navigasi-profil.ts`'s own `insertAfter("home", …)`
+ * contract is left untouched; this is a presentation-only splice local to
+ * this component, not a second nav-resolution mechanism.
+ */
+const omesSectionNav =
+  SITE_PROFILE === "landing"
+    ? [
+        { label: "Fitur", href: "/#fitur" },
+        { label: "Siklus", href: "/#siklus" },
+        { label: "Control Center", href: "/#control-center" },
+        { label: "Instalasi", href: "/#instalasi" }
+      ]
+    : [];
+
+const renderedNav =
+  omesSectionNav.length > 0 ? [primaryNav[0], ...omesSectionNav, ...primaryNav.slice(1)] : primaryNav;
 ---
 
 {tokoAktif && (
@@ -126,9 +148,14 @@ const brandInitial = identity.name.trim().charAt(0).toUpperCase() || "•";
       </summary>
 
       <nav aria-label="Navigasi utama">
-        {primaryNav.map((item) => (
+        {renderedNav.map((item) => (
           <a href={item.href}>{item.label}</a>
         ))}
+        {SITE_PROFILE === "landing" && (
+          <a href="https://github.com/ahliweb/omes" rel="noopener noreferrer" target="_blank">
+            GitHub
+          </a>
+        )}
       </nav>
     </details>
 
@@ -164,4 +191,5 @@ const brandInitial = identity.name.trim().charAt(0).toUpperCase() || "•";
   import "../scripts/keranjang-hitung";
   import "../scripts/wishlist-tombol";
   import "../scripts/akun-header";
+  import "../scripts/nav-desktop-buka";
 </script>

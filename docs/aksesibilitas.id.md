@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](aksesibilitas.md)
 
-<!-- i18n-source-hash: sha256:e0f515a658d21d8ddc60fa2d45ae50313d5b33575d73435ef1f600eeadae8ed6 -->
+<!-- i18n-source-hash: sha256:dc0e42aafbe30957b00105022819982e0599d591fe7e4e0828bd4ce61ac642f1 -->
 
 # Aksesibilitas
 
@@ -32,6 +32,13 @@ Apa yang dilakukan `apps/storefront` untuk aksesibilitas, dan bagaimana itu dipe
 - **Redesign 2026-09 (issue #166)'s token/primitif baru memegang batas AA yang sama walau mockup-nya sendiri tidak.** Caption milik mockup sendiri (`#94a3b8` pada 10px) tidak dirender di mana pun di aplikasi ini — setiap pill/badge/label baru memakai `--status-*-fg` di atas `--status-*-bg` minimal 12px (`--text-xs`), dan setiap pasangan status lembut dipilih agar tetap mencapai 4.5:1 terhadap latarnya sendiri di kedua skema warna (lihat tabel token `docs/ui-ux.md`). Tautan utility bar baru bertinggi minimal `44px` (`.utility-bar-inner a`, `global.css`) walau berada dalam strip gelap yang tampak ramping secara visual — bukan baris pendek milik mockup sendiri — dan kontrol `.radio-card`/`.stepper` membawa `<input type="radio">`/`<button>` asli di bawah setiap permukaan visualnya, tidak pernah `<div>` yang digayakan. `.btn`, `.pill`, `.field-label`, `.stepper`, `.radio-card`, dan `.segmented` hanyalah nama kelas baru — tidak satu pun mengubah markup atau perilaku terrender halaman mana pun di issue ini, karena belum ada halaman yang memakainya (issue #167/#168/#169 yang memakai).
 - **Brand tile baru `Header.astro` bersifat `aria-hidden`** — teks `.site-brand` yang sudah ada (`identity.name`) tetap satu-satunya nama aksesibel tautan itu, sehingga pembaca layar mengumumkan nama situs persis sekali, bukan dua kali.
 - **`akun-header.ts` kini memperbarui setiap elemen `[data-akun-tautan]`, bukan hanya yang pertama.** Issue #166 menambahkan elemen kedua (tautan "Akun saya" di utility bar) di samping tautan "Masuk"/akun milik header sendiri; skrip diubah dari `querySelector` ke `querySelectorAll` pada perubahan yang sama justru agar KEDUANYA tetap sinkron dengan status masuk — sebuah label "Masuk" yang basi bertahan setelah login pada salah satu dari keduanya akan menjadi regresi nyata dan senyap.
+
+## Tema OMES (hanya profil build `landing`, `omes-web`#3)
+
+- **Setiap pasangan warna tema OMES terukur, bukan sekadar diperkirakan mata** — lihat tabel "Kontras, terukur" milik [`docs/ui-ux.md`](ui-ux.md) untuk rasio pasangan lengkapnya (teks/permukaan/aksen). `--text-dim` (`#7a8894`), satu-satunya warna yang dekat dengan batas AA, dibatasi konvensinya hanya untuk teks besar/label dan tak pernah dipakai untuk isi teks di dua panel kartu paling dalam milik tema ini, di mana rasionya jatuh di bawah 4.5:1.
+- **Pratinjau Control Center dan pohon orkestrasi Hermes adalah `role="img"` dengan `aria-label` deskriptif penuh**, dan masing-masing didahului label "◇ Ilustrasi" yang terlihat di prosa sekitarnya — pengguna screen reader diberi tahu, dengan kata-kata, bahwa blok tersebut adalah ilustrasi dengan data contoh sebelum mencapainya, tak dibiarkan menyimpulkannya sendiri dari gaya visual saja.
+- **Kursor berkedip pada activity-stream adalah satu-satunya animasi yang ditambahkan halaman ini**, dan ia dibekukan (bukan sekadar diperlambat) di bawah `prefers-reduced-motion: reduce` (`apps/storefront/src/styles/omes-beranda.css`).
+- **Pekerjaan ini menemukan dan memperbaiki defek keyboard/screen-reader nyata yang sudah ada sebelumnya, memengaruhi setiap profil build, bukan hanya `landing`**: nav utama `Header.astro` (di dalam `<details class="mobile-nav-toggle">`) dan tombol buka/tutupnya sendiri (`<summary>`) sama-sama tak terjangkau di atas breakpoint mobile 720px pada Chromium, Firefox, dan WebKit terkini — elemen `<details>` yang tertutup menyembunyikan konten non-`<summary>`-nya tanpa syarat, yang tak diubah oleh override CSS penulis mana pun (termasuk aturan `display: flex` aplikasi ini sendiri, ada sejak issue #24). `apps/storefront/src/scripts/nav-desktop-buka.ts` memperbaiki ini dengan sinkronisasi atribut `open` yang digerakkan `matchMedia`, membiarkan perilaku disclosure tanpa-JS di mobile sama sekali tak berubah. Lihat tulisan lengkap [`docs/ui-ux.md`](ui-ux.md) sendiri untuk before/after selengkapnya.
 
 ## Apa yang diperbaiki oleh jalankan axe (issue #183)
 

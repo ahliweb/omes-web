@@ -223,3 +223,57 @@ Builds on the tokens/primitives above — no change to `apps/storefront/src/styl
 One deliberate divergence from the mockup's literal shape: the POS screen (`/admin/commerce-pos`) keeps its own `.pos-layout` two-pane grid rather than adopting the generic `.admin-two-pane` primitive, because its cart side needs POS-specific controls (a quantity stepper, a tendered-amount/change readout, a `@media print` receipt block) the generic primitive does not model — the same "restyle, do not force-fit" judgment call issue #167 made for the checkout step-pills above.
 
 No dedicated commerce media-grid screen exists yet — product/slider/testimonial images are managed inline per record, not through a standalone gallery — so `.admin-media-grid` is not consumed by this issue; it remains available in `admin.css` for whichever screen adopts it next.
+
+## The OMES theme (`landing` build profile only, `omes-web`#3)
+
+This deployment (`omes.ahlikoding.com`, `SITE_PROFILE=landing`) carries its own dark theme for the public OMES product site — [`ahliweb/omes`](https://github.com/ahliweb/omes), a separate, independent project this storefront presents; not the admin/operator surface, which is the real OMES Control Center at `https://omes-cms.ahlikoding.com/admin/omes`. Source: `redesign/redesign-omes.zip`'s "OMES Control Center" operator-UI prototype (9 screens, `github.md`'s own screen map) — adopted here as the PUBLIC site's visual language, not a copy of the admin UI itself. Implemented through this app's EXISTING theming mechanism (CSS custom properties, `template:init`'s own identity/colour config) — no parallel theme system, no new build step. `toko`/`berita` are unaffected: every OMES-specific rule below is gated by `[data-tema="omes"]`, an attribute `BaseLayout.astro` sets on `<html>` only when `SITE_PROFILE=landing` (`apps/storefront/src/config/profil.ts`'s `SITE_PROFILE`), and the OMES-only page components (`apps/storefront/src/styles/omes-beranda.css`) are imported only from `apps/storefront/src/profil/landing/Beranda.astro` — never bundled into another profile's CSS.
+
+### A second type system, self-hosted the same way
+
+| Token | Family | Weights vendored |
+| --- | --- | --- |
+| `--font-sans` (OMES theme only) | Public Sans | 400, 500, 600, 700 |
+| `--font-mono` (OMES theme only) | JetBrains Mono | 400, 500, 600 |
+
+Same rule as the base type system above: same-origin `/fonts/*.woff2` only (`apps/storefront/public/fonts/LICENSE-OFL.txt` names both families, SIL OFL, `@fontsource` package version 5.3.0 — the same CDN mirror the base four families were vendored from), `font-display: swap`, no Google Fonts, no new CSP origin. `toko`/`berita` never set `--font-sans`/`--font-mono` to these names, so a browser building either profile has no matching text to trigger a fetch of these two families at all.
+
+### Tokens (`global.css`'s `:root[data-tema="omes"]` block)
+
+Dark, unconditionally — the source prototype has no light variant, so this theme does not follow `prefers-color-scheme`; its selector's specificity (an attribute selector) overrides both the light `:root` defaults and the `prefers-color-scheme: dark` block for any element carrying the attribute.
+
+| Group | Values |
+| --- | --- |
+| Surfaces | `--bg-primary #0b0f13`, `--bg-surface #0e1216`, `--bg-subtle #151a20`, plus three OMES-only panel steps with no base-token equivalent: `--bg-panel-2 #191f26`, `--bg-panel-3 #1e262e`, `--bg-panel-4 #242c35` |
+| Text | `--text-primary #e6edf3`, `--text-secondary #c6d1da`, `--text-muted #8b99a6`, `--text-dim #7a8894` (large text/labels only — see the contrast table below) |
+| Accent | `--accent-primary`/`--link-color` cyan `#5fc8d6`, plus three OMES-only status accents with no base-token name: `--omes-green #6fd08c`, `--omes-violet #8b9cf7`, `--omes-rose #e9a9a0` |
+
+### Contrast, measured (WCAG 2.1 relative-luminance formula, not merely eyeballed)
+
+The redesign's own design notes recorded that its dimmest caption colour (`#7a8894`) needed raising to clear AA on a dark panel — this theme keeps that colour but restricts where it is used rather than raising it further, since a plain reading of the numbers below shows it already fails on the two deepest card panels:
+
+| Pair | Ratio | AA (4.5:1 normal / 3:1 large) |
+| --- | --- | --- |
+| `--text-primary` on `--bg-primary` | 16.28:1 | Pass |
+| `--text-secondary` on `--bg-primary` | 12.39:1 | Pass |
+| `--text-muted` on `--bg-subtle` | 6.00:1 | Pass |
+| `--text-muted` on the deepest card panel (`--bg-panel-4`) | 4.85:1 | Pass |
+| `--text-dim` on `--bg-primary` | 5.29:1 | Pass (large text/labels only — this token's own convention) |
+| `--text-dim` on `--bg-panel-3`/`--bg-panel-4` | 4.21:1 / 3.89:1 | **Large text only** — never used for body copy on these two panels |
+| `--accent-primary` (cyan) on `--bg-primary` | 9.82:1 | Pass |
+| `--color-accent` (amber, CMS-driven) on `--bg-primary` | 10.13:1 | Pass |
+| `--omes-green` / `--omes-violet` / `--omes-rose` on `--bg-primary` | 10.14:1 / 7.51:1 / 9.75:1 | Pass |
+
+`global.css`'s own `[data-tema="omes"]` block carries this same table in its header comment, next to the tokens it documents.
+
+### Home page components (`apps/storefront/src/styles/omes-beranda.css`, `apps/storefront/src/profil/landing/Beranda.astro`)
+
+The lifecycle strip (Bootstrap → Check → Diff → Apply → Verify → Rollback), the capabilities grid, the platform table, and the install code block reuse this app's existing primitives (`.card`-adjacent surfaces, `.btn`, `.is-mono`) over the new OMES tokens — no new interaction pattern. Two sections are explicit, labelled STATIC illustrations with example data, never a screenshot and never the redesign zip's own PNGs (which carry a third-party chat UI's chrome the OMES site itself has nothing to do with):
+
+- **Control Center preview** (`.omes-cc-mock`) — a sidebar + KPI-tile mock of the fleet overview screen, `role="img"` with a full descriptive `aria-label`, and a visible "◇ Ilustrasi" label in the prose above it.
+- **Hermes orchestration** (`.omes-hermes`) — a planner → agent → subagent tree (`.omes-tree`, `role="img"`) plus an example activity-stream log; the log's blinking cursor is the only animation on this page and is frozen (not merely slowed) under `prefers-reduced-motion: reduce`.
+
+### A pre-existing template defect this work found and fixed: the desktop primary nav was invisible
+
+`Header.astro`'s primary nav lives inside `<details class="mobile-nav-toggle">` so a visitor with no JavaScript can open/close it below 720px (issue #24's own no-JS disclosure). `global.css`'s desktop rule (`.mobile-nav-toggle nav { display: flex }`) was written on the assumption that an author `display` override makes a CLOSED `<details>` element's non-`<summary>` content render anyway above the mobile breakpoint. Verified against real, current Chromium, Firefox, and WebKit builds (Playwright): that assumption is false on all three — a closed `<details>` hides its non-`<summary>` content unconditionally, and no author CSS override changes that. The practical effect, on **every build profile**, not just `landing`: the entire primary nav (and, since `.mobile-nav-toggle summary` is also `display: none` above 720px, the toggle to open it) was unreachable by mouse, keyboard, or screen reader on any desktop-width viewport, with nothing in this repository's existing test suite catching it (`profil-build-smoke`-style tests assert on the built HTML string, not on a real browser's rendered visibility).
+
+Fixed by `apps/storefront/src/scripts/nav-desktop-buka.ts` (mounted from `Header.astro`'s existing `<script>` block, an external module like every other script there — `script-src 'self'`): a `matchMedia` listener sets/clears the `<details>` element's own `open` attribute at the same 720px breakpoint `global.css` already uses, named as one constant so the two cannot silently drift apart again. The mobile, no-JS disclosure behaviour is completely unchanged — a visitor with JavaScript off still gets a working `<summary>` toggle below 720px, exactly as `Header.astro`'s own docblock already described; only the desktop case, which was always meant to need no interaction at all, changes.

@@ -1,23 +1,29 @@
 ---
 /**
- * The `landing` profile's home page (issue #137) — a company-profile /
- * landing site's `/`: a hero (the site's name, tagline and description,
- * with the contact page as the primary call to action), the published
- * static pages (`listStaticPages()` — the same list the footer and the
- * header nav render, so every page the CMS publishes is reachable from
- * here), and a contact section (address, phone, e-mail, WhatsApp — the
- * identity fields `/kontak` renders in full). `identity.description` is
- * the CMS's tagline (`src/lib/awcms/profil.ts`), so the hero's one line of
- * copy under the name is the operator's own.
+ * The `landing` profile's home page (issue #137; OMES theme, `omes-web`#3) —
+ * the public product site for OMES (github.com/ahliweb/omes), a separate,
+ * independent project this deployment's `landing` build profile presents.
+ * Not the admin/operator surface: the real OMES Control Center lives in the
+ * CMS at `https://omes-cms.ahlikoding.com/admin/omes` — this page's own
+ * "Control Center" section is a STATIC illustration with example data, not
+ * a live embed, and is labelled as such wherever it appears.
  *
- * No commerce, no news: nothing here imports from `src/lib/catalog.ts` or
- * `src/lib/berita.ts`, so a `landing` build fetches neither products nor
- * posts. Everything it reads (`getSiteIdentity()`, `listStaticPages()`)
- * `BaseLayout.astro` already reads for every page, memoized per build.
+ * Content grounded in OMES's own `README.md` (`ahliweb/omes`, `v0.4.0`) —
+ * every capability claim below (preflight, idempotent modules with verify,
+ * `omes doctor` drift detection, backup/restore/rollback, the hardening
+ * baseline, Hermes Agent integration) and the supported-platform table are
+ * copied from that document's "What OMES does"/"Supported platforms"
+ * sections, not invented. OMES is pre-alpha (the status chip below), and
+ * this page never claims otherwise.
+ *
+ * `identity`/`getSiteIdentity()` still drives `<title>`/canonical/OG (this
+ * app's existing CMS data flow, unchanged) — the OMES sections below are
+ * added storefront components alongside it, not a replacement for it.
+ * `pages`/`listStaticPages()` (any CMS-published static page) still renders
+ * its own section, same as before this change.
  *
  * Renders through `BaseLayout` (skip link, `<header>`/`<main id="konten">`/
- * `<footer>` landmarks) and owns the page's single `<h1>`. Every string is
- * Indonesian, matching the rest of this app. Selected by
+ * `<footer>` landmarks) and owns the page's single `<h1>`. Selected by
  * `integrations/profil.mjs`'s `@profil/beranda` alias when
  * `SITE_PROFILE=landing`.
  */
@@ -26,30 +32,259 @@ import { getSiteIdentity } from "../../lib/awcms/profil";
 import { listStaticPages } from "../../lib/awcms/pages";
 import { ROUTES } from "../../config/routes";
 import "../../styles/katalog.css";
+import "../../styles/omes-beranda.css";
 
 const identity = await getSiteIdentity();
 const pages = await listStaticPages();
 
-const whatsappHref = identity.whatsappNumber
-  ? `https://wa.me/${identity.whatsappNumber.replace(/[^\d]/g, "")}`
-  : null;
+const CONTROL_CENTER_LOGIN = "https://omes-cms.ahlikoding.com/login";
+const GITHUB_REPO = "https://github.com/ahliweb/omes";
+const INSTALL_DOCS = "https://github.com/ahliweb/omes/blob/main/docs/installation.md";
+
+/** README.md "Quick start", step 1 — the pinned v0.4.0 bootstrap one-liner, copied verbatim. */
+const BOOTSTRAP_COMMAND =
+  "curl -fsSL https://raw.githubusercontent.com/ahliweb/omes/v0.4.0/install/bootstrap.sh | bash";
+
+const LIFECYCLE = [
+  { label: "Bootstrap", detail: "Instal rilis stabil yang immutable dan pasang symlink omes ke ~/.local/bin." },
+  { label: "Check", detail: "Preflight baca-saja untuk setiap modul sebelum ada perubahan apa pun diterapkan." },
+  { label: "Diff", detail: "--dry-run menampilkan persis apa yang akan berubah, tanpa mengubah apa pun." },
+  { label: "Apply", detail: "Menerapkan modul yang diminta secara idempoten, mencadangkan setiap berkas yang disentuh." },
+  { label: "Verify", detail: "Setiap perubahan diverifikasi (module_verify) segera setelah diterapkan." },
+  { label: "Rollback", detail: "omes backup/restore/uninstall bekerja offline dan tak pernah menghapus yang bukan miliknya." }
+] as const;
+
+const CAPABILITIES = [
+  {
+    title: "Preflight sebelum mutasi",
+    body: "Mendeteksi platform (Ubuntu Server 26.04/24.04/22.04 LTS, Linux Mint 22.x) dan menolak mengubah apa pun yang tak didukung — keluar kode 3 sebelum ada mutasi."
+  },
+  {
+    title: "Modul idempoten dengan verifikasi",
+    body: "Setiap modul dijalankan lewat omes check lalu omes install, dan setiap perubahan diverifikasi lewat module_verify, bukan diasumsikan berhasil."
+  },
+  {
+    title: "Deteksi drift — omes doctor",
+    body: "omes doctor melaporkan status OK/WARN/FAIL kapan pun dijalankan, bukan hanya saat instalasi pertama — drift dilaporkan di setiap pemeriksaan berikutnya."
+  },
+  {
+    title: "Backup, restore, rollback",
+    body: "omes backup/restore/uninstall bekerja sepenuhnya offline dan tidak pernah menghapus berkas yang bukan dipasang oleh OMES sendiri."
+  },
+  {
+    title: "Baseline hardening",
+    body: "Memasang baseline terinspirasi Omarchy: tooling CLI serta kebijakan firewall/pembaruan pada profil server, sesi Hyprland aditif-opsional pada profil desktop."
+  },
+  {
+    title: "Integrasi Hermes Agent",
+    body: "Hermes Agent terpasang sebagai lapisan otomasi pada kedua profil — OMES berintegrasi dengannya dan tidak menjalankan runtime agen kedua."
+  }
+] as const;
+
+const PLATFORMS = [
+  { platform: "Ubuntu Server 26.04 LTS / 24.04 LTS, amd64", tier: "tier1", notes: "Target utama" },
+  { platform: "Linux Mint 22.x, amd64", tier: "tier1", notes: "Target desktop" },
+  { platform: "Ubuntu Server 22.04 LTS, amd64", tier: "tier2", notes: "Didukung, prioritas lebih rendah" },
+  { platform: "Platform di atas, arm64", tier: "tier3", notes: "Best-effort" },
+  { platform: "Selain itu (Debian, Fedora, dll.)", tier: "unsupported", notes: "omes check/install keluar kode 3 sebelum ada mutasi" }
+] as const;
+
+const ACTIVITY_LOG = [
+  { time: "09:12:03", text: "planner → agent[check]: mulai omes check --profile server" },
+  { time: "09:12:04", text: "agent[check] → subagent[preflight]: verifikasi platform Ubuntu 24.04 LTS" },
+  { time: "09:12:06", text: "subagent[preflight]: OK — 6 modul memenuhi syarat" },
+  { time: "09:12:07", text: "planner → agent[apply]: terapkan security-baseline (dry-run)" }
+] as const;
+
+const description =
+  identity.name === "OMES"
+    ? "OMES: compatibility layer dan toolkit deployment terinspirasi Omarchy untuk Ubuntu Server dan Linux Mint, dengan Hermes Agent sebagai lapisan otomasi. Pre-alpha v0.4.0."
+    : identity.description;
 ---
 
-<BaseLayout title={identity.name} description={identity.description} canonicalPath="/">
+<BaseLayout title={identity.name} description={description} canonicalPath="/">
   <div class="container">
-    <section class="home-section landing-hero" aria-labelledby="landing-heading">
-      <div class="page-heading">
-        <h1 id="landing-heading">{identity.name}</h1>
-        <p>{identity.description}</p>
+    <section class="omes-hero" aria-labelledby="landing-heading">
+      <p class="omes-status-chip"><span class="dot" aria-hidden="true"></span> Pre-alpha · v0.4.0</p>
+      <h1 id="landing-heading">{identity.name}</h1>
+      <p class="omes-hero-tagline">
+        Compatibility layer dan toolkit deployment terinspirasi Omarchy untuk
+        Ubuntu Server 26.04/24.04 LTS dan Linux Mint 22.x, dengan Hermes
+        Agent sebagai lapisan otomasi terintegrasi.
+      </p>
+      <div class="omes-hero-actions">
+        <a class="btn btn--primary" href="#instalasi">Mulai</a>
+        <a class="btn btn--secondary" href={CONTROL_CENTER_LOGIN}>Buka Control Center</a>
       </div>
-      <div class="contact-actions">
-        <a class="button-primary" href={ROUTES.contact}>Hubungi Kami</a>
-        {pages.length > 0 && <a class="button-primary" href="#halaman">Lihat Halaman</a>}
+      <p class="omes-disclaimer">
+        OMES adalah proyek independen berlisensi MIT, terinspirasi oleh alur
+        kerja Omarchy — bukan Omarchy resmi, dan tidak berafiliasi dengan
+        Canonical (Ubuntu), Linux Mint, Docker, Telegram, atau Nous Research.
+      </p>
+    </section>
+
+    <section class="omes-section" id="siklus" aria-labelledby="siklus-heading">
+      <h2 id="siklus-heading">Siklus operasi</h2>
+      <p class="omes-section-lede">Setiap perubahan yang dibuat OMES mengikuti enam langkah yang sama, dari deteksi hingga pemulihan.</p>
+      <ol class="omes-lifecycle">
+        {LIFECYCLE.map((step, index) => (
+          <li class="omes-step">
+            <span class="omes-step-index is-mono">{String(index + 1).padStart(2, "0")}</span>
+            <h3>{step.label}</h3>
+            <p>{step.detail}</p>
+          </li>
+        ))}
+      </ol>
+    </section>
+
+    <section class="omes-section" id="fitur" aria-labelledby="fitur-heading">
+      <h2 id="fitur-heading">Kemampuan</h2>
+      <p class="omes-section-lede">Diambil langsung dari README OMES — tidak ada klaim yang melebihi apa yang benar-benar sudah diimplementasikan.</p>
+      <div class="omes-cap-grid">
+        {CAPABILITIES.map((cap, index) => (
+          <div class="omes-cap-card">
+            <span class="omes-cap-icon is-mono" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+            <h3>{cap.title}</h3>
+            <p>{cap.body}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <section class="omes-section" id="control-center" aria-labelledby="cc-heading">
+      <h2 id="cc-heading">Control Center</h2>
+      <p class="omes-section-lede">
+        Pratinjau statis dengan data contoh — bukan tangkapan layar. Control
+        Center sesungguhnya berjalan di CMS: <a href={CONTROL_CENTER_LOGIN}>omes-cms.ahlikoding.com/admin/omes</a>.
+      </p>
+      <p class="omes-illustration-label" role="note">◇ Ilustrasi — data contoh, bukan status armada nyata</p>
+      <div class="omes-cc-mock" role="img" aria-label="Ilustrasi ringkasan armada OMES Control Center dengan data contoh: tiga host, status pemeriksaan dan drift">
+        <div class="omes-cc-sidebar">
+          <span class="omes-cc-sidebar-item" aria-current="true">Overview</span>
+          <span class="omes-cc-sidebar-item">Hosts</span>
+          <span class="omes-cc-sidebar-item">Modules</span>
+          <span class="omes-cc-sidebar-item">Backups</span>
+          <span class="omes-cc-sidebar-item">Hermes</span>
+        </div>
+        <div class="omes-cc-main">
+          <div class="omes-cc-kpis">
+            <div class="omes-cc-kpi">
+              <p class="omes-cc-kpi-label">Host terkelola</p>
+              <p class="omes-cc-kpi-value">03</p>
+            </div>
+            <div class="omes-cc-kpi">
+              <p class="omes-cc-kpi-label">Sehat</p>
+              <p class="omes-cc-kpi-value">02</p>
+            </div>
+            <div class="omes-cc-kpi">
+              <p class="omes-cc-kpi-label">Drift</p>
+              <p class="omes-cc-kpi-value">01</p>
+            </div>
+          </div>
+          <div class="omes-cc-row">
+            <span class="omes-status-dot omes-status-dot--ok" aria-hidden="true"></span>
+            <span class="omes-cc-row-host is-mono">srv-contoh-01</span>
+            <span class="omes-cc-row-meta">Diperiksa 2 menit lalu</span>
+          </div>
+          <div class="omes-cc-row">
+            <span class="omes-status-dot omes-status-dot--drift" aria-hidden="true"></span>
+            <span class="omes-cc-row-host is-mono">srv-contoh-02</span>
+            <span class="omes-cc-row-meta">Drift terdeteksi — omes doctor</span>
+          </div>
+          <div class="omes-cc-row">
+            <span class="omes-status-dot omes-status-dot--ok" aria-hidden="true"></span>
+            <span class="omes-cc-row-host is-mono">srv-contoh-03</span>
+            <span class="omes-cc-row-meta">Diperiksa 14 menit lalu</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="omes-section" aria-labelledby="hermes-heading">
+      <h2 id="hermes-heading">Orkestrasi Hermes</h2>
+      <p class="omes-section-lede">
+        Hermes Agent adalah lapisan otomasi OMES — planner/manager mendelegasikan ke agent, yang dapat mendelegasikan lagi ke subagent.
+      </p>
+      <p class="omes-illustration-label" role="note">◇ Ilustrasi — contoh alur delegasi, bukan sesi nyata</p>
+      <div class="omes-hermes">
+        <div role="img" aria-label="Ilustrasi pohon delegasi Hermes: planner mendelegasikan ke agent check dan apply, yang masing-masing mendelegasikan ke subagent">
+        <ul class="omes-tree">
+          <li>
+            <span class="omes-tree-node omes-tree-node--root">Planner / Manager</span>
+            <ul>
+              <li>
+                <span class="omes-tree-node">Agent · check</span>
+                <ul>
+                  <li><span class="omes-tree-node">Subagent · preflight</span></li>
+                </ul>
+              </li>
+              <li>
+                <span class="omes-tree-node">Agent · apply</span>
+                <ul>
+                  <li><span class="omes-tree-node">Subagent · backup</span></li>
+                  <li><span class="omes-tree-node">Subagent · verify</span></li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+        </ul>
+        </div>
+        <ul class="omes-activity-log" aria-label="Contoh log aktivitas">
+          {ACTIVITY_LOG.map((entry) => (
+            <li><time>{entry.time}</time><span>{entry.text}</span></li>
+          ))}
+          <li aria-hidden="true"><span class="cursor"></span></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="omes-section" aria-labelledby="platform-heading">
+      <h2 id="platform-heading">Platform yang didukung</h2>
+      <div class="omes-table-wrap">
+        <table class="omes-table">
+          <caption>Sumber: README OMES, bagian "Supported platforms".</caption>
+          <thead>
+            <tr>
+              <th scope="col">Platform</th>
+              <th scope="col">Tingkat</th>
+              <th scope="col">Catatan</th>
+            </tr>
+          </thead>
+          <tbody>
+            {PLATFORMS.map((row) => (
+              <tr>
+                <td>{row.platform}</td>
+                <td class="is-mono">{row.tier}</td>
+                <td>{row.notes}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="omes-section" id="instalasi" aria-labelledby="instalasi-heading">
+      <h2 id="instalasi-heading">Instalasi</h2>
+      <p class="omes-section-lede">
+        Satu perintah yang sama untuk kedua profil (server/desktop) — profil dipilih lewat flag saat pemeriksaan. Perintah ini adalah bootstrap resmi dari README OMES v0.4.0; tidak ada installer yang di-hosting ulang di sini.
+      </p>
+      <div class="omes-code-block">
+        <div class="omes-code-block-head">
+          <span class="omes-code-block-label is-mono">bash</span>
+          <button type="button" class="btn btn--secondary btn--sm omes-copy-btn" data-omes-copy={BOOTSTRAP_COMMAND}>
+            Salin
+          </button>
+        </div>
+        <pre><code>{BOOTSTRAP_COMMAND}</code></pre>
+      </div>
+      <div class="omes-install-links">
+        <a class="btn btn--quiet" href={INSTALL_DOCS} rel="noopener noreferrer" target="_blank">Panduan instalasi lengkap →</a>
+        <a class="btn btn--quiet" href={GITHUB_REPO} rel="noopener noreferrer" target="_blank">Lihat repositori GitHub →</a>
       </div>
     </section>
 
     {pages.length > 0 && (
-      <section class="home-section" id="halaman" aria-labelledby="halaman-heading">
+      <section class="omes-section" id="halaman" aria-labelledby="halaman-heading">
         <div class="home-section-heading">
           <h2 id="halaman-heading">Halaman</h2>
         </div>
@@ -65,7 +300,7 @@ const whatsappHref = identity.whatsappNumber
       </section>
     )}
 
-    <section class="home-section" aria-labelledby="kontak-heading">
+    <section class="omes-section" aria-labelledby="kontak-heading">
       <div class="home-section-heading">
         <h2 id="kontak-heading">Kontak</h2>
         <a href={ROUTES.contact}>Halaman kontak &rarr;</a>
@@ -89,13 +324,35 @@ const whatsappHref = identity.whatsappNumber
             <p><a href={`mailto:${identity.contactEmail}`}>{identity.contactEmail}</a></p>
           </div>
         )}
-        {whatsappHref && (
-          <div class="contact-card">
-            <h3>WhatsApp</h3>
-            <p><a href={whatsappHref} rel="noopener noreferrer" target="_blank">Chat WhatsApp</a></p>
-          </div>
-        )}
       </div>
     </section>
   </div>
+
+  <script>
+    // Progressive enhancement only: the install command is already fully
+    // readable/selectable text in a <pre> with no JS at all. This just adds
+    // a one-click copy affordance — an external, Astro-bundled module
+    // (script-src 'self'), never inline.
+    function wireCopyButtons() {
+      const buttons = document.querySelectorAll<HTMLButtonElement>("[data-omes-copy]");
+      for (const button of buttons) {
+        button.addEventListener("click", async () => {
+          const text = button.getAttribute("data-omes-copy") ?? "";
+          try {
+            await navigator.clipboard.writeText(text);
+            const original = button.textContent;
+            button.textContent = "Tersalin!";
+            setTimeout(() => {
+              button.textContent = original;
+            }, 2000);
+          } catch {
+            // Clipboard unavailable (denied permission, insecure context,
+            // private window) — the command is still selectable text in the
+            // <pre> above, so this fails silently rather than with a prompt().
+          }
+        });
+      }
+    }
+    wireCopyButtons();
+  </script>
 </BaseLayout>

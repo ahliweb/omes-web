@@ -9,7 +9,7 @@ What is root-owned, what is a synchronised subtree, and what is still planned �
 | `packages/config/` | Shared `tsconfig` preset | this repo |
 | `packages/gerbang/` | This workspace's audit gates, as a package | this repo |
 | `packages/kontrak/` | The type-only DTO contract `apps/storefront` imports from `apps/cms`, plus its import-direction gate | this repo |
-| `tools/`, `tests/`, `.changesets/` | Cross-workspace scripts (incl. `tools/seed-borneojek-mart.ts`), root gate tests, release notes | this repo |
+| `tools/`, `tests/`, `.changesets/` | Cross-workspace scripts (incl. tools/seed-borneojek-mart.ts), root gate tests, release notes | this repo |
 | `knowledge/` | This directory — the federated Graphify + Obsidian workflow | this repo |
 | `.claude/skills/` | `awcms-one-storefront`, `awcms-one-commerce` — how-to guides for adding a storefront page or a commerce table/endpoint through the module | this repo |
 | `compose.yaml`, `docker/postgres-init/` | A disposable local/CI PostgreSQL ([issue #25](https://github.com/ahliweb/awcms-one/issues/25)) — never production | this repo |

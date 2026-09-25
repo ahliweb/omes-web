@@ -80,7 +80,7 @@ Both are new AWCMS tables carrying the legacy tables' own concepts forward: an i
 
 ## seputarborneo.com → `blog_content` / `seo_distribution` (issue #58)
 
-Column mapping for `tools/import-seputarborneo.ts` (`bun run import:seputarborneo`), which reads seputarborneo's legacy MariaDB archive and EXPORTS it to `apps/cms`'s own operator pipeline (`bun run blog:legacy:import`, Issue #599/ADR-0114 in upstream awcms) — see `docs/deployment.md`'s "Importing seputarborneo" for the full runbook. Never a legacy column list ported verbatim into a new table: `blog_content`'s schema (Portable Text body, term/institution classification) already exists and predates this exporter.
+Column mapping for tools/import-seputarborneo.ts (`bun run import:seputarborneo`), which reads seputarborneo's legacy MariaDB archive and EXPORTS it to `apps/cms`'s own operator pipeline (`bun run blog:legacy:import`, Issue #599/ADR-0114 in upstream awcms) — see `docs/deployment.md`'s "Importing seputarborneo" for the full runbook. Never a legacy column list ported verbatim into a new table: `blog_content`'s schema (Portable Text body, term/institution classification) already exists and predates this exporter.
 
 ### `berita_red` → `tools/out/seputarborneo/posts.ndjson`, one `LegacyImportRecord` per line
 

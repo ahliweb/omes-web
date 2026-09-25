@@ -36,7 +36,7 @@ Media (product photography, article heroes, ad creatives) resolves through `GET 
 
 ## Template mechanism
 
-`bun run template:init` (`tools/template-init.ts`) is an idempotent CLI a derived repository runs once to rewrite its brand surface — name, domain, colours, contact, chosen profile — never touching `apps/cms/**`. `.github/workflows/template-init-smoke.yml` matrices it over the three profiles on every push; all four of its legs (`toko`, `berita`, `landing`, `root-suite`) are required status checks. Per-profile seeds live at `tools/seed-data/profil/{toko,berita,landing}/**`; the BjekMart reference content itself (kept as the template's worked example) is `tools/seed-data/contoh/borneojek-mart/**`. Full walkthrough: [`docs/template.md`](template.md) and [ADR-0018](adr/0018-awcms-one-is-a-template-with-build-profiles-and-an-idempotent-init.md).
+`bun run template:init` (`tools/template-init.ts`) is an idempotent CLI a derived repository runs once to rewrite its brand surface — name, domain, colours, contact, chosen profile — never touching `apps/cms/**`. `.github/workflows/template-init-smoke.yml` matrices it over the three profiles on every push; all four of its legs (`toko`, `berita`, `landing`, `root-suite`) are required status checks. Per-profile seeds live at `tools/seed-data/profil/{toko,berita,landing}/**`; the BjekMart reference content itself (kept as the template's worked example) is tools/seed-data/contoh/borneojek-mart/**. Full walkthrough: [`docs/template.md`](template.md) and [ADR-0018](adr/0018-awcms-one-is-a-template-with-build-profiles-and-an-idempotent-init.md).
 
 ## Ops and deployment
 

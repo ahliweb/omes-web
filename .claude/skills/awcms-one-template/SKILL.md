@@ -49,7 +49,7 @@ bun run template:init \
 
 **What it rewrites** (and nothing outside this list): `apps/storefront/src/config/site.ts` (`DEFAULT_IDENTITY`, `DEFAULT_THEME_COLORS`, `SITE_NAME`/`SITE_DESCRIPTION` fallbacks), root `package.json` (name/description/homepage/repository — `repository.url` becomes a loud `GANTI-ORG` placeholder since the tool has no `--org`/`--repo` flag), `compose.yaml`, `README*.md`/`SUPPORT*.md` heroes, both `.env.example` files (including uncommenting and setting `SITE_PROFILE`), `tools/seed-cms.ts`'s default profile and the `db:seed:cms` script line, `CHANGELOG.md` (reset to `0.1.0`), and `.changesets/*.md` (cleared).
 
-**What it removes**: the BjekMart-only reference seed (`tools/seed-borneojek-mart.ts`, `tools/seed-data/contoh/borneojek-mart/**`), the seputarborneo importer and its test, and `graphify-out/`/`knowledge/generated/` (an absent directory is a valid state — a fresh `bun run knowledge:graph:update` recreates it).
+**What it removes**: the BjekMart-only reference seed (tools/seed-borneojek-mart.ts, tools/seed-data/contoh/borneojek-mart/**), the seputarborneo importer and its test, and graphify-out//knowledge/generated/ (an absent directory is a valid state — a fresh `bun run knowledge:graph:update` recreates it).
 
 **What it never touches, under any flag**: `apps/cms/**`. That tree is `ahliweb/awcms` embedded via `git subtree` — upstream's own code, never rewritten locally (see the root [`AGENTS.md`](../../../AGENTS.md#the-subtree-embed)). A derived app's tenant name, contact details, and theming live in what `apps/cms` serves at runtime or in `apps/storefront`'s own build-time `site.ts` fallback, never in `apps/cms`'s source.
 
@@ -74,7 +74,7 @@ bun run dev
 
 1. **`repository.url` in `package.json`** still reads `GANTI-ORG` — replace it, and any GitHub links in `README*.md`/`SUPPORT*.md`/`SECURITY*.md` still pointing at `ahliweb/awcms-one`, once the new repo has an owner.
 2. **`SITE_PROFILE`** in `apps/storefront/.env.example` matches the profile chosen — `bun run build` with no override should ship exactly that profile's pages.
-3. **No leftover BjekMart-only artefact** — `tools/seed-borneojek-mart.ts` and `tools/seed-data/contoh/**` should be gone; `tests/seed-profil.test.mjs`'s reference-example test cases self-skip once they are.
+3. **No leftover BjekMart-only artefact** — tools/seed-borneojek-mart.ts and `tools/seed-data/contoh/**` should be gone; `tests/seed-profil.test.mjs`'s reference-example test cases self-skip once they are.
 4. **`cd apps/storefront && SITE_PROFILE=<chosen> bun run check`** passes, and a real `bun run build` produces only the chosen profile's routes.
 
 ## Common mistakes

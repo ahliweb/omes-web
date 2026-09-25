@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](status.md)
 
-<!-- i18n-source-hash: sha256:f38e8b8d075bb3736ec4cfd7fb18959c476b5b52b97281f5e4871f71db98c57b -->
+<!-- i18n-source-hash: sha256:e3b95301b1566307d95f80902566937a81de58312a0ddbfe988c06243ae574ed -->
 
 # Status
 
@@ -38,7 +38,7 @@ Media (fotografi produk, hero artikel, kreatif iklan) diresolusi lewat `GET /api
 
 ## Mekanisme template
 
-`bun run template:init` (`tools/template-init.ts`) adalah CLI idempoten yang dijalankan repositori turunan sekali untuk menulis ulang permukaan brand-nya — nama, domain, warna, kontak, profil pilihan — tidak pernah menyentuh `apps/cms/**`. `.github/workflows/template-init-smoke.yml` mematriks-kannya atas tiga profil di setiap push; keempat leg-nya (`toko`, `berita`, `landing`, `root-suite`) adalah status check wajib. Seed per profil hidup di `tools/seed-data/profil/{toko,berita,landing}/**`; konten referensi BjekMart sendiri (dipertahankan sebagai contoh kerja template) adalah `tools/seed-data/contoh/borneojek-mart/**`. Walkthrough lengkap: [`docs/template.md`](template.id.md) dan [ADR-0018](adr/0018-awcms-one-is-a-template-with-build-profiles-and-an-idempotent-init.md).
+`bun run template:init` (`tools/template-init.ts`) adalah CLI idempoten yang dijalankan repositori turunan sekali untuk menulis ulang permukaan brand-nya — nama, domain, warna, kontak, profil pilihan — tidak pernah menyentuh `apps/cms/**`. `.github/workflows/template-init-smoke.yml` mematriks-kannya atas tiga profil di setiap push; keempat leg-nya (`toko`, `berita`, `landing`, `root-suite`) adalah status check wajib. Seed per profil hidup di `tools/seed-data/profil/{toko,berita,landing}/**`; konten referensi BjekMart sendiri (dipertahankan sebagai contoh kerja template) adalah tools/seed-data/contoh/borneojek-mart/**. Walkthrough lengkap: [`docs/template.md`](template.id.md) dan [ADR-0018](adr/0018-awcms-one-is-a-template-with-build-profiles-and-an-idempotent-init.md).
 
 ## Ops dan deployment
 

@@ -46,7 +46,7 @@ bun run template:init \
 
 **Yang ditulis ulang** (dan tidak ada di luar daftar ini): `apps/storefront/src/config/site.ts` (`DEFAULT_IDENTITY`, `DEFAULT_THEME_COLORS`, fallback `SITE_NAME`/`SITE_DESCRIPTION`), `package.json` root (name/description/homepage/repository — `repository.url` menjadi placeholder mencolok `GANTI-ORG` karena alat ini tidak punya flag `--org`/`--repo`), `compose.yaml`, hero `README*.md`/`SUPPORT*.md`, kedua berkas `.env.example` (termasuk menghapus komentar dan mengatur `SITE_PROFILE`), default profil `tools/seed-cms.ts` dan baris skrip `db:seed:cms`, `CHANGELOG.md` (direset ke `0.1.0`), dan `.changesets/*.md` (dikosongkan).
 
-**Yang dihapus**: seed referensi khusus BjekMart (`tools/seed-borneojek-mart.ts`, `tools/seed-data/contoh/borneojek-mart/**`), importer seputarborneo beserta tesnya, dan `graphify-out/`/`knowledge/generated/` (direktori yang absen adalah keadaan valid — `bun run knowledge:graph:update` yang baru membuatnya ulang).
+**Yang dihapus**: seed referensi khusus BjekMart (tools/seed-borneojek-mart.ts, tools/seed-data/contoh/borneojek-mart/**), importer seputarborneo beserta tesnya, dan graphify-out//knowledge/generated/ (direktori yang absen adalah keadaan valid — `bun run knowledge:graph:update` yang baru membuatnya ulang).
 
 **Yang tidak pernah disentuhnya, di bawah flag mana pun**: `apps/cms/**`. Pohon itu adalah `ahliweb/awcms` yang disematkan lewat `git subtree` — kode upstream sendiri, tidak pernah ditulis ulang secara lokal (lihat [`AGENTS.md`](../../../AGENTS.md#the-subtree-embed) root). Nama tenant, detail kontak, dan tema aplikasi turunan hidup di apa yang disajikan `apps/cms` saat runtime atau di fallback `site.ts` saat-build milik `apps/storefront` sendiri, tidak pernah di source `apps/cms`.
 
@@ -71,7 +71,7 @@ bun run dev
 
 1. **`repository.url` di `package.json`** masih berbunyi `GANTI-ORG` — ganti, beserta tautan GitHub mana pun di `README*.md`/`SUPPORT*.md`/`SECURITY*.md` yang masih menunjuk ke `ahliweb/awcms-one`, begitu repo baru punya pemilik.
 2. **`SITE_PROFILE`** di `apps/storefront/.env.example` cocok dengan profil yang dipilih — `bun run build` tanpa override seharusnya mengirim persis halaman profil itu.
-3. **Tidak ada artefak khusus-BjekMart yang tertinggal** — `tools/seed-borneojek-mart.ts` dan `tools/seed-data/contoh/**` seharusnya sudah hilang; kasus tes contoh-referensi `tests/seed-profil.test.mjs` melewati dirinya sendiri begitu itu terjadi.
+3. **Tidak ada artefak khusus-BjekMart yang tertinggal** — tools/seed-borneojek-mart.ts dan `tools/seed-data/contoh/**` seharusnya sudah hilang; kasus tes contoh-referensi `tests/seed-profil.test.mjs` melewati dirinya sendiri begitu itu terjadi.
 4. **`cd apps/storefront && SITE_PROFILE=<pilihan> bun run check`** lulus, dan `bun run build` yang sungguhan hanya menghasilkan rute milik profil yang dipilih.
 
 ## Kesalahan umum

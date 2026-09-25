@@ -299,7 +299,7 @@ Everything here is `apps/cms`'s own, owned by modules the subtree carries; this 
 | `POST /api/v1/analytics/collect`                           | **the reader's browser**  | anonymous, Origin-bound ([ADR-0012](adr/0012-first-party-visitor-analytics-with-an-opt-in-ga4-switch.md))                                                                                                                                                                                                          |
 | `POST /api/v1/newsletter/{subscribe,confirm,unsubscribe}`  | **the reader's browser**  | anonymous, Origin-bound; the confirm/unsubscribe **paths are a CMS contract** (`NEWSLETTER_CONFIRM_PATH`/`NEWSLETTER_UNSUBSCRIBE_PATH` in `apps/cms/src/modules/newsletter/domain/newsletter-mail.ts`), which is why this app serves `/newsletter/confirm` and `/newsletter/unsubscribe` under exactly those names |
 
-The build credential's permission set is seeded by `tools/seed-borneojek-mart.ts`; changing it there **rotates** the credential on the next seed run, so an `AWCMS_API_TOKEN` still holding the old secret starts failing with 401 (issue #57's own reconciliation step prints the replacement).
+The build credential's permission set is seeded by tools/seed-borneojek-mart.ts; changing it there **rotates** the credential on the next seed run, so an `AWCMS_API_TOKEN` still holding the old secret starts failing with 401 (issue #57's own reconciliation step prints the replacement).
 
 ## Not built
 

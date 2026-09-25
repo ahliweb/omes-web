@@ -344,12 +344,12 @@ No code, schema, or runtime behaviour changes. `docs/alur-kerja-pengembangan.md`
 
 ### `audit:graf` fails once the root knowledge graph drifts too far from the tree
 
-`graphify-out/` was last regenerated 2026-09-20, before v0.10.0's storefront
+graphify-out/ was last regenerated 2026-09-20, before v0.10.0's storefront
 redesign — `audit:graf` verified the corpus was self-consistent but never
 that it still described the current code, and CI has no `graphify` on `PATH`
 to regenerate it itself.
 
-- `audit:graf` now diffs `graphify-out/manifest.json`'s recorded per-file MD5
+- `audit:graf` now diffs graphify-out/manifest.json's recorded per-file MD5
   (`graphify`'s own `ast_hash` — verified reproducible with plain
   `node:crypto`, no `graphify` install needed) against the current working
   tree, and fails once more than `MAX_STALE_FILES` (40) files show up
@@ -371,7 +371,7 @@ to regenerate it itself.
 Issue #184 (part of epic #179) adds GitHub CodeQL code scanning alongside the secret scanning + push protection and Dependabot security updates already enabled on this repository (issue #182).
 
 - `.github/workflows/codeql.yml` — a new, separate workflow (`javascript-typescript`, `build-mode: none`) on push to `main`, every pull request, a weekly schedule, and manual dispatch. `github/codeql-action/{init,analyze}` are pinned to a commit SHA (`1c5b675653bb5c22dbe9b12b556ec555138e09fd`, `# v4.38.1`, verified against `github/codeql-action`'s own tag), the job's own permissions are the least required (`security-events: write`, `actions: read`, on top of the workflow-level `contents: read`), and the query suite is `security-extended` — not upstream `ahliweb/awcms`'s own `security-extended,security-and-quality`, since this repository has no CodeQL triage playbook of its own yet.
-- `.github/codeql/codeql-config.yml` excludes only generated/build/vendored output (`node_modules`, `dist`, `.astro`, `graphify-out`, generated i18n catalogs, lockfiles, vendored datasets, Playwright run artefacts) at any depth in the workspace. **`apps/cms/**` SOURCE stays in scope** — it is the code that actually runs in this deployment, even though that tree is upstream `ahliweb/awcms` embedded via `git subtree`; a resulting finding there is triaged per `SECURITY.md` (fixed here only if it is one of `AGENTS.md`'s documented local divergences or this repository's own `commerce` module, otherwise reported/fixed upstream and pulled in via the normal subtree sync).
+- `.github/codeql/codeql-config.yml` excludes only generated/build/vendored output (`node_modules`, `dist`, `.astro`, graphify-out, generated i18n catalogs, lockfiles, vendored datasets, Playwright run artefacts) at any depth in the workspace. **`apps/cms/**` SOURCE stays in scope** — it is the code that actually runs in this deployment, even though that tree is upstream `ahliweb/awcms` embedded via `git subtree`; a resulting finding there is triaged per `SECURITY.md` (fixed here only if it is one of `AGENTS.md`'s documented local divergences or this repository's own `commerce` module, otherwise reported/fixed upstream and pulled in via the normal subtree sync).
 - Not a required status check yet — promoted, if ever, only after it has run green on `main` for a while, the same bar `check-cms` and `template-init-smoke` were held to before their own promotion.
 - Docs: `SECURITY.md` (+ `.id.md`) now names all three forms of automated scanning in force and how a CodeQL alert on `apps/cms/**` is triaged; `docs/alur-kerja-pengembangan.md` (+ `.id.md`) gets a new "CI: a fifth workflow, not required — `codeql`" section describing the workflow's shape and scope decision.
 
@@ -775,7 +775,7 @@ No code changes — this is the contract #137 (storefront profiles + CI matrix),
 
 ### Neutral sample seeds per profile; BjekMart's seed becomes the labelled reference example
 
-ADR-0018 D6, issue #139. `tools/seed-cms.ts` replaces `tools/seed-borneojek-mart.ts` as the
+ADR-0018 D6, issue #139. `tools/seed-cms.ts` replaces tools/seed-borneojek-mart.ts as the
 seeder every profile shares — `--profil toko|berita|landing|contoh:borneojek-mart`, `--dry-run`,
 idempotent upsert-by-slug, a printed inventory summary — so a repository derived from this
 template (`template:init`, #138) has real, honest, fast-to-seed sample content the moment it
@@ -783,9 +783,9 @@ first runs `bun run dev`, without inheriting BjekMart's own five-increment-deep 
 content as its default.
 
 - `tools/seed-data/*.json` moved, unchanged in shape, to
-  `tools/seed-data/contoh/borneojek-mart/**` — the reference example. `bun run db:seed:cms`
+  tools/seed-data/contoh/borneojek-mart/** — the reference example. `bun run db:seed:cms`
   with no flag still targets it by default, so the live reference deployment's own workflow is
-  unchanged; `tools/seed-borneojek-mart.ts` is now a one-release deprecation shim that prints a
+  unchanged; tools/seed-borneojek-mart.ts is now a one-release deprecation shim that prints a
   notice and delegates to `tools/seed-cms.ts --profil contoh:borneojek-mart`.
 - Three new neutral, fictional seed sets under `tools/seed-data/profil/{toko,berita,landing}/*`
   — invented names ("Toko Nusantara", "Kabar Kita", "PT Contoh Karya"), placeholder contacts on
@@ -886,11 +886,11 @@ derived repo's first commit is already green.
   happen exactly once, gated on the new `package.json#awcmsOne.templateVersion`
   field. Refuses a dirty working tree, and refuses to run against the
   template itself (`package.json.name === "awcms-one"`), without `--yes`.
-- Removes BjekMart-only artefacts — `tools/seed-borneojek-mart.ts` (issue
-  #139's own deprecation shim) and `tools/seed-data/contoh/borneojek-mart/**`
+- Removes BjekMart-only artefacts — tools/seed-borneojek-mart.ts (issue
+  #139's own deprecation shim) and tools/seed-data/contoh/borneojek-mart/**
   (its reference-example layout, checking the pre-#139 flat layout too,
-  defensively), `tools/import-seputarborneo.ts` and its test — and resets
-  `graphify-out/`/`knowledge/generated/` to absent, which
+  defensively), tools/import-seputarborneo.ts and its test — and resets
+  graphify-out//knowledge/generated/ to absent, which
   `packages/gerbang/audit-graf.mjs` already treats as a valid, gate-passing
   state. Rewrites `tools/seed-cms.ts`'s `--profil` default and
   `package.json`'s `db:seed:cms` script from BjekMart's reference example
@@ -1882,9 +1882,9 @@ related bugs of its own, found while wiring the above:
 
 ### Seed seputarborneo reference taxonomy, institutions, sample posts, legal pages, ad placements, social links, and legacy redirects
 
-`tools/seed-borneojek-mart.ts` previously seeded 3 store-flavoured blog terms, 3 posts, 2 legal pages, 0 institutions, 0 ad placements, and 0 redirects — against a real database every news page the storefront's `/berita`, `/rubrik/*`, `/daerah/*`, and `/mitra/*` routes render was empty. This gives every developer, reviewer, and CI job something real to look at instead of an empty news IA, modelled on seputarborneo's own reference structure (`include/nav_menu.php`, verified 2026-09-18) so it matches the shape `apps/storefront`'s news pages were actually built against.
+tools/seed-borneojek-mart.ts previously seeded 3 store-flavoured blog terms, 3 posts, 2 legal pages, 0 institutions, 0 ad placements, and 0 redirects — against a real database every news page the storefront's `/berita`, `/rubrik/*`, `/daerah/*`, and `/mitra/*` routes render was empty. This gives every developer, reviewer, and CI job something real to look at instead of an empty news IA, modelled on seputarborneo's own reference structure (`include/nav_menu.php`, verified 2026-09-18) so it matches the shape `apps/storefront`'s news pages were actually built against.
 
-- An 8-rubrik `category` taxonomy tree (politik/hukum/nasional/olahraga/wisata/daerah/mitra-borneo/umum) with umum's topical children — including a `wisata-travel` child, a deliberate slug choice recorded in `tools/seed-borneojek-mart.ts`'s own docblock: `awcms_blog_terms_slug_dedup` (`apps/cms/sql/035_awcms_blog_content_schema.sql`) is unique on `(tenant_id, taxonomy_type, slug)` with no `parent_id` component, so this one tree cannot hold seputarborneo's own two `wisata` slugs (a top-level rubrik and a UMUM child) the way its legacy two-column MySQL schema could.
+- An 8-rubrik `category` taxonomy tree (politik/hukum/nasional/olahraga/wisata/daerah/mitra-borneo/umum) with umum's topical children — including a `wisata-travel` child, a deliberate slug choice recorded in tools/seed-borneojek-mart.ts's own docblock: `awcms_blog_terms_slug_dedup` (`apps/cms/sql/035_awcms_blog_content_schema.sql`) is unique on `(tenant_id, taxonomy_type, slug)` with no `parent_id` component, so this one tree cannot hold seputarborneo's own two `wisata` slugs (a top-level rubrik and a UMUM child) the way its legacy two-column MySQL schema could.
 - The 27-institution legislative/executive directory — seputarborneo's own 24-channel Mitra Borneo list plus a bare `Pemkab` for the 3 regencies that list leaves out (Kotawaringin Barat, Sukamara, Barito Selatan), added so all 14 Kalteng regencies/cities have at least one institution to carry their `regionCode` (region membership is institution-only) — each `regionCode` resolved by NAME against `GET /api/v1/idn-regions/regions` at seed time rather than a hard-coded Kepmendagri code.
 - 44 sample news posts — at least two per rubrik (all 14, including umum's children) and at least one filed to every one of the 27 institutions through `institutionIds`, so every `/rubrik/*`, all 14 `/daerah/*`, and all 27 `/mitra/*` archives render with content rather than an empty state; generic, clearly-marked placeholders with no real people or events, three carrying a Portable Text `videoNews` node with a clearly-marked placeholder YouTube id.
 - Three additional legal pages: `redaksi` (generic placeholders, deliberately not seputarborneo's own company/personnel data), `pedoman-media-siber` (Dewan Pers's public text, ported), and `disclaimer` (genericized to this tenant).
@@ -1898,7 +1898,7 @@ related bugs of its own, found while wiring the above:
 
 ### Exporter from the seputarborneo MariaDB dump to `blog_content`'s legacy-import pipeline
 
-`tools/import-seputarborneo.ts` (`bun run import:seputarborneo`) reads seputarborneo.com's legacy MariaDB archive and writes the input files `apps/cms`'s own operator pipeline for exactly this job expects — `bun run blog:legacy:import` (Issue #599/ADR-0114 in upstream awcms). It makes no network call itself; the actual import runs from inside `apps/cms`, against the same `borneojek-mart` tenant `tools/seed-borneojek-mart.ts` bootstraps.
+tools/import-seputarborneo.ts (`bun run import:seputarborneo`) reads seputarborneo.com's legacy MariaDB archive and writes the input files `apps/cms`'s own operator pipeline for exactly this job expects — `bun run blog:legacy:import` (Issue #599/ADR-0114 in upstream awcms). It makes no network call itself; the actual import runs from inside `apps/cms`, against the same `borneojek-mart` tenant tools/seed-borneojek-mart.ts bootstraps.
 
 The **why** is mostly about what an earlier design got wrong: a first pass of this tool called the public HTTP API directly, but no public route can backdate `published_at` for an already-past article or write `legacy_source_id` — `apps/cms`'s own `blog:legacy:import` does both, and was built (per its own docblock) using this exact archive as its reference case. Routing through it also means this exporter does not need its own HTML→Portable Text converter — a second one would diverge from the converter whose refusals the pipeline actually reports and acts on.
 
@@ -2049,7 +2049,7 @@ image, never a broken `<img>`.
   resolved media origin and, only when this build has a video post,
   `img-src`/`frame-src` with the two YouTube origins the facade needs.
 - The storefront build credential's permission set
-  (`tools/seed-borneojek-mart.ts`) gains `media_library.media.read`.
+  (tools/seed-borneojek-mart.ts) gains `media_library.media.read`.
 
 **Known cross-PR dependency:** `apps/storefront/server/penyaji.mjs`'s
 `buildCsp` (a sibling issue this wave, not this change) does not yet read
@@ -2564,7 +2564,7 @@ The transactional half of mart.borneojek.com — customers, addresses, cart quot
 - Anonymous routes under `/api/v1/commerce/storefront/*`: cart quote, order creation (idempotent by a client-supplied key, re-quoting the cart inside the write transaction), order tracking (`orderCode` + phone as the credential, checked inside the query — an unknown code, a wrong phone, and another tenant's order all answer the same neutral 404), payment confirmations, cancel, reviews. Tenant is resolved from the request Origin/Host through `awcms_tenant_domains`, never a caller-supplied header.
 - Idempotency reuses the shared `awcms_idempotency_keys` store (it needs only a tenant id, not a principal) rather than a bespoke column. Payment-proof upload answers `503 MEDIA_UNAVAILABLE` in this increment — the existing upload-session flow requires an authenticated principal a guest checkout does not have, and building a second, unreviewed anonymous auth seam for it was judged out of scope; a payment confirmation without a proof image is still fully accepted, and the public store-settings read model now says `payment.proofUpload: false` so the storefront hides the control.
 - Customers are guest-checkout rows identified by phone (E.164, kept in the clear — it is also the tracking credential) — real personal data, but not addressable by this codebase's own ADR-0094 subject vocabulary (`tenant_user`/`identity`/`profile`), since there is no account behind a phone number yet (accounts are issue #32). All eight new tables are therefore `unreachableBySubject: true`, the same shape `commerce.testimonials` already uses for free-text personal data with no subject-id column — a genuine erasure/export request is handled as an ordinary admin lookup, outside the automated engine's scope by construction.
-- `tools/seed-borneojek-mart.ts` registers the tenant's storefront origins in `awcms_tenant_domains` (manually attested `active`, the one place this script reaches Postgres directly instead of through HTTP — a fresh domain otherwise starts `pending_verification` and this script has no real DNS record to prove) and seeds one customer with two orders in different states (`pending_payment`, `paid`) through the anonymous order-creation path itself.
+- tools/seed-borneojek-mart.ts registers the tenant's storefront origins in `awcms_tenant_domains` (manually attested `active`, the one place this script reaches Postgres directly instead of through HTTP — a fresh domain otherwise starts `pending_verification` and this script has no real DNS record to prove) and seeds one customer with two orders in different states (`pending_payment`, `paid`) through the anonymous order-creation path itself.
 
 ### Commerce marketing surface: flash sales, vouchers, sliders, testimonials, promo popup, store settings
 
@@ -2577,7 +2577,7 @@ Why one module rather than three (the decision is recorded by issue #31, https:/
 - Store settings are one versioned `jsonb` document per tenant; the public read model never carries a bank account number, holder, or QRIS reference. `DELETE` resets to defaults by stamping `deleted_at`, which is also what lets the singleton answer the retention question with a column rather than an exemption.
 - Two #23 follow-ups: `downloadLink` (a digital product's paid asset) leaves the public product DTO for the admin record; `sizeChartImageUrl` joins it.
 - Two latent defects found while proving the seed end to end: batch reads of images/variants bound a JS array straight into `= ANY(…)` (fails on two or more ids — now `tx.array(…)::uuid[]`, with a regression test); and `Bun.SQL` decodes a stored `0.00` as `"0"` through a parameterised query — every money field now passes through `normalizeMoney` so the wire shape is always two decimals.
-- `tools/seed-borneojek-mart.ts` applies the #23 product fields and variants, seeds one flash sale, two vouchers, three testimonials, one popup and the live store-settings block (bank account a placeholder), and issues the storefront build credential with every marketing `read`. Product images and sliders stay recorded under `future`: both need a media object, and media objects need the R2-backed upload session.
+- tools/seed-borneojek-mart.ts applies the #23 product fields and variants, seeds one flash sale, two vouchers, three testimonials, one popup and the live store-settings block (bank account a placeholder), and issues the storefront build credential with every marketing `read`. Product images and sliders stay recorded under `future`: both need a media object, and media objects need the R2-backed upload session.
 
 ### `commerce` reaches full BjekMart product-model parity
 
@@ -2642,7 +2642,7 @@ Increment 2 needed a real PostgreSQL somewhere before `apps/cms` could migrate, 
 
 - `compose.yaml` + `docker/postgres-init/` — a disposable `postgres:18.4`, project `awcms-one`, host port 5433. Creates ONLY the `LOGIN` half of the three roles `apps/cms`'s own migrations (`sql/019`, `sql/022`) already create `NOLOGIN` and passwordless on purpose; every `GRANT` stays the migrations' job.
 - `bun run db:up` / `db:down` / `db:reset` — new root scripts.
-- `tools/seed-borneojek-mart.ts` (`bun run db:seed:cms`) — an idempotent HTTP client of `apps/cms`'s own `/api/v1/*` surface (never a direct import of its internals, since that module is mid-flight on another branch). Bootstraps the `borneojek-mart` tenant + owner, the 8-category catalog, one representative product per commerce `type`, a handful of blog terms/pages/posts, the site profile, and a read-only machine credential scoped to `commerce.products.read`/`commerce.categories.read` — the same shape `apps/storefront`'s build token needs. `tools/seed-data/*.json` separates each resource's `current` (what the API accepts today) from `future` (images, variants, `service_form`, `subscription_period`, tiers — issue #23's fields), so landing those is a data change, not a script restructure. `tools/seed-assets/` carries small, self-generated SVG placeholders for the extension point — no downloads from the live site.
+- tools/seed-borneojek-mart.ts (`bun run db:seed:cms`) — an idempotent HTTP client of `apps/cms`'s own `/api/v1/*` surface (never a direct import of its internals, since that module is mid-flight on another branch). Bootstraps the `borneojek-mart` tenant + owner, the 8-category catalog, one representative product per commerce `type`, a handful of blog terms/pages/posts, the site profile, and a read-only machine credential scoped to `commerce.products.read`/`commerce.categories.read` — the same shape `apps/storefront`'s build token needs. `tools/seed-data/*.json` separates each resource's `current` (what the API accepts today) from `future` (images, variants, `service_form`, `subscription_period`, tiers — issue #23's fields), so landing those is a data change, not a script restructure. `tools/seed-assets/` carries small, self-generated SVG placeholders for the extension point — no downloads from the live site.
 - `.github/workflows/ci.yml` — new `check-cms` job (`needs: check`, `timeout-minutes: 20`): `apps/cms`'s own full `bun run check` against `DATABASE_URL=""`, then migrate + `bun test tests/integration/` against a real `postgres:18.4` service, with a job-summary line recording the DB-gated skip count before and after. Not yet a required status on `main` — `docs/alur-kerja-pengembangan.md` records the exact `gh api` command and the "green twice in a row" condition for a maintainer to run it.
 - `docs/deployment.md` — the full local sequence, in order, with real values; what the seed script deliberately does not seed (legacy shipping/payment/customer-level settings with no API surface today) and why.
 - `docs/alur-kerja-pengembangan.md` — the CI section now describes both jobs.
@@ -2857,11 +2857,11 @@ Adds `docs/` (issue #7): architecture, six ADRs, the database schema, a data dic
 
 - `bun run audit:dokumen`'s ADR-index and `ADR-NNNN`-citation checks run for real for the first time in this repository, now that `docs/adr/` exists — both green against the six ADRs landed here.
 - Where the tree disagreed with the original issue text, the documents follow the tree: the URL shape (`/product/{slug}`, per the live-site evidence on issue #5), the real API envelope (`{ items, nextCursor }`, not the originally assumed shape), and the real, verified branch-protection settings (a required `Check` status check; no merge-strategy restriction) are what is documented, not what was planned.
-- A pre-existing, unrelated defect surfaced by activating the ADR-citation check for the first time — a generated Obsidian note under `knowledge/generated/graphify/` extracts `packages/gerbang/audit-dokumen.mjs`'s own illustrative example (`` `ADR-0042` ``) as a false citation — is filed as [issue #15](https://github.com/ahliweb/awcms-one/issues/15) rather than patched here, since fixing it needs a change to `packages/gerbang/` or a knowledge-graph regeneration, both outside this change's own scope.
+- A pre-existing, unrelated defect surfaced by activating the ADR-citation check for the first time — a generated Obsidian note under knowledge/generated/graphify/ extracts `packages/gerbang/audit-dokumen.mjs`'s own illustrative example (`` `ADR-0042` ``) as a false citation — is filed as [issue #15](https://github.com/ahliweb/awcms-one/issues/15) rather than patched here, since fixing it needs a change to `packages/gerbang/` or a knowledge-graph regeneration, both outside this change's own scope.
 
 ### audit:dokumen no longer reads knowledge/generated/
 
-`bun run audit:dokumen` now skips `knowledge/generated/` the way it already skips `apps/cms/` (issue #15). Graphify's Obsidian export extracts notes from source code; it does not author them. The first false positive was concrete: the moment `docs/adr/` existed, the ADR-citation check fired on three generated notes quoting the gate's own illustrative example citation (a placeholder ADR number in a comment in `packages/gerbang/audit-dokumen.mjs`). Every other check in the gate would misfire on generated notes the same way — their links are wikilinks the gate does not parse, and a stale path in one is graph staleness, which `bun run audit:graf` deliberately leaves alone. `knowledge/curated/` and `knowledge/README.md` are authored and stay in scope; two fixture tests pin both sides of that line.
+`bun run audit:dokumen` now skips knowledge/generated/ the way it already skips `apps/cms/` (issue #15). Graphify's Obsidian export extracts notes from source code; it does not author them. The first false positive was concrete: the moment `docs/adr/` existed, the ADR-citation check fired on three generated notes quoting the gate's own illustrative example citation (a placeholder ADR number in a comment in `packages/gerbang/audit-dokumen.mjs`). Every other check in the gate would misfire on generated notes the same way — their links are wikilinks the gate does not parse, and a stale path in one is graph staleness, which `bun run audit:graf` deliberately leaves alone. `knowledge/curated/` and `knowledge/README.md` are authored and stay in scope; two fixture tests pin both sides of that line.
 
 ### apps/cms: the `commerce` module — catalog domain, persistence, migrations, API
 
@@ -2878,10 +2878,10 @@ Adds the `commerce` module to the embedded CMS (issue #4): categories (hierarchi
 
 Adds a monorepo-level Graphify + Obsidian workflow (issue #11) without duplicating or corrupting the Graphify state already embedded inside `apps/cms` via the `ahliweb/awcms` subtree. Two graphs, federated on demand rather than one graph built twice — the same discipline the rest of this repo already applies to `apps/cms`'s own tree.
 
-- Root `.graphifyignore` + a real, committed root graph (`graphify-out/graph.json`, 396 nodes) built `--code-only` — structural AST extraction, no LLM, no API key, no network, ever, by default. Excludes `apps/cms/**`, which already owns its own graph and its own gate.
+- Root `.graphifyignore` + a real, committed root graph (graphify-out/graph.json, 396 nodes) built `--code-only` — structural AST extraction, no LLM, no API key, no network, ever, by default. Excludes `apps/cms/**`, which already owns its own graph and its own gate.
 - `bun run audit:graf` (alias `knowledge:check`) — the fourth `audit:*` gate, modelled on `apps/cms/scripts/graph-artifacts-check.ts`: tracked-artefact hygiene, report/graph agreement, chosen community names, `.graphifyignore` still excluding `apps/cms`, no duplicate-extracted node, the federated graph never tracked, and `apps/cms/graphify-out/` untouched by this repo's own tooling. Runs in CI (`.github/workflows/ci.yml`) — it reads only committed artefacts, no `graphify` installation needed.
-- `bun run knowledge:graph:combine` — merges the root graph with `apps/cms/graphify-out/graph.json` into a gitignored, on-demand `graphify-out/combined/graph.json`, failing closed on a missing, malformed, empty, or `directed`-mismatched component graph (checks `graphify merge-graphs` itself does not make).
-- `bun run knowledge:obsidian:export` — stages the root graph's Obsidian export, validates every file (rejecting a symlink, an unexpected extension, path traversal, or a curated-filename collision), and syncs only the allowlisted result to `knowledge/generated/graphify/`. `knowledge/curated/` is read only for collision-checking, never written.
+- `bun run knowledge:graph:combine` — merges the root graph with `apps/cms/graphify-out/graph.json` into a gitignored, on-demand graphify-out/combined/graph.json, failing closed on a missing, malformed, empty, or `directed`-mismatched component graph (checks `graphify merge-graphs` itself does not make).
+- `bun run knowledge:obsidian:export` — stages the root graph's Obsidian export, validates every file (rejecting a symlink, an unexpected extension, path traversal, or a curated-filename collision), and syncs only the allowlisted result to knowledge/generated/graphify/. `knowledge/curated/` is read only for collision-checking, never written.
 - `packages/gerbang/lib/subtree-guard.mjs` guards every write both new tools perform; `tests/knowledge-no-subtree-write.test.mjs` runs both tools for real against a fixture tree and proves `apps/cms/` comes out byte-for-byte unchanged.
 - `knowledge/README.md` + five thin `knowledge/curated/*.md` files record what code alone cannot state: ownership boundaries, cross-repo source-of-truth rules, the tracked/untracked table, and a nine-item threat model — no ISO/IEC certification claimed.
 - `README.md`/`AGENTS.md` (and their Indonesian mirrors) revisit the earlier, now-outdated statement that `audit:graf` was not ported — it is, and both documents say why and what changed.

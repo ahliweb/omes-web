@@ -139,17 +139,51 @@ function jsonForScript(value: unknown): string {
     <title>{fullTitle}</title>
     <meta name="description" content={metaDescription} />
 
-    {/* Self-hosted type system (issue #166, 2026-09 redesign) — only the
-        faces rendered above the fold on a typical page are preloaded: the
-        sans's body (400) and semibold (600) weights, and the serif's medium
-        (500) weight (news headlines/pull quotes use it at that weight).
-        Every other declared `@font-face` (700/800 sans, serif 600/400
-        italic, both mono weights) loads lazily, on demand, with
-        `font-display: swap` (`src/styles/global.css`) — no CSP change,
-        since every font is already same-origin `/fonts/*.woff2`. */}
-    <link rel="preload" as="font" type="font/woff2" href="/fonts/plus-jakarta-sans-latin-400-normal.woff2" crossorigin />
-    <link rel="preload" as="font" type="font/woff2" href="/fonts/plus-jakarta-sans-latin-600-normal.woff2" crossorigin />
-    <link rel="preload" as="font" type="font/woff2" href="/fonts/lora-latin-500-normal.woff2" crossorigin />
+    {/* Self-hosted type system (issue #166, 2026-09 redesign; made
+        theme-aware for issue #9) — only the faces rendered above the fold on
+        a typical page are preloaded, and which faces those are depends on
+        which theme is actually rendering: `toko`/`berita` render the base
+        type system (`--font-sans: 'Plus Jakarta Sans'`,
+        `--font-serif: 'Lora'`), while the OMES theme (`data-tema="omes"`,
+        `landing` profile only, `docs/ui-ux.md`'s "OMES theme" section) sets
+        `--font-sans`/`--font-mono` to 'Public Sans'/'JetBrains Mono'
+        instead and never renders Plus Jakarta Sans or Lora at all — so
+        preloading those two families' faces on a `landing` build fetched
+        three woff2 files no page ever used (`omes-web`#9).
+
+        Base theme (`toko`/`berita`): the sans's body (400) and semibold
+        (600) weights, and the serif's medium (500) weight (news headlines/
+        pull quotes use it at that weight).
+
+        OMES theme (`landing`): `Header.astro`'s utility bar/nav render
+        Public Sans 500/600 and the home page's hero status chip
+        (`.omes-status-chip`, `src/profil/landing/Beranda.astro`) renders
+        JetBrains Mono 600 — both above the fold on every `landing` page,
+        the header being shared chrome. `h1`/`.btn`'s 700 weight and
+        `.site-brand`'s 800 (which has no Public Sans 800 face at all — the
+        theme only vendors 400/500/600/700 per `docs/ui-ux.md` — so the
+        browser weight-matches it to 700) are left to load lazily, same as
+        the base theme already leaves ITS 700/800 sans and 600/400-italic
+        serif faces to `font-display: swap`, rather than growing this list
+        further.
+
+        Every other declared `@font-face` for the active theme loads lazily,
+        on demand, with `font-display: swap` (`src/styles/global.css`) — no
+        CSP change either way, since every font is already same-origin
+        `/fonts/*.woff2`. */}
+    {SITE_PROFILE === "landing" ? (
+      <Fragment>
+        <link rel="preload" as="font" type="font/woff2" href="/fonts/public-sans-latin-400-normal.woff2" crossorigin />
+        <link rel="preload" as="font" type="font/woff2" href="/fonts/public-sans-latin-600-normal.woff2" crossorigin />
+        <link rel="preload" as="font" type="font/woff2" href="/fonts/jetbrains-mono-latin-600-normal.woff2" crossorigin />
+      </Fragment>
+    ) : (
+      <Fragment>
+        <link rel="preload" as="font" type="font/woff2" href="/fonts/plus-jakarta-sans-latin-400-normal.woff2" crossorigin />
+        <link rel="preload" as="font" type="font/woff2" href="/fonts/plus-jakarta-sans-latin-600-normal.woff2" crossorigin />
+        <link rel="preload" as="font" type="font/woff2" href="/fonts/lora-latin-500-normal.woff2" crossorigin />
+      </Fragment>
+    )}
 
     {/* GA4 (issue #56, A10) — the ONLY third-party script this app ever
         loads, and only when `gaId` is configured (`src/lib/ga.ts`); the

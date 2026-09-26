@@ -97,7 +97,7 @@ The checkout shipping step's courier row is no longer a permanent "segera" place
 | `--font-serif` | Lora | 400, 500, 600 (+ 400 italic) |
 | `--font-mono` | IBM Plex Mono | 400, 500 |
 
-No Google Fonts, no new CSP origin: every `@font-face src` in `apps/storefront/src/styles/global.css` is a same-origin `/fonts/*.woff2` path (`font-src 'self'`, `apps/storefront/server/penyaji.mjs`, unchanged), `font-display: swap` throughout, and `apps/storefront/tests/global-css-fonts.test.ts` proves both. `BaseLayout.astro` preloads only the three faces actually above the fold on a typical page — sans 400/600, serif 500 — everything else loads lazily on first use.
+No Google Fonts, no new CSP origin: every `@font-face src` in `apps/storefront/src/styles/global.css` is a same-origin `/fonts/*.woff2` path (`font-src 'self'`, `apps/storefront/server/penyaji.mjs`, unchanged), `font-display: swap` throughout, and `apps/storefront/tests/global-css-fonts.test.ts` proves both. `BaseLayout.astro` preloads only the faces actually above the fold on a typical page, and which faces those are now follows `SITE_PROFILE` (issue `omes-web`#9): `toko`/`berita` preload this base type system's sans 400/600 and serif 500, exactly as before; `landing` (the OMES theme, `data-tema="omes"`, which never renders Plus Jakarta Sans or Lora at all — see "The OMES theme" below) preloads its own Public Sans 400/600 and JetBrains Mono 600 instead. Everything else loads lazily on first use, for either theme; `apps/storefront/tests/base-layout-font-preload.test.ts` proves a `landing` build's preload list is entirely faces the OMES theme's own `--font-sans`/`--font-mono` tokens name, that neither Plus Jakarta Sans nor Lora ever appears in it, and that `toko`/`berita` keep preloading the base theme's fonts unchanged.
 
 ### Tokens (`apps/storefront/src/styles/global.css`)
 
@@ -235,7 +235,7 @@ This deployment (`omes.ahlikoding.com`, `SITE_PROFILE=landing`) carries its own 
 | `--font-sans` (OMES theme only) | Public Sans | 400, 500, 600, 700 |
 | `--font-mono` (OMES theme only) | JetBrains Mono | 400, 500, 600 |
 
-Same rule as the base type system above: same-origin `/fonts/*.woff2` only (`apps/storefront/public/fonts/LICENSE-OFL.txt` names both families, SIL OFL, `@fontsource` package version 5.3.0 — the same CDN mirror the base four families were vendored from), `font-display: swap`, no Google Fonts, no new CSP origin. `toko`/`berita` never set `--font-sans`/`--font-mono` to these names, so a browser building either profile has no matching text to trigger a fetch of these two families at all.
+Same rule as the base type system above: same-origin `/fonts/*.woff2` only (`apps/storefront/public/fonts/LICENSE-OFL.txt` names both families, SIL OFL, `@fontsource` package version 5.3.0 — the same CDN mirror the base four families were vendored from), `font-display: swap`, no Google Fonts, no new CSP origin. `toko`/`berita` never set `--font-sans`/`--font-mono` to these names, so a browser building either profile has no matching text to trigger a fetch of these two families at all. `BaseLayout.astro`'s preload hints follow the same split (issue `omes-web`#9, "Type system: self-hosted, three families" above): a `landing` build preloads Public Sans 400/600 (the header's utility bar/nav, rendered on every page) and JetBrains Mono 600 (the home page hero's status chip) — never Plus Jakarta Sans or Lora, which this theme never renders.
 
 ### Tokens (`global.css`'s `:root[data-tema="omes"]` block)
 

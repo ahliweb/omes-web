@@ -51,6 +51,18 @@ describe("lib/awcms/profil: mergeSiteIdentity", () => {
     expect(identity.socialLinks).toEqual([]);
   });
 
+  test("the fallback never invents a phone number or street address (OMES publishes neither)", () => {
+    const identity = mergeSiteIdentity(EMPTY_PAYLOAD);
+
+    // Found before the production cutover: the template's BjekMart phone and
+    // street address survived template:init as DEFAULT_IDENTITY fallbacks and
+    // rendered in the footer although the CMS holds neither.
+    expect(DEFAULT_IDENTITY.contactPhone).toBeNull();
+    expect(DEFAULT_IDENTITY.address).toBeNull();
+    expect(identity.contactPhone).toBeNull();
+    expect(identity.address).toBeNull();
+  });
+
   test("a CMS value is preferred over the hardcoded default when present", () => {
     const identity = mergeSiteIdentity({
       ...EMPTY_PAYLOAD,

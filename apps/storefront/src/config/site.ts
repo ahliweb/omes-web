@@ -48,13 +48,24 @@ export function absoluteUrl(path: string): string {
  * with a live CMS fetch. Nothing else should read `DEFAULT_IDENTITY`
  * directly.
  */
-export const DEFAULT_IDENTITY = {
+export const DEFAULT_IDENTITY: {
+  readonly name: string;
+  readonly description: string;
+  readonly contactEmail: string;
+  readonly contactPhone: string | null;
+  readonly address: string | null;
+} = {
   name: "OMES",
-  description: "Solusi tepercaya dari OMES",
+  description:
+    "Compatibility layer dan toolkit deployment terinspirasi Omarchy untuk Ubuntu Server dan Linux Mint, dengan Hermes Agent sebagai lapisan otomasi.",
   contactEmail: "admin@ahlikoding.com",
-  contactPhone: "0851-2868-8885",
-  address: "Jl. Ahmad Wongso RT 19 Kelurahan Madurejo, Kotawaringin Barat"
-} as const;
+  // OMES publishes no phone number or street address. `template:init` was run
+  // without --kontak-telepon/--alamat, so there must be no fallback that
+  // invents one: `null` makes every consumer omit the line (see Footer.astro,
+  // FooterBerita.astro, Beranda.astro, kontak.astro).
+  contactPhone: null,
+  address: null
+};
 
 /**
  * The default theme palette (issue #24) — BjekMart's own emerald brand

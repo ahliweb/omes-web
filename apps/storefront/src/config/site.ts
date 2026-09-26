@@ -50,10 +50,17 @@ export function absoluteUrl(path: string): string {
  */
 export const DEFAULT_IDENTITY = {
   name: "OMES",
-  description: "Solusi tepercaya dari OMES",
+  description:
+    "Compatibility layer dan toolkit deployment terinspirasi Omarchy untuk Ubuntu Server dan Linux Mint, dengan Hermes Agent sebagai lapisan otomasi.",
   contactEmail: "admin@ahlikoding.com",
-  contactPhone: "0851-2868-8885",
-  address: "Jl. Ahmad Wongso RT 19 Kelurahan Madurejo, Kotawaringin Barat"
+  // OMES publishes no phone number or street address, and template:init was
+  // run without --kontak-telepon/--alamat, so there must be no fallback that
+  // invents one. The empty string (not null) keeps both fields string
+  // literals that template:init's `setStringField` can still rewrite on a
+  // later run; every consumer treats "" as absent and omits the line (see
+  // Footer.astro, FooterBerita.astro, Beranda.astro, kontak.astro).
+  contactPhone: "",
+  address: ""
 } as const;
 
 /**

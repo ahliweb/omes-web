@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](ui-ux.md)
 
-<!-- i18n-source-hash: sha256:db6feea343c98abea132624f6bb2c83a648bcb4f176c7ca349fca0267713d641 -->
+<!-- i18n-source-hash: sha256:b81c1a06c83951af80c60c89c3ea72e4a7751021db9e13b063cf0c6e29570c5a -->
 
 # UI / UX
 
@@ -99,7 +99,7 @@ Baris kurir pada langkah pengiriman checkout bukan lagi placeholder "segera" per
 | `--font-serif` | Lora | 400, 500, 600 (+ 400 italic) |
 | `--font-mono` | IBM Plex Mono | 400, 500 |
 
-Tidak ada Google Fonts, tidak ada origin CSP baru: setiap `src` `@font-face` di `apps/storefront/src/styles/global.css` adalah path same-origin `/fonts/*.woff2` (`font-src 'self'`, `apps/storefront/server/penyaji.mjs`, tidak berubah), `font-display: swap` di semuanya, dan `apps/storefront/tests/global-css-fonts.test.ts` membuktikan keduanya. `BaseLayout.astro` hanya mem-preload tiga wajah huruf yang benar-benar tampil di atas lipatan pada halaman biasa — sans 400/600, serif 500 — sisanya dimuat lambat saat pertama dipakai.
+Tidak ada Google Fonts, tidak ada origin CSP baru: setiap `src` `@font-face` di `apps/storefront/src/styles/global.css` adalah path same-origin `/fonts/*.woff2` (`font-src 'self'`, `apps/storefront/server/penyaji.mjs`, tidak berubah), `font-display: swap` di semuanya, dan `apps/storefront/tests/global-css-fonts.test.ts` membuktikan keduanya. `BaseLayout.astro` hanya mem-preload wajah huruf yang benar-benar tampil di atas lipatan pada halaman biasa, dan wajah huruf mana itu kini mengikuti `SITE_PROFILE` (issue `omes-web`#9): `toko`/`berita` mem-preload sans 400/600 dan serif 500 dari sistem tipe dasar ini, persis seperti sebelumnya; `landing` (tema OMES, `data-tema="omes"`, yang sama sekali tidak pernah merender Plus Jakarta Sans atau Lora — lihat "Tema OMES" di bawah) mem-preload Public Sans 400/600 dan JetBrains Mono 600 miliknya sendiri. Sisanya dimuat lambat saat pertama dipakai, untuk tema mana pun; `apps/storefront/tests/base-layout-font-preload.test.ts` membuktikan daftar preload build `landing` seluruhnya adalah wajah huruf yang disebut token `--font-sans`/`--font-mono` milik tema OMES sendiri, bahwa Plus Jakarta Sans atau Lora tidak pernah muncul di situ, dan bahwa `toko`/`berita` tetap mem-preload font tema dasar tanpa perubahan.
 
 ### Token (`apps/storefront/src/styles/global.css`)
 
@@ -237,7 +237,7 @@ Deployment ini (`omes.ahlikoding.com`, `SITE_PROFILE=landing`) membawa tema gela
 | `--font-sans` (khusus tema OMES) | Public Sans | 400, 500, 600, 700 |
 | `--font-mono` (khusus tema OMES) | JetBrains Mono | 400, 500, 600 |
 
-Aturan sama seperti sistem tipe dasar di atas: hanya `/fonts/*.woff2` same-origin (`apps/storefront/public/fonts/LICENSE-OFL.txt` menyebut kedua keluarga, SIL OFL, versi paket `@fontsource` 5.3.0 — mirror CDN yang sama tempat empat keluarga dasar di-vendor), `font-display: swap`, tanpa Google Fonts, tanpa origin CSP baru. `toko`/`berita` tak pernah menyetel `--font-sans`/`--font-mono` ke nama ini, jadi build salah satu dari keduanya tak punya teks yang cocok untuk memicu fetch kedua keluarga ini sama sekali.
+Aturan sama seperti sistem tipe dasar di atas: hanya `/fonts/*.woff2` same-origin (`apps/storefront/public/fonts/LICENSE-OFL.txt` menyebut kedua keluarga, SIL OFL, versi paket `@fontsource` 5.3.0 — mirror CDN yang sama tempat empat keluarga dasar di-vendor), `font-display: swap`, tanpa Google Fonts, tanpa origin CSP baru. `toko`/`berita` tak pernah menyetel `--font-sans`/`--font-mono` ke nama ini, jadi build salah satu dari keduanya tak punya teks yang cocok untuk memicu fetch kedua keluarga ini sama sekali. Petunjuk preload `BaseLayout.astro` mengikuti pemisahan yang sama (issue `omes-web`#9, "Sistem tipe: self-hosted, tiga keluarga" di atas): build `landing` mem-preload Public Sans 400/600 (utility bar/nav header, dirender di setiap halaman) dan JetBrains Mono 600 (status chip hero halaman beranda) — tidak pernah Plus Jakarta Sans atau Lora, yang memang tak pernah dirender tema ini.
 
 ### Token (blok `:root[data-tema="omes"]` milik `global.css`)
 

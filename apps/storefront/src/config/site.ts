@@ -48,24 +48,20 @@ export function absoluteUrl(path: string): string {
  * with a live CMS fetch. Nothing else should read `DEFAULT_IDENTITY`
  * directly.
  */
-export const DEFAULT_IDENTITY: {
-  readonly name: string;
-  readonly description: string;
-  readonly contactEmail: string;
-  readonly contactPhone: string | null;
-  readonly address: string | null;
-} = {
+export const DEFAULT_IDENTITY = {
   name: "OMES",
   description:
     "Compatibility layer dan toolkit deployment terinspirasi Omarchy untuk Ubuntu Server dan Linux Mint, dengan Hermes Agent sebagai lapisan otomasi.",
   contactEmail: "admin@ahlikoding.com",
-  // OMES publishes no phone number or street address. `template:init` was run
-  // without --kontak-telepon/--alamat, so there must be no fallback that
-  // invents one: `null` makes every consumer omit the line (see Footer.astro,
-  // FooterBerita.astro, Beranda.astro, kontak.astro).
-  contactPhone: null,
-  address: null
-};
+  // OMES publishes no phone number or street address, and template:init was
+  // run without --kontak-telepon/--alamat, so there must be no fallback that
+  // invents one. The empty string (not null) keeps both fields string
+  // literals that template:init's `setStringField` can still rewrite on a
+  // later run; every consumer treats "" as absent and omits the line (see
+  // Footer.astro, FooterBerita.astro, Beranda.astro, kontak.astro).
+  contactPhone: "",
+  address: ""
+} as const;
 
 /**
  * The default theme palette (issue #24) — BjekMart's own emerald brand

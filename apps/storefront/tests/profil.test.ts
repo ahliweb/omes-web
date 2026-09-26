@@ -57,10 +57,12 @@ describe("lib/awcms/profil: mergeSiteIdentity", () => {
     // Found before the production cutover: the template's BjekMart phone and
     // street address survived template:init as DEFAULT_IDENTITY fallbacks and
     // rendered in the footer although the CMS holds neither.
-    expect(DEFAULT_IDENTITY.contactPhone).toBeNull();
-    expect(DEFAULT_IDENTITY.address).toBeNull();
-    expect(identity.contactPhone).toBeNull();
-    expect(identity.address).toBeNull();
+    // "" rather than null so template:init can still rewrite the fields;
+    // every consumer treats a falsy value as "omit this line".
+    expect(DEFAULT_IDENTITY.contactPhone).toBe("");
+    expect(DEFAULT_IDENTITY.address).toBe("");
+    expect(identity.contactPhone).toBeFalsy();
+    expect(identity.address).toBeFalsy();
   });
 
   test("a CMS value is preferred over the hardcoded default when present", () => {

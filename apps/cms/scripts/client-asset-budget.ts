@@ -600,6 +600,156 @@ export const READER_BUDGET_BYTES = 24_000;
  * does not hand-roll a sixth variant, per the same reasoning the 218,000 raise
  * above already accepted for this file. Measured clean build: 221,626 B.
  * 226,000 is measured + ~2%, the same tight margin as the raise above.
+ *
+ * **Raised to 229,500 on 27 September 2026 for the OMES Control Center design
+ * system (ahliweb/omes#246 part 1/3, this repo's `/admin/omes/*` screens
+ * only).** The addition is one new stylesheet,
+ * `src/styles/omes-control-center.css` — the `.omes-cc` scoped dark-palette
+ * token overrides (canvas/panel/text/accent values measured against WCAG 2.1
+ * AA, see `docs/awcms/omes-control-center-design-system.md`), KPI status-dot
+ * styling, and the Bootstrap -> Check -> Diff -> Apply -> Verify -> Rollback
+ * lifecycle strip — imported ONLY by the 9 `admin/omes/*.astro` screens, no
+ * other screen. It ships NO new font: Public Sans / JetBrains Mono are
+ * already self-hosted for the whole admin (ADR-0120) and this addition adds
+ * no `@font-face` and no new `.woff2`, so the `font` audience budget below is
+ * untouched.
+ *
+ * ```
+ * before (226,000 ceiling)   225,983 B
+ * + omes-control-center.css  229,154 B   (+3,171)
+ * ```
+ *
+ * It was not absorbed by trimming: every rule is a token override or the
+ * lifecycle strip, and the previous ceiling's headroom was already down to
+ * 17 B before this change — the same "next lever" section above already
+ * named the remaining duplication (six near-identical card classes) as a
+ * cross-cutting refactor out of scope for a single-screen-family change.
+ * 229,500 is measured + ~150 B, deliberately tighter than the ~2% margin
+ * above: this addition is presentational and scoped to one screen family, so
+ * it should not buy headroom for unrelated future growth elsewhere.
+ *
+ * **Raised to 230,400 on 27 September 2026 for the OMES Control Center design
+ * system polish (ahliweb/omes#246 part 1b)**, fixing 5 defects a screenshot
+ * review of part 1 found: multi-value tiles rendered as one giant wrapping
+ * KPI number, the 8 filter/create forms using an unstyled `.admin-toolbar`
+ * instead of the existing `.admin-create-form` vocabulary, the lifecycle
+ * strip's `→` separators orphaning at a line wrap below 1440px, and a
+ * `clamp()` sign error that left an 18px light-canvas strip on the panel's
+ * right/bottom edge above ~1133px wide. The growth is `omes-control-center.css`
+ * gaining the multi-value-tile chip list, the lifecycle wrap fix, and a
+ * handful of dark-theme form states (focus ring, placeholder, disabled,
+ * invalid) — no new color tokens, every value reuses a pairing already in
+ * this file's own contrast table.
+ *
+ * ```
+ * before (229,500 ceiling)   229,154 B
+ * + part 1b polish (above)   230,263 B   (+1,109)
+ * ```
+ *
+ * Trimmed before raising: selectors were consolidated with `:is()`
+ * (`input:focus-visible, select:focus-visible, textarea:focus-visible` ->
+ * `:is(input, select, textarea):focus-visible`), the empty-breakdown state
+ * reuses the existing `.stat-hint` class instead of a new one, and prose
+ * comments were cut — recovered roughly 700 B of the naive-first-pass total
+ * before this final number. 230,400 is measured + ~140 B, the same tight
+ * margin the raise above used, for the same reason: this is presentational
+ * and scoped to the same 9 screens.
+ *
+ * **Raised again to 231,200 on 27 September 2026 for the tenth
+ * `/admin/omes/*` screen, AI privacy posture and egress owner-approval
+ * (ahliweb/omes#232), rebased onto part 1b above.** The screen ships no new
+ * stylesheet and no new font — it imports the SAME
+ * `admin-screens.css`/`omes-control-center.css` every other `omes_control`
+ * screen already imports, and its one inline `<script>` calls only the
+ * SHARED `lib/ui/admin-form-client.ts` helpers (`lockElement`, `messageBox`,
+ * `onAction`, `sendJsonForData`) every other screen's approve/deny-style
+ * action already uses — no hand-rolled lifecycle duplication for this raise
+ * to recover, unlike Issue #552's precedent. The growth is the page's own
+ * compiled markup/script chunk for a genuinely new screen, not decoration.
+ *
+ * ```
+ * before (230,400 ceiling)   230,263 B (per part 1b's own measurement above)
+ * + admin/omes/ai-privacy    231,059 B   (measured after rebasing onto part 1b)
+ * ```
+ *
+ * 231,200 is measured + ~140 B, the same tight margin the immediately
+ * preceding raise used, for the same reason: a new screen's own weight
+ * should not buy headroom for unrelated future growth elsewhere.
+ *
+ * ## ahliweb/omes#246 part 2 — three more genuinely new screens
+ *
+ * `/admin/omes/orkestrasi-langsung` (live tree + depth filter + polling
+ * activity stream), `/admin/omes/hermes` (task summary), and
+ * `/admin/omes/progres-hermes` (empty state) each add their own compiled
+ * markup/script chunk, the same "real new screen weight" shape as the
+ * ai-privacy raise immediately above.
+ *
+ * ```
+ * before (231,200 ceiling)        231,200 B (per the ai-privacy measurement above)
+ * + orkestrasi-langsung/hermes/
+ *   progres-hermes                234,303 B
+ * ```
+ *
+ * 234,443 is measured + ~140 B, the same tight margin every preceding raise
+ * in this constant's history has used.
+ *
+ * **Raised again to 234,992 for a post-merge visual-verification fix to
+ * `orkestrasi-langsung.astro` (ahliweb/omes#246 part 2 render check).** The
+ * 234,303 B measurement above was the SHIPPED, BUGGY build, not a
+ * post-fix number as an earlier draft of this comment claimed: the tree's
+ * depth indentation used a per-node inline `style="padding-left: ...px"`,
+ * which this repo's CSP (`default-src 'self'`, no `style-src`/
+ * `'unsafe-inline'`, `lib/security/security-headers.ts`) silently drops in
+ * every real browser — logging in and looking at the rendered screen (never
+ * done for this screen before merge) showed a flat, non-indented tree. The
+ * fix replaces the inline style with a bounded `data-indent-level` attribute
+ * (clamped to 6) plus seven fixed attribute-selector rules in
+ * `omes-control-center.css` — CSP-safe, but seven small rules cost more than
+ * one dynamic inline expression did.
+ *
+ * ```
+ * before (234,443 ceiling)   234,303 B (the buggy build, see above)
+ * + indent-level CSS rules   234,992 B   (+689; the fix itself, not new UI)
+ * ```
+ *
+ * 234,992 is the measured value with no added margin — the delta is the
+ * fix's own cost, not room for unrelated future growth.
+ *
+ * **Raised again to 236,936 for Issue ahliweb/omes#246 part 3.** `/admin/omes/
+ * arsitektur` (the new Architecture Control Center screen, planes-as-lanes
+ * of capability cards rendered from the vendored, pinned OMES
+ * architecture-capabilities-view snapshot) adds its own compiled
+ * markup/script/style chunk — the same "real new screen weight" shape as
+ * every preceding raise in this history. This screen was originally
+ * measured (236,247 B) against the stale 234,443 ceiling before the
+ * orchestration-indent fix (PR #835) landed on main; after rebasing onto
+ * that fix's 234,992 ceiling, the real build measures higher still because
+ * the indent-fix CSS and this screen's own chunk both changed the shared
+ * `AdminLayout` CSS bundle. Re-measured post-rebase rather than trusting
+ * the pre-rebase estimate.
+ *
+ * ```
+ * before (234,992 ceiling)   234,992 B (post orchestration-indent fix, PR #835)
+ * + arsitektur screen        236,936 B (measured actual total, post-rebase)
+ * ```
+ *
+ * 236,936 is the measured value with no added margin.
+ *
+ * **Raised again to 237,433 for issue ahliweb/omes#246 part 2 follow-up**
+ * (stale-session node/event historical rendering). The added
+ * `isHistorical`/"last reported: X" muted treatment on
+ * `orkestrasi-langsung.astro` and `hermes.astro` (a new `t()` msgid, a
+ * `data-historical` attribute, and the muted-row CSS rule in
+ * `omes-control-center.css`, all shared through the `AdminLayout` CSS
+ * bundle these two screens already pull in) grew the measured total by 497
+ * bytes over the prior ceiling:
+ *
+ * ```
+ * before (236,936 ceiling)   236,936 B
+ * + stale-session muting        237,433 B (measured actual total)
+ * ```
+ *
+ * 237,433 is the measured value with no added margin.
  */
 /**
  * **Raised to 254,500 B in awcms-one (subtree sync of awcms#813, issue
@@ -634,8 +784,17 @@ export const READER_BUDGET_BYTES = 24_000;
  * +4,357 B (upstream measured 221,626 → 225,983 B under its unchanged
  * 226,000 limit); carried here as 259,000 → 263,400 per AGENTS.md's
  * divergence rule. Measured on the merged tree: 263,184 B.
+ *
+ * **Raised to 274,833 B for the omes-web sync (27 September 2026,
+ * `0d6c0dfe` → `4a7416ac`, PRs #829-#837):** upstream's own ceiling moved
+ * 226,000 → 237,433 across this window (the design system, AI privacy,
+ * Hermes orchestration, the tree-indentation CSP fix, Arsitektur, and the
+ * stale-session rendering fix — see upstream's own docblock lineage above),
+ * a +11,433 B delta. Carried here as 263,400 → 274,833 per AGENTS.md's
+ * divergence rule (keep both lineages, add upstream's delta to this repo's
+ * figure).
  */
-export const APP_BUDGET_BYTES = 263_400;
+export const APP_BUDGET_BYTES = 274_833;
 
 /**
  * Largest file at baseline 16,800 B (2026-08-05) + 25% was 21,000 B.

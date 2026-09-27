@@ -14,6 +14,14 @@ export const OMES_BACKUP_SNAPSHOTS_LIFECYCLE_KEY =
   "omes_control.backup_snapshots";
 export const OMES_WORKER_NONCES_LIFECYCLE_KEY = "omes_control.worker_nonces";
 export const OMES_WORKER_RESULTS_LIFECYCLE_KEY = "omes_control.worker_results";
+export const OMES_AI_PRIVACY_POSTURE_LIFECYCLE_KEY =
+  "omes_control.ai_privacy_posture";
+export const OMES_AI_EGRESS_APPROVALS_LIFECYCLE_KEY =
+  "omes_control.ai_egress_approvals";
+export const OMES_HERMES_ORCHESTRATION_TREES_LIFECYCLE_KEY =
+  "omes_control.hermes_orchestration_trees";
+export const OMES_HERMES_ORCHESTRATION_EVENTS_LIFECYCLE_KEY =
+  "omes_control.hermes_orchestration_events";
 
 /**
  * `omes_control` — OMES Control Center domain module (ADR-0122, Issue ahliweb/omes#196).
@@ -162,6 +170,50 @@ export const omesControlModule = defineModule({
       path: "/admin/omes/enrollments",
       order: 98,
       requiredPermission: "omes_control.enrollments.manage"
+    },
+    {
+      labelKey: "admin.layout.nav_omes_ai_privacy",
+      path: "/admin/omes/ai-privacy",
+      order: 99,
+      requiredPermission: "omes_control.ai_privacy.read"
+    },
+    // Issue ahliweb/omes#246 (part 2; OMES issue #183, ADR-0028) adds the
+    // final three redesign-parity screens. All three share the single
+    // `hermes_orchestration.read` permission (the same "one read
+    // permission for a family of related read-only projections" precedent
+    // `health` already sets against `servers.read` above) — none accepts a
+    // write/control action, so no separate permission per screen.
+    {
+      labelKey: "admin.layout.nav_omes_orkestrasi_langsung",
+      path: "/admin/omes/orkestrasi-langsung",
+      order: 100,
+      requiredPermission: "omes_control.hermes_orchestration.read"
+    },
+    {
+      labelKey: "admin.layout.nav_omes_hermes",
+      path: "/admin/omes/hermes",
+      order: 101,
+      requiredPermission: "omes_control.hermes_orchestration.read"
+    },
+    {
+      labelKey: "admin.layout.nav_omes_progres_hermes",
+      path: "/admin/omes/progres-hermes",
+      order: 102,
+      requiredPermission: "omes_control.hermes_orchestration.read"
+    },
+    // Issue ahliweb/omes#246 part 3: the read-only Architecture Control
+    // Center screen, projected from the vendored
+    // `architecture-capabilities-view` v1 contract. This is a DIFFERENT
+    // audience/concern from `hermes_orchestration.read` above — it is not a
+    // Hermes delegated-task projection, it is the ADR-0017 layered
+    // reference-architecture registry (planes/capabilities across OMES,
+    // Hermes, Omarchy, AWCMS, and providers) — so it gets its own permission,
+    // `architecture.read`, rather than reusing `hermes_orchestration.read`.
+    {
+      labelKey: "admin.layout.nav_omes_arsitektur",
+      path: "/admin/omes/arsitektur",
+      order: 103,
+      requiredPermission: "omes_control.architecture.read"
     }
   ],
   permissions: [
@@ -229,6 +281,29 @@ export const omesControlModule = defineModule({
       activityCode: "enrollments",
       action: "manage",
       description: "Manage worker enrollment tokens and public key credentials"
+    },
+    {
+      activityCode: "ai_privacy",
+      action: "read",
+      description:
+        "Read AI privacy posture evidence and egress-approval requests"
+    },
+    {
+      activityCode: "ai_privacy",
+      action: "approve",
+      description: "Approve or deny an AI egress owner-approval request"
+    },
+    {
+      activityCode: "hermes_orchestration",
+      action: "read",
+      description:
+        "Read Hermes delegated-task/subagent orchestration projections"
+    },
+    {
+      activityCode: "architecture",
+      action: "read",
+      description:
+        "Read the pinned OMES layered reference-architecture capability snapshot"
     }
   ],
   dataLifecycle: [
@@ -625,6 +700,165 @@ export const omesControlModule = defineModule({
       batchLimit: 500,
       backupRestoreNotes:
         "Worker-reported job evidence preserved during backups for audit continuity.",
+      executionMode: "generic"
+    },
+    {
+      key: OMES_AI_PRIVACY_POSTURE_LIFECYCLE_KEY,
+      tableName: "awcms_omes_ai_privacy_posture",
+      ownerModuleKey: "omes_control",
+      scope: "tenant",
+      cursorColumn: "received_at",
+      retentionClass: "audit_security",
+      retentionMinDays: 90,
+      retentionMaxDays: 1825,
+      defaultRetentionDays: 730,
+      partition: {
+        eligible: false,
+        rationale:
+          "One current row per (tenant, server, deployment) target — bounded by fleet size, not append-only history."
+      },
+      archive: {
+        archivable: false,
+        rationale:
+          "Bounded metadata evidence only (issue #217/ADR-0029); no raw prompt/transcript content ever reaches this table, so it carries no separate archival value beyond the two-year audit retention."
+      },
+      deletion: {
+        mode: "hard_delete",
+        rationale:
+          "Posture rows for a decommissioned/removed server past retention window are purged."
+      },
+      legalHold: {
+        applicable: true,
+        precedence: "overrides_retention"
+      },
+      requiredIndexes: [
+        {
+          columns: ["tenant_id", "received_at"],
+          purpose: "Cursor scan index for retention purging."
+        }
+      ],
+      batchLimit: 500,
+      backupRestoreNotes:
+        "AI privacy posture evidence preserved during backups for governance continuity.",
+      executionMode: "generic"
+    },
+    {
+      key: OMES_AI_EGRESS_APPROVALS_LIFECYCLE_KEY,
+      tableName: "awcms_omes_ai_egress_approvals",
+      ownerModuleKey: "omes_control",
+      scope: "tenant",
+      cursorColumn: "created_at",
+      retentionClass: "audit_security",
+      retentionMinDays: 365,
+      retentionMaxDays: 1825,
+      defaultRetentionDays: 730,
+      partition: {
+        eligible: false,
+        rationale:
+          "AI egress owner-approval requests are indexed by (tenant_id, idempotency_key); volume is bounded by administrative activity."
+      },
+      archive: {
+        archivable: false,
+        rationale:
+          "The approval decision/reason is itself the durable governance evidence for a Confidential/Restricted egress decision; excluded from separate archival, kept in the primary table for its full retention window."
+      },
+      deletion: {
+        mode: "hard_delete",
+        rationale: "Approval request rows past the retention window are purged."
+      },
+      legalHold: {
+        applicable: true,
+        precedence: "overrides_retention"
+      },
+      requiredIndexes: [
+        {
+          columns: ["tenant_id", "created_at"],
+          purpose: "Cursor scan index for retention purging."
+        }
+      ],
+      batchLimit: 500,
+      backupRestoreNotes:
+        "AI egress owner-approval decisions preserved during backups for governance continuity.",
+      executionMode: "generic"
+    },
+    {
+      key: OMES_HERMES_ORCHESTRATION_TREES_LIFECYCLE_KEY,
+      tableName: "awcms_omes_hermes_orchestration_trees",
+      ownerModuleKey: "omes_control",
+      scope: "tenant",
+      cursorColumn: "received_at",
+      retentionClass: "operational_queue",
+      retentionMinDays: 7,
+      retentionMaxDays: 180,
+      defaultRetentionDays: 30,
+      partition: {
+        eligible: false,
+        rationale:
+          "One current row per (tenant, server, session) target — bounded by concurrently active Hermes sessions, not append-only history."
+      },
+      archive: {
+        archivable: false,
+        rationale:
+          "Live orchestration snapshots are ephemeral operational telemetry (issue #183); the durable activity record is the events table below."
+      },
+      deletion: {
+        mode: "hard_delete",
+        rationale:
+          "Snapshot rows for a session no longer being observed are purged after the retention window."
+      },
+      legalHold: {
+        applicable: false,
+        precedence: "not_applicable"
+      },
+      requiredIndexes: [
+        {
+          columns: ["tenant_id", "received_at"],
+          purpose: "Cursor scan index for retention purging."
+        }
+      ],
+      batchLimit: 500,
+      backupRestoreNotes:
+        "Ephemeral live-orchestration telemetry; excluded from disaster-recovery significance.",
+      executionMode: "generic"
+    },
+    {
+      key: OMES_HERMES_ORCHESTRATION_EVENTS_LIFECYCLE_KEY,
+      tableName: "awcms_omes_hermes_orchestration_events",
+      ownerModuleKey: "omes_control",
+      scope: "tenant",
+      cursorColumn: "received_at",
+      retentionClass: "audit_security",
+      retentionMinDays: 30,
+      retentionMaxDays: 365,
+      defaultRetentionDays: 90,
+      partition: {
+        eligible: false,
+        rationale:
+          "Append-only activity log indexed by (tenant_id, session_id, event_timestamp); volume is bounded by delegated-task throughput."
+      },
+      archive: {
+        archivable: false,
+        rationale:
+          "Bounded metadata evidence only (issue #183); no raw prompt/transcript/tool-argument content ever reaches this table."
+      },
+      deletion: {
+        mode: "hard_delete",
+        rationale:
+          "Activity-stream rows past the retention window are purged; awcms_worker holds SELECT+DELETE only."
+      },
+      legalHold: {
+        applicable: false,
+        precedence: "not_applicable"
+      },
+      requiredIndexes: [
+        {
+          columns: ["tenant_id", "received_at"],
+          purpose: "Cursor scan index for retention purging."
+        }
+      ],
+      batchLimit: 500,
+      backupRestoreNotes:
+        "Recent orchestration activity preserved during backups for operational continuity; not a compliance record.",
       executionMode: "generic"
     }
   ]

@@ -14,7 +14,11 @@ import {
   OMES_ENROLLMENTS_LIFECYCLE_KEY,
   OMES_DEPLOYMENTS_LIFECYCLE_KEY,
   OMES_OPERATION_REQUESTS_LIFECYCLE_KEY,
-  OMES_BACKUP_SNAPSHOTS_LIFECYCLE_KEY
+  OMES_BACKUP_SNAPSHOTS_LIFECYCLE_KEY,
+  OMES_AI_PRIVACY_POSTURE_LIFECYCLE_KEY,
+  OMES_AI_EGRESS_APPROVALS_LIFECYCLE_KEY,
+  OMES_HERMES_ORCHESTRATION_TREES_LIFECYCLE_KEY,
+  OMES_HERMES_ORCHESTRATION_EVENTS_LIFECYCLE_KEY
 } from "../src/modules/omes-control/module";
 import { getModuleByKey } from "../src/modules";
 
@@ -37,13 +41,16 @@ describe("omes_control module descriptor", () => {
     expect(mod?.dependencies).toEqual(["tenant_admin", "identity_access"]);
   });
 
-  test("declares navigation for all nine screens ahliweb/omes#200, #201, and #233 landed", () => {
+  test("declares navigation for all fourteen screens ahliweb/omes#200, #201, #233, #232, and #246 (parts 2 and 3) landed", () => {
     // Was `toBeUndefined()` while the physical pages were staged work
     // (ahliweb/omes#196/#197/#198) — matching the push_delivery (ADR-0074)
     // precedent that a descriptor must not declare a path with no page
     // behind it (`tests/admin-navigation-registry.test.ts` enforces this in
     // both directions). ahliweb/omes#200 landed the first five; #201 added
-    // health, backups, and audit; #233 adds the ninth, enrollments.
+    // health, backups, and audit; #233 added the ninth, enrollments; #232
+    // added the tenth, AI privacy; #246 part 2 adds live orchestration,
+    // Hermes, and Hermes progress; #246 part 3 adds the fourteenth,
+    // Arsitektur (architecture).
     const nav = omesControlModule.navigation ?? [];
     expect(nav.map((entry) => entry.path).sort()).toEqual(
       [
@@ -55,11 +62,16 @@ describe("omes_control module descriptor", () => {
         "/admin/omes/health",
         "/admin/omes/backups",
         "/admin/omes/audit",
-        "/admin/omes/enrollments"
+        "/admin/omes/enrollments",
+        "/admin/omes/ai-privacy",
+        "/admin/omes/orkestrasi-langsung",
+        "/admin/omes/hermes",
+        "/admin/omes/progres-hermes",
+        "/admin/omes/arsitektur"
       ].sort()
     );
 
-    // Every requiredPermission must be one of the 13 permissions this same
+    // Every requiredPermission must be one of the permissions this same
     // descriptor declares below — a nav entry gated on a permission nothing
     // seeds denies even `owner` (this repo's own recorded failure mode).
     const declared = new Set(
@@ -74,9 +86,13 @@ describe("omes_control module descriptor", () => {
     }
   });
 
-  test("defines 13 granular least-privilege permissions", () => {
+  test("defines 17 granular least-privilege permissions", () => {
+    // 13 original (#196/#198/#233) + ai_privacy.read + ai_privacy.approve
+    // (ahliweb/omes#232, sql/161) + hermes_orchestration.read
+    // (ahliweb/omes#246 part 2, sql/164) + architecture.read
+    // (ahliweb/omes#246 part 3, sql/165).
     const permissions = omesControlModule.permissions ?? [];
-    expect(permissions.length).toBe(13);
+    expect(permissions.length).toBe(17);
 
     const permKeys = permissions.map(
       (p) => `omes_control.${p.activityCode}.${p.action}`
@@ -94,13 +110,20 @@ describe("omes_control module descriptor", () => {
     expect(permKeys).toContain("omes_control.backups.rollback");
     expect(permKeys).toContain("omes_control.audit.read");
     expect(permKeys).toContain("omes_control.enrollments.manage");
+    expect(permKeys).toContain("omes_control.ai_privacy.read");
+    expect(permKeys).toContain("omes_control.ai_privacy.approve");
+    expect(permKeys).toContain("omes_control.hermes_orchestration.read");
+    expect(permKeys).toContain("omes_control.architecture.read");
   });
 
-  test("defines dataLifecycle descriptors for all 10 domain tables", () => {
+  test("defines dataLifecycle descriptors for all 14 domain tables", () => {
     // 8 original (#196) + awcms_omes_worker_nonces + awcms_omes_worker_results
-    // (ahliweb/omes#199, sql/159).
+    // (ahliweb/omes#199, sql/159) + awcms_omes_ai_privacy_posture +
+    // awcms_omes_ai_egress_approvals (ahliweb/omes#232, sql/160) +
+    // awcms_omes_hermes_orchestration_trees + _events (ahliweb/omes#246,
+    // sql/163).
     const lifecycles = omesControlModule.dataLifecycle ?? [];
-    expect(lifecycles.length).toBe(10);
+    expect(lifecycles.length).toBe(14);
 
     const keys = lifecycles.map((l) => l.key);
     expect(keys).toContain(OMES_HEALTH_SNAPSHOTS_LIFECYCLE_KEY);
@@ -111,6 +134,10 @@ describe("omes_control module descriptor", () => {
     expect(keys).toContain(OMES_DEPLOYMENTS_LIFECYCLE_KEY);
     expect(keys).toContain(OMES_OPERATION_REQUESTS_LIFECYCLE_KEY);
     expect(keys).toContain(OMES_BACKUP_SNAPSHOTS_LIFECYCLE_KEY);
+    expect(keys).toContain(OMES_AI_PRIVACY_POSTURE_LIFECYCLE_KEY);
+    expect(keys).toContain(OMES_AI_EGRESS_APPROVALS_LIFECYCLE_KEY);
+    expect(keys).toContain(OMES_HERMES_ORCHESTRATION_TREES_LIFECYCLE_KEY);
+    expect(keys).toContain(OMES_HERMES_ORCHESTRATION_EVENTS_LIFECYCLE_KEY);
 
     for (const desc of lifecycles) {
       expect(desc.scope).toBe("tenant");
@@ -130,10 +157,39 @@ describe("omes_control SQL migration sanity", () => {
     join(import.meta.dir, "../sql/154_awcms_omes_control_schema.sql"),
     "utf8"
   );
-  const permissionsSql = readFileSync(
-    join(import.meta.dir, "../sql/155_awcms_omes_control_permissions.sql"),
-    "utf8"
-  );
+  const permissionsSql =
+    readFileSync(
+      join(import.meta.dir, "../sql/155_awcms_omes_control_permissions.sql"),
+      "utf8"
+    ) +
+    // ahliweb/omes#232 added two more module permissions (ai_privacy.read/
+    // .approve) via a NEW migration rather than editing the already-applied
+    // sql/155 — this repo's own immutable-migration rule. This test's own
+    // "seeds exactly the declared permissions" claim must therefore look
+    // across every migration that ever added an omes_control permission,
+    // not only the first one.
+    readFileSync(
+      join(import.meta.dir, "../sql/161_awcms_omes_ai_privacy_permissions.sql"),
+      "utf8"
+    ) +
+    // ahliweb/omes#246 part 2 adds the sixteenth the same way, via sql/164.
+    readFileSync(
+      join(
+        import.meta.dir,
+        "../sql/164_awcms_omes_hermes_orchestration_permissions.sql"
+      ),
+      "utf8"
+    ) +
+    // ahliweb/omes#246 part 3 adds the seventeenth, via sql/165 — no schema
+    // migration accompanies it (the Architecture screen has no table; see
+    // sql/165's own header comment).
+    readFileSync(
+      join(
+        import.meta.dir,
+        "../sql/165_awcms_omes_architecture_permissions.sql"
+      ),
+      "utf8"
+    );
 
   test("all 8 tables enforce ENABLE and FORCE ROW LEVEL SECURITY", () => {
     const expectedTables = [
@@ -161,7 +217,7 @@ describe("omes_control SQL migration sanity", () => {
     }
   });
 
-  test("permissions migration seeds exactly the 13 declared module permissions", () => {
+  test("the permissions migrations seed exactly the 17 declared module permissions", () => {
     const permissions = omesControlModule.permissions ?? [];
     for (const perm of permissions) {
       expect(permissionsSql).toContain(

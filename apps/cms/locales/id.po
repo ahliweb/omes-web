@@ -6134,6 +6134,15 @@ msgstr "{count} deployment basi atau belum direkonsiliasi"
 msgid "{count} stale (no recent heartbeat)"
 msgstr "{count} basi (tanpa heartbeat terbaru)"
 
+msgid "No servers enrolled"
+msgstr "Tidak ada server terdaftar"
+
+msgid "No jobs recorded"
+msgstr "Tidak ada job tercatat"
+
+msgid "No deployments recorded"
+msgstr "Tidak ada deployment tercatat"
+
 
 msgid "Operations"
 msgstr "Operasi"
@@ -6545,3 +6554,252 @@ msgstr "belum disajikan"
 
 msgid "Enrollments"
 msgstr "Pendaftaran"
+
+msgid "OMES operation lifecycle"
+msgstr "Siklus operasi OMES"
+
+msgid "Every OMES change moves through the same sequence of allowlisted, auditable steps — never a shortcut around one of them."
+msgstr "Setiap perubahan OMES melewati urutan langkah yang sama — diizin-daftarkan dan dapat diaudit — tidak pernah ada jalan pintas melewati salah satunya."
+
+msgid "Bootstrap"
+msgstr "Bootstrap"
+
+msgid "Check"
+msgstr "Periksa"
+
+msgid "Diff"
+msgstr "Diff"
+
+msgid "Rollback"
+msgstr "Rollback"
+
+msgid "OMES AI privacy"
+msgstr "Privasi AI OMES"
+
+msgid "Read-only AI privacy posture evidence and AI egress owner-approval requests, projected from OMES. Never displays a prompt, transcript, or raw provider response — bounded metadata only."
+msgstr "Bukti postur privasi AI dan permintaan persetujuan pemilik untuk keluarnya (egress) AI, hanya-baca, diproyeksikan dari OMES. Tidak pernah menampilkan prompt, transkrip, atau respons mentah penyedia — hanya metadata terbatas."
+
+msgid "You do not have permission to view AI privacy posture."
+msgstr "Anda tidak memiliki izin untuk melihat postur privasi AI."
+
+msgid "The AI privacy posture console could not be loaded right now. This is a problem reading it, not a healthy silence — please try again later."
+msgstr "Konsol postur privasi AI tidak dapat dimuat saat ini. Ini adalah masalah membacanya, bukan keheningan yang sehat — silakan coba lagi nanti."
+
+msgid "AI privacy posture"
+msgstr "Postur privasi AI"
+
+msgid "Fleet healthy"
+msgstr "Armada sehat"
+
+msgid "Attention needed"
+msgstr "Perlu perhatian"
+
+msgid "Evidence older than its freshness window, or with unrecognized fields, is always shown as stale/unknown and never as healthy."
+msgstr "Bukti yang lebih tua dari jendela kesegarannya, atau dengan bidang yang tidak dikenali, selalu ditampilkan sebagai usang/tidak diketahui dan tidak pernah sebagai sehat."
+
+msgid "AI privacy posture evidence per server, newest first."
+msgstr "Bukti postur privasi AI per server, terbaru lebih dulu."
+
+msgid "Destination class"
+msgstr "Kelas tujuan"
+
+msgid "Last verified"
+msgstr "Terakhir diverifikasi"
+
+msgid "No AI privacy posture evidence yet"
+msgstr "Belum ada bukti postur privasi AI"
+
+msgid "Evidence appears here once an enrolled OMES host reports its AI privacy posture."
+msgstr "Bukti muncul di sini setelah host OMES yang terdaftar melaporkan postur privasi AI-nya."
+
+msgid "AI egress approval requests"
+msgstr "Permintaan persetujuan egress AI"
+
+msgid "A RESTRICTED classification resolving to a cloud destination has no approval path and is never offered a control here."
+msgstr "Klasifikasi RESTRICTED yang mengarah ke tujuan cloud tidak memiliki jalur persetujuan dan tidak pernah ditawarkan kontrol di sini."
+
+msgid "AI egress owner-approval requests, newest first."
+msgstr "Permintaan persetujuan pemilik untuk egress AI, terbaru lebih dulu."
+
+msgid "Classification"
+msgstr "Klasifikasi"
+
+msgid "Destination"
+msgstr "Tujuan"
+
+msgid "Decided"
+msgstr "Diputuskan"
+
+msgid "No AI egress approval requests"
+msgstr "Tidak ada permintaan persetujuan egress AI"
+
+msgid "OMES live orchestration"
+msgstr "Orkestrasi langsung OMES"
+
+msgid "OMES Hermes"
+msgstr "Hermes OMES"
+
+msgid "OMES Hermes progress"
+msgstr "Progres Hermes OMES"
+
+msgid "OMES architecture"
+msgstr "Arsitektur OMES"
+
+msgid "Live orchestration"
+msgstr "Orkestrasi langsung"
+
+msgid "The live Hermes manager → agent → subagent tree, filtered by depth, plus the activity stream. Read-only projection — OMES never sends a command to a Hermes agent."
+msgstr "Pohon manajer → agen → subagent Hermes secara langsung, difilter berdasarkan kedalaman, beserta aliran aktivitas. Proyeksi baca saja — OMES tidak pernah mengirim perintah ke agen Hermes."
+
+msgid "You do not have permission to view Hermes orchestration."
+msgstr "Anda tidak memiliki izin untuk melihat orkestrasi Hermes."
+
+msgid "The live orchestration console could not be loaded right now. This is a problem reading it, not a healthy silence — please try again later."
+msgstr "Konsol orkestrasi langsung tidak dapat dimuat saat ini. Ini adalah masalah membacanya, bukan keheningan yang sehat — silakan coba lagi nanti."
+
+msgid "Orchestration tree"
+msgstr "Pohon orkestrasi"
+
+msgid "A snapshot older than its liveness window is shown as stale/unknown, never as live."
+msgstr "Sebuah snapshot yang lebih tua dari jendela kesegarannya ditampilkan sebagai stale/unknown, tidak pernah sebagai langsung (live)."
+
+msgid "Depth filter"
+msgstr "Filter kedalaman"
+
+msgid "All depths"
+msgstr "Semua kedalaman"
+
+msgid "Root only"
+msgstr "Root saja"
+
+msgid "Up to depth 1"
+msgstr "Hingga kedalaman 1"
+
+msgid "Up to depth 2"
+msgstr "Hingga kedalaman 2"
+
+msgid "Up to depth 3"
+msgstr "Hingga kedalaman 3"
+
+msgid "No orchestration snapshot yet"
+msgstr "Belum ada snapshot orkestrasi"
+
+msgid "Appears here once an enrolled OMES host reports a Hermes delegation tree."
+msgstr "Muncul di sini setelah host OMES yang terdaftar melaporkan pohon delegasi Hermes."
+
+msgid "Completed"
+msgstr "Selesai"
+
+msgid "Tool"
+msgstr "Alat"
+
+msgid "Activity stream"
+msgstr "Aliran aktivitas"
+
+msgid "Subagent lifecycle events, newest first. Refreshes periodically without reloading the page."
+msgstr "Peristiwa siklus hidup subagent, terbaru lebih dulu. Diperbarui secara berkala tanpa memuat ulang halaman."
+
+msgid "No orchestration activity yet"
+msgstr "Belum ada aktivitas orkestrasi"
+
+msgid "Hermes"
+msgstr "Hermes"
+
+msgid "Summary of the currently active Hermes delegated task — a read-only projection from OMES; it never sends a command to a Hermes agent."
+msgstr "Ringkasan tugas delegasi Hermes yang sedang aktif — proyeksi baca saja dari OMES, tidak pernah mengirim perintah ke agen Hermes."
+
+msgid "The Hermes task summary could not be loaded right now. This is a problem reading it, not a healthy silence — please try again later."
+msgstr "Ringkasan tugas Hermes tidak dapat dimuat saat ini. Ini adalah masalah membacanya, bukan keheningan yang sehat — silakan coba lagi nanti."
+
+msgid "Current Hermes task"
+msgstr "Tugas Hermes saat ini"
+
+msgid "No Hermes task reported yet"
+msgstr "Belum ada tugas Hermes yang dilaporkan"
+
+msgid "Appears here once an enrolled OMES host reports a Hermes delegation session."
+msgstr "Muncul di sini setelah host OMES yang terdaftar melaporkan sesi delegasi Hermes."
+
+msgid "Goal"
+msgstr "Tujuan"
+
+msgid "Step count"
+msgstr "Jumlah langkah"
+
+msgid "Planner"
+msgstr "Perencana (planner)"
+
+msgid "not available in the v1 contract"
+msgstr "tidak tersedia di kontrak v1"
+
+msgid "not reported"
+msgstr "tidak dilaporkan"
+
+msgid "Step budget"
+msgstr "Anggaran langkah (budget)"
+
+msgid "Hermes log"
+msgstr "Log Hermes"
+
+msgid "No log yet"
+msgstr "Belum ada log"
+
+msgid "Hermes progress"
+msgstr "Progres Hermes"
+
+msgid "This view needs a GitHub repository-progress projection that is not implemented yet."
+msgstr "Tampilan ini membutuhkan proyeksi progres repositori GitHub yang belum diimplementasikan."
+
+msgid "This screen could not be loaded right now. This is a problem reading it, not a healthy silence — please try again later."
+msgstr "Layar ini tidak dapat dimuat saat ini. Ini adalah masalah membacanya, bukan keheningan yang sehat — silakan coba lagi nanti."
+
+msgid "This view is not implemented yet"
+msgstr "Tampilan ini belum diimplementasikan"
+
+msgid "Hermes integration progress needs a projection of the ahliweb/omes GitHub repository's milestones and issues, which is not implemented (it is not an OMES/Hermes runtime projection). No direct GitHub integration and no static list is shown here, because either would be misleading — see"
+msgstr "Progres integrasi Hermes membutuhkan proyeksi milestone dan issue repositori GitHub ahliweb/omes, yang belum diimplementasikan (bukan proyeksi runtime OMES/Hermes). Tidak ada integrasi GitHub langsung dan tidak ada daftar statis yang ditampilkan di sini, karena keduanya akan menyesatkan — lihat"
+
+msgid "ahliweb/omes#249"
+msgstr "ahliweb/omes#249"
+
+msgid "A read-only projection of the ADR-0017 layered reference architecture — planes and capabilities across OMES, Hermes, Omarchy, AWCMS, and provider integrations."
+msgstr "Proyeksi baca-saja dari arsitektur referensi berlapis ADR-0017 — plane dan kapabilitas di OMES, Hermes, Omarchy, AWCMS, dan integrasi penyedia."
+
+msgid "You do not have permission to view the architecture snapshot."
+msgstr "Anda tidak memiliki izin untuk melihat cuplikan arsitektur."
+
+msgid "The architecture snapshot could not be loaded right now. This is a problem reading it, not a healthy silence — please try again later."
+msgstr "Cuplikan arsitektur tidak dapat dimuat saat ini. Ini adalah masalah membacanya, bukan keheningan yang sehat — silakan coba lagi nanti."
+
+msgid "Reference architecture"
+msgstr "Arsitektur referensi"
+
+msgid "This is a pinned release snapshot from a specific OMES release — not live host state. It only changes when this screen's data is re-vendored from a newer OMES commit."
+msgstr "Ini adalah cuplikan rilis yang dipatok dari rilis OMES tertentu — bukan status host langsung. Cuplikan ini hanya berubah saat data layar ini divendorkan ulang dari commit OMES yang lebih baru."
+
+msgid "OMES version"
+msgstr "Versi OMES"
+
+msgid "OMES commit"
+msgstr "Commit OMES"
+
+msgid "Generated at"
+msgstr "Dibuat pada"
+
+msgid "Capabilities"
+msgstr "Kapabilitas"
+
+msgid "No capabilities in this plane yet"
+msgstr "Belum ada kapabilitas di plane ini"
+
+msgid "Execution semantics"
+msgstr "Semantik eksekusi"
+
+msgid "Upstream project"
+msgstr "Proyek hulu"
+
+msgid "OMES module"
+msgstr "Modul OMES"
+
+msgid "last reported: {state}"
+msgstr "terakhir dilaporkan: {state}"

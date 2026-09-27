@@ -53,7 +53,25 @@ export const ENVELOPE_TIMESTAMP_WINDOW_MS = 5 * 60 * 1000;
 /** How long a consumed nonce is retained for replay detection. */
 export const NONCE_RETENTION_MS = 15 * 60 * 1000;
 
-export type WorkerRoute = "poll" | "result" | "heartbeat";
+/**
+ * `"ai-privacy-posture"` added by Issue ahliweb/omes#232: the OMES pull
+ * worker delivers an `ai-privacy-posture-view` projection over the SAME
+ * Ed25519-envelope-authenticated worker transport as poll/result/heartbeat
+ * (ADR-0027's pull-worker/outbox delivery), rather than a new,
+ * separately-authenticated inbound listener.
+ *
+ * `"hermes-orchestration-tree"` / `"hermes-orchestration-event"` added by
+ * Issue ahliweb/omes#246 (OMES issue #183, ADR-0028): the OMES pull worker
+ * delivers `hermes-orchestration-tree`/`hermes-orchestration-event`
+ * projections over the same transport.
+ */
+export type WorkerRoute =
+  | "poll"
+  | "result"
+  | "heartbeat"
+  | "ai-privacy-posture"
+  | "hermes-orchestration-tree"
+  | "hermes-orchestration-event";
 
 export type CanonicalEnvelopeInput = {
   method: string;

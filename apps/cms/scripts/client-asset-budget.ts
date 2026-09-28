@@ -750,6 +750,89 @@ export const READER_BUDGET_BYTES = 24_000;
  * ```
  *
  * 237,433 is the measured value with no added margin.
+ *
+ * **Raised again to 237,468 for ahliweb/awcms#831** (admin sidebar clipping
+ * fix). The fix adds one bare, universal `.cell-muted { overflow-wrap:
+ * anywhere; }` rule to `admin.css` (previously `.cell-muted`'s only wrap
+ * protection was scoped to `.data-table td`, which does nothing for the
+ * Hermes orchestration tree/activity list — a `display:flex` list, not a
+ * table) plus its doc comment. Measured actual total:
+ *
+ * ```
+ * before (237,433 ceiling)   237,433 B
+ * + .cell-muted overflow-wrap fix   237,468 B (measured actual total)
+ * ```
+ *
+ * 237,468 is the measured value with no added margin.
+ *
+ * **Raised again to 237,491, same issue.** `responsive-360.e2e.ts` (a full
+ * fleet sweep, not something this fix's own tests happened to cover) caught
+ * a SECOND instance of the identical defect on `/admin/omes/hermes`: its
+ * `.omes-hermes-task-summary dd` (a scoped `<style>` in `hermes.astro`)
+ * renders the same Hermes-supplied `goal` text as a plain `<dd>` with no
+ * `.cell-muted` class, inside a `display: grid;
+ * grid-template-columns: repeat(auto-fit, minmax(200px, 1fr))` row — a grid
+ * item's default `min-width: auto` let a long, space-free value exceed the
+ * `minmax()` track's 200px floor the same way `.cell-muted` was overflowing
+ * `.admin-main`. Fixed with the same `overflow-wrap: anywhere;` on that
+ * `<dd>` directly (it has no shared class with the orchestration tree's
+ * `.cell-muted` to fix once for both). Measured actual total:
+ *
+ * ```
+ * before (237,468 ceiling)   237,468 B
+ * + hermes.astro dd overflow-wrap fix   237,491 B (measured actual total)
+ * ```
+ *
+ * 237,491 is the measured value with no added margin.
+ *
+ * **Raised again to 237,558 for ahliweb/awcms#843** (the topbar account-link
+ * overflow at 1024px, plus the `/admin/data-lifecycle` legal-hold `<select>`
+ * overflow at 360px). Three small `admin.css` rule changes: widening the
+ * `@media (max-width: 1023.98px)` breakpoint that hides `.admin-palette-open`/
+ * `.admin-tenant-switch` to `1024px` (so they also step aside at the exact
+ * width where the topbar ran out of room), `.admin-user-menu { flex: none; }`
+ * (was `min-width: 0`, which let the account cluster be squeezed narrower
+ * than `.admin-account-link`'s real content and then overflow its own shrunk
+ * parent), and `.admin-create-form label { min-width: 0; }` (a nested
+ * column-flex label was inheriting its child `<select>`'s full intrinsic
+ * width as its own automatic minimum, the same class of bug the `/admin/seo`
+ * select fix above addressed one level down). Measured actual total:
+ *
+ * ```
+ * before (237,491 ceiling)   237,491 B
+ * + admin.css topbar/create-form overflow fixes   237,558 B (measured actual total)
+ * ```
+ *
+ * 237,558 is the measured value with no added margin.
+ *
+ * **Raised again for issue ahliweb/omes#249** (ADR-0030's repository-progress
+ * projection). `progres-hermes.astro`'s own scoped `<style>` block
+ * (accessible `<progress>` bar styling, shared through the same
+ * `AdminLayout` CSS bundle every other `/admin/omes/*` screen already pulls
+ * in) plus the ~30 new `t()` msgids the screen and its configuration form
+ * use grew the measured total over the prior ceiling:
+ *
+ * ```
+ * before (237,558 ceiling)   237,558 B
+ * + repository-progress screen  239,275 B (measured actual total)
+ * ```
+ *
+ * 239,275 is the measured value with no added margin.
+ *
+ * **Raised again for the ahliweb/omes#249 UX polish follow-up** (danger-button
+ * override + checkbox reset added to `omes-control-center.css`, plus the
+ * milestone-lookup helper in `progres-hermes.astro`'s frontmatter — no new
+ * `t()` msgids). Measured actual total:
+ *
+ * ```
+ * before (239,275 ceiling)   239,275 B
+ * + progres-hermes danger-button/checkbox CSS fixes   239,956 B (measured actual total)
+ * ```
+ *
+ * 239,956 is the measured value with no added margin (the `border: 1px solid
+ * var(--color-danger)` shorthand — needed whole, not just `border-color`, to
+ * out-rank `.admin-create-form button`'s own `border: none` — cost 4 B more
+ * than first measured).
  */
 /**
  * **Raised to 254,500 B in awcms-one (subtree sync of awcms#813, issue
@@ -793,8 +876,18 @@ export const READER_BUDGET_BYTES = 24_000;
  * a +11,433 B delta. Carried here as 263,400 → 274,833 per AGENTS.md's
  * divergence rule (keep both lineages, add upstream's delta to this repo's
  * figure).
+ *
+ * **Raised to 277,356 B for the omes-web sync (28 September 2026,
+ * `4a7416ac` → `9ca28dee`, upstream PRs #839-#846):** upstream's own ceiling
+ * moved 237,433 → 239,956 across this window (the provenance header, the
+ * base-image security upgrade, the long-text overflow and topbar-overflow
+ * fixes, the repository-progress projection for `ahliweb/omes#249`, and its
+ * UX polish follow-up — see upstream's own docblock lineage above), a
+ * +2,523 B delta. Carried here as 274,833 → 277,356 per AGENTS.md's
+ * divergence rule (keep both lineages, add upstream's delta to this repo's
+ * figure): 274,833 + (239,956 − 237,433) = 277,356.
  */
-export const APP_BUDGET_BYTES = 274_833;
+export const APP_BUDGET_BYTES = 277_356;
 
 /**
  * Largest file at baseline 16,800 B (2026-08-05) + 25% was 21,000 B.

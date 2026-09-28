@@ -85,195 +85,172 @@ const canUpdate = screen.state === "allowed" && screen.data.canUpdate;
   title={t("Orders")}
   description={t("Guest checkout orders — status, payment, and totals.")}
 >
-  {
-    !canRead && (
-      <p class="state-notice fade-in-up" id="orders-denied">
-        {t("You do not have permission to view orders.")}
-      </p>
-    )
-  }
-  {
-    canRead && loadError && (
-      <p class="state-notice fade-in-up" id="orders-error">
-        {t("Orders could not be loaded right now. Please try again later.")}
-      </p>
-    )
-  }
+  {!canRead && (
+    <p class="state-notice fade-in-up" id="orders-denied">
+      {t("You do not have permission to view orders.")}
+    </p>
+  )}
+  {canRead && loadError && (
+    <p class="state-notice fade-in-up" id="orders-error">
+      {t("Orders could not be loaded right now. Please try again later.")}
+    </p>
+  )}
 
-  {
-    canRead && !loadError && (
-      <p
-        id="order-action-error"
-        class="admin-create-error"
-        role="alert"
-        hidden
-      />
-    )
-  }
+  {canRead && !loadError && (
+    <p id="order-action-error" class="admin-create-error" role="alert" hidden />
+  )}
 
-  {
-    canRead && !loadError && statusCounts && (
-      <nav
-        class="admin-segmented fade-in-up"
-        aria-label={t("Filter by status")}
+  {canRead && !loadError && statusCounts && (
+    <nav class="admin-segmented fade-in-up" aria-label={t("Filter by status")}>
+      <a
+        class="admin-segmented-option"
+        aria-current={activeStatus === null ? "page" : "false"}
+        href="/admin/commerce-orders"
       >
+        {t("All")} ({totalOrders})
+      </a>
+      {ORDER_STATUSES.map((status) => (
         <a
           class="admin-segmented-option"
-          aria-current={activeStatus === null ? "page" : "false"}
-          href="/admin/commerce-orders"
+          aria-current={activeStatus === status ? "page" : "false"}
+          href={`/admin/commerce-orders?status=${status}`}
         >
-          {t("All")} ({totalOrders})
+          {status} ({statusCounts[status]})
         </a>
-        {ORDER_STATUSES.map((status) => (
-          <a
-            class="admin-segmented-option"
-            aria-current={activeStatus === status ? "page" : "false"}
-            href={`/admin/commerce-orders?status=${status}`}
-          >
-            {status} ({statusCounts[status]})
-          </a>
-        ))}
-      </nav>
-    )
-  }
+      ))}
+    </nav>
+  )}
 
-  {
-    canRead && !loadError && (
-      <div class="data-table-scroll fade-in-up">
-        <table
-          class="data-table data-table--stack"
-          id="commerce-orders-table"
-          data-can-update={canUpdate ? "true" : "false"}
-        >
-          <caption>
-            {tn("{count} order", "{count} orders", orders.length, {
-              count: orders.length
-            })}
-          </caption>
-          <thead>
+  {canRead && !loadError && (
+    <div class="data-table-scroll fade-in-up">
+      <table
+        class="data-table data-table--stack"
+        id="commerce-orders-table"
+        data-can-update={canUpdate ? "true" : "false"}
+      >
+        <caption>
+          {tn("{count} order", "{count} orders", orders.length, {
+            count: orders.length
+          })}
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">{t("Order code")}</th>
+            <th scope="col">{t("Customer")}</th>
+            <th scope="col">{t("Status")}</th>
+            <th scope="col">{t("Payment")}</th>
+            <th scope="col">{t("Total")}</th>
+            <th scope="col">{t("Placed")}</th>
+            <th scope="col">{t("Payment gateway")}</th>
+            {canUpdate && <th scope="col">{t("Actions")}</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {orders.length === 0 ? (
             <tr>
-              <th scope="col">{t("Order code")}</th>
-              <th scope="col">{t("Customer")}</th>
-              <th scope="col">{t("Status")}</th>
-              <th scope="col">{t("Payment")}</th>
-              <th scope="col">{t("Total")}</th>
-              <th scope="col">{t("Placed")}</th>
-              <th scope="col">{t("Payment gateway")}</th>
-              {canUpdate && <th scope="col">{t("Actions")}</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {orders.length === 0 ? (
-              <tr>
-                <td class="data-table-empty" colspan={canUpdate ? 8 : 7}>
-                  <div class="empty-state">
-                    <span class="empty-state-icon" aria-hidden="true">
-                      ◇
-                    </span>
-                    <span class="empty-state-title">{t("No orders yet")}</span>
-                    <span class="empty-state-text">
-                      {t(
-                        "Orders placed through the storefront will appear here."
-                      )}
-                    </span>
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              orders.map((order) => (
-                <>
-                  <tr data-order-row={order.id}>
-                    <td data-label="Order code">
-                      <a
-                        class="cell-code"
-                        href={`/admin/commerce-orders/${order.id}`}
-                      >
-                        {order.orderCode}
-                      </a>
-                    </td>
-                    <td data-label="Customer">
-                      {order.customerName} ({order.customerPhoneMasked})
-                    </td>
-                    <td
-                      data-label="Status"
-                      class={canUpdate ? "stacked-block" : ""}
-                    >
-                      <span
-                        class="admin-status-pill"
-                        data-tone={STATUS_TONE[order.status] ?? "neutral"}
-                      >
-                        <span
-                          class="admin-status-pill-dot"
-                          aria-hidden="true"
-                        />
-                        {order.status}
-                      </span>
-                      {canUpdate && (
-                        <select
-                          class="order-status-input"
-                          data-order-status={order.id}
-                        >
-                          {ORDER_STATUSES.map((status) => (
-                            <option
-                              value={status}
-                              selected={order.status === status}
-                            >
-                              {status}
-                            </option>
-                          ))}
-                        </select>
-                      )}
-                    </td>
-                    <td data-label="Payment">{order.paymentStatus}</td>
-                    <td data-label="Total">{order.total}</td>
-                    <td data-label="Placed">{order.createdAt}</td>
-                    <td data-label="Payment gateway" class="stacked-block">
-                      <button
-                        type="button"
-                        class="module-toggle order-gateway-toggle-btn"
-                        data-order-id={order.id}
-                      >
-                        {t("View gateway status")}
-                      </button>
-                    </td>
-                    {canUpdate && (
-                      <td data-label="Actions" class="stacked-block">
-                        <div class="row-actions">
-                          <button
-                            type="button"
-                            class="module-toggle order-status-save-btn"
-                            data-order-id={order.id}
-                          >
-                            {t("Save")}
-                          </button>
-                        </div>
-                      </td>
+              <td class="data-table-empty" colspan={canUpdate ? 8 : 7}>
+                <div class="empty-state">
+                  <span class="empty-state-icon" aria-hidden="true">
+                    ◇
+                  </span>
+                  <span class="empty-state-title">{t("No orders yet")}</span>
+                  <span class="empty-state-text">
+                    {t(
+                      "Orders placed through the storefront will appear here."
                     )}
-                  </tr>
-                  <tr
-                    class="order-gateway-panel-row"
-                    data-order-gateway-panel-row={order.id}
-                    hidden
+                  </span>
+                </div>
+              </td>
+            </tr>
+          ) : (
+            orders.map((order) => (
+              <>
+                <tr data-order-row={order.id}>
+                  <td data-label="Order code">
+                    <a
+                      class="cell-code"
+                      href={`/admin/commerce-orders/${order.id}`}
+                    >
+                      {order.orderCode}
+                    </a>
+                  </td>
+                  <td data-label="Customer">
+                    {order.customerName} ({order.customerPhoneMasked})
+                  </td>
+                  <td
+                    data-label="Status"
+                    class={canUpdate ? "stacked-block" : ""}
                   >
-                    <td colspan={canUpdate ? 8 : 7}>
-                      <div
-                        class="order-gateway-panel"
-                        data-order-gateway-panel={order.id}
+                    <span
+                      class="admin-status-pill"
+                      data-tone={STATUS_TONE[order.status] ?? "neutral"}
+                    >
+                      <span class="admin-status-pill-dot" aria-hidden="true" />
+                      {order.status}
+                    </span>
+                    {canUpdate && (
+                      <select
+                        class="order-status-input"
+                        data-order-status={order.id}
                       >
-                        <p class="order-gateway-panel-loading">
-                          {t("Loading…")}
-                        </p>
+                        {ORDER_STATUSES.map((status) => (
+                          <option
+                            value={status}
+                            selected={order.status === status}
+                          >
+                            {status}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </td>
+                  <td data-label="Payment">{order.paymentStatus}</td>
+                  <td data-label="Total">{order.total}</td>
+                  <td data-label="Placed">{order.createdAt}</td>
+                  <td data-label="Payment gateway" class="stacked-block">
+                    <button
+                      type="button"
+                      class="module-toggle order-gateway-toggle-btn"
+                      data-order-id={order.id}
+                    >
+                      {t("View gateway status")}
+                    </button>
+                  </td>
+                  {canUpdate && (
+                    <td data-label="Actions" class="stacked-block">
+                      <div class="row-actions">
+                        <button
+                          type="button"
+                          class="module-toggle order-status-save-btn"
+                          data-order-id={order.id}
+                        >
+                          {t("Save")}
+                        </button>
                       </div>
                     </td>
-                  </tr>
-                </>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    )
-  }
+                  )}
+                </tr>
+                <tr
+                  class="order-gateway-panel-row"
+                  data-order-gateway-panel-row={order.id}
+                  hidden
+                >
+                  <td colspan={canUpdate ? 8 : 7}>
+                    <div
+                      class="order-gateway-panel"
+                      data-order-gateway-panel={order.id}
+                    >
+                      <p class="order-gateway-panel-loading">{t("Loading…")}</p>
+                    </div>
+                  </td>
+                </tr>
+              </>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  )}
 </AdminLayout>
 
 <style>

@@ -119,324 +119,302 @@ const STATUS_TONE: Record<string, string> = {
     "Affiliate enrolments and their commission ledger for this store."
   )}
 >
-  {
-    !canRead && (
-      <p class="state-notice fade-in-up" id="affiliates-denied">
-        {t("You do not have permission to view affiliates.")}
-      </p>
-    )
-  }
-  {
-    canRead && loadError && (
-      <p class="state-notice fade-in-up" id="affiliates-error">
-        {t("Affiliates could not be loaded right now. Please try again later.")}
-      </p>
-    )
-  }
+  {!canRead && (
+    <p class="state-notice fade-in-up" id="affiliates-denied">
+      {t("You do not have permission to view affiliates.")}
+    </p>
+  )}
+  {canRead && loadError && (
+    <p class="state-notice fade-in-up" id="affiliates-error">
+      {t("Affiliates could not be loaded right now. Please try again later.")}
+    </p>
+  )}
 
-  {
-    canRead && !loadError && (
-      <p
-        id="affiliate-action-error"
-        class="admin-create-error"
-        role="alert"
-        hidden
-      />
-    )
-  }
+  {canRead && !loadError && (
+    <p
+      id="affiliate-action-error"
+      class="admin-create-error"
+      role="alert"
+      hidden
+    />
+  )}
 
-  {
-    canRead && !loadError && (
-      <section
-        class="admin-dashboard-stats fade-in-up"
-        aria-label={t("Affiliate figures")}
+  {canRead && !loadError && (
+    <section
+      class="admin-dashboard-stats fade-in-up"
+      aria-label={t("Affiliate figures")}
+    >
+      <div class="admin-stat-card">
+        <span class="admin-stat-card-label">{t("Active affiliates")}</span>
+        <span class="admin-stat-card-value">{activeAffiliateCount}</span>
+      </div>
+      {canReadCommissions && (
+        <>
+          <div class="admin-stat-card">
+            <span class="admin-stat-card-label">
+              {t("Pending commissions")}
+            </span>
+            <span class="admin-stat-card-value">{pendingCommissionCount}</span>
+          </div>
+          <div class="admin-stat-card">
+            <span class="admin-stat-card-label">
+              {t("Pending commission total")}
+            </span>
+            <span class="admin-stat-card-value">{pendingCommissionTotal}</span>
+          </div>
+        </>
+      )}
+    </section>
+  )}
+
+  {canRead && !loadError && (
+    <div class="data-table-scroll fade-in-up">
+      <table
+        class="data-table data-table--stack"
+        id="commerce-affiliates-table"
       >
-        <div class="admin-stat-card">
-          <span class="admin-stat-card-label">{t("Active affiliates")}</span>
-          <span class="admin-stat-card-value">{activeAffiliateCount}</span>
-        </div>
-        {canReadCommissions && (
-          <>
-            <div class="admin-stat-card">
-              <span class="admin-stat-card-label">
-                {t("Pending commissions")}
-              </span>
-              <span class="admin-stat-card-value">
-                {pendingCommissionCount}
-              </span>
-            </div>
-            <div class="admin-stat-card">
-              <span class="admin-stat-card-label">
-                {t("Pending commission total")}
-              </span>
-              <span class="admin-stat-card-value">
-                {pendingCommissionTotal}
-              </span>
-            </div>
-          </>
-        )}
-      </section>
-    )
-  }
-
-  {
-    canRead && !loadError && (
-      <div class="data-table-scroll fade-in-up">
-        <table
-          class="data-table data-table--stack"
-          id="commerce-affiliates-table"
-        >
-          <caption>
-            {tn("{count} affiliate", "{count} affiliates", affiliates.length, {
-              count: affiliates.length
-            })}
-          </caption>
-          <thead>
+        <caption>
+          {tn("{count} affiliate", "{count} affiliates", affiliates.length, {
+            count: affiliates.length
+          })}
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">{t("Code")}</th>
+            <th scope="col">{t("Customer")}</th>
+            <th scope="col">{t("Rate (%)")}</th>
+            <th scope="col">{t("Status")}</th>
+            {canUpdateAffiliates && <th scope="col">{t("Actions")}</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {affiliates.length === 0 ? (
             <tr>
-              <th scope="col">{t("Code")}</th>
-              <th scope="col">{t("Customer")}</th>
-              <th scope="col">{t("Rate (%)")}</th>
-              <th scope="col">{t("Status")}</th>
-              {canUpdateAffiliates && <th scope="col">{t("Actions")}</th>}
+              <td
+                class="data-table-empty"
+                colspan={canUpdateAffiliates ? 5 : 4}
+              >
+                <div class="empty-state">
+                  <span class="empty-state-icon" aria-hidden="true">
+                    ◇
+                  </span>
+                  <span class="empty-state-title">
+                    {t("No affiliates yet")}
+                  </span>
+                  <span class="empty-state-text">
+                    {t(
+                      "Shoppers who enrol in the affiliate program will appear here."
+                    )}
+                  </span>
+                </div>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {affiliates.length === 0 ? (
-              <tr>
-                <td
-                  class="data-table-empty"
-                  colspan={canUpdateAffiliates ? 5 : 4}
-                >
-                  <div class="empty-state">
-                    <span class="empty-state-icon" aria-hidden="true">
-                      ◇
-                    </span>
-                    <span class="empty-state-title">
-                      {t("No affiliates yet")}
-                    </span>
-                    <span class="empty-state-text">
-                      {t(
-                        "Shoppers who enrol in the affiliate program will appear here."
-                      )}
-                    </span>
-                  </div>
+          ) : (
+            affiliates.map((affiliate) => (
+              <tr data-affiliate-row={affiliate.id}>
+                <td data-label="Code">
+                  <span class="cell-code">{affiliate.code}</span>
                 </td>
-              </tr>
-            ) : (
-              affiliates.map((affiliate) => (
-                <tr data-affiliate-row={affiliate.id}>
-                  <td data-label="Code">
-                    <span class="cell-code">{affiliate.code}</span>
-                  </td>
-                  <td data-label="Customer">{affiliate.customerName}</td>
-                  <td data-label="Rate">
-                    <span class="stacked-block">
-                      <span>{affiliate.commissionRate}</span>
-                      {canUpdateAffiliates && (
-                        <span class="row-actions">
-                          <input
-                            type="text"
-                            inputmode="decimal"
-                            class="affiliate-rate-input"
-                            data-affiliate-id={affiliate.id}
-                            placeholder={affiliate.commissionRate}
-                          />
-                          <button
-                            type="button"
-                            class="module-toggle affiliate-rate-btn"
-                            data-affiliate-id={affiliate.id}
-                          >
-                            {t("Update rate")}
-                          </button>
-                        </span>
+                <td data-label="Customer">{affiliate.customerName}</td>
+                <td data-label="Rate">
+                  <span class="stacked-block">
+                    <span>{affiliate.commissionRate}</span>
+                    {canUpdateAffiliates && (
+                      <span class="row-actions">
+                        <input
+                          type="text"
+                          inputmode="decimal"
+                          class="affiliate-rate-input"
+                          data-affiliate-id={affiliate.id}
+                          placeholder={affiliate.commissionRate}
+                        />
+                        <button
+                          type="button"
+                          class="module-toggle affiliate-rate-btn"
+                          data-affiliate-id={affiliate.id}
+                        >
+                          {t("Update rate")}
+                        </button>
+                      </span>
+                    )}
+                  </span>
+                </td>
+                <td data-label="Status">
+                  <span
+                    class="admin-status-pill"
+                    data-tone={STATUS_TONE[affiliate.status] ?? "neutral"}
+                  >
+                    <span class="admin-status-pill-dot" aria-hidden="true" />
+                    {affiliate.status}
+                  </span>
+                </td>
+                {canUpdateAffiliates && (
+                  <td data-label="Actions" class="stacked-block">
+                    <div class="row-actions">
+                      {affiliate.status === "active" ? (
+                        <button
+                          type="button"
+                          class="module-toggle affiliate-suspend-btn"
+                          data-affiliate-id={affiliate.id}
+                        >
+                          {t("Suspend")}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          class="module-toggle affiliate-activate-btn"
+                          data-affiliate-id={affiliate.id}
+                        >
+                          {t("Activate")}
+                        </button>
                       )}
-                    </span>
+                    </div>
                   </td>
-                  <td data-label="Status">
-                    <span
-                      class="admin-status-pill"
-                      data-tone={STATUS_TONE[affiliate.status] ?? "neutral"}
-                    >
-                      <span class="admin-status-pill-dot" aria-hidden="true" />
-                      {affiliate.status}
-                    </span>
-                  </td>
-                  {canUpdateAffiliates && (
-                    <td data-label="Actions" class="stacked-block">
-                      <div class="row-actions">
-                        {affiliate.status === "active" ? (
-                          <button
-                            type="button"
-                            class="module-toggle affiliate-suspend-btn"
-                            data-affiliate-id={affiliate.id}
-                          >
-                            {t("Suspend")}
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            class="module-toggle affiliate-activate-btn"
-                            data-affiliate-id={affiliate.id}
-                          >
-                            {t("Activate")}
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  )}
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    )
-  }
+                )}
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  )}
 
-  {
-    canRead && canReadCommissions && !loadError && (
-      <div class="data-table-scroll fade-in-up">
-        <table
-          class="data-table data-table--stack"
-          id="commerce-affiliate-commissions-table"
-        >
-          <caption>
-            {tn(
-              "{count} commission",
-              "{count} commissions",
-              commissions.length,
-              { count: commissions.length }
-            )}
-          </caption>
-          <thead>
+  {canRead && canReadCommissions && !loadError && (
+    <div class="data-table-scroll fade-in-up">
+      <table
+        class="data-table data-table--stack"
+        id="commerce-affiliate-commissions-table"
+      >
+        <caption>
+          {tn("{count} commission", "{count} commissions", commissions.length, {
+            count: commissions.length
+          })}
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">
+              {t("Filter by status")}
+              <form method="get" id="commission-filter-form">
+                <select name="commissionStatus" id="commission-status-select">
+                  <option value="" selected={statusFilter === ""}>
+                    {t("All")}
+                  </option>
+                  <option value="pending" selected={statusFilter === "pending"}>
+                    {t("Pending")}
+                  </option>
+                  <option
+                    value="approved"
+                    selected={statusFilter === "approved"}
+                  >
+                    {t("Approved")}
+                  </option>
+                  <option value="paid" selected={statusFilter === "paid"}>
+                    {t("Paid")}
+                  </option>
+                  <option value="void" selected={statusFilter === "void"}>
+                    {t("Void")}
+                  </option>
+                </select>
+              </form>
+            </th>
+            <th scope="col">{t("Order")}</th>
+            <th scope="col">{t("Amount")}</th>
+            <th scope="col">{t("Status")}</th>
+            <th scope="col">{t("Created")}</th>
+            {canUpdateCommissions && <th scope="col">{t("Actions")}</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {commissions.length === 0 ? (
             <tr>
-              <th scope="col">
-                {t("Filter by status")}
-                <form method="get" id="commission-filter-form">
-                  <select name="commissionStatus" id="commission-status-select">
-                    <option value="" selected={statusFilter === ""}>
-                      {t("All")}
-                    </option>
-                    <option
-                      value="pending"
-                      selected={statusFilter === "pending"}
-                    >
-                      {t("Pending")}
-                    </option>
-                    <option
-                      value="approved"
-                      selected={statusFilter === "approved"}
-                    >
-                      {t("Approved")}
-                    </option>
-                    <option value="paid" selected={statusFilter === "paid"}>
-                      {t("Paid")}
-                    </option>
-                    <option value="void" selected={statusFilter === "void"}>
-                      {t("Void")}
-                    </option>
-                  </select>
-                </form>
-              </th>
-              <th scope="col">{t("Order")}</th>
-              <th scope="col">{t("Amount")}</th>
-              <th scope="col">{t("Status")}</th>
-              <th scope="col">{t("Created")}</th>
-              {canUpdateCommissions && <th scope="col">{t("Actions")}</th>}
+              <td
+                class="data-table-empty"
+                colspan={canUpdateCommissions ? 6 : 5}
+              >
+                <div class="empty-state">
+                  <span class="empty-state-icon" aria-hidden="true">
+                    ◇
+                  </span>
+                  <span class="empty-state-title">
+                    {t("No commissions yet")}
+                  </span>
+                  <span class="empty-state-text">
+                    {t(
+                      "Commissions appear once a referred order reaches completed."
+                    )}
+                  </span>
+                </div>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {commissions.length === 0 ? (
-              <tr>
-                <td
-                  class="data-table-empty"
-                  colspan={canUpdateCommissions ? 6 : 5}
-                >
-                  <div class="empty-state">
-                    <span class="empty-state-icon" aria-hidden="true">
-                      ◇
-                    </span>
-                    <span class="empty-state-title">
-                      {t("No commissions yet")}
-                    </span>
-                    <span class="empty-state-text">
-                      {t(
-                        "Commissions appear once a referred order reaches completed."
-                      )}
-                    </span>
-                  </div>
+          ) : (
+            commissions.map((commission) => (
+              <tr data-commission-row={commission.id}>
+                <td data-label="Affiliate">
+                  <span class="cell-code">{commission.affiliateCode}</span>
                 </td>
+                <td data-label="Order">
+                  <span class="cell-code">{commission.orderCode}</span>
+                </td>
+                <td data-label="Amount">{commission.amount}</td>
+                <td data-label="Status">
+                  <span
+                    class="admin-status-pill"
+                    data-tone={STATUS_TONE[commission.status] ?? "neutral"}
+                  >
+                    <span class="admin-status-pill-dot" aria-hidden="true" />
+                    {commission.status}
+                  </span>
+                </td>
+                <td data-label="Created">{commission.createdAt}</td>
+                {canUpdateCommissions && (
+                  <td data-label="Actions" class="stacked-block">
+                    <div class="row-actions">
+                      {commission.status === "pending" && (
+                        <>
+                          <button
+                            type="button"
+                            class="module-toggle commission-approve-btn"
+                            data-commission-id={commission.id}
+                          >
+                            {t("Approve")}
+                          </button>
+                          <button
+                            type="button"
+                            class="module-toggle commission-void-btn"
+                            data-commission-id={commission.id}
+                          >
+                            {t("Void")}
+                          </button>
+                        </>
+                      )}
+                      {commission.status === "approved" && (
+                        <>
+                          <button
+                            type="button"
+                            class="module-toggle commission-pay-btn"
+                            data-commission-id={commission.id}
+                          >
+                            {t("Mark paid")}
+                          </button>
+                          <button
+                            type="button"
+                            class="module-toggle commission-void-btn"
+                            data-commission-id={commission.id}
+                          >
+                            {t("Void")}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                )}
               </tr>
-            ) : (
-              commissions.map((commission) => (
-                <tr data-commission-row={commission.id}>
-                  <td data-label="Affiliate">
-                    <span class="cell-code">{commission.affiliateCode}</span>
-                  </td>
-                  <td data-label="Order">
-                    <span class="cell-code">{commission.orderCode}</span>
-                  </td>
-                  <td data-label="Amount">{commission.amount}</td>
-                  <td data-label="Status">
-                    <span
-                      class="admin-status-pill"
-                      data-tone={STATUS_TONE[commission.status] ?? "neutral"}
-                    >
-                      <span class="admin-status-pill-dot" aria-hidden="true" />
-                      {commission.status}
-                    </span>
-                  </td>
-                  <td data-label="Created">{commission.createdAt}</td>
-                  {canUpdateCommissions && (
-                    <td data-label="Actions" class="stacked-block">
-                      <div class="row-actions">
-                        {commission.status === "pending" && (
-                          <>
-                            <button
-                              type="button"
-                              class="module-toggle commission-approve-btn"
-                              data-commission-id={commission.id}
-                            >
-                              {t("Approve")}
-                            </button>
-                            <button
-                              type="button"
-                              class="module-toggle commission-void-btn"
-                              data-commission-id={commission.id}
-                            >
-                              {t("Void")}
-                            </button>
-                          </>
-                        )}
-                        {commission.status === "approved" && (
-                          <>
-                            <button
-                              type="button"
-                              class="module-toggle commission-pay-btn"
-                              data-commission-id={commission.id}
-                            >
-                              {t("Mark paid")}
-                            </button>
-                            <button
-                              type="button"
-                              class="module-toggle commission-void-btn"
-                              data-commission-id={commission.id}
-                            >
-                              {t("Void")}
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  )}
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    )
-  }
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  )}
 </AdminLayout>
 
 <script>

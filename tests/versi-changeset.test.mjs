@@ -199,8 +199,13 @@ describe("one number, three records, no drift", () => {
 
   test("the released version has a section in CHANGELOG.md", () => {
     const changelog = readFileSync("CHANGELOG.md", "utf8");
+    // Before the first OMES-Web release there is no `## [X.Y.Z]` section at all:
+    // the awcms-one 0.1.0-0.12.0 history is kept under a level-1 heading and is
+    // not a set of releases of this repository. From the first release on, the
+    // version package.json claims must have its own section.
+    const hasOwnReleases = /^## \[\d+\.\d+\.\d+\] — /m.test(changelog);
     assert.ok(
-      changelog.includes(`## [${pkg.version}]`),
+      !hasOwnReleases || changelog.includes(`## [${pkg.version}]`),
       `CHANGELOG.md has no section for ${pkg.version}, the version package.json claims`
     );
   });

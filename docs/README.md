@@ -30,3 +30,8 @@ Architecture, schema, API, CMS workflow, storefront behaviour, testing, deployme
 ## Language
 
 English at the bare path is the authoritative source; Indonesian at `<name>.id.md` is the mirror, stamped by `bun run docs:i18n:stamp` after translation and checked by `bun run audit:translation`. Every document in this directory, including every file under `adr/`, is in scope for that gate — see `packages/gerbang/lib/docs-i18n-checks.mjs`'s `isInScope`, which covers everything under `docs/**`.
+
+## OMES-Web product integration and SYSTEM admin UX
+
+- [OMES-Web Admin / Control Center — detailed UI/UX v1.0](omes-admin-ui-ux.md): 15 audited upstream OMES route files, 3 planned workspaces, permission/status, responsive wireframes, workflow approvals and QA tests. Upstream route existence does **not** prove product deployment availability.
+- [ADR-0021: OMES-Web remains a separate product with strict OMES/AWCMS integration](adr/0021-separate-omes-product-site-from-native-host-runtime.md): Option A, contracts, ownership, release compatibility, subtree MERGE COMMIT only; proposals pending review.

@@ -36,6 +36,7 @@ What does **not** need an ADR: adding a field within an already-decided schema, 
 | [0018](0018-awcms-one-is-a-template-with-build-profiles-and-an-idempotent-init.md) | awcms-one is a template, with build profiles and an idempotent `template:init` | Accepted |
 | [0019](0019-production-topology-two-images-a-jobs-sidecar-and-a-fail-closed-preflight.md) | Production topology: two images, a jobs sidecar, and a fail-closed preflight | Accepted |
 | [0020](0020-publish-only-the-cms-images-to-ghcr-with-sbom-and-provenance.md) | Publish only the CMS images to GHCR, with SBOM and provenance | Accepted |
+| [0021](0021-separate-omes-product-site-from-native-host-runtime.md) | OMES-Web remains separately deployed from native OMES, with versioned integration and canonical AWCMS Control Center ownership | Proposed |
 
 ## Why the numbering starts at 0001
 

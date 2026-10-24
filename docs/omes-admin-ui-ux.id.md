@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](omes-admin-ui-ux.md)
 
-<!-- i18n-source-hash: sha256:972b78cf2f47748fc149f2029d6b7716296a312bbb31e26f69100a314d1e7d36 -->
+<!-- i18n-source-hash: sha256:e6aaf3cc3eb6ae6aed6e216abc2b3aea8d821444037301a5ad7dee59757363b1 -->
 
 # Spesifikasi UI/UX Admin OMES-Web / Control Center v1.0
 
@@ -8,10 +8,10 @@
 
 ## 0. Dasar bukti, kepemilikan dan istilah
 
-- **Implementasi produk:** OMES-Web adalah website \`landing\` Astro/Bun pada \`omes.ahlikoding.com\`, serta instance AWCMS yang didokumentasikan pada \`omes-cms.ahlikoding.com\`. Route admin berasal dari **subtree \`apps/cms\`** yang ditarik dari \`ahliweb/awcms\`. Terakhir sinkron upstream \`8e9bce0c\`; **halaman yang ada di AWCMS terbaru belum tentu sudah ada di build OMES-Web**. Verifikasi ulang manifest route dan izin sesudah sinkronisasi [#17](https://github.com/ahliweb/omes-web/issues/17).
-- **Kode kanonis:** AWCMS upstream pada 24 Oktober memiliki **15 berkas route** di \`src/pages/admin/omes/\`. Ada halaman read-only, tindakan terotorisasi, snapshot rilis, dan layar graf 3D. Modul \`omes_control\`, sistem otorisasi dan API adalah milik AWCMS, bukan dashboard React terpisah.
-- **Runtime native:** OMES mengelola host, signed HTTPS pull worker keluar dan kontrak \`control-center/v1\`; Hermes mengelola runtime agent. \`ui/control-center/index.html\` di OMES adalah **prototipe desain non-fungsional**, sedangkan mockup Control Center pada website publik OMES-Web adalah **ilustrasi sintetis**, bukan screenshot armada.
-- **Sistem desain:** gunakan \`AdminLayout.astro\` AWCMS, \`tokens.css\`, \`admin.css\`, \`admin-screens.css\`, \`omes-control-center.css\`, tenant badge, sidebar modular, language/theme switch dan API permission yang sudah ada. ADR-0023 OMES merupakan acuan, bukan implementasi admin pesaing.
+- **Implementasi produk:** OMES-Web adalah website `landing` Astro/Bun pada `omes.ahlikoding.com`, serta instance AWCMS yang didokumentasikan pada `omes-cms.ahlikoding.com`. Route admin berasal dari **subtree `apps/cms`** yang ditarik dari `ahliweb/awcms`. Terakhir sinkron upstream `8e9bce0c`; **halaman yang ada di AWCMS terbaru belum tentu sudah ada di build OMES-Web**. Verifikasi ulang manifest route dan izin sesudah sinkronisasi [#17](https://github.com/ahliweb/omes-web/issues/17).
+- **Kode kanonis:** AWCMS upstream pada 24 Oktober memiliki **15 berkas route** di `src/pages/admin/omes/`. Ada halaman read-only, tindakan terotorisasi, snapshot rilis, dan layar graf 3D. Modul `omes_control`, sistem otorisasi dan API adalah milik AWCMS, bukan dashboard React terpisah.
+- **Runtime native:** OMES mengelola host, signed HTTPS pull worker keluar dan kontrak `control-center/v1`; Hermes mengelola runtime agent. `ui/control-center/index.html` di OMES adalah **prototipe desain non-fungsional**, sedangkan mockup Control Center pada website publik OMES-Web adalah **ilustrasi sintetis**, bukan screenshot armada.
+- **Sistem desain:** gunakan `AdminLayout.astro` AWCMS, `tokens.css`, `admin.css`, `admin-screens.css`, `omes-control-center.css`, tenant badge, sidebar modular, language/theme switch dan API permission yang sudah ada. ADR-0023 OMES merupakan acuan, bukan implementasi admin pesaing.
 
 Bedakan status **diimplementasikan upstream**, **sudah ada pada subtree produk**, **diaktifkan sesuai role/flag**, dan **terverifikasi pada deployment**. Bukti keberadaan route upstream **tidak otomatis membuktikan halaman sudah live** di OMES-Web.
 
@@ -22,31 +22,31 @@ Struktur sidebar yang direkomendasikan (**memakai hierarki admin AWCMS**, bukan 
 
 | ID | Route upstream yang diperiksa | Bukti fungsi upstream saat audit | Syarat aktif pada OMES-Web |
 | --- | --- | --- | --- |
-| OMUI-01 | \`/admin/omes\` | Ringkasan armada, pekerjaan, backup, drift | Subtree dan role diverifikasi |
-| OMUI-02 | \`/admin/omes/servers\` | List/registrasi/riwayat server dan trust | API + migrasi DB sudah siap |
-| OMUI-03 | \`/admin/omes/enrollments\` | Penerbitan dan pencabutan challenge sekali pakai | Izin dan kesesuaian host |
-| OMUI-04 | \`/admin/omes/deployments\` | Desired vs observed deploy | Kontrak worker sesuai |
-| OMUI-05 | \`/admin/omes/operations\` | Request operasi bertipe, approval bersama | Workflow benar-benar aktif |
-| OMUI-06 | \`/admin/omes/jobs\` | Antrian, cancel queued, retry failed | Tidak ada approval berbahaya kedua |
-| OMUI-07 | \`/admin/omes/health\` | Snapshot terbaru dan histori host | Timestamp/sumber valid |
-| OMUI-08 | \`/admin/omes/backups\` | Snapshot backup dan restore terjaga | Izin dan rekonsiliasi hasil |
-| OMUI-09 | \`/admin/omes/audit\` | Proyeksi audit teredaksi | Tenant dan pagination sah |
-| OMUI-10 | \`/admin/omes/hermes\` | Observasi tugas Hermes **read-only**; planner/budget belum dilaporkan kontrak v1 | Tampilkan tidak tersedia |
-| OMUI-11 | \`/admin/omes/orkestrasi-langsung\` | Pohon subagent/event lewat polling, status stale/unknown | Bukan runtime agent kedua |
-| OMUI-12 | \`/admin/omes/progres-hermes\` | Progres GitHub hasil polling AWCMS; unknown/stale/configured | GitHub sumber kebenaran |
-| OMUI-13 | \`/admin/omes/ai-privacy\` | Postur privasi read-only dan **satu approval egress owner** yang sempit | Tanpa prompt/transkrip mentah |
-| OMUI-14 | \`/admin/omes/arsitektur\` | **Snapshot rilis yang dipin**, bukan telemetri live | SHA/snapshot jelas |
-| OMUI-15 | \`/admin/omes/mission-control\` | **Graf 3D**, fallback daftar, mode live/history dan aksi dari endpoint existing | Cek versi subtree, WebGL dan role |
+| OMUI-01 | `/admin/omes` | Ringkasan armada, pekerjaan, backup, drift | Subtree dan role diverifikasi |
+| OMUI-02 | `/admin/omes/servers` | List/registrasi/riwayat server dan trust | API + migrasi DB sudah siap |
+| OMUI-03 | `/admin/omes/enrollments` | Penerbitan dan pencabutan challenge sekali pakai | Izin dan kesesuaian host |
+| OMUI-04 | `/admin/omes/deployments` | Desired vs observed deploy | Kontrak worker sesuai |
+| OMUI-05 | `/admin/omes/operations` | Request operasi bertipe, approval bersama | Workflow benar-benar aktif |
+| OMUI-06 | `/admin/omes/jobs` | Antrian, cancel queued, retry failed | Tidak ada approval berbahaya kedua |
+| OMUI-07 | `/admin/omes/health` | Snapshot terbaru dan histori host | Timestamp/sumber valid |
+| OMUI-08 | `/admin/omes/backups` | Snapshot backup dan restore terjaga | Izin dan rekonsiliasi hasil |
+| OMUI-09 | `/admin/omes/audit` | Proyeksi audit teredaksi | Tenant dan pagination sah |
+| OMUI-10 | `/admin/omes/hermes` | Observasi tugas Hermes **read-only**; planner/budget belum dilaporkan kontrak v1 | Tampilkan tidak tersedia |
+| OMUI-11 | `/admin/omes/orkestrasi-langsung` | Pohon subagent/event lewat polling, status stale/unknown | Bukan runtime agent kedua |
+| OMUI-12 | `/admin/omes/progres-hermes` | Progres GitHub hasil polling AWCMS; unknown/stale/configured | GitHub sumber kebenaran |
+| OMUI-13 | `/admin/omes/ai-privacy` | Postur privasi read-only dan **satu approval egress owner** yang sempit | Tanpa prompt/transkrip mentah |
+| OMUI-14 | `/admin/omes/arsitektur` | **Snapshot rilis yang dipin**, bukan telemetri live | SHA/snapshot jelas |
+| OMUI-15 | `/admin/omes/mission-control` | **Graf 3D**, fallback daftar, mode live/history dan aksi dari endpoint existing | Cek versi subtree, WebGL dan role |
 | OMUI-16 | Manajemen AI tambahan | **BELUM terbukti berupa route/fungsi mandiri yang lengkap** | OMES #343/#344 harus selesai |
 | OMUI-17 | Browser transfer dan AI controls | **RENCANA** OMES #294/#300–#306 | API, kebijakan dan worker tersedia |
 | OMUI-18 | SSE/WS Bun realtime | **RENCANA** AWCMS #1168/#1171 | ADR dan implementasi telah diterima |
 
-Perubahan UI generik tidak dilakukan dengan menyalin berkas dari \`awcms/src/pages/admin/omes\` secara lokal. Kembangkan upstream AWCMS dan bawa via subtree **MERGE COMMIT**.
+Perubahan UI generik tidak dilakukan dengan menyalin berkas dari `awcms/src/pages/admin/omes` secara lokal. Kembangkan upstream AWCMS dan bawa via subtree **MERGE COMMIT**.
 
 ## 2. Pola shell admin dan tata letak responsif
 
 ### Wireframe desktop acuan ±1440px
-\`\`\`text
+```text
 ┌────────────────────────────────────────────────────────────────────────────────┐
 │ Admin SYSTEM ▾  Badge Tenant   Waktu sync    Search   Notifikasi    Pengguna ▾ │
 ├───────────────┬────────────────────────────────────────────────────────────────┤
@@ -60,7 +60,7 @@ Perubahan UI generik tidak dilakukan dengan menyalin berkas dari \`awcms/src/pag
 │ Insights      │                                                                │
 │ Governance    │                                                                │
 └───────────────┴────────────────────────────────────────────────────────────────┘
-\`\`\`
+```
 Ini **kontrak komposisi** di dalam shell AWCMS, bukan template aplikasi admin baru.
 
 Desktop ≥1200px memanfaatkan sidebar asli dan split table/detail bila perlu; tablet 768–1199px menggunakan navigasi dapat dilipat dan filter bertumpuk; ponsel ≤767px (uji 360/390px) memakai drawer, list→detail dan tombol dengan nama aksesibel. Aksi kritis tidak boleh tergantung hover. Graf memakai alternatif daftar dan reduced motion. Semua status harus memiliki teks dan label, bukan warna saja.
@@ -78,7 +78,7 @@ Context header: tenant, role, asal data, waktu observasi dan zona waktu, notifik
 | Pengamat/analis | Status dan report yang diizinkan | Tidak ada | Memberi approval atau menjalankan capability unknown |
 | Agent Hermes | Runtime/skill milik Hermes | Hanya melalui adapter native tepercaya | Eksekusi browser privileged dari prompt tidak tepercaya |
 
-Permission sebenarnya menggunakan \`OMES_GUARDS\` dan endpoint AWCMS, **tidak membuat ACL baru di OMES-Web**. Tombol yang disembunyikan tidak mengganti cek otorisasi API.
+Permission sebenarnya menggunakan `OMES_GUARDS` dan endpoint AWCMS, **tidak membuat ACL baru di OMES-Web**. Tombol yang disembunyikan tidak mengganti cek otorisasi API.
 
 ## 4. Kontrak per layar: komponen, aksi, state dan kegagalan
 
@@ -86,7 +86,7 @@ Permission sebenarnya menggunakan \`OMES_GUARDS\` dan endpoint AWCMS, **tidak me
 Kartu: host terdaftar, healthy/stale/unknown, operasi pending/failed, panjang antrean job, backup terverifikasi terakhir, drift deployment dan freshness. Klik metrik menuju route yang sudah berizin sambil mewariskan filter. CTA register/enroll/operation tergantung role. Empty: “Belum ada server pada tenant ini” dan onboarding aman, bukan nol server berarti semuanya sehat. Polling dan timestamp ditampilkan; kegagalan permintaan tidak diam-diam menampilkan data stale sebagai live.
 
 ### OMUI-02 Server Registry
-Tabel nama host tersamarkan, ID, OS/profile, status worker, heartbeat bertanda tangan terakhir, desired vs observed release, contract version. Search/filter status dan pagination keyset. Detail Overview/Enrollment Evidence/Heartbeat/Deployment/History. Registrasi lewat \`POST /api/v1/omes/servers\` harus mempunyai tenant dan idempotency key; decommission soft-delete memerlukan konfirmasi dan audit. Jangan menampilkan credential/key private worker.
+Tabel nama host tersamarkan, ID, OS/profile, status worker, heartbeat bertanda tangan terakhir, desired vs observed release, contract version. Search/filter status dan pagination keyset. Detail Overview/Enrollment Evidence/Heartbeat/Deployment/History. Registrasi lewat `POST /api/v1/omes/servers` harus mempunyai tenant dan idempotency key; decommission soft-delete memerlukan konfirmasi dan audit. Jangan menampilkan credential/key private worker.
 
 ### OMUI-03 Enrollment Management
 Pilih server dengan status eligible; challenge enrollment hanya ditampilkan **sekali**, memiliki masa berlaku dan tidak masuk log/URL/download. Sesuaikan dengan UI upstream yang memakai petunjuk seleksi teks manual; **jangan mengklaim tombol auto-copy/modal sudah dibangun**. Revoke memiliki konfirmasi dan endpoint idempotent. Server aktif tidak diam-diam memperoleh token baru. State Pending/Expired/Revoked/Enrolled/Unknown dan pemulihan jelas. Host membuat keypair lokal; koneksi selalu HTTPS **keluar dari host**.
@@ -101,7 +101,7 @@ Wizard target host → operasi allowlisted **status/preflight/start/stop/restart
 Tab queued/leased/failed/completed/unknown, kolom job ID, correlation operasi, lease, jumlah percobaan, error terakhir dan aksi. **Cancel** hanya queued; **approve for retry** hanya failed dan **bukan approval destruktif baru**. Konfirmasi dan kondisi race jika worker sudah claim ditampilkan jelas. Payload dan hasil tool tidak dipublikasikan tanpa redaksi.
 
 ### OMUI-07 Health/Doctor
-Ringkasan snapshot kesehatan terakhir per host dan histori terpaginasikan melalui \`?serverId=\`. Tiap pemeriksaan menunjukkan status, sumber \`omes-host\`/\`hermes\`/\`external\` bila disuplai, waktu observasi dan stale flag. Endpoint model terhubung bukan bukti seluruh skill/agent siap. Badge kesehatan dan badge freshness tetap **terpisah**, tidak menganggap host stale sebagai live. Aksi diagnosis memakai kontrak aman, bukan perintah shell bebas.
+Ringkasan snapshot kesehatan terakhir per host dan histori terpaginasikan melalui `?serverId=`. Tiap pemeriksaan menunjukkan status, sumber `omes-host`/`hermes`/`external` bila disuplai, waktu observasi dan stale flag. Endpoint model terhubung bukan bukti seluruh skill/agent siap. Badge kesehatan dan badge freshness tetap **terpisah**, tidak menganggap host stale sebagai live. Aksi diagnosis memakai kontrak aman, bukan perintah shell bebas.
 
 ### OMUI-08 Backups/Restore
 Tabel backup target, tanggal pembuatan, retensi, checksum, bukti verifikasi dan kesiapan restore. Backup diminta bukan backup berhasil. Restore membutuhkan izin, konfirmasi keras dan approval/destructive workflow, menyebut target serta dampak, memerlukan bukti read-back setelah pemulihan. Unknown/failure tidak diulang secara buta.
@@ -119,7 +119,7 @@ Tree subagent dan event Hermes, aktivitas dengan timestamp dan bounded depth. St
 Ringkasan issue/milestone GitHub diperbarui oleh poll AWCMS (default sekitar 15 menit pada dokumentasi upstream), bukan passthrough langsung ke GitHub. Tampilkan belum dikonfigurasi/unknown/stale/fresh, last successful poll, alasan gagal, progress berdasarkan fakta tersedia. Jangan mengarang persen penyelesaian proyek atau tombol “sync now” tanpa endpoint yang telah diterima.
 
 ### OMUI-13 AI Privacy
-Postur privasi AI dan izin keluar data ditampilkan sebagai metadata teredaksi. **Ada satu tindakan owner egress approval yang sempit**, dengan role \`aiPrivacy.approve\` dan cek server-side, bukan panel kontrol model bebas. Tampilkan kebijakan/versi/risiko/sumber/waktu dan status keputusan, tanpa prompt, transkrip, respons raw dan credential. Status unknown tidak dianggap aman. Request palsu oleh non-owner harus ditolak.
+Postur privasi AI dan izin keluar data ditampilkan sebagai metadata teredaksi. **Ada satu tindakan owner egress approval yang sempit**, dengan role `aiPrivacy.approve` dan cek server-side, bukan panel kontrol model bebas. Tampilkan kebijakan/versi/risiko/sumber/waktu dan status keputusan, tanpa prompt, transkrip, respons raw dan credential. Status unknown tidak dianggap aman. Request palsu oleh non-owner harus ditolak.
 
 ### OMUI-14 Architecture Snapshot
 Lane komponen OMES/Hermes/AWCMS/provider, versi dan SHA sumber. Banner jelas **“Snapshot rilis yang dipin — BUKAN telemetri host langsung”**, waktu vendored dan sumber. Saat release berubah, lakukan sinkronisasi fixture melalui alur audit terkontrol, bukan fetch JSON bebas dari browser. Diagram read-only harus menyediakan tabel/list aksesibel.
@@ -140,7 +140,7 @@ SSE Bun untuk progres satu arah; WebSocket native Bun bila kebutuhan dua arah te
 
 Tambahan khas OMES-Web hanya branding/logo, konfigurasi domain dan tenant, tautan support, CTA instalasi rilis OMES, kompatibilitas deployment dan enablement modul sesuai kemampuan. Gunakan API konfigurasi AWCMS yang resmi. **Jangan memfork halaman admin generik**. Menu e-commerce/BjekMart/kurir tidak tampil sebagai fitur operator OMES kecuali produk memang mengaktifkannya dengan kebutuhan yang tervalidasi. Drift README/AGENTS ditangani [#19](https://github.com/ahliweb/omes-web/issues/19).
 
-\`\`\`mermaid
+```mermaid
 flowchart TB
     Site["OMES-Web Astro landing SSG<br/>omes.ahlikoding.com"] -->|"CMS public read API saat build"| CMS["OMES-Web apps/cms<br/>AWCMS git subtree"]
     CMS --> UI["Control Center /admin/omes/*<br/>Astro SYSTEM Admin"]
@@ -148,7 +148,7 @@ flowchart TB
     Release["Rilis OMES resmi, versi/manifest"] -.->|"Metadata terverifikasi"| Site
     Release -.->|"Fixture kontrak kompatibilitas"| CMS
     Hermes["Hermes Agent native"] -->|"Observasi terotorisasi"| Host
-\`\`\`
+```
 Panah koneksi host menunjukkan **host menginisiasi HTTPS keluar**, tidak ada listener privileged inbound.
 
 ## 6. Matriks pengujian UI/UX dan keamanan
@@ -166,7 +166,7 @@ Panah koneksi host menunjukkan **host menginisiasi HTTPS keluar**, tidak ada lis
 | UI-09 | Homepage installer OMES sesuai rilis resmi terpin, tidak v0.4.0 usang, canonical/CSP/SEO aman |
 | UI-10 | Bun dipin, image digest, PostgreSQL role non-owner, migrasi forward-only, staging dan rollback |
 
-**Urutan pengembangan:** perbaiki UI yang generic **di upstream AWCMS**, uji kontrak/DB/RLS/a11y, lalu OMES-Web menarik upstream melalui git subtree **MERGE COMMIT (tidak squash/rebase)** pada branch sendiri. Sesudah itu uji 18 ID layar dan feature flag, \`bun test\`, \`bun run check\`, \`bun run check:cms\`, audit dokumen/terjemahan, integrasi DB, build \`landing/toko/berita\`, deploy preflight dan staging. OMES native menjalankan \`./scripts/ci-local.sh\` terpisah. PR dokumentasi ini **tidak** mengklaim tes atau deploy sudah dilakukan.
+**Urutan pengembangan:** perbaiki UI yang generic **di upstream AWCMS**, uji kontrak/DB/RLS/a11y, lalu OMES-Web menarik upstream melalui git subtree **MERGE COMMIT (tidak squash/rebase)** pada branch sendiri. Sesudah itu uji 18 ID layar dan feature flag, `bun test`, `bun run check`, `bun run check:cms`, audit dokumen/terjemahan, integrasi DB, build `landing/toko/berita`, deploy preflight dan staging. OMES native menjalankan `./scripts/ci-local.sh` terpisah. PR dokumentasi ini **tidak** mengklaim tes atau deploy sudah dilakukan.
 
 ## 7. Urutan prioritas dan issue
 

@@ -60,6 +60,13 @@ describe("changelogSection — the middle, first, and last section", () => {
     expect(body).not.toContain("[0.2.0]");
   });
 
+  test("a level-1 heading after the last version ends that version's section", () => {
+    const withInherited = `${FIXTURE.trimEnd()}\n\n# Inherited history\n\n### awcms-one 0.0.1 — x\n\nold prose\n`;
+    const body = changelogSection(withInherited, "0.1.0");
+    expect(body).not.toContain("Inherited history");
+    expect(body).not.toContain("old prose");
+  });
+
   test("the LAST heading in the file (the oldest version) runs to end of file", () => {
     expect(changelogSection(FIXTURE, "0.1.0")).toBe("First body.");
   });
@@ -124,13 +131,20 @@ describe("the real root CHANGELOG.md — a heading-format regression here fails 
     expect(() => findChangelogHeadings(real)).not.toThrow();
   });
 
-  test("v0.1.0 (the very first release, no `.changesets/` convention yet) is still readable", () => {
-    const body = changelogSection(real, "v0.1.0");
-    expect(body).toContain("Initial workspace scaffolding");
-    // Proves the slice does not run past end of its own section by accident —
-    // v0.1.0 is last in the file, so this only guards against a body that
-    // somehow includes content before its own heading.
-    expect(body).not.toContain("## [0.2.0]");
+  test("the inherited awcms-one history is not a set of OMES-Web release sections", () => {
+    // 0.1.0 and 0.12.0 are awcms-one template releases kept as provenance under a
+    // level-1 heading, demoted so no release lookup (or release.yml) can match them.
+    expect(() => changelogSection(real, "v0.1.0")).toThrow(/no section for version 0\.1\.0/);
+    expect(() => changelogSection(real, "0.12.0")).toThrow(/no section for version 0\.12\.0/);
+    expect(real).toContain("# Inherited awcms-one template history");
+    expect(real).toContain("### awcms-one 0.1.0");
+  });
+
+  test("the newest real section stops at the inherited-history block", () => {
+    const newest = findChangelogHeadings(real)[0];
+    if (newest) {
+      expect(changelogSection(real, newest.version)).not.toContain("Inherited awcms-one");
+    }
   });
 });
 

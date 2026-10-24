@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](README.md)
 
-<!-- i18n-source-hash: sha256:e1d12683750bf96b9971dd9d7eed5cf47fceff9a4814c9a8248b05b9453bf6c8 -->
+<!-- i18n-source-hash: sha256:2316165cb384dc93622cb09d7c9122d28a6e43f692da7e68f859ce6f82eb14af -->
 
 # Dokumentasi
 
@@ -32,3 +32,8 @@ Dokumentasi arsitektur, skema, API, alur kerja CMS, perilaku storefront, penguji
 ## Bahasa
 
 Bahasa Inggris di jalur telanjang adalah sumber yang otoritatif; Bahasa Indonesia di `<name>.id.md` adalah mirror, dicap `bun run docs:i18n:stamp` setelah diterjemahkan dan diperiksa `bun run audit:translation`. Setiap dokumen di direktori ini, termasuk setiap berkas di bawah `adr/`, berada dalam cakupan gate itu — lihat `isInScope` milik `packages/gerbang/lib/docs-i18n-checks.mjs`, yang mencakup segala sesuatu di bawah `docs/**`.
+
+## Integrasi produk OMES-Web dan UI/UX admin SYSTEM
+
+- [Spesifikasi UI/UX Admin OMES-Web / Control Center v1.0](omes-admin-ui-ux.id.md): 15 berkas route OMES upstream yang diaudit, 3 workspace rencana, hak akses/status, wireframe responsif, approval dan uji keamanan. Adanya route di upstream **bukan** bukti sudah tersedia di deployment produk.
+- [ADR-0021: OMES-Web tetap menjadi produk terpisah dengan integrasi OMES/AWCMS yang ketat](adr/0021-separate-omes-product-site-from-native-host-runtime.id.md): Opsi A, kontrak, tanggung jawab, kompatibilitas rilis dan subtree hanya MERGE COMMIT; rancangan masih menunggu review.

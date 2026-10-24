@@ -38,6 +38,13 @@ import { formatVersion, parseVersion } from "./semver.mjs";
 /** `## [X.Y.Z] — <anything>` — the one shape every version heading may take. */
 const VERSION_HEADING = /^## \[(\d+\.\d+\.\d+)\] — .+$/;
 
+/**
+ * A level-1 heading starting a line (after the `\n` that precedes it). CHANGELOG.md's
+ * only level-1 headings are its title (before every version) and the block that holds
+ * the template history this repository inherited, which no release section may swallow.
+ */
+const LEVEL1_HEADING = /\n# /;
+
 /** Any level-2 heading at all — matched first so a non-conforming one can still be named in the error. */
 const ANY_LEVEL2_HEADING = /^## .*$/gm;
 
@@ -129,6 +136,11 @@ export function changelogSection(changelogText, version) {
   }
 
   const bodyStart = headings[index].bodyStart;
-  const bodyEnd = index + 1 < headings.length ? headings[index + 1].headingStart : text.length;
+  let bodyEnd = index + 1 < headings.length ? headings[index + 1].headingStart : text.length;
+  // A level-1 heading after the version headings opens the inherited-history
+  // block (see LEVEL1_HEADING): it is not part of any release, so it
+  // ends the section even when the version is the last real one.
+  const levelOne = text.slice(bodyStart, bodyEnd).search(LEVEL1_HEADING);
+  if (levelOne !== -1) bodyEnd = bodyStart + levelOne;
   return text.slice(bodyStart, bodyEnd).trim();
 }

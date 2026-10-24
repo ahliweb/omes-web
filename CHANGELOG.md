@@ -2,9 +2,13 @@
 
 Every entry below is folded from `.changesets/` by `bun run release`, which also tags the release. The version is `MAJOR.MINOR.PATCH`, tagged `vX.Y.Z`; the next version is the largest `bump` declared among the changesets a release folds (see [`.changesets/README.md`](.changesets/README.md)) — never a level chosen at release time from a list of file names.
 
-## [0.12.0] — 2026-09-24
+# Inherited awcms-one template history (pre-fork, not OMES-Web releases)
 
-### Align the root-owned Bun pin to 1.4.2
+Everything below is the release history this repository inherited from the [`ahliweb/awcms-one`](https://github.com/ahliweb/awcms-one) template. It is kept verbatim as provenance (only heading depth was lowered by one level); those versions were never OMES-Web releases and are not tags of this repository. OMES-Web releases are the `## [X.Y.Z]` sections above this heading, and `bun run release` writes new ones there.
+
+### awcms-one 0.12.0 — 2026-09-24
+
+#### Align the root-owned Bun pin to 1.4.2
 
 The #210 subtree sync left a root-owned toolchain drift: root `package.json`
 still pinned `packageManager: "bun@1.4.0"`/`engines.bun: ">=1.3.0"` while the
@@ -37,7 +41,7 @@ Astro/Playwright/Changesets updates that arrived through #210 remain that
 subtree sync's own scope and are untouched here; this change is root-owned
 toolchain alignment only (issue #211).
 
-### Encrypted backup assurance and restore drills, integrated into the production topology
+#### Encrypted backup assurance and restore drills, integrated into the production topology
 
 `compose.production.yaml` gains three profile-gated services — `backup`, `restore-drill`, `offsite-copy` — that reuse upstream `apps/cms/deploy/backup/*.sh` (issue #210, ADR-0123) through this repository's own distinct `awcms_setup`/`awcms_app`/`awcms_worker` identities, rather than forking or reimplementing that tooling. `docker/backup/Dockerfile` supplies only the binaries (`age`, `rsync`, `openssh-client`) those scripts' own README already says a runner image needs, on top of the same `postgres:18.4` the `postgres` service runs. `ops/run-backup-compose.sh` and `ops/awcms-one-backup.crontab` give the host-cron scheduling path.
 
@@ -46,7 +50,7 @@ toolchain alignment only (issue #211).
 - Validated end to end against a disposable PostgreSQL with synthetic data: create → backup → encrypt → manifest → off-site copy (a disposable SSH test target) → restore-drill into an isolated scratch database → schema/RLS integrity verification → measured RTO/RPO, plus five fail-closed paths (wrong/missing key material, tampered manifest, corrupted backup, unavailable off-site destination, unsafe restore target).
 - `docs/deployment.md`'s new "Backup assurance" section (and its Indonesian mirror) is the operator runbook; `docs/status.md` removes its "at-rest backup encryption" gap now that the capability is documented and validated.
 
-### Test awcms-one's deployment/migration boundary around the synchronized `omes_control` module
+#### Test awcms-one's deployment/migration boundary around the synchronized `omes_control` module
 
 Issue #210 pulled upstream's `omes_control` domain module into `apps/cms`
 (`sql/154`-`sql/158`, `awcms`'s own ADR-0122). Upstream already tests that module's own unit
@@ -82,7 +86,7 @@ of upstream's own coverage, and no OMES/Hermes runtime-execution behaviour
 - `docs/pengujian.md`/`.id.md` document the new coverage under `check-cms`'s
   section.
 
-### Promote CodeQL to a required pull-request status check
+#### Promote CodeQL to a required pull-request status check
 
 CodeQL (issue #184) ran on every push and PR for a full triage cycle
 (issue #206) with a green track record and no un-triaged findings — the
@@ -111,7 +115,7 @@ required merge gate on `main` (issue #214).
   `docs/status.id.md`, `docs/alur-kerja-pengembangan.md`/`.id.md`, and
   `.github/workflows/codeql.yml`'s own comments.
 
-### Promote the Playwright e2e matrix to required status checks
+#### Promote the Playwright e2e matrix to required status checks
 
 `.github/workflows/e2e.yml` (issue #183) was introduced on a deliberate
 probation period: a real-browser suite carries a different flake risk than
@@ -139,7 +143,7 @@ branch protection **additively** — every previously required check
   (plus their Indonesian mirrors) no longer describe this workflow as
   optional.
 
-### Sync the `apps/cms` subtree from upstream `8c64528d` to `2d29a446`
+#### Sync the `apps/cms` subtree from upstream `8c64528d` to `2d29a446`
 
 `apps/cms` is `ahliweb/awcms` embedded via `git subtree` (see `AGENTS.md`'s "The
 subtree embed"). This pulls the 14 upstream commits that landed since the last
@@ -192,9 +196,9 @@ moving the descriptor to match the applied, checksum-pinned migration.
 - Verified `toko`/`berita`/`landing` all still pass `bun run check` under
   their own `SITE_PROFILE`.
 
-## [0.11.1] — 2026-09-24
+### awcms-one 0.11.1 — 2026-09-24
 
-### First CodeQL triage: dismiss the false positives, record the standing rules
+#### First CodeQL triage: dismiss the false positives, record the standing rules
 
 Thirteen of the fifteen CodeQL alerts open on `main` after issue #184 were false
 positives, won't-fix, or test-only findings, each verified against the actual
@@ -223,7 +227,7 @@ not accepted or rejected on the tool's word alone.
 Both changed governance documents ship their Indonesian mirror in this same
 change (`bun run docs:i18n:stamp`).
 
-### `commerce:deploy:preflight` redacts credential-shaped values before printing
+#### `commerce:deploy:preflight` redacts credential-shaped values before printing
 
 CodeQL's first triage after the production-preflight work (#184) flagged two
 `js/clear-text-logging` alerts on `apps/cms/scripts/commerce-deploy-preflight.ts`:
@@ -244,9 +248,9 @@ retained logs.
 - `docs/deployment.md` (+ its Indonesian mirror) now says what the preflight
   prints and what it redacts.
 
-## [0.11.0] — 2026-09-23
+### awcms-one 0.11.0 — 2026-09-23
 
-### CODEOWNERS, a PR template, and issue forms
+#### CODEOWNERS, a PR template, and issue forms
 
 Contribution routing had no structure: no `CODEOWNERS` to route review requests, no PR template to put `AGENTS.md`'s Definition of Done in front of a contributor (human or agent) at the exact moment they open a PR, and no issue forms to separate the three shapes this repo's own history actually produces — a bug report, a feature request, and a `git subtree pull` of `apps/cms` from `ahliweb/awcms`, which carries its own checklist nothing else was reminding anyone of.
 
@@ -257,7 +261,7 @@ Contribution routing had no structure: no `CODEOWNERS` to route review requests,
 
 No code, gate, or runtime behaviour changes — this is contribution-process scaffolding.
 
-### GitHub Releases are published from CHANGELOG.md on tag push
+#### GitHub Releases are published from CHANGELOG.md on tag push
 
 Ten release tags (`v0.1.0`–`v0.10.0`) existed with zero GitHub Release
 objects behind them — a template user landing on this repo's own GitHub page
@@ -298,7 +302,7 @@ this closes the one part it did not yet cover.
 After this merges, the manager backfills Releases for `v0.1.0`–`v0.10.0` by
 dispatching this workflow once per tag.
 
-### Publish `apps/cms`'s runtime/jobs images to GHCR, with SBOM and provenance
+#### Publish `apps/cms`'s runtime/jobs images to GHCR, with SBOM and provenance
 
 Every production deploy re-ran `bun install --frozen-lockfile` and a full `apps/cms`
 build on the machine serving traffic, with nothing attestable behind the tag a
@@ -329,7 +333,7 @@ registry).
   "Not here yet" list is updated the same way. ADR-0019 itself is left
   untouched — it is cited from ADR-0020, not amended.
 
-### Repository settings hardening: admin enforcement, conversation resolution, template-init-smoke required
+#### Repository settings hardening: admin enforcement, conversation resolution, template-init-smoke required
 
 Issue #182 closed a gap between what `main`'s branch protection actually enforced and what a maintainer merging solo could still get away with: until now, an administrator (the only role that ever merges here) could push past a red or pending required check, and a review thread could be left unresolved at merge time. Neither is a defect a reviewer would catch, because both only matter on the one PR where someone is in a hurry — exactly when a mechanical gate is worth more than a habit.
 
@@ -342,7 +346,7 @@ Issue #182 closed a gap between what `main`'s branch protection actually enforce
 
 No code, schema, or runtime behaviour changes. `docs/alur-kerja-pengembangan.md`, `AGENTS.md`, `README.md`, and `docs/template.md` (each with its Indonesian mirror) are updated to match the settings as verified, with the `gh api` commands to re-verify them.
 
-### `audit:graf` fails once the root knowledge graph drifts too far from the tree
+#### `audit:graf` fails once the root knowledge graph drifts too far from the tree
 
 graphify-out/ was last regenerated 2026-09-20, before v0.10.0's storefront
 redesign — `audit:graf` verified the corpus was self-consistent but never
@@ -366,7 +370,7 @@ to regenerate it itself.
   communities carries a human-chosen name — the graph is at parity with the
   tree as of this change.
 
-### CodeQL code scanning for JavaScript/TypeScript
+#### CodeQL code scanning for JavaScript/TypeScript
 
 Issue #184 (part of epic #179) adds GitHub CodeQL code scanning alongside the secret scanning + push protection and Dependabot security updates already enabled on this repository (issue #182).
 
@@ -375,7 +379,7 @@ Issue #184 (part of epic #179) adds GitHub CodeQL code scanning alongside the se
 - Not a required status check yet — promoted, if ever, only after it has run green on `main` for a while, the same bar `check-cms` and `template-init-smoke` were held to before their own promotion.
 - Docs: `SECURITY.md` (+ `.id.md`) now names all three forms of automated scanning in force and how a CodeQL alert on `apps/cms/**` is triaged; `docs/alur-kerja-pengembangan.md` (+ `.id.md`) gets a new "CI: a fifth workflow, not required — `codeql`" section describing the workflow's shape and scope decision.
 
-### Dependabot version updates for GitHub Actions and this repo's own workspaces
+#### Dependabot version updates for GitHub Actions and this repo's own workspaces
 
 `AGENTS.md`'s "Configuration and toolchain" already claimed GitHub Actions are pinned to a SHA "with a `# vX.Y.Z` comment Dependabot reads to keep both in step" — but no `.github/dependabot.yml` existed, so only Dependabot *security* updates ever ran and pinned actions/dependencies never received a routine version bump.
 
@@ -384,7 +388,7 @@ Issue #184 (part of epic #179) adds GitHub CodeQL code scanning alongside the se
 - `bun` update ignores the `bun` dependency itself — its version is pinned in three places that must move together (`packageManager`/`engines.bun`, `bun-version` in every CI job), a deliberate hand-made change, not something a single-dependency PR should touch.
 - `AGENTS.md` and `docs/alur-kerja-pengembangan.md` (plus their `.id.md` mirrors) now name the real config and describe what to check on a Dependabot PR against the lockfile gate.
 
-### A newcomer-first README, with real per-profile screenshots
+#### A newcomer-first README, with real per-profile screenshots
 
 `README.md` (+ `.id.md`) had grown into the same increment-by-increment chronicle `docs/status.md` (issue #188) already moved out of `AGENTS.md` — a first-time visitor to a public template had to read five increments' worth of history before reaching "how do I run this". This restructures it around what a newcomer actually needs, in order: what the platform is (one paragraph) → screenshots of the redesigned storefront per build profile → "Use this as a template" + quick start → the documentation index → running locally → architecture at a glance → gates. The chronicle itself was never deleted — it lives in [`CHANGELOG.md`](CHANGELOG.md), and [`docs/status.md`](docs/status.md) is the current-state reference both documents now point to.
 
@@ -393,7 +397,7 @@ Issue #184 (part of epic #179) adds GitHub CodeQL code scanning alongside the se
 - The "Gates" section now names `MAX_STALE_FILES` (40, issue #186's bounded knowledge-graph staleness check) and briefly lists the four workflows that run on every push but are not yet required status checks (CodeQL, the Playwright e2e suite, the GHCR image publish, the release publish).
 - `tools/template-init/rewriters.mjs`'s `rewriteReadme` structural markers (the H1 hero span, the "Use this as a template" span) are unchanged in shape, so `bun run template:init` still rewrites this README correctly for a derived repository — verified with `bun test ./tests/template-init.test.mjs` and the `template-init-smoke` workflow.
 
-### Remove the Dependabot `bun` ecosystem block
+#### Remove the Dependabot `bun` ecosystem block
 
 Dependabot's `bun` updater cannot parse this repo's `bun.lock`
 (`lockfileVersion` 2 — Bun 1.4's own format): its first scheduled run
@@ -413,7 +417,7 @@ workspace dependencies (root `package.json`, `apps/storefront`,
   `.id.md` mirrors) describe the manual bump workflow and how to
   re-enable the block later.
 
-### A single current-state status page; AGENTS.md becomes working rules only
+#### A single current-state status page; AGENTS.md becomes working rules only
 
 `AGENTS.md`'s "What this repo is"/"What is here today" sections had grown into an increment-by-increment chronicle that went stale the moment the next increment landed — "Increment 1 — this epic — is foundation... with no live database" was still there after five increments. History belongs in `CHANGELOG.md` and the ADR index, not in the working contract a reader consults on every task.
 
@@ -423,7 +427,7 @@ workspace dependencies (root `package.json`, `apps/storefront`,
 - Fixed a handful of present-tense claims elsewhere that contradicted the current tree: `docs/skema-basis-data.md` citing ADR-0016 as "not yet written" (it has been since increment 4), and `docs/arsitektur.md`'s epic-chronicle opening paragraph (now points at `docs/status.md` instead).
 - `AGENTS.md`'s Dependabot bullet also updated to match reality: no `bun` ecosystem block (Dependabot's updater cannot parse this repo's `bun.lock` `lockfileVersion` 2 — issue #199), workspace dependencies bumped by hand instead.
 
-### Storefront Playwright e2e now runs in CI: axe accessibility, no-overflow checks, per-profile screenshots
+#### Storefront Playwright e2e now runs in CI: axe accessibility, no-overflow checks, per-profile screenshots
 
 `apps/storefront/tests/e2e/` (Playwright: checkout, the ad popup) never ran in CI, and `docs/aksesibilitas.md`/`docs/responsif.md` both stated their claims were verified by reading code by hand, not by a tool or a browser — stale since the 2026-09 redesign rewrote every public page's visuals (issue #183, part of #179).
 
@@ -437,7 +441,7 @@ workspace dependencies (root `package.json`, `apps/storefront`,
 
 `bun.lock` gained `@axe-core/playwright` as an `apps/storefront` devDependency, regenerated by `bun install`.
 
-### Fix the storefront Dockerfile smoke job's unreachable stub CMS
+#### Fix the storefront Dockerfile smoke job's unreachable stub CMS
 
 `.github/workflows/images.yml`'s `storefront-smoke` job has never passed:
 `astro build` inside `apps/storefront/Dockerfile` failed prerendering with
@@ -457,9 +461,9 @@ build.
   which need BuildKit features the classic `docker` driver does not
   support.
 
-## [0.10.0] — 2026-09-22
+### awcms-one 0.10.0 — 2026-09-22
 
-### Storefront redesign — account and affiliate pages
+#### Storefront redesign — account and affiliate pages
 
 Wave 2 of the 2026-09 redesign (issue #168), built on issue #166's foundation (`.btn`, `.pill`, `.field-label`/`.is-mono`, the 42px form controls) — markup/CSS only across `apps/storefront/src/profil/toko/pages/akun/**`, `masuk.astro`, `daftar.astro`, `apps/storefront/src/styles/akun.css`, and the account scripts' own DOM-building code. The bearer-session client (`akun-sesi.ts`/`akun-klien.ts`) and every data-fetching contract are unchanged; every pre-existing `data-*` hook a test asserts on is unchanged.
 
@@ -472,7 +476,7 @@ Wave 2 of the 2026-09 redesign (issue #168), built on issue #166's foundation (`
 
 Documented in `docs/ui-ux.md`'s "Design system (2026-09 redesign)" section under a new "Account & affiliate pages, redesigned (issue #168)" heading (+ Indonesian mirror).
 
-### Storefront redesign — commerce pages (home, catalog, product, cart, checkout, tracking, wishlist)
+#### Storefront redesign — commerce pages (home, catalog, product, cart, checkout, tracking, wishlist)
 
 Wave 2 of the 2026-09 redesign (issue #167), built on the foundation issue #166 landed (`.btn`, `.pill`, `.band-inverse`, `.stepper`, `.radio-card`, `.segmented`, `.field-label`/`.is-mono`, the token scales). Markup/CSS only — every client contract (`toko-klien`, `keranjang-kontrak`, `wishlist-kontrak`, the checkout quote/order flow) is unchanged.
 
@@ -487,7 +491,7 @@ Wave 2 of the 2026-09 redesign (issue #167), built on the foundation issue #166 
 
 Documented in `docs/ui-ux.md`'s "Design system (2026-09 redesign)" section (+ Indonesian mirror).
 
-### Storefront redesign foundation — self-hosted type system, tokens, primitives, site chrome
+#### Storefront redesign foundation — self-hosted type system, tokens, primitives, site chrome
 
 Wave 1 of the 2026-09 redesign (issue #166): everything issues #167/#168/#169 (product, cart/checkout, and account/news-chrome screens) build on, landed on its own so those issues never touch `apps/storefront/src/styles/global.css`'s top-of-file structure or the font vendoring again.
 
@@ -498,7 +502,7 @@ Wave 1 of the 2026-09 redesign (issue #166): everything issues #167/#168/#169 (p
 
 Documented in `docs/ui-ux.md`'s new "Design system (2026-09 redesign)" section (+ Indonesian mirror), with matching updates to `docs/aksesibilitas.md`/`docs/responsif.md` and `apps/storefront/README.md`.
 
-### Storefront redesign — news chrome, news home and article
+#### Storefront redesign — news chrome, news home and article
 
 Wave 2 of the 2026-09 redesign (issue #169), building on issue #166's foundation (`docs/ui-ux.md`'s "Design system (2026-09 redesign)" section) — markup/CSS restyling only, no data or behaviour change beyond what is called out below.
 
@@ -509,7 +513,7 @@ Wave 2 of the 2026-09 redesign (issue #169), building on issue #166's foundation
 
 Documented in `docs/ui-ux.md`'s "News chrome, news home and article (issue #169)" subsection (+ Indonesian mirror).
 
-### apps/cms synced to ahliweb/awcms 8c64528d — the admin chrome restyle
+#### apps/cms synced to ahliweb/awcms 8c64528d — the admin chrome restyle
 
 Issue #170's upstream half landed as awcms PR #813 and is pulled in here with a
 `git subtree pull` merged by merge commit (AGENTS.md, "The subtree embed"). The
@@ -529,7 +533,7 @@ them.
   divergences this sync surfaced (AdminLayout/sidebar model, admin-screens.css,
   the asset budget) beside the original version-check patch.
 
-### Commerce admin screens re-composed on the new admin primitives (issue #171)
+#### Commerce admin screens re-composed on the new admin primitives (issue #171)
 
 Every `apps/cms` commerce admin screen is now built on the shared primitives issue #170's admin-chrome subtree sync (upstream awcms#813) added to `admin.css` — `.admin-stat-card`, `.admin-status-pill`, `.admin-segmented`, `.admin-bulk-bar`, `.admin-two-pane`, `.admin-toggle`, `.admin-timeline` — rather than page-specific markup, so the twelve commerce screens read as one coherent surface with the rest of the redesigned admin chrome. Real data only throughout: a screen omits a stat it cannot honestly compute (the dashboard's missing conversion-rate stat, for lack of a funnel/visit projection) rather than inventing one.
 
@@ -542,9 +546,9 @@ Every `apps/cms` commerce admin screen is now built on the shared primitives iss
 
 Documented in `docs/cms.md` (+ Indonesian mirror, the admin-screens table and a new re-composition section) and `docs/ui-ux.md` (+ mirror, a new "Admin (2026-09 redesign, issue #171)" section); `.claude/skills/awcms-one-commerce/SKILL.md` (+ mirror) gets an "Admin screen composition" note naming the primitives.
 
-## [0.9.0] — 2026-09-21
+### awcms-one 0.9.0 — 2026-09-21
 
-### Merge commit is now the only merge method — subtree-sync protection is mechanical, not procedural
+#### Merge commit is now the only merge method — subtree-sync protection is mechanical, not procedural
 
 Issue #149 closed the gap this repo's own governance had named since ADR-0001: nothing in
 GitHub's settings stopped a `git subtree pull` PR from being squashed or rebased, which would
@@ -575,7 +579,7 @@ GitHub's merge button offers, repository-wide, not only for subtree syncs.
 No `apps/cms/**` files were changed. This is a docs/governance-only change; the repository
 settings themselves were applied out of band by a maintainer.
 
-### A real production deployment path, and a fail-closed preflight
+#### A real production deployment path, and a fail-closed preflight
 
 Issue #150 closed the gap between "a broad, tested feature set" and "a
 reproducible way to run it in production": `docs/deployment.md` used to state
@@ -616,7 +620,7 @@ per-profile images to a registry, a reverse-proxy/TLS config beyond an
 example, backup encryption (tracked upstream), and a Xendit/courier-tracking
 adapter (both already-named ADR-0017 follow-ups).
 
-### Security policy reconciled with the implemented customer and provider surfaces
+#### Security policy reconciled with the implemented customer and provider surfaces
 
 `SECURITY.md`/`SECURITY.id.md` still said, under "What is NOT yet true," that
 customer accounts do not exist and that there is no session/login attack
@@ -649,7 +653,7 @@ exist when it does.
   language of `SECURITY.md`, and that the bearer-session table/scheme and
   the webhook route family stay named concretely.
 
-### `template-init-smoke` no longer runs the full root suite three times at once
+#### `template-init-smoke` no longer runs the full root suite three times at once
 
 Issue #147: two consecutive `main` runs each failed a *different* matrix
 leg's final `Root bun test` step on a *different* storefront build-smoke
@@ -674,7 +678,7 @@ same two-core runner's CPU/IO, not a real profile-specific defect.
   a required status check — promotion still waits for a run of consecutive
   green `main` runs (docs/alur-kerja-pengembangan.md).
 
-#### A second, independent contention source, found while validating this fix
+##### A second, independent contention source, found while validating this fix
 
 After the job-split above landed, the REQUIRED `Check (toko)` job (a
 different workflow, `ci.yml`) still hit the same failure *shape* on two
@@ -704,7 +708,7 @@ full account. No test's assertions changed. `docs/pengujian.md`/`.id.md`
 now describe this lifecycle in place of the old shared-deadline-only
 description.
 
-#### A third, root-cause finding: `TEMPLATE_INIT_TEST_SCOPE=root` never scoped anything
+##### A third, root-cause finding: `TEMPLATE_INIT_TEST_SCOPE=root` never scoped anything
 
 `main` itself went red after PR #160 merged (run `35594610231`,
 `template:init`'s own full-run-in-a-temp-copy test): "killed 1 dangling
@@ -732,9 +736,9 @@ contrast, that the OLD `["test", "tests"]` argv runs both). `docs/
 template.md`/`.id.md` now explain the filter-vs-directory distinction
 where `TEMPLATE_INIT_TEST_SCOPE` is documented.
 
-## [0.8.0] — 2026-09-20
+### awcms-one 0.8.0 — 2026-09-20
 
-### ADR-0018 + profile matrix + template contract (wave 0 of epic #135)
+#### ADR-0018 + profile matrix + template contract (wave 0 of epic #135)
 
 Increment 6 turns awcms-one into a **template** other applications can start from, while it
 keeps running as the BjekMart reference deployment. Wave 0 (issue #136) settles the eight
@@ -773,7 +777,7 @@ exactly as ADR-0016 and ADR-0017 did for their own increments.
 No code changes — this is the contract #137 (storefront profiles + CI matrix), #138
 (`template:init`), and #139 (profile seeds) build against in parallel next.
 
-### Neutral sample seeds per profile; BjekMart's seed becomes the labelled reference example
+#### Neutral sample seeds per profile; BjekMart's seed becomes the labelled reference example
 
 ADR-0018 D6, issue #139. `tools/seed-cms.ts` replaces tools/seed-borneojek-mart.ts as the
 seeder every profile shares — `--profil toko|berita|landing|contoh:borneojek-mart`, `--dry-run`,
@@ -817,7 +821,7 @@ content as its default.
 `#137` (storefront profiles + CI matrix) and `#138` (`template:init`) remain outstanding; this
 issue's own scope is the seeder and its seed data only.
 
-### Storefront build profiles: `SITE_PROFILE` = `toko` | `berita` | `landing` (issue #137)
+#### Storefront build profiles: `SITE_PROFILE` = `toko` | `berita` | `landing` (issue #137)
 
 `apps/storefront` now builds one of three sites from the same tree, decided at build time by
 `SITE_PROFILE` ([ADR-0018](docs/adr/0018-awcms-one-is-a-template-with-build-profiles-and-an-idempotent-init.md)
@@ -867,7 +871,7 @@ build naming the variable.
 Operators of the BjekMart deployment need to do nothing: with `SITE_PROFILE` unset the build is
 unchanged.
 
-### `bun run template:init` — idempotent brand/profile initialisation for derived repos
+#### `bun run template:init` — idempotent brand/profile initialisation for derived repos
 
 Issue #138 (ADR-0018 D4/D5): a new root-level script that rewrites this
 repository's brand surface (name, domain, colours, contact, `SITE_PROFILE`)
@@ -906,9 +910,9 @@ derived repo's first commit is already green.
   actually stands, and `SITE_NAME`/`SITE_URL`/`SITE_DESCRIPTION`/
   `SITE_PROFILE` live in `apps/storefront/.env.example`, not the root one.
 
-## [0.7.0] — 2026-09-20
+### awcms-one 0.7.0 — 2026-09-20
 
-### ADR-0017 + OpenAPI contract for external providers — payment gateway, courier rates, WhatsApp, POS, reports, inbox, campaigns
+#### ADR-0017 + OpenAPI contract for external providers — payment gateway, courier rates, WhatsApp, POS, reports, inbox, campaigns
 
 Epic #33 (external providers) needed its ten architectural decisions settled and its
 API contract argued through review **before** any handler exists, so C1–C9 (issues
@@ -938,7 +942,7 @@ re-deciding it issue by issue.
   (ADR-0017, issue #106) even though no handler does yet; the commerce module's
   README gains a matching "contract only" section.
 
-### Commerce inbox — customer/store conversations, bearer + owner endpoints, admin screen
+#### Commerce inbox — customer/store conversations, bearer + owner endpoints, admin screen
 
 `commerce` gains a support inbox (Issue #111, contract #106 D8): `awcms_commerce_conversations`/`awcms_commerce_messages` (`sql/927`, FORCE RLS, one thread per verified customer account), and a `commerce.conversations.read|update` permission pair (`sql/928`).
 
@@ -954,7 +958,7 @@ New admin screen `/admin/commerce-inbox`: conversation list with status/unread f
 - New env var: `COMMERCE_CONVERSATION_POST_RATE_LIMIT_MAX` (default 10).
 - `APP_BUDGET_BYTES` (`apps/cms/scripts/client-asset-budget.ts`) raised 231,000 -> 231,500 for this screen's own measured cost (624 B client script, built on the shared `onSubmit`/`onAction`/`mutateAndReload` helpers — no per-screen duplication).
 
-### Payment gateway — schema, Midtrans Snap adapter, session endpoint, webhook endpoint tokens (C3)
+#### Payment gateway — schema, Midtrans Snap adapter, session endpoint, webhook endpoint tokens (C3)
 
 Issue #110 (part of epic #33, C3; contract #106's D2/D3, ADR-0017). The second
 external-provider integration under `commerce`, following the same
@@ -1044,7 +1048,7 @@ Out of scope, explicitly: the webhook INTAKE route itself
 (`POST /api/v1/commerce/webhooks/midtrans/{token}`), `markOrderPaidBySystem`, and
 the `commerce:payments:reconcile` job — all #113.
 
-### POS — cash counter sales, `orders.channel`, `commerce.pos.create`, POS screen + history
+#### POS — cash counter sales, `orders.channel`, `commerce.pos.create`, POS screen + history
 
 Issue #116 (epic #33 C7, contract #106 D6, ADR-0017). BjekMart's kasir as
 one more order-creation path over the SAME order tables, quote engine and
@@ -1111,7 +1115,7 @@ empty again as `AGENTS.md` requires before the epic closes.
   `docs/kamus-data.md` (`channel`, `cash`, the walk-in sentinel),
   `docs/api.md`, the commerce module README, and their Indonesian mirrors.
 
-### RajaOngkir courier rates — provider port, cached rates, destination in quote, courier settings (C1)
+#### RajaOngkir courier rates — provider port, cached rates, destination in quote, courier settings (C1)
 
 Issue #107 (part of epic #33, C1; contract #106's D4). The first external-provider
 integration under `commerce` (ADR-0006/0010's "external providers are commerce-owned
@@ -1180,7 +1184,7 @@ doubles as the id field, and a couriers multi-select (`jne`/`jnt`/`sicepat`/`pos
 from 231,000 to 231,500 B to fit the new (non-duplicative) control — reasoning
 recorded in that file's own docblock.
 
-### Sales reports — three commerce reporting projections over order events + reports screen (C8)
+#### Sales reports — three commerce reporting projections over order events + reports screen (C8)
 
 Issue #117 (part of epic #33, C8; contract #106's D7, ADR-0017). `commerce`
 contributes three `cursor_table` projections to the `reporting` module's generic
@@ -1254,7 +1258,7 @@ totals are category-agnostic, so this never reads as a reconcile mismatch.
 Docs: `docs/cms.md` "Sales reports", `docs/skema-basis-data.md` "Sales-report
 projections", the commerce and reporting module READMEs, plus Indonesian mirrors.
 
-### WhatsApp outbox, Fonnte/Meta adapters, OTP via WhatsApp, login by phone
+#### WhatsApp outbox, Fonnte/Meta adapters, OTP via WhatsApp, login by phone
 
 `commerce` gains a second provider outbox modelled on `email` (ADR-0017 D1): `awcms_commerce_whatsapp_messages`/`awcms_commerce_whatsapp_delivery_attempts` (`sql/925`), a claim/send/finalize dispatcher (`bun run commerce:whatsapp:dispatch`) with the same lease/retry/circuit-breaker shape as `email-dispatch.ts`, and a retention purge (`bun run commerce:whatsapp:purge`). Two real adapters — Fonnte (`COMMERCE_WHATSAPP_PROVIDER=fonnte`) and the Meta WhatsApp Cloud API (`meta`) — plus a `log` adapter for dev/CI, resolved by `COMMERCE_WHATSAPP_PROVIDER`/gated by `COMMERCE_WHATSAPP_ENABLED`.
 
@@ -1266,7 +1270,7 @@ New owner diagnostics: `GET /api/v1/commerce/whatsapp/messages` (`commerce.whats
 - Module-local WhatsApp template registry (`commerce.customer_otp`/`commerce.order_paid`/`commerce.campaign`) — `{{var}}` rendering with a per-template variable allowlist; only `commerce.customer_otp` is wired to a caller in this issue.
 - New env vars: `COMMERCE_WHATSAPP_ENABLED`, `COMMERCE_WHATSAPP_PROVIDER`, `COMMERCE_WHATSAPP_SEND_TIMEOUT_MS`, `COMMERCE_WHATSAPP_SEND_MAX_RETRIES`, `COMMERCE_FONNTE_TOKEN`, `COMMERCE_FONNTE_API_BASE_URL`, `COMMERCE_META_WA_TOKEN`, `COMMERCE_META_WA_PHONE_NUMBER_ID`, `COMMERCE_META_WA_OTP_TEMPLATE`, `COMMERCE_META_WA_API_BASE_URL`.
 
-### Customer campaigns: consent, mass e-mail/WhatsApp, dispatcher, admin screen (issue #114, C6 of #33)
+#### Customer campaigns: consent, mass e-mail/WhatsApp, dispatcher, admin screen (issue #114, C6 of #33)
 
 `apps/cms` gains a consent-gated mass e-mail/WhatsApp send to a filtered
 slice of a tenant's customer accounts, coded against
@@ -1306,7 +1310,7 @@ Docs updated: `docs/cms.md`, `docs/api.md`, `docs/skema-basis-data.md`,
 `apps/cms/src/modules/commerce/README.md`, all with their Indonesian
 mirrors.
 
-### Commerce feature toggles per tenant + tiered pricing at quote for logged-in customers
+#### Commerce feature toggles per tenant + tiered pricing at quote for logged-in customers
 
 Issue #118 (epic #33 C9, contract #106 D10, closing ADR-0016 D6's tiered-pricing
 follow-up).
@@ -1345,7 +1349,7 @@ follow-up).
 - Docs: `docs/cms.md`/`.id.md`, `docs/api.md`/`.id.md`, ADR-0016 status note,
   `apps/cms/src/modules/commerce/README.md`/`.id.md`.
 
-### Payment gateway webhook intake, system-actor `paid`, and reconcile job (issue #113, C5 of #33)
+#### Payment gateway webhook intake, system-actor `paid`, and reconcile job (issue #113, C5 of #33)
 
 Closes the payment-gateway loop issue #110 opened: `apps/cms` can now
 actually learn that a hosted-checkout order was paid, from either an
@@ -1396,13 +1400,13 @@ pointing Midtrans's dashboard at it, the `COMMERCE_MIDTRANS_*`/
 `docs/deployment.md`, `docs/api.md`, and the commerce module README (all
 with their Indonesian mirrors).
 
-### Build-smoke tests wait 20 s, not 5 s, for the stub CMS to boot
+#### Build-smoke tests wait 20 s, not 5 s, for the stub CMS to boot
 
 Sixteen storefront build-smoke tests each spawn `apps/storefront/scripts/stub-awcms.mjs` and waited a hard-coded five seconds for its first answer. The stub now loads a dozen fixtures and state machines and the root `bun test` runs those builds concurrently, so a cold start on a two-core CI runner regularly crossed the line and a green change failed CI on a timing accident — four reruns in two days.
 
 - One shared constant, `apps/storefront/tests/stub-deadline.ts` (`STUB_START_DEADLINE_MS = 20_000`), replaces every literal; a stub that truly cannot start still fails inside the test's own budget.
 
-### Payment gateway checkout — "Bayar sekarang" + polling (issue #112, S2 of #33)
+#### Payment gateway checkout — "Bayar sekarang" + polling (issue #112, S2 of #33)
 
 Checkout gains a fourth, redirect-based payment method — "Bayar online
 (kartu, VA, e-wallet)" — and `/pesanan`/`/akun/pesanan` gain a live-polled
@@ -1439,7 +1443,7 @@ are both unit-tested with no DOM/timer at all;
 `apps/storefront/tests/e2e/checkout.e2e.ts` gains a full gateway scenario
 against the stub's own hosted page.
 
-### Checkout prices real courier rates per destination (issue #109, S1 of #33)
+#### Checkout prices real courier rates per destination (issue #109, S1 of #33)
 
 The checkout shipping step's courier row stops being a permanent "segera"
 placeholder. Coded against the contract [issue #106](https://github.com/ahliweb/awcms-one/issues/106)
@@ -1470,7 +1474,7 @@ storefront change.
 - No client-side arithmetic was added — every price shown still comes from
   the quote, formatted only through the existing `formatPrice`.
 
-### WhatsApp OTP, marketing consent, and `/akun/pesan` (issue #115, S3 of #33)
+#### WhatsApp OTP, marketing consent, and `/akun/pesan` (issue #115, S3 of #33)
 
 Sign-in gains a second OTP channel, `/akun` gains a promo-consent toggle,
 and signed-in shoppers gain a message inbox with the store. Coded against
@@ -1515,9 +1519,9 @@ storage in later needs no storefront change.
 real build; `akun-klien.test.ts`/`akun-kontrak.test.ts` gain unit coverage
 for every new request shape and the `marketingConsent` default.
 
-## [0.6.0] — 2026-09-19
+### awcms-one 0.6.0 — 2026-09-19
 
-### ADR-0016 + OpenAPI contract for customer accounts, OTP, bearer sessions, affiliates
+#### ADR-0016 + OpenAPI contract for customer accounts, OTP, bearer sessions, affiliates
 
 Epic #32 (customer accounts) needed its four architectural decisions settled and its
 API contract argued through review **before** any handler exists, so C2–C4 (issues
@@ -1541,7 +1545,7 @@ it wave by wave.
   updates the "Not built" line to say the contract now exists (ADR-0016, issue #86)
   even though no handler does yet.
 
-### Customer account auth endpoints — OTP request/verify, me, logout (C2)
+#### Customer account auth endpoints — OTP request/verify, me, logout (C2)
 
 Issue #89 (part of #32; contract #86/ADR-0016): the storefront's first four
 `/api/v1/commerce/storefront/account/*` routes actually run. Built on #87's
@@ -1585,7 +1589,7 @@ schema/domain/store.
   string rather than a parsed object, which #87's own tests never exercised
   far enough to notice — caught by this issue's integration suite.
 
-### Customer account resource endpoints — addresses, wishlist, orders, reviews (C3)
+#### Customer account resource endpoints — addresses, wishlist, orders, reviews (C3)
 
 Issue #91 (part of epic #32, C3; contract #86/ADR-0016). Built on #87's schema and
 #89's bearer sessions, the storefront's account holders can now manage their own
@@ -1615,7 +1619,7 @@ shape-validated only in this issue, ignored until #92 wires attribution.
 Removed from `ROUTE_PARITY_EXEMPTIONS` (`apps/cms/scripts/api-spec-check.ts`)
 accordingly; only the C4 affiliate paths remain contract-only.
 
-### Affiliate program — schema, commissions on completed orders, storefront + owner API, admin screen (C4)
+#### Affiliate program — schema, commissions on completed orders, storefront + owner API, admin screen (C4)
 
 Issue #92 (part of epic #32, C4; contract #86's D5). Built on #87–#91's customer
 accounts, a customer can now enrol as an affiliate, refer other shoppers with an
@@ -1671,7 +1675,7 @@ decimals, nullable).
 Removed from `ROUTE_PARITY_EXEMPTIONS` (`apps/cms/scripts/api-spec-check.ts`),
 which is now empty — every path #86 documented ahead of its handler has one.
 
-### Customer account, OTP and session schema (C1)
+#### Customer account, OTP and session schema (C1)
 
 Issue #87 (part of #32; contract #86/ADR-0016 — this awcms repo's own ADR,
 not yet written): the first slice of storefront customer accounts — schema,
@@ -1697,13 +1701,13 @@ domain and application layer only, no HTTP routes yet (those are Issue
   and landing them first keeps each later PR small and independently
   reviewable.
 
-### `db:commerce:renumber` could not run: the name list was bound as a malformed array
+#### `db:commerce:renumber` could not run: the name list was bound as a malformed array
 
 The one-off script from #72 passed a plain JavaScript array into `= ANY(${…})`, which Bun.SQL serialises as a comma-joined string rather than a PostgreSQL array, so the very first query failed with `malformed array literal` on every database. It now binds through `sql.array(names, "text")`, the way `data-lifecycle`'s executor already does.
 
 - Verified against the local development database: `--dry-run` lists sixteen renames, the real run renames them, a second run reports nothing to do, and `db:migrate` then skips all 169 migrations instead of re-applying `901`.
 
-### Affiliate program, from the shopper's side: `?ref=` capture, checkout attribution, `/akun/afiliasi` (issue #93, S3 of #32)
+#### Affiliate program, from the shopper's side: `?ref=` capture, checkout attribution, `/akun/afiliasi` (issue #93, S3 of #32)
 
 `apps/storefront` gains the shopper-facing half of #86's freshly designed affiliate program (D5) — the CMS/staff side is issue #92, tracked separately.
 
@@ -1716,7 +1720,7 @@ The one-off script from #72 passed a plain JavaScript array into `= ANY(${…})`
 - `/akun`'s dashboard already links its "Afiliasi" card at `ROUTES.accountAffiliate` (declared since issue #88) — this issue is what makes that link resolve to a real page instead of a 404.
 - `apps/storefront/scripts/stub-awcms.mjs` grows per-account `affiliate`/`commissions` state and `GET/POST /account/affiliate` + `GET /account/affiliate/commissions`; the fixture account (`budi@example.test`) is seeded already enrolled with a deterministic code and three commissions, one per status; a freshly registered account starts unenrolled. `POST /orders` records `affiliateCode` on the created order when present. `apps/storefront/tests/fixtures/awcms/store-settings-public.json` sets `affiliateProgramEnabled: true`.
 
-### Customer accounts: addresses, order history, synced wishlist, reviews (issue #90, S2 of #32)
+#### Customer accounts: addresses, order history, synced wishlist, reviews (issue #90, S2 of #32)
 
 `apps/storefront` gains the rest of the customer-account surface #86 contracted: `/akun/alamat` (addresses), `/akun/pesanan` (order history and an owned-order detail view), `/akun/ulasan` (reviews), and an account-synced wishlist — all static (`output: "static"`, no `prerender = false`), calling `apps/cms`'s bearer-authenticated `/api/v1/commerce/storefront/account/*` routes directly from the browser, continuing S1's pattern (issue #88).
 
@@ -1727,7 +1731,7 @@ The one-off script from #72 passed a plain JavaScript array into `= ANY(${…})`
 - `toko-klien.ts`'s `createOrder` and `submitReview` each gain an OPTIONAL second `bearerToken` argument — every existing anonymous caller is unaffected; `checkout.ts` passes the signed-in shopper's session token so a placed order is bound to their account.
 - `apps/storefront/scripts/stub-awcms.mjs` grows per-account addresses/wishlist/orders/reviews storage, seeding the fixture account with two addresses (one default) and two orders — one dated before `historyFrom` to prove the server, not the client, enforces #86's D4 history-window rule.
 
-### Customer accounts: `/masuk`, `/daftar`, `/akun`, and a bearer client (issue #88, S1 of #32)
+#### Customer accounts: `/masuk`, `/daftar`, `/akun`, and a bearer client (issue #88, S1 of #32)
 
 `apps/storefront` gains its first customer-facing authentication surface — an e-mail OTP sign-in (`/masuk`), registration (`/daftar`), and a signed-in account shell (`/akun`) — all static (`output: "static"`, no `prerender = false`), calling `apps/cms`'s `/api/v1/commerce/storefront/account/*` routes directly from the browser, per issue #86's contract. No password is ever collected, sent, or stored — matching ADR-0007's "the storefront holds no runtime credential" posture and #86's own D1/D2/D3 decisions (bearer session, no link to the staff `awcms_principals` table).
 
@@ -1738,9 +1742,9 @@ The one-off script from #72 passed a plain JavaScript array into `= ANY(${…})`
 - `robots.txt.ts` disallows `/masuk`, `/daftar`, `/akun` (the bare `/akun` prefix also covers its future children); all three pages carry `<meta name="robots" content="noindex, follow">`.
 - `apps/storefront/scripts/stub-awcms.mjs` implements the `/account/*` OTP/session state machine (fixed code `123456`, a seeded `budi@example.test` account) so this app's own build-smoke and future e2e tests exercise the real request/response shapes rather than a hand-rolled fixture.
 
-## [0.5.0] — 2026-09-18
+### awcms-one 0.5.0 — 2026-09-18
 
-### Commerce migrations renumbered into a reserved `9xx` range
+#### Commerce migrations renumbered into a reserved `9xx` range
 
 `apps/cms/sql/*.sql` is one flat, lexically-ordered migration sequence owned by upstream `ahliweb/awcms`'s own `db-migrate.ts`. This repo's own `commerce` module originally numbered its sixteen migrations `153`–`168`, inside upstream's own `001`–`899` range — the only range that existed at the time. Upstream has since started adding its own migrations from `153` onward (`sql/153_awcms_blog_institution_logo.sql`, issue #59), and every future upstream `git subtree pull` will keep colliding with this repo's own commerce numbers.
 
@@ -1750,9 +1754,9 @@ The sixteen commerce migrations are renumbered to `901`–`916` (offset +748: `1
 - A new `apps/cms/tests/commerce-migrations-range.test.ts` enforces the split (`9xx` for commerce, below `900` for everything else) so it stays true after every future `git subtree pull`.
 - **Operator step:** a database that already ran `db:migrate` against the old file names must run `bun run db:commerce:renumber` once, from `apps/cms`, before its next `db:migrate` — a new, transactional, idempotent compatibility script (`apps/cms/scripts/commerce-migrations-renumber.ts`) that updates the sixteen already-applied rows' recorded names and checksums. No production PostgreSQL exists yet for this repo, so no database needs this today; a fresh database needs nothing at all, since it applies the new file names directly.
 
-## [0.4.0] — 2026-09-18
+### awcms-one 0.4.0 — 2026-09-18
 
-### Reconcile apps READMEs found broken by #43's review
+#### Reconcile apps READMEs found broken by #43's review
 
 Two defects in `apps/**` READMEs, both found while reviewing PR #43 and out
 of scope for it since it only touches root-level docs.
@@ -1779,7 +1783,7 @@ of scope for it since it only touches root-level docs.
   which now match `README.md`; no factual error was found in the English
   source itself.
 
-### `audit:rilis` count bound raised from 10 to 20 waiting changesets
+#### `audit:rilis` count bound raised from 10 to 20 waiting changesets
 
 The gate's own docblock called 10 files a "starting assumption pending real
 release history". There is history now: v0.3.0 folded ten changesets from
@@ -1793,7 +1797,7 @@ is the one that actually catches an unwatched backlog, is unchanged.
 - Only felt while developing: `bun run audit:rilis` no longer reddens a
   branch merely because an increment is more than half merged.
 
-### Rule-based legacy redirects for seputarborneo's rubrik/daerah/mitra/video/static/search URLs
+#### Rule-based legacy redirects for seputarborneo's rubrik/daerah/mitra/video/static/search URLs
 
 Issue #28's redirect map only ever knows a URL an operator/import explicitly
 recorded as a `awcms_seo_redirects` row — right for a single article, but
@@ -1832,7 +1836,7 @@ never a guessed slug), the three static pages, the search box (302, not
 - `docs/routing.md`/`.id.md`'s "Legacy redirects" section documents the full
   table.
 
-#### Post-review corrections (PR #61)
+##### Post-review corrections (PR #61)
 
 Six defects found reviewing the first version of this change, all fixed on
 the same branch:
@@ -1860,7 +1864,7 @@ the same branch:
    (`WeakMap`), instead of an `Object.keys` scan repeated on every request
    — load-bearing once issue #58 (B2) imports seputarborneo's ~25k rows.
 
-#### One more correction: the row-based (issue #28) map itself
+##### One more correction: the row-based (issue #28) map itself
 
 `apps/storefront/src/profil/berita/pages/index/pengalihan-legacy.json.ts`'s row-based map — the one
 `pengalihan-aturan.mjs` only ever falls through to on a miss — had two
@@ -1880,7 +1884,7 @@ related bugs of its own, found while wiring the above:
   moment a second, differently-targeted video row existed. It now preserves
   the query for that one shape only.
 
-### Seed seputarborneo reference taxonomy, institutions, sample posts, legal pages, ad placements, social links, and legacy redirects
+#### Seed seputarborneo reference taxonomy, institutions, sample posts, legal pages, ad placements, social links, and legacy redirects
 
 tools/seed-borneojek-mart.ts previously seeded 3 store-flavoured blog terms, 3 posts, 2 legal pages, 0 institutions, 0 ad placements, and 0 redirects — against a real database every news page the storefront's `/berita`, `/rubrik/*`, `/daerah/*`, and `/mitra/*` routes render was empty. This gives every developer, reviewer, and CI job something real to look at instead of an empty news IA, modelled on seputarborneo's own reference structure (`include/nav_menu.php`, verified 2026-09-18) so it matches the shape `apps/storefront`'s news pages were actually built against.
 
@@ -1896,7 +1900,7 @@ tools/seed-borneojek-mart.ts previously seeded 3 store-flavoured blog terms, 3 p
 - Found and fixed, for every page/post this script has ever seeded (not narrowly this issue's own): `createBlogPage`/`createBlogPost` always write `status: 'draft'`, and nothing published either past it, so `kebijakan-privasi`/`tos` and BjekMart's own 3 posts were, and would have stayed, invisible to `apps/storefront`'s build. Found and fixed while verifying this issue's own rendering acceptance criteria against a real seeded local CMS.
 - Every step is additive to the existing seed and follows the same idempotent `ensure*` posture already established — verified locally with two consecutive `bun run db:seed:cms` runs against a freshly reset/migrated database: the second run reports 0 created for everything this issue adds. `apps/storefront`'s build against this real seeded CMS now renders `/berita` (19 article pages), all 14 Kalteng `/daerah/*` (19 total with the neighbouring Lintas Kalimantan provinces), all 27 `/mitra/*`, `/rubrik/politik`, `/halaman/redaksi`, and 3 `/video/*` pages.
 
-### Exporter from the seputarborneo MariaDB dump to `blog_content`'s legacy-import pipeline
+#### Exporter from the seputarborneo MariaDB dump to `blog_content`'s legacy-import pipeline
 
 tools/import-seputarborneo.ts (`bun run import:seputarborneo`) reads seputarborneo.com's legacy MariaDB archive and writes the input files `apps/cms`'s own operator pipeline for exactly this job expects — `bun run blog:legacy:import` (Issue #599/ADR-0114 in upstream awcms). It makes no network call itself; the actual import runs from inside `apps/cms`, against the same `borneojek-mart` tenant tools/seed-borneojek-mart.ts bootstraps.
 
@@ -1909,7 +1913,7 @@ The **why** is mostly about what an earlier design got wrong: a first pass of th
 - `redirects.json` is shaped by how it is consumed, not by the legacy URLs alone (review round 2 of PR #67): every row carries `origin: "legacy_blog"`, because the storefront's `getLegacyRedirectRows()` serves only that origin and would have silently ignored an `import`-origin row; and a video post's source is a synthetic, query-free `/video/{id}-{slug}.html` rather than the real `/video/?video={id}-{slug}.html`, because the CMS strips a redirect source's query string at write time and every video row would otherwise have collapsed onto one bare `/video` — breaking the import chunk, or redirecting the `/video` list page itself. `apps/storefront/server/pengalihan-aturan.mjs` now indexes that key by id and still answers the real inbound `?video={id}` URL from it.
 - `--push-redirects [--commit]` (`tools/lib/redirect-push.ts`): ~51,000 redirect entries against a route capped at 200 per all-or-nothing call is a ~256-call loop, which the first runbook left to `curl` by hand. The exporter now runs it — a whole-file dry run by default, then real chunks each under an `Idempotency-Key` derived from the chunk's content, so a crash mid-run is safe to rerun (committed chunks replay from the CMS's idempotency record). A file-wide duplicate check runs before any call, because the route only detects duplicates within one chunk.
 
-### Storefront ad popup: a native `<dialog>` on creative click
+#### Storefront ad popup: a native `<dialog>` on creative click
 
 Since issue #47 an ad slot on the news surface renders its creative as a
 real `<img>` — 300×250, the slot's own size — inside an anchor straight to
@@ -1957,7 +1961,7 @@ decorate, now wraps its image in a real `<button type="button">` so the
   `berita/index.html` before `send`'s `.html` fallback runs. Recorded in
   `apps/storefront/README.md`'s "Ad popup" section for follow-up.
 
-### Storefront build no longer floods the CMS with 56 concurrent region requests
+#### Storefront build no longer floods the CMS with 56 concurrent region requests
 
 `apps/storefront`'s `/index/wilayah-kecamatan-{code}.json` route fetched the
 districts of every regency under every configured province in one
@@ -1988,7 +1992,7 @@ local database (issue #71).
   real 56-regency fan-out with a mocked client; `apps/storefront/README.md`
   documents the ceiling and the CMS limit it stays under.
 
-### Logo Instansi — an institution's emblem beside the article it filed
+#### Logo Instansi — an institution's emblem beside the article it filed
 
 Issue #59 (C1), the last of its three steps. seputarborneo.com v2.3.0 lets
 an editor attach a regency's emblem to an ARTICLE; here every such article
@@ -2016,7 +2020,7 @@ renders no emblem rather than crashing on a missing property; every
 emblem in the list resolves in the same batched `resolveMedia` call the
 post images already use.
 
-### Storefront media client: article images, ad creatives, YouTube facade
+#### Storefront media client: article images, ad creatives, YouTube facade
 
 `apps/storefront` could see that a post, a gallery item, or an ad
 placement HAD a photo or a video, but had no way to turn that into a URL —
@@ -2059,7 +2063,7 @@ even though every other piece (the resolved images, the artifact itself)
 already works. The artifact change is additive and does not regress an
 older reader.
 
-### `apps/storefront`: news chrome — primary nav, Daerah panel, ticker, utility bar, footer directory, footer leaderboard slot, back-to-top
+#### `apps/storefront`: news chrome — primary nav, Daerah panel, ticker, utility bar, footer directory, footer leaderboard slot, back-to-top
 
 Every news-surface page (`/berita`, `/rubrik/*`, `/daerah/*`, `/mitra/*`,
 `/video`, `/tag/*`, `/penulis/*`, `/arsip/*`, `/cari-berita`) rendered the
@@ -2125,7 +2129,7 @@ two-line slot addition above, and no `apps/cms` endpoint shape is new —
 every field this issue reads was already verified against a route file by
 earlier issues (`src/lib/awcms/{blog,wilayah,pages,profil}.ts`).
 
-### Shared news sidebar, homepage ad slots in seputarborneo's order, a real "Terpopuler" (issue #49)
+#### Shared news sidebar, homepage ad slots in seputarborneo's order, a real "Terpopuler" (issue #49)
 
 Until now only `/berita` had a sidebar — an inline `<aside>` from issue #28
 with a "Terpopuler" that was really "latest", one of the CMS's three sidebar
@@ -2205,7 +2209,7 @@ would find it.
   sidebar page carries both newsletter forms with distinct ids. The
   now-unused `getTerpopuler()` in `apps/storefront/src/lib/berita.ts` is removed.
 
-### Storefront newsletter subscribe form and double opt-in pages (issue #50)
+#### Storefront newsletter subscribe form and double opt-in pages (issue #50)
 
 `apps/cms`'s `newsletter` module — an `awcms` module, ADR-0103 in
 `ahliweb/awcms`'s own decision log — has shipped anonymous double opt-in
@@ -2285,7 +2289,7 @@ Four fixes from review, all in `apps/storefront/src/scripts/buletin.ts`:
   `error.details` — the wait travels as a header — so the previous
   `details.retryAfter` read always evaluated to `null` in production.
 
-### Storefront link previews: `og:image`, `article:*`, `video.other`, Twitter cards, `rel=prev/next`
+#### Storefront link previews: `og:image`, `article:*`, `video.other`, Twitter cards, `rel=prev/next`
 
 A news article or video shared from `apps/storefront` previewed as a bare
 title-and-description card on WhatsApp, Facebook, X and Telegram — no
@@ -2337,7 +2341,7 @@ never fail a build).
   page type" section and a truthful "Not built"; the article page's
   docblock no longer claims either gap.
 
-### "Dengarkan berita ini" — the article read-aloud player
+#### "Dengarkan berita ini" — the article read-aloud player
 
 Issue #52. Every article page (never a video post — there is nothing to
 read aloud beside a video the reader is already watching) now offers a
@@ -2369,7 +2373,7 @@ utterance off after ~15 seconds) while the highlight stays per block; the
 `apps/storefront/src/components/berita/PemutarDengar.astro`, `apps/storefront/src/styles/dengar.css` and `apps/storefront/src/scripts/dengar.ts`,
 listed in the component's own docblock.
 
-### `/berita`, `/video` and every `/rubrik/{slug}` answered 404 on the served site
+#### `/berita`, `/video` and every `/rubrik/{slug}` answered 404 on the served site
 
 Issue #75. `apps/storefront` builds with `build.format: "file"` and
 `trailingSlash: "never"`, so a landing page that also has children is
@@ -2411,7 +2415,7 @@ Only felt while developing:
   fails with the fix removed.
 - `docs/routing.md` (+ `.id.md`) gains a section on the rule.
 
-### Storefront article share row — FB/X/WhatsApp/Threads, Instagram via Web Share, TikTok/YouTube follow (issue #51)
+#### Storefront article share row — FB/X/WhatsApp/Threads, Instagram via Web Share, TikTok/YouTube follow (issue #51)
 
 Every article and video page (`/berita/{slug}`, `/video/{slug}`) used to end
 with two text links — "Bagikan ke WhatsApp" and "Bagikan ke Facebook". The
@@ -2473,7 +2477,7 @@ the row with that distinction intact.
   rules are now unused — a follow-up cleanup once this wave's concurrent
   edits to the article templates have landed).
 
-### Storefront visitor beacon + optional GA4 (issue #56, A10)
+#### Storefront visitor beacon + optional GA4 (issue #56, A10)
 
 `apps/storefront` sent no telemetry of any kind — the seputarborneo
 reference this epic re-platforms from loads GA4 on every page and runs its
@@ -2514,7 +2518,7 @@ for an operator who wants it alongside.
   actually recorded) and `apps/storefront`'s `PUBLIC_GA_ID` (whether GA4 is
   additionally on) — independent of each other, both off by default.
 
-### Sync `apps/cms` from upstream `ahliweb/awcms` — institution logo, SVG safety scan
+#### Sync `apps/cms` from upstream `ahliweb/awcms` — institution logo, SVG safety scan
 
 `git subtree pull --prefix=apps/cms awcms main`, merged with a merge commit
 (the one rule AGENTS.md protects every future sync with), bringing
@@ -2546,16 +2550,16 @@ Only felt while developing:
   one until the commerce migrations move out of upstream's range, which is
   tracked as a follow-up issue.
 
-## [0.3.0] — 2026-09-17
+### awcms-one 0.3.0 — 2026-09-17
 
-### `bun run check:cms` is green again inside the subtree embed
+#### `bun run check:cms` is green again inside the subtree embed
 
 `apps/cms/tests/version-check.test.ts` asserted that more than 20 git tags were examined — true in a clone of `ahliweb/awcms`, false by construction here, where `git tag` answers with this repo's own `v0.x` line and upstream's tags are deliberately never fetched. The whole CMS gate chain was red on a clean `main` because of it (issue #22).
 
 - The non-vacuity floor is skipped only when `apps/cms` is embedded inside a larger repository; the namespace-conformance and version-not-behind assertions still run.
 - `AGENTS.md` now carries a "known local divergences" list under the subtree section, so the next `git subtree pull` conflict on this file is expected rather than a surprise.
 
-### Commerce transactional surface: customers, addresses, orders, payment confirmations, reviews
+#### Commerce transactional surface: customers, addresses, orders, payment confirmations, reviews
 
 The transactional half of mart.borneojek.com — customers, addresses, cart quoting, orders and their lifecycle, payment confirmations, reviews (issue #29, epic #21) — plus the **anonymous, cross-origin storefront API** a statically built site calls from the browser with no bearer token, the same pattern already hardened for newsletter/site-search/comments.
 
@@ -2566,7 +2570,7 @@ The transactional half of mart.borneojek.com — customers, addresses, cart quot
 - Customers are guest-checkout rows identified by phone (E.164, kept in the clear — it is also the tracking credential) — real personal data, but not addressable by this codebase's own ADR-0094 subject vocabulary (`tenant_user`/`identity`/`profile`), since there is no account behind a phone number yet (accounts are issue #32). All eight new tables are therefore `unreachableBySubject: true`, the same shape `commerce.testimonials` already uses for free-text personal data with no subject-id column — a genuine erasure/export request is handled as an ordinary admin lookup, outside the automated engine's scope by construction.
 - tools/seed-borneojek-mart.ts registers the tenant's storefront origins in `awcms_tenant_domains` (manually attested `active`, the one place this script reaches Postgres directly instead of through HTTP — a fresh domain otherwise starts `pending_verification` and this script has no real DNS record to prove) and seeds one customer with two orders in different states (`pending_payment`, `paid`) through the anonymous order-creation path itself.
 
-### Commerce marketing surface: flash sales, vouchers, sliders, testimonials, promo popup, store settings
+#### Commerce marketing surface: flash sales, vouchers, sliders, testimonials, promo popup, store settings
 
 Everything mart.borneojek.com's home page and promotions run on, as tenant-scoped tables in the one `commerce` module (issue #26, epic #21) — with a public read model per family that `apps/storefront` bakes the home page from, and six admin screens.
 
@@ -2579,7 +2583,7 @@ Why one module rather than three (the decision is recorded by issue #31, https:/
 - Two latent defects found while proving the seed end to end: batch reads of images/variants bound a JS array straight into `= ANY(…)` (fails on two or more ids — now `tx.array(…)::uuid[]`, with a regression test); and `Bun.SQL` decodes a stored `0.00` as `"0"` through a parameterised query — every money field now passes through `normalizeMoney` so the wire shape is always two decimals.
 - tools/seed-borneojek-mart.ts applies the #23 product fields and variants, seeds one flash sale, two vouchers, three testimonials, one popup and the live store-settings block (bank account a placeholder), and issues the storefront build credential with every marketing `read`. Product images and sliders stay recorded under `future`: both need a media object, and media objects need the R2-backed upload session.
 
-### `commerce` reaches full BjekMart product-model parity
+#### `commerce` reaches full BjekMart product-model parity
 
 Issue #23 (part of epic #21) brings `apps/cms`'s `commerce` module from Issue #4's
 13-column catalog core to the full legacy `commerce_bj_mart.products` shape, and
@@ -2636,7 +2640,7 @@ docs:
   measured on a clean build) — no new CSS, both screens reuse the existing
   admin design-system classes.
 
-### Local PostgreSQL via docker compose, seed the BjekMart tenant, CI job for check:cms
+#### Local PostgreSQL via docker compose, seed the BjekMart tenant, CI job for check:cms
 
 Increment 2 needed a real PostgreSQL somewhere before `apps/cms` could migrate, run, or be seeded at all — issue #1's epic explicitly deferred it past increment 1's no-database foundation. This closes that gap for local development and CI, without touching production provisioning (still not done — see `docs/deployment.md`).
 
@@ -2648,7 +2652,7 @@ Increment 2 needed a real PostgreSQL somewhere before `apps/cms` could migrate, 
 - `docs/alur-kerja-pengembangan.md` — the CI section now describes both jobs.
 - Root `.env.example` — every new variable (`POSTGRES_*`, `AWCMS_*_PASSWORD`, `AWCMS_BASE_URL`, `SEED_*`), each with the consequence of leaving it unset.
 
-### Storefront catalog parity: home, listing, category, flash sale, product detail
+#### Storefront catalog parity: home, listing, category, flash sale, product detail
 
 The public storefront now matches mart.borneojek.com's catalog surface end
 to end, still static (ADR-0002): a real home page (slider, popular
@@ -2687,7 +2691,7 @@ product/category model issue #23 landed and the marketing read models issue
   `noindex, follow` alongside the existing `Disallow: /cari` (the two do
   different jobs — one stops the fetch, the other stops the indexing).
 
-### Storefront cart, checkout, order tracking, and wishlist
+#### Storefront cart, checkout, order tracking, and wishlist
 
 The storefront can now place a real order while staying 100% static
 (ADR-0002 intact): no `prerender = false`, no runtime credential. This is
@@ -2759,7 +2763,7 @@ named for it — every interactive script in this app already lives under
 external module" sentence agrees with that location, not the one-off
 mention.
 
-### Storefront site chrome + foundation
+#### Storefront site chrome + foundation
 
 `apps/storefront` gains the shared shell every future page needs before it
 can be a page: header/nav/search/footer, site identity and brand colors
@@ -2790,7 +2794,7 @@ sitemap/robots/feed/manifest surface a public site needs (issue #24).
   this re-platform slice), and `/kontak` has no maps iframe or FAQ
   accordion — neither field exists on the real `site_profile` schema.
 
-### Storefront news surface (article/rubrik/daerah/mitra/video/tag/search)
+#### Storefront news surface (article/rubrik/daerah/mitra/video/tag/search)
 
 `apps/storefront` gains the seputarborneo/beritasampit-parity news surface
 over `apps/cms`'s `blog_content` module: `/berita` (front page + article
@@ -2837,7 +2841,7 @@ build-time index) — issue #28.
   one); "internal tag links" needed no renderer change (awcms's own
   auto-linking is a CMS-side render-time transform, not an authored node).
 
-### Increment-2 documentation refresh: ADR-0007..0010, mirrors, root skills, knowledge graph
+#### Increment-2 documentation refresh: ADR-0007..0010, mirrors, root skills, knowledge graph
 
 Every root `docs/**` document, `README.md`/`AGENTS.md`/`SECURITY.md`, and `knowledge/curated/monorepo-map.md` described the repository as it stood after increment 1 (issue #1's slice: catalog listing + product detail, no live database). Nine implementation PRs (#34–#42, epic #21) since landed the full BjekMart/news-portal parity increment — a provisioned PostgreSQL, the complete `commerce` module (catalog depth, marketing, orders), and the complete public storefront (catalog, news, cart, checkout, order tracking, wishlist) — without a single governance document catching up. A reader following this repository's own documentation would have been told cart, checkout, and orders "do not exist yet" on a `main` where they had shipped weeks earlier.
 
@@ -2849,9 +2853,9 @@ Every root `docs/**` document, `README.md`/`AGENTS.md`/`SECURITY.md`, and `knowl
 
 Nothing here changes runtime behaviour; every change is documentation.
 
-## [0.2.0] — 2026-09-15
+### awcms-one 0.2.0 — 2026-09-15
 
-### Architecture and reference documentation, describing the merged tree as it actually is
+#### Architecture and reference documentation, describing the merged tree as it actually is
 
 Adds `docs/` (issue #7): architecture, six ADRs, the database schema, a data dictionary mapping every `awcms_commerce_*` column to its legacy `commerce_bj_mart` source column, the commerce API, the CMS authoring workflow, storefront routing, SEO, accessibility, responsive design, UI/UX, testing, deployment, and the development workflow — plus `docs/README.md` as the index. Every document is mirrored to Indonesian (`docs:i18n:stamp`) and lands with `AGENTS.md`/`README.md` updated to describe the tree as it now is: every child issue of #1 (#2, #4, #5, #6, #11) has landed, so the "not here yet" framing both documents carried is retired.
 
@@ -2859,11 +2863,11 @@ Adds `docs/` (issue #7): architecture, six ADRs, the database schema, a data dic
 - Where the tree disagreed with the original issue text, the documents follow the tree: the URL shape (`/product/{slug}`, per the live-site evidence on issue #5), the real API envelope (`{ items, nextCursor }`, not the originally assumed shape), and the real, verified branch-protection settings (a required `Check` status check; no merge-strategy restriction) are what is documented, not what was planned.
 - A pre-existing, unrelated defect surfaced by activating the ADR-citation check for the first time — a generated Obsidian note under knowledge/generated/graphify/ extracts `packages/gerbang/audit-dokumen.mjs`'s own illustrative example (`` `ADR-0042` ``) as a false citation — is filed as [issue #15](https://github.com/ahliweb/awcms-one/issues/15) rather than patched here, since fixing it needs a change to `packages/gerbang/` or a knowledge-graph regeneration, both outside this change's own scope.
 
-### audit:dokumen no longer reads knowledge/generated/
+#### audit:dokumen no longer reads knowledge/generated/
 
 `bun run audit:dokumen` now skips knowledge/generated/ the way it already skips `apps/cms/` (issue #15). Graphify's Obsidian export extracts notes from source code; it does not author them. The first false positive was concrete: the moment `docs/adr/` existed, the ADR-citation check fired on three generated notes quoting the gate's own illustrative example citation (a placeholder ADR number in a comment in `packages/gerbang/audit-dokumen.mjs`). Every other check in the gate would misfire on generated notes the same way — their links are wikilinks the gate does not parse, and a stale path in one is graph staleness, which `bun run audit:graf` deliberately leaves alone. `knowledge/curated/` and `knowledge/README.md` are authored and stay in scope; two fixture tests pin both sides of that line.
 
-### apps/cms: the `commerce` module — catalog domain, persistence, migrations, API
+#### apps/cms: the `commerce` module — catalog domain, persistence, migrations, API
 
 Adds the `commerce` module to the embedded CMS (issue #4): categories (hierarchical) and products, the catalog core of the legacy `commerce_bj_mart` schema, as `awcms_commerce_categories` and `awcms_commerce_products` under PostgreSQL row-level security, with `GET`/`POST` list-and-create and `GET`/`PATCH`/`DELETE` by id at `/api/v1/commerce/{products,categories}`, an OpenAPI fragment, three domain events, and a read-only `/admin/commerce` screen.
 
@@ -2874,7 +2878,7 @@ Adds the `commerce` module to the embedded CMS (issue #4): categories (hierarchi
 - Twenty-nine upstream files in `apps/cms/` are modified — the module registry, the event-type registry, the AsyncAPI and OpenAPI catalogues, the sidebar registry, the admin-screen coverage ledger, and the generated inventories and module-count lines that awcms's own `check` chain regenerates or enforces when a module is admitted. Each one is a future `git subtree pull` conflict point; the resolution is to re-run the generators after a sync, not to hand-merge generated output.
 - The list endpoints return the awcms house envelope `{items, nextCursor}`; the storefront's local assumption of `{products}` / `{categories}` is reconciled in issue #6.
 
-### Federated knowledge-graph workflow: root Graphify graph, `audit:graf`, safe Obsidian export
+#### Federated knowledge-graph workflow: root Graphify graph, `audit:graf`, safe Obsidian export
 
 Adds a monorepo-level Graphify + Obsidian workflow (issue #11) without duplicating or corrupting the Graphify state already embedded inside `apps/cms` via the `ahliweb/awcms` subtree. Two graphs, federated on demand rather than one graph built twice — the same discipline the rest of this repo already applies to `apps/cms`'s own tree.
 
@@ -2886,7 +2890,7 @@ Adds a monorepo-level Graphify + Obsidian workflow (issue #11) without duplicati
 - `knowledge/README.md` + five thin `knowledge/curated/*.md` files record what code alone cannot state: ownership boundaries, cross-repo source-of-truth rules, the tracked/untracked table, and a nine-item threat model — no ISO/IEC certification claimed.
 - `README.md`/`AGENTS.md` (and their Indonesian mirrors) revisit the earlier, now-outdated statement that `audit:graf` was not ported — it is, and both documents say why and what changed.
 
-### packages/kontrak: the type-only DTO contract, and the storefront reconciled to the real envelope
+#### packages/kontrak: the type-only DTO contract, and the storefront reconciled to the real envelope
 
 Adds the fifth workspace member, `@awcms-one/kontrak` (issue #6): `ProductType`/`ProductStatus` re-exported, `export type` only, from `apps/cms`'s commerce domain layer (`apps/cms/src/modules/commerce/domain/{product-type,product-status}.ts`) — never hand-copied again. `tests/kontrak-arah-impor.test.mjs` guards the one-way import direction (`storefront -> kontrak -> cms`) that keeps `apps/cms`'s `git subtree pull` safe: a dependency pointing back at this repo's own code would turn every future sync into a merge conflict against code upstream never wrote.
 
@@ -2901,7 +2905,7 @@ Reconciles `apps/storefront/src/lib/catalog.ts` against the real commerce API th
 
 Fixtures (`apps/storefront/tests/fixtures/awcms/*.json`) and `apps/storefront/scripts/stub-awcms.mjs` now emit the real envelope too, so the offline build proof against the stub is honest rather than agreeing with the bug it used to ship with.
 
-### Monorepo foundation: audit gates, release tooling, governance docs, and CI
+#### Monorepo foundation: audit gates, release tooling, governance docs, and CI
 
 Stands up the machinery `apps/storefront` (issue #5) and `packages/kontrak` (issue #6) will land into, modelled on `ahliweb/media-lenterakalteng`: `packages/gerbang`'s three audit gates (`audit:dokumen`, `audit:rilis`, `audit:translation`), `tools/rilis.mjs` + `cek-lockfile.mjs` + `docs-i18n-stamp.mjs`, the `.changesets/` convention itself, every governance document with its Indonesian mirror, and a CI workflow that runs the check job unconditionally.
 
@@ -2909,7 +2913,7 @@ Stands up the machinery `apps/storefront` (issue #5) and `packages/kontrak` (iss
 - Content, asset, and crawl gates (`audit:konten`, `audit:aset`, `audit:graf`, `audit:serapan`) are deliberately **not** ported: this repository has no built content, asset, or crawl surface yet for them to guard. Porting them now would ship gates that always pass trivially, which is worse than not having them — a green gate that checks nothing reads exactly like one that checked something and found it clean.
 - `AGENTS.md` records the `git subtree` sync discipline for `apps/cms`: a subtree-sync PR must be merged with a merge commit, never squashed or rebased, or the next `git subtree pull` loses the merge base it needs.
 
-### apps/storefront: the public catalog and product-detail storefront
+#### apps/storefront: the public catalog and product-detail storefront
 
 Adds the fourth workspace member, `apps/storefront` (issue #5): an Astro app with `output: "static"` that fetches the catalog from `apps/cms` at **build** time and bakes it — the running container holds no API token and never reaches the database. Catalog at `/`, product pages at `/product/{slug}` with no trailing slash, matching the live `mart.borneojek.com` URL shape so indexed URLs, bookmarks, and shared links survive the cutover unchanged; `/products` (with or without a query string) 301s to `/`.
 
@@ -2920,7 +2924,7 @@ Adds the fourth workspace member, `apps/storefront` (issue #5): an Astro app wit
 - The build is reproducible offline against `apps/storefront/scripts/stub-awcms.mjs` + `apps/storefront/tests/fixtures/awcms/`.
 - The DTO unions are declared locally for now; issue #6 replaces them with a re-export from `@awcms-one/kontrak`.
 
-## [0.1.0] — 2026-09-15
+### awcms-one 0.1.0 — 2026-09-15
 
 Initial workspace scaffolding, landed before the `.changesets/` convention itself existed — recorded here by hand rather than folded from a changeset entry.
 

@@ -2,6 +2,158 @@
 
 Every entry below is folded from `.changesets/` by `bun run release`, which also tags the release. The version is `MAJOR.MINOR.PATCH`, tagged `vX.Y.Z`; the next version is the largest `bump` declared among the changesets a release folds (see [`.changesets/README.md`](.changesets/README.md)) — never a level chosen at release time from a list of file names.
 
+## [0.2.0] — 2026-10-24
+
+### The site no longer shows a phone number or street address OMES never published
+
+`DEFAULT_IDENTITY` in `apps/storefront/src/config/site.ts` still carried the template's BjekMart
+phone number and street address after `template:init`, although it was run without
+`--kontak-telepon`/`--alamat`. Whenever the CMS held no value, those appeared in the footer, the
+home page's contact section and `/kontak`, which is exactly what the production CMS does (OMES
+publishes neither). Both fallbacks are now empty strings, which every consumer treats as absent (an empty string rather than `null`, so `template:init` can still rewrite the fields). `/kontak`'s
+address card is now conditional like the phone card already was. The default description is real
+OMES text instead of a placeholder, and a regression test pins the rule. Found in the pre-cutover
+check of `omes.ahlikoding.com` (ahliweb/omes-web#5).
+
+### OMES theme, self-hosted Public Sans/JetBrains Mono, and the OMES home page
+
+The `landing` build profile (`omes.ahlikoding.com`) now carries a custom, dark-first OMES
+theme instead of the template's default light/dark BjekMart palette, and its home page
+presents the actual OMES product (`ahliweb/omes`) rather than the generic
+pages-and-contact placeholder `template:init` scaffolds.
+
+- A new theme, scoped to `[data-tema="omes"]` (set on `<html>` only when
+  `SITE_PROFILE=landing`) so `toko`/`berita` are completely unaffected — same
+  theming mechanism (CSS custom properties), no parallel system.
+- Public Sans and JetBrains Mono, self-hosted the same way the existing four
+  families are (same-origin `/fonts/*.woff2`, SIL OFL, no Google Fonts, no
+  new CSP origin).
+- The home page: a hero with a "Pre-alpha v0.4.0" status chip, the
+  Bootstrap→Check→Diff→Apply→Verify→Rollback lifecycle strip, a capabilities
+  grid, a labelled Control Center preview illustration, a labelled Hermes
+  orchestration illustration, the supported-platforms table, and an install
+  section with the real, pinned `v0.4.0` bootstrap command — every claim
+  grounded in `ahliweb/omes`'s own `README.md`.
+- Fixed a real, pre-existing defect affecting every build profile: the
+  primary header nav (and its own mobile toggle) was invisible above the
+  720px breakpoint on every current browser engine, because a closed
+  `<details>` element hides its non-`<summary>` content regardless of an
+  author `display` override. A small `matchMedia`-driven script restores the
+  desktop nav without changing the mobile no-JS disclosure behaviour at all.
+
+### `landing` build stops preloading fonts the OMES theme never renders
+
+`BaseLayout.astro` preloaded the base type system's Plus Jakarta Sans (400/600) and Lora (500) faces unconditionally, even on a `landing` build — where the OMES theme (`data-tema="omes"`) sets `--font-sans`/`--font-mono` to Public Sans/JetBrains Mono instead and never renders either base family at all. Every OMES visitor downloaded three unused woff2 files at high (preload) priority, and the fonts the theme actually renders above the fold weren't preloaded — the opposite of what a preload hint is for.
+
+- The preload list now follows `SITE_PROFILE`: `toko`/`berita` are unaffected (still Plus Jakarta Sans 400/600, Lora 500 — the built `<head>` is byte-identical to before this change), and `landing` now preloads Public Sans 400/600 (the header's utility bar/nav, rendered on every page) and JetBrains Mono 600 (the home page hero's status chip) instead.
+- A new test (`apps/storefront/tests/base-layout-font-preload.test.ts`) builds the `landing` profile and asserts every preloaded font URL is a face the OMES theme's own `--font-sans`/`--font-mono` tokens name, and that neither Plus Jakarta Sans nor Lora is ever preloaded on `landing`; a second case proves `toko`/`berita` keep preloading the base theme's own fonts, unchanged.
+
+### `apps/cms` synced from `ahliweb/awcms` `0d6c0dfe` — OMES Control Center screens and worker API
+
+`apps/cms` carried the `omes_control` module's domain and application code but none of its admin screens and not the worker endpoints, so `/admin/omes` did not exist in a deployment of this repo. This sync (issue #2) pulls upstream `main` at `0d6c0dfef92c1d1708f21ad2211687cb0f207788`, six commits past the previous sync point `2d29a446`.
+
+- Nine OMES Control Center admin screens under `/admin/omes/`: overview, servers, deployments, operations, jobs, health, backups, audit, and enrollments.
+- The OMES host worker API: `POST /api/v1/omes/worker/{enroll,poll,result,heartbeat}`, authenticated by Ed25519 proof of possession and signed request envelopes with replay protection, not by an AWCMS session.
+- One new migration, `sql/159_awcms_omes_control_worker_ingestion.sql` — run `bun run db:migrate:cms` before deploying.
+- `APP_BUDGET_BYTES` in `apps/cms/scripts/client-asset-budget.ts` rises 259,000 → 263,400 B: upstream's own +4,357 B for these screens, carried per the divergence rule in [`AGENTS.md`](AGENTS.md).
+- Because this repo was created from the template without the subtree's history, a one-time no-change merge of `2d29a446` restores the ancestry the pull needs; `AGENTS.md` now documents that step for the next derived repository.
+
+### Sync apps/cms subtree to awcms 4a7416ac
+
+Pulled `ahliweb/awcms` `main` (`0d6c0dfe` → `4a7416ac`) into `apps/cms`,
+carrying in the design system, AI-privacy consumption (sql/160-162),
+design polish, Hermes orchestration (sql/163-164), a tree-indentation
+CSP fix, the Arsitektur screen (sql/165), and a stale-session rendering
+fix — upstream PRs #829, #830, #832, #834, #835, #836, #837.
+
+- `APP_BUDGET_BYTES` raised 263,400 → 274,833 B, carrying both lineages
+  per AGENTS.md's divergence rule (upstream moved 226,000 → 237,433,
+  a +11,433 B delta added to this repo's own figure).
+- New migrations sql/160-165 ship in this sync; they still need to be
+  applied to any running database before the corresponding admin
+  screens are usable (see the production runbook for the applied
+  sequence).
+
+Part of ahliweb/omes#246.
+
+### Sync apps/cms subtree to awcms e48bd84f — fixes the Arsitektur PIN.json read failure
+
+Pulled `ahliweb/awcms` `main` (`4a7416ac` → `e48bd84f`) into `apps/cms`, carrying in
+awcms#838: `apps/cms/Dockerfile.production`'s `runtime` stage now also copies
+`apps/cms/src/modules/omes-control/contracts`, `apps/cms/sql`, `apps/cms/openapi`, and
+`apps/cms/asyncapi` — directories the app reads from disk at request time via
+`process.cwd()`-relative paths, never bundled into `dist/`.
+
+This closes the PIN.json follow-up recorded against the production `omes-cms`
+deployment's 2026-09-27 redeploy runbook: `/admin/omes/arsitektur` returning `200` but
+failing to load its own capability data (`ENOENT` on
+`apps/cms/src/modules/omes-control/contracts/v1/PIN.json` inside the running
+container) on `omes-cms.ahlikoding.com`. Also fixes the same class of defect in
+`openapi_documented`/`asyncapi_documented`/`migrations_applied` module health signals,
+which previously reported `fail` in every production container of this app for the
+same reason.
+
+- `APP_BUDGET_BYTES` unchanged at 274,833 B — upstream's own asset budget did not move
+  (this is a Dockerfile/backend fix, no client asset changed).
+- Adds `apps/cms/tests/dockerfile-runtime-disk-reads.test.ts`, asserting every
+  directory `apps/cms`'s runtime code reads from disk is copied into the `runtime`
+  Docker stage.
+
+Refs ahliweb/omes#246.
+
+### Sync apps/cms subtree to awcms 9ca28dee
+
+Pulled `ahliweb/awcms` `main` (`e48bd84f` → `9ca28dee`) into `apps/cms`, carrying in
+upstream PRs #839 (real vendoring provenance on the Arsitektur screen), #840 (a
+Debian base-image security upgrade patching CRITICAL `perl-base` CVEs in
+`Dockerfile.production`'s base stage), #841 (deploy docs split), #842 (long
+unbreakable text no longer widens the admin main column), #844 (topbar/legal-hold-form
+overflow fixes at 1024px/360px), #845 (the repository-progress feature: sql/166-167,
+`omes:repository-progress:poll`, `omes_control.repository_progress.configure`, and
+`/api/v1/omes/repository-progress[/config]` — closes ahliweb/omes#249), and #846
+(Progres Hermes UX polish — danger button, milestone titles, checkbox sizing).
+
+- `APP_BUDGET_BYTES` raised 274,833 → 277,356 B, carrying both lineages per
+  AGENTS.md's divergence rule: upstream moved 237,433 → 239,956, a +2,523 B delta
+  added to this repo's own figure (274,833 + 2,523 = 277,356).
+- New migrations sql/166-167 ship in this sync; they still need to be applied to any
+  running database before the repository-progress projection is usable (see the
+  production runbook for the applied sequence).
+- Two upstream-authored generated docs (`apps/cms/docs/PROJECT_STATE.md`/`.id.md`) still said
+  "25 modules" after the wholesale-then-regenerate merge; fixed to 26 to match this
+  embed's own module registry (which also carries the `commerce` module upstream does
+  not have), same class of stale-prose fix the `4a7416ac` sync made for the equivalent
+  "25 registered modules"/`sql/001-sql/164` count.
+
+Part of ahliweb/omes#249.
+
+### Sync apps/cms subtree to awcms 8e9bce0c
+
+Pulled `ahliweb/awcms` `main` (`9ca28dee` → `8e9bce0c`) into `apps/cms`: dependency bumps (#847
+`@astrojs/node` 11.1.6, #848 prettier, #849 astro 7.3.5, #851 yaml, #855 `codeql-action`), #856
+`prettier-plugin-astro` 1.1.0 (a repo-wide reformat of upstream's `.astro` files, verified
+render-neutral), and #857 — a real fix: `ssrfSafeFetch` no longer misclassifies HTTP `304 Not
+Modified` as a broken redirect. That bug (found while verifying the `ahliweb/omes#249`
+repository-progress poller on production) failed every conditional GitHub request once an ETag
+existed, reporting `pollStatus: "error"`/`errorClass: "network_error"` on each poll after the first —
+#857 fixes it at the source.
+
+- No new migrations in this range (`sql/` is byte-identical between `9ca28dee` and `8e9bce0c`).
+- `APP_BUDGET_BYTES` unchanged (277,356 B) — the `prettier-plugin-astro` reformat is whitespace-only;
+  the built app bundle is byte-identical too (277,154 B, same as the previous sync).
+- Running `bun run format` with the new `prettier-plugin-astro` version also reformatted this embed's
+  own local `commerce` module `.astro` files for consistency (whitespace/brace-placement only, no
+  behavior change) — the same reformat class upstream's own #856 applied to its files.
+
+Part of ahliweb/omes#249.
+
+### Clear the bun audit advisories on main
+
+`bun audit --audit-level=low` reported 30 advisories (1 critical, 11 high) on `main`, which failed the `Check (toko)` "Dependency audit" step on every PR. `bun audit fix` raised eleven transitive packages inside their existing declared ranges, rewriting only `bun.lock` (issue #25).
+
+- devalue 5.9.3, fast-uri 3.1.9, http-cache-semantics 4.3.0, launch-editor 2.14.2, sharp 0.35.5, shell-quote 1.11.0, smol-toml 1.9.0, source-map-js 1.2.2, undici 8.12.2, vite 8.3.3, zod 4.6.6.
+- No `package.json` change, no `overrides`, and nothing under `apps/cms/` is edited: every bump resolves through the existing ranges.
+
 # Inherited awcms-one template history (pre-fork, not OMES-Web releases)
 
 Everything below is the release history this repository inherited from the [`ahliweb/awcms-one`](https://github.com/ahliweb/awcms-one) template. It is kept verbatim as provenance (only heading depth was lowered by one level); those versions were never OMES-Web releases and are not tags of this repository. OMES-Web releases are the `## [X.Y.Z]` sections above this heading, and `bun run release` writes new ones there.

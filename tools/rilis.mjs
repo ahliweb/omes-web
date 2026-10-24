@@ -219,9 +219,13 @@ if (changelog.includes(`\n## [${next}]`)) {
 // Before the first release there is no version heading at all. `indexOf`
 // answers -1 for that state, and `slice(0, -1)` would silently chop the
 // last character of the preamble instead of inserting after it.
-const marker = "\n## [";
-const found = changelog.indexOf(marker);
-const at = found === -1 ? changelog.length : found;
+// The block of inherited awcms-one template history (a level-1 heading, so no
+// version lookup can mistake it for a release) is where a FIRST release has to
+// be inserted before, not after.
+const candidates = ["\n## [", "\n# Inherited awcms-one template history"]
+  .map((marker) => changelog.indexOf(marker))
+  .filter((i) => i !== -1);
+const at = candidates.length ? Math.min(...candidates) : changelog.length;
 const entry = `\n## [${next}] — ${today}\n\n${body || "_No changesets; see git history._"}\n`;
 fs.writeFileSync("CHANGELOG.md", changelog.slice(0, at) + entry + changelog.slice(at));
 

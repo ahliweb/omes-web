@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "repository": "ahliweb/omes",
+  "tag": "v0.6.0",
+  "tagObjectSha": "82f0a15927c1f6c255eeb5ca62c9b46f8fd1a607",
+  "commitSha": "c7c3cf9d89090071a1690d209b7b86ad8ce03d49",
+  "publishedAt": "2026-09-28",
+  "channel": "stable",
+  "prerelease": false,
+  "releaseUrl": "https://github.com/ahliweb/omes/releases/tag/v0.6.0",
+  "changelogUrl": "https://github.com/ahliweb/omes/blob/v0.6.0/CHANGELOG.md",
+  "installGuideUrl": "https://github.com/ahliweb/omes/blob/v0.6.0/docs/installation.md",
+  "installer": {
+    "path": "install/bootstrap.sh",
+    "rawUrl": "https://raw.githubusercontent.com/ahliweb/omes/v0.6.0/install/bootstrap.sh",
+    "gitBlobSha": "2bc20d4cc0a7b3dc7e5b456dcb4d86cb1b4ae067",
+    "sha256": "00284512a6e578a2e0436596ab1de8c88d86b052da69ea6e4cf7fe0632288751"
+  },
+  "installCommand": "curl -fsSL https://raw.githubusercontent.com/ahliweb/omes/v0.6.0/install/bootstrap.sh | bash -s -- --ref v0.6.0",
+  "verification": {
+    "verifiedAt": "2026-10-25",
+    "method": "GitHub REST API (releases/tags, git/ref/tags, git/tags, git/trees) via tools/omes-release-verify.mjs; the installer is never downloaded or executed.",
+    "notes": "The v0.6.0 install/bootstrap.sh still sets OMES_DEFAULT_STABLE_TAG=v0.4.0, so the command pins --ref v0.6.0 explicitly; without it the installer would install v0.4.0. OMES's own v0.6.0 README still shows the v0.4.0 command (upstream discrepancy)."
+  }
+}

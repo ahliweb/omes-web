@@ -76,8 +76,9 @@ describe("verifyRelease / main", () => {
     const { calls } = await run(goodRoutes());
     assert.equal(calls.length, 4);
     for (const { url, init } of calls) {
-      assert.ok(url.startsWith("https://api.github.com/"), url);
-      assert.ok(!url.includes("raw.githubusercontent.com"), url);
+      const { protocol, hostname } = new URL(url);
+      assert.equal(protocol, "https:", url);
+      assert.equal(hostname, "api.github.com", url);
       assert.equal(init.method, undefined); // default GET
     }
   });

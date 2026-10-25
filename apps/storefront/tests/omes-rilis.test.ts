@@ -79,9 +79,9 @@ describe("landing build renders the metadata", () => {
     async () => {
       await buildProfile("landing");
       const html = readFileSync(join(DIST_CLIENT, "index.html"), "utf8");
-      const text = html.replace(/<[^>]+>/g, "");
-
-      expect(text.split(omesRilis.installCommand).length - 1).toBe(1);
+      // The command is rendered once, as the whole text of a <code> element.
+      const codeBlocks = [...html.matchAll(/<code[^>]*>([^<]*)<\/code>/g)].map((m) => m[1]);
+      expect(codeBlocks.filter((c) => c === omesRilis.installCommand)).toHaveLength(1);
       expect(html).toContain(`Pre-alpha · ${omesRilis.tag}`);
       expect(html).toContain(omesRilis.releaseUrl);
       expect(html).toContain(omesRilis.installGuideUrl);

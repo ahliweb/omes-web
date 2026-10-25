@@ -29,6 +29,8 @@
     "audit:rilis": "bun packages/gerbang/audit-rilis.mjs",
     "audit:translation": "bun packages/gerbang/check-docs-translation.mjs",
     "audit:graf": "bun packages/gerbang/audit-graf.mjs",
+    "audit:repo-settings": "bun tools/repo-settings-guard.mjs",
+    "audit:subtree": "bun tools/subtree-ancestry-check.mjs",
     "knowledge:check": "bun run audit:graf",
     "knowledge:graph:update": "bun tools/knowledge-graph-update.mjs",
     "knowledge:graph:combine": "bun tools/knowledge-graph-combine.mjs",

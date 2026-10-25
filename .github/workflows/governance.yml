@@ -1,0 +1,72 @@
+name: governance
+
+# Issue #23 — the subtree-ancestry smoke (`bun run audit:subtree`). `apps/cms`
+# is `ahliweb/awcms` embedded by `git subtree`; a sync PR landed with anything
+# but a merge commit, or a plain fetch that imported upstream's release tags,
+# breaks the NEXT sync (or the next release) silently. This workflow reads the
+# real history and says so. See docs/alur-kerja-pengembangan.md, "Branch
+# protection on `main`" and "Restoring subtree ancestry".
+#
+# A SEPARATE workflow from `ci.yml` on purpose (other changes edit that file),
+# and on PROBATION: it is NOT a required status check yet. It is promoted the
+# way `e2e` and `template-init-smoke` were — only after its own post-
+# introduction run history shows no false failure — and the promotion is a
+# separate, recorded change to `main`'s protection plus `repo-settings-policy`'s
+# expected-context list.
+#
+# What is deliberately NOT here: `bun run audit:repo-settings`. Reading branch
+# protection needs repository ADMIN rights, which a workflow's GITHUB_TOKEN
+# does not have; it is a maintainer-run command (same document).
+#
+# Actions are pinned to a commit SHA, not a tag — see AGENTS.md's
+# "Configuration and toolchain". The `# vX.Y.Z` comment behind each SHA is
+# read by Dependabot to raise the pin and its comment together.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # Weekly, off-peak UTC — catches a settings-independent drift (an upstream
+    # force-push, a tag leaked into a long-lived clone's cache) on a quiet week.
+    - cron: "17 5 * * 1"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  subtree:
+    name: subtree-ancestry
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      # Full history: ancestry cannot be judged from a shallow clone.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      # The ROOT pin (package.json's packageManager/engines.bun) — see
+      # AGENTS.md's "Configuration and toolchain". No `bun install`: the audit
+      # uses only Bun and Node built-ins.
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: "1.4.2"
+
+      # Narrowed to `main` and --no-tags, exactly as AGENTS.md prescribes: a
+      # wide refspec drags in every upstream branch, and a tag fetch imports
+      # upstream's release tags into this repository's tag namespace.
+      - name: Add the upstream remote (narrowed, no tags)
+        run: |
+          git remote add awcms https://github.com/ahliweb/awcms.git
+          git config remote.awcms.fetch '+refs/heads/main:refs/remotes/awcms/main'
+          git config remote.awcms.tagOpt --no-tags
+          git fetch awcms
+
+      - name: Subtree ancestry
+        run: bun run audit:subtree --require-remote

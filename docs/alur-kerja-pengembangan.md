@@ -2,7 +2,7 @@
 
 # Development workflow
 
-Branching, the homegrown changeset convention, the release cut, and this repository's actual GitHub branch protection — read from the repository's own live settings, not from what was planned, since the two have since diverged (see the note at the end of this section).
+Branching, the homegrown changeset convention, the release cut, and this repository's actual GitHub branch protection — read from the repository's own live settings, not from what was planned.
 
 ## Branching and PRs
 
@@ -10,30 +10,85 @@ One branch per issue, cut from `main`; a PR back into `main`, titled to referenc
 
 ## Branch protection on `main`
 
-Verified directly against this repository's GitHub settings, most recently re-verified for issue #214 (24 September 2026) with:
+Read from `ahliweb/omes-web`'s own live GitHub settings on 25 October 2026 (issue #23), not from what was planned. The settings had been changed after the issue was filed, so the issue's original "unprotected / squash allowed" evidence was already stale — the lesson that produced `bun run audit:repo-settings`, a maintainer-run command that reads these same endpoints and fails if any line below stops being true:
 
 ```
-gh api repos/ahliweb/awcms-one/branches/main/protection
-gh api repos/ahliweb/awcms-one --jq '{has_wiki, allow_merge_commit, allow_squash_merge, allow_rebase_merge, delete_branch_on_merge, security_and_analysis}'
+gh api repos/ahliweb/omes-web
+gh api repos/ahliweb/omes-web/branches/main/protection
+gh api repos/ahliweb/omes-web/rulesets
 ```
 
 | Setting | Value |
 | --- | --- |
-| Required status checks | Twelve contexts: `check-cms`, `Check (toko)`, `Check (berita)`, `Check (landing)`, `template-init-smoke (toko)`, `template-init-smoke (berita)`, `template-init-smoke (landing)`, `template-init-smoke (root-suite)`, `e2e (toko)`, `e2e (berita)`, `e2e (landing)`, `Analyze (javascript-typescript)` — the four `template-init-smoke` legs were promoted to required in issue #182, the three `e2e` legs in issue #215, `Analyze (javascript-typescript)` (the `codeql` workflow's own job-status check — see "CI: a fifth, now-required workflow — `codeql`" below for why that context and not the sibling `CodeQL` code-scanning-results check) in issue #214, alongside the four `ci.yml` legs already required since increment 6 (issue #137) |
+| Merge methods | Merge commit **allowed**; squash **off**; rebase **off** (`allow_merge_commit=true`, `allow_squash_merge=false`, `allow_rebase_merge=false`). `delete_branch_on_merge` is on |
+| Required status checks | Twelve contexts: `Check (toko)`, `Check (berita)`, `Check (landing)`, `check-cms`, `template-init-smoke (toko)`, `template-init-smoke (berita)`, `template-init-smoke (landing)`, `template-init-smoke (root-suite)`, `e2e (toko)`, `e2e (berita)`, `e2e (landing)`, `Analyze (javascript-typescript)` — all reported by GitHub Actions. The list lives in one place, `packages/gerbang/lib/repo-settings-policy.mjs`, and `tests/repo-settings-policy.test.mjs` proves each is a real job name in `.github/workflows/` |
 | Strict (branch must be up to date before merging) | Yes |
-| Force pushes | Refused |
-| Branch deletion | Refused |
+| Required reviews | **1 approving review**; stale approvals are dismissed on a new push; code-owner review is not required; approval of the last push is not required |
+| Required conversation resolution | Yes |
+| Enforce for admins | **Yes** — an administrator cannot merge past a red or pending check or a missing review |
+| Force pushes / branch deletion | Refused / refused |
+| Required linear history | **No, deliberately** — it forbids the real merge commits the full-history subtree model is built from (see "The subtree embed" in [`AGENTS.md`](../AGENTS.md#the-subtree-embed)). `audit:repo-settings` fails if someone turns it on |
 | Required signatures | No |
-| Enforce for admins | **Yes**, since issue #182 — an administrator can no longer merge past a required check that is red or still pending |
-| Required linear history | No, deliberately — it would conflict with the full-history subtree model (see "The subtree embed" in [`AGENTS.md`](../AGENTS.md#the-subtree-embed)), which depends on real merge commits rather than a linear, rebased history |
-| Required conversation resolution | **Yes**, since issue #182 — every review conversation on a PR must be marked resolved before that PR can merge |
-| Required reviews / code owners | No — this repository has one active maintainer, so a required-approval count would block every PR on its own author; a `CODEOWNERS` file (only `apps/cms/.github/CODEOWNERS` exists today, and it is upstream's own, not this repository's) is informational at best unless branch protection's own "require review from code owners" is also turned on, which it is not |
+| Lock branch | No |
+| Repository rulesets | **None** (`gh api repos/ahliweb/omes-web/rulesets` returns `[]`). The repository is user-owned, so no organisation ruleset applies either. Were one added, `audit:repo-settings` fails closed on any active ruleset that lists bypass actors |
 
-`check-cms` was added to the required list after two green runs on `main`, using the exact command [`docs/deployment.md`](deployment.md) and issue #25's own PR recorded in advance — see "CI: two jobs" below for what each one runs. `delete_branch_on_merge` is enabled repository-wide (also verified via `gh api repos/ahliweb/awcms-one`), so a merged branch is cleaned up automatically regardless of merge strategy.
+### Effective bypass policy
 
-**Squash and rebase merges are now disabled repository-wide (issue #149).** Verified via `gh api repos/ahliweb/awcms-one`: `allow_merge_commit=true`, `allow_squash_merge=false`, `allow_rebase_merge=false`. Branch protection (the table above) still only names required status checks — it does not itself restrict merge method, and GitHub cannot restrict a merge method to PRs touching one path — so the mechanical trap described in [ADR-0001](adr/0001-git-subtree-with-full-history-for-apps-cms.md) (a subtree-sync PR merged with anything but a merge commit) is now closed the only way GitHub allows: repository-wide. The operational consequence for an ordinary PR unrelated to `apps/cms` is the same as for a subtree sync — a merge commit is the only option the merge button offers; `delete_branch_on_merge` still cleans up the branch regardless. **Required linear history remains disabled**, deliberately: it would conflict with the full-history subtree model, which depends on real merge commits rather than a linear, rebased history.
+There is none. `enforce_admins` is on and no ruleset exists, so no actor — owner included — can push to `main` or merge a PR past the rules above. The only way past them is to change the settings themselves, which is the break-glass procedure below and nothing else.
 
-**Other repository settings, verified the same way (issue #182):** the wiki is disabled (`has_wiki: false`) — verified empty first (`ahliweb/awcms-one.wiki.git` did not exist, so disabling it lost nothing) — because this repository's documentation already lives in `docs/**`, not a separate wiki. Secret scanning and secret-scanning push protection are both enabled, and so are Dependabot security updates. Two related toggles the maintainer also tried to turn on in the same change, `secret_scanning_non_provider_patterns` and `secret_scanning_validity_checks`, remain `disabled`: the `gh api` `PATCH` is accepted without error, but the setting does not take effect — both appear to require a GitHub Secret Protection licence that a user-owned public repository cannot enable. Re-run the second command above to check whether that has since changed.
+### What one required review means with one maintainer
+
+GitHub does not let an author approve their own PR. With a single maintainer, a required review therefore **blocks every PR the maintainer opens** until a second account approves it — a collaborator, or a reviewer bot account added as a collaborator. This is a deliberate trade: the protection that guarantees nobody (including an automation holding the maintainer's token) lands an unreviewed change on `main` is the same protection that makes the maintainer wait for a reviewer. Do not "fix" the wait by lowering the count or by disabling `enforce_admins`; add a reviewer, or use the break-glass procedure when a wait is not affordable. `audit:repo-settings` fails if the count drops below 1.
+
+### Merge method and the subtree trap
+
+GitHub cannot restrict a merge method to PRs touching one path, so the rule that a subtree-sync PR must be merged with a merge commit ([ADR-0001](adr/0001-git-subtree-with-full-history-for-apps-cms.md)) is enforced repository-wide: squash and rebase are switched off, and the merge button offers a merge commit only. Branch protection alone does not restrict merge method, which is why the repository setting is audited as well as the protection.
+
+### Checking it
+
+```
+bun run audit:repo-settings                 # live: needs `gh` signed in as a repository ADMIN
+bun run audit:repo-settings --from <dir>    # fixtures: repo.json, protection.json, rulesets.json
+bun run audit:subtree --require-remote      # history, not settings — see below
+```
+
+`audit:repo-settings` exits `0` when every line holds, `1` when a setting is wrong, and `2` when the settings could not be read (no `gh`, not signed in, not an admin, offline). **Exit `2` is a failure, never a pass**: an unreadable setting is not treated as a compliant one. Reading branch protection needs repository administrator rights, which a workflow's `GITHUB_TOKEN` does not have, so this audit is **maintainer-run** — after any settings change, at each release cut, and monthly — not a CI step.
+
+### Subtree ancestry: `governance.yml` and `audit:subtree`
+
+Settings stop a squash from being offered; they cannot show that the history underneath is still sound. `bun run audit:subtree` (`tools/subtree-ancestry-check.mjs`) reads the history itself, against one machine-readable record, [`ops/awcms-subtree.json`](../ops/awcms-subtree.json), which holds the upstream commit `apps/cms` was last synced to. It checks that:
+
+- the recorded `lastSyncCommit` is an ancestor of `HEAD`, and `git merge-base HEAD awcms/main` equals it — so a sync landed without updating the record (merge base newer than the record) and a squashed/rebased sync (record not on the path to upstream) are both caught;
+- the `awcms` remote, when present, fetches only `main`, has `tagOpt --no-tags`, and points at the recorded upstream;
+- every local tag matches the product pattern (`^v\d+\.\d+\.\d+$`) and none points into upstream's own history (an ancestor of `lastSyncCommit`), which is what an upstream release tag imported by a plain fetch looks like;
+- the clone is not shallow (ancestry cannot be judged from one; the check refuses rather than guesses).
+
+**Every subtree-sync PR updates `ops/awcms-subtree.json` in the same change**; the sync is not complete until it does, and the audit says so. It runs in [`.github/workflows/governance.yml`](../.github/workflows/governance.yml) on pull requests, pushes to `main`, a weekly schedule and manual dispatch (full-history checkout, the upstream remote added narrowed and `--no-tags`). **`governance / subtree-ancestry` is on probation and is NOT a required status check yet**; it is promoted only after a post-introduction run history shows no false failure, the same path `e2e` and `template-init-smoke` followed — and promotion is a separate change to `main`'s protection plus `EXPECTED_REQUIRED_CONTEXTS`. It deliberately stays out of the bare root `bun test`: it needs full history and a fetched upstream ref, so its unit tests (`tests/subtree-ancestry.test.mjs`) build throwaway git repositories instead.
+
+### Break-glass procedure
+
+For an emergency that cannot wait for a review — a broken `main`, a leaked secret that needs a same-hour fix — and only then:
+
+1. **Who.** The repository owner (a settings administrator). Nobody else, and no automation.
+2. **Prefer not to touch the rules.** Open the PR and ask a collaborator to approve it, or revert the offending commit through an ordinary PR. Settings change only if neither works in time.
+3. **Record first.** Before changing anything, open an issue titled `break-glass: <reason>` stating the time, the reason, and exactly which setting you will change, and save the output of `gh api repos/ahliweb/omes-web/branches/main/protection` to the issue. That output is the evidence of what to restore.
+4. **Change the minimum, for the minimum time.** Lower only the one setting that blocks you (normally `required_approving_review_count`, or `enforce_admins` for a red required check). Never enable squash or rebase, never turn on linear history, and never touch force-push or deletion.
+5. **Land the fix** as a PR with a merge commit, linking the issue.
+6. **Restore immediately,** from the saved output, then run `bun run audit:repo-settings` and paste its `OK — no violations.` into the issue. The break-glass is not over until that audit is green.
+7. **Close the issue with a short account** of why the normal path did not work, and what would let it work next time.
+
+### Restoring subtree ancestry
+
+If a subtree-sync PR was ever squashed or rebased — `audit:subtree` fails with "not an ancestor of HEAD" or "ancestry broken", or the next `git subtree pull` conflicts against history git cannot line up — repair it before any further sync:
+
+1. **Stop syncing.** Do not paper over it with a manual merge; stacking syncs on a broken base buries it.
+2. **Revert the squashed PR** on a branch (`git revert <squash commit>`) and merge that revert as an ordinary PR with a merge commit. The `apps/cms` tree returns to the previous sync.
+3. **Confirm the ancestry** is back: `git fetch awcms main`, `git merge-base HEAD awcms/main` is the pre-squash sync commit, and `ops/awcms-subtree.json` names it. If the record was moved forward by the squashed PR, the revert restores it.
+4. **Redo the sync** from the restored base: `git subtree pull --prefix=apps/cms awcms main` on a branch, update `ops/awcms-subtree.json` to the new upstream commit in the same PR, and merge it with a **merge commit**.
+5. **Re-run `bun run audit:subtree --require-remote`** and `bun run audit:repo-settings`. If squash or rebase merging turns out to have been re-enabled, fix that setting first — it is how this happened.
+6. **If the merge base was already lost** (a pull cannot find any common ancestor): run the one-time ancestry merge described under "The subtree embed" in [`AGENTS.md`](../AGENTS.md#the-subtree-embed) — `git merge -s ours --allow-unrelated-histories <the awcms commit apps/cms matches>`, after confirming the tree matches — then continue from step 4.
+
+Never force-push `main` to repair any of this; the protection refuses it, and the repair is always a forward change.
 
 ## Homegrown changesets, not `@changesets/cli`
 
@@ -124,4 +179,4 @@ Re-enabling the `bun` block is a matter of restoring a `package-ecosystem: "bun"
 
 ## Not enforced today
 
-A required review count or code-owner requirement — branch protection here names required status checks and nothing about reviewers. A CI step that builds or publishes a container image, or deploys anywhere — see [`docs/deployment.md`](deployment.md) for what "deploying this repository" means today. (The merge-strategy restriction for `apps/cms`-touching PRs, previously listed here as honour-system only, is now mechanically enforced repository-wide — see "Branch protection on `main`" above — issue #149.)
+A code-owner review requirement (`require_code_owner_reviews` is off; only `apps/cms/.github/CODEOWNERS` exists, and it is upstream's). A CI step that builds or publishes a container image, or deploys anywhere — see [`docs/deployment.md`](deployment.md) for what "deploying this repository" means today. (The merge-strategy restriction for `apps/cms`-touching PRs, previously listed here as honour-system only, is now mechanically enforced repository-wide — see "Branch protection on `main`" above — issue #149.)

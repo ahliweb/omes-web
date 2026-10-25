@@ -1,10 +1,10 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](alur-kerja-pengembangan.md)
 
-<!-- i18n-source-hash: sha256:87e1af0e74bc13f4990c881d4f157b6ef615e4c89f498f26daec3a10cc81a258 -->
+<!-- i18n-source-hash: sha256:d106a261249a2d2b2d6f05dcf51d57542e4df4df0a583ae1e1aa2fb080da10eb -->
 
 # Alur kerja pengembangan
 
-Branching, konvensi changeset buatan-sendiri, pemotongan rilis, dan branch protection GitHub nyata repositori ini — dibaca dari pengaturan live repositori ini sendiri, bukan dari apa yang direncanakan, karena keduanya sejak itu berbeda (lihat catatan di akhir bagian ini).
+Branching, konvensi changeset buatan-sendiri, pemotongan rilis, dan branch protection GitHub nyata repositori ini — dibaca dari pengaturan live repositori ini sendiri, bukan dari apa yang direncanakan.
 
 ## Branching dan PR
 
@@ -12,30 +12,85 @@ Satu branch per issue, dipotong dari `main`; PR kembali ke `main`, berjudul meru
 
 ## Branch protection pada `main`
 
-Diverifikasi langsung terhadap pengaturan GitHub repositori ini, paling akhir diverifikasi ulang untuk issue #214 (24 September 2026) dengan:
+Dibaca dari pengaturan GitHub live `ahliweb/omes-web` sendiri pada 25 Oktober 2026 (issue #23), bukan dari apa yang direncanakan. Pengaturannya sudah diubah setelah issue dibuat, sehingga bukti awal issue ("tanpa proteksi / squash diizinkan") sudah basi — pelajaran yang melahirkan `bun run audit:repo-settings`, perintah yang dijalankan maintainer, membaca endpoint yang sama, dan gagal bila salah satu baris di bawah tidak lagi benar:
 
 ```
-gh api repos/ahliweb/awcms-one/branches/main/protection
-gh api repos/ahliweb/awcms-one --jq '{has_wiki, allow_merge_commit, allow_squash_merge, allow_rebase_merge, delete_branch_on_merge, security_and_analysis}'
+gh api repos/ahliweb/omes-web
+gh api repos/ahliweb/omes-web/branches/main/protection
+gh api repos/ahliweb/omes-web/rulesets
 ```
 
 | Pengaturan | Nilai |
 | --- | --- |
-| Status check wajib | Dua belas context: `check-cms`, `Check (toko)`, `Check (berita)`, `Check (landing)`, `template-init-smoke (toko)`, `template-init-smoke (berita)`, `template-init-smoke (landing)`, `template-init-smoke (root-suite)`, `e2e (toko)`, `e2e (berita)`, `e2e (landing)`, `Analyze (javascript-typescript)` — keempat leg `template-init-smoke` dipromosikan menjadi wajib pada issue #182, ketiga leg `e2e` pada issue #215, `Analyze (javascript-typescript)` (status check milik job workflow `codeql` sendiri — lihat "CI: workflow kelima, kini wajib — `codeql`" di bawah untuk alasan memilih context itu, bukan check `CodeQL` yang bersebelahan) pada issue #214, di samping keempat leg `ci.yml` yang sudah wajib sejak increment 6 (issue #137) |
-| Strict (branch harus up to date sebelum merge) | Ya |
-| Force push | Ditolak |
-| Penghapusan branch | Ditolak |
+| Metode merge | Merge commit **diizinkan**; squash **mati**; rebase **mati** (`allow_merge_commit=true`, `allow_squash_merge=false`, `allow_rebase_merge=false`). `delete_branch_on_merge` aktif |
+| Status check wajib | Dua belas context: `Check (toko)`, `Check (berita)`, `Check (landing)`, `check-cms`, `template-init-smoke (toko)`, `template-init-smoke (berita)`, `template-init-smoke (landing)`, `template-init-smoke (root-suite)`, `e2e (toko)`, `e2e (berita)`, `e2e (landing)`, `Analyze (javascript-typescript)` — semuanya dilaporkan GitHub Actions. Daftarnya ada di satu tempat, `packages/gerbang/lib/repo-settings-policy.mjs`, dan `tests/repo-settings-policy.test.mjs` membuktikan setiap entri adalah nama job nyata di `.github/workflows/` |
+| Strict (branch harus mutakhir sebelum merge) | Ya |
+| Review wajib | **1 review persetujuan**; persetujuan basi dibatalkan saat ada push baru; review code-owner tidak wajib; persetujuan atas push terakhir tidak wajib |
+| Resolusi percakapan wajib | Ya |
+| Enforce untuk admin | **Ya** — administrator tidak bisa merge melewati check yang merah atau tertunda, atau review yang belum ada |
+| Force push / penghapusan branch | Ditolak / ditolak |
+| Required linear history | **Tidak, dengan sengaja** — itu melarang merge commit sungguhan yang menjadi dasar model subtree riwayat-lengkap (lihat "Penyematan subtree" di [`AGENTS.md`](../AGENTS.md#the-subtree-embed)). `audit:repo-settings` gagal bila ada yang menyalakannya |
 | Tanda tangan wajib | Tidak |
-| Berlaku untuk admin | **Ya**, sejak issue #182 — seorang admin tidak lagi bisa merge melewati status check wajib yang merah atau masih pending |
-| Riwayat linear wajib | Tidak, dengan sengaja — itu akan berbenturan dengan model subtree riwayat-lengkap (lihat "The subtree embed" di [`AGENTS.md`](../AGENTS.md#the-subtree-embed)), yang bergantung pada merge commit sungguhan, bukan riwayat linear hasil rebase |
-| Resolusi percakapan wajib | **Ya**, sejak issue #182 — setiap percakapan review di sebuah PR harus ditandai selesai sebelum PR itu bisa merge |
-| Review wajib / code owner | Tidak — repositori ini punya satu maintainer aktif, jadi jumlah approval wajib akan memblokir setiap PR pada penulisnya sendiri; berkas `CODEOWNERS` (hanya `apps/cms/.github/CODEOWNERS` yang ada hari ini, dan itu milik upstream, bukan milik repositori ini) sifatnya informatif saja kecuali pengaturan branch protection "require review from code owners" juga diaktifkan — dan itu tidak diaktifkan |
+| Lock branch | Tidak |
+| Ruleset repositori | **Tidak ada** (`gh api repos/ahliweb/omes-web/rulesets` mengembalikan `[]`). Repositori ini dimiliki pengguna, jadi ruleset organisasi pun tidak berlaku. Bila ada yang ditambahkan, `audit:repo-settings` gagal tertutup pada ruleset aktif mana pun yang mencantumkan bypass actor |
 
-`check-cms` ditambahkan ke daftar wajib setelah dua run hijau di `main`, memakai perintah persis yang dicatat lebih dulu oleh [`docs/deployment.md`](deployment.id.md) dan PR issue #25 sendiri — lihat "CI: dua job" di bawah untuk apa yang dijalankan masing-masing. `delete_branch_on_merge` aktif di seluruh repositori (juga diverifikasi lewat `gh api repos/ahliweb/awcms-one`), jadi branch yang sudah di-merge dibersihkan otomatis tanpa memandang strategi merge.
+### Kebijakan bypass yang berlaku
 
-**Squash dan rebase merge kini dinonaktifkan di seluruh repositori (issue #149).** Diverifikasi lewat `gh api repos/ahliweb/awcms-one`: `allow_merge_commit=true`, `allow_squash_merge=false`, `allow_rebase_merge=false`. Branch protection (tabel di atas) masih hanya menamai status check wajib — ia sendiri tidak membatasi metode merge, dan GitHub tidak bisa membatasi metode merge khusus ke PR yang menyentuh satu path — jadi jebakan mekanis yang dideskripsikan [ADR-0001](adr/0001-git-subtree-with-full-history-for-apps-cms.md) (PR sinkronisasi subtree di-merge dengan apa pun selain merge commit) kini ditutup dengan satu-satunya cara yang diizinkan GitHub: di seluruh repositori. Konsekuensi operasional untuk PR biasa yang tidak menyentuh `apps/cms` sama dengan untuk sinkronisasi subtree — merge commit adalah satu-satunya opsi yang ditawarkan tombol merge; `delete_branch_on_merge` tetap membersihkan branch tanpa memandang itu. **Required linear history tetap dinonaktifkan**, dengan sengaja: itu akan berbenturan dengan model subtree riwayat-lengkap, yang bergantung pada merge commit sungguhan, bukan riwayat linear hasil rebase.
+Tidak ada. `enforce_admins` aktif dan tidak ada ruleset, jadi tidak ada aktor — termasuk pemilik — yang bisa push ke `main` atau merge PR melewati aturan di atas. Satu-satunya jalan melewatinya adalah mengubah pengaturannya sendiri, yaitu prosedur break-glass di bawah, bukan yang lain.
 
-**Pengaturan repositori lain, diverifikasi dengan cara yang sama (issue #182):** wiki dinonaktifkan (`has_wiki: false`) — diverifikasi kosong lebih dulu (`ahliweb/awcms-one.wiki.git` tidak pernah ada, jadi menonaktifkannya tidak menghilangkan apa pun) — karena dokumentasi repositori ini sudah hidup di `docs/**`, bukan wiki terpisah. Secret scanning dan secret-scanning push protection keduanya aktif, begitu juga Dependabot security updates. Dua toggle terkait yang juga dicoba diaktifkan maintainer pada perubahan yang sama, `secret_scanning_non_provider_patterns` dan `secret_scanning_validity_checks`, tetap `disabled`: `PATCH` lewat `gh api` diterima tanpa galat, tapi pengaturannya tidak sungguh-sungguh berubah — keduanya tampaknya membutuhkan lisensi GitHub Secret Protection yang tidak bisa diaktifkan repositori publik milik perorangan. Jalankan ulang perintah kedua di atas untuk memeriksa apakah itu sudah berubah.
+### Arti satu review wajib dengan satu maintainer
+
+GitHub tidak mengizinkan penulis menyetujui PR-nya sendiri. Dengan satu maintainer, review wajib karena itu **memblokir setiap PR yang dibuka maintainer** sampai akun kedua menyetujuinya — kolaborator, atau akun bot reviewer yang ditambahkan sebagai kolaborator. Ini pertukaran yang disengaja: proteksi yang menjamin tak seorang pun (termasuk otomasi yang memegang token maintainer) bisa memasukkan perubahan tanpa review ke `main` adalah proteksi yang sama yang membuat maintainer menunggu reviewer. Jangan "memperbaiki" penantian itu dengan menurunkan jumlahnya atau mematikan `enforce_admins`; tambahkan reviewer, atau pakai prosedur break-glass bila menunggu tidak terjangkau. `audit:repo-settings` gagal bila jumlahnya turun di bawah 1.
+
+### Metode merge dan jebakan subtree
+
+GitHub tidak bisa membatasi metode merge ke PR yang menyentuh satu path, jadi aturan bahwa PR sinkronisasi subtree harus di-merge dengan merge commit ([ADR-0001](adr/0001-git-subtree-with-full-history-for-apps-cms.md)) ditegakkan di seluruh repositori: squash dan rebase dimatikan, dan tombol merge hanya menawarkan merge commit. Branch protection saja tidak membatasi metode merge, itulah sebabnya pengaturan repositori ikut diaudit di samping proteksinya.
+
+### Memeriksanya
+
+```
+bun run audit:repo-settings                 # live: butuh `gh` masuk sebagai ADMIN repositori
+bun run audit:repo-settings --from <dir>    # fixture: repo.json, protection.json, rulesets.json
+bun run audit:subtree --require-remote      # riwayat, bukan pengaturan — lihat di bawah
+```
+
+`audit:repo-settings` keluar `0` bila setiap baris benar, `1` bila ada pengaturan yang salah, dan `2` bila pengaturan tidak bisa dibaca (tanpa `gh`, belum masuk, bukan admin, luring). **Exit `2` adalah kegagalan, bukan lulus**: pengaturan yang tak terbaca tidak dianggap patuh. Membaca branch protection butuh hak administrator repositori, yang tidak dimiliki `GITHUB_TOKEN` sebuah workflow, jadi audit ini **dijalankan maintainer** — setelah setiap perubahan pengaturan, pada setiap pemotongan rilis, dan bulanan — bukan langkah CI.
+
+### Ancestry subtree: `governance.yml` dan `audit:subtree`
+
+Pengaturan mencegah squash ditawarkan; ia tidak bisa menunjukkan bahwa riwayat di bawahnya masih sehat. `bun run audit:subtree` (`tools/subtree-ancestry-check.mjs`) membaca riwayatnya sendiri, terhadap satu catatan yang bisa dibaca mesin, [`ops/awcms-subtree.json`](../ops/awcms-subtree.json), yang menyimpan commit upstream tempat `apps/cms` terakhir disinkronkan. Ia memeriksa bahwa:
+
+- `lastSyncCommit` yang tercatat adalah leluhur `HEAD`, dan `git merge-base HEAD awcms/main` sama dengannya — sehingga sinkronisasi yang masuk tanpa memperbarui catatan (merge base lebih baru dari catatan) dan sinkronisasi yang di-squash/rebase (catatan tidak berada di jalur menuju upstream) sama-sama tertangkap;
+- remote `awcms`, bila ada, hanya mengambil `main`, memiliki `tagOpt --no-tags`, dan menunjuk ke upstream yang tercatat;
+- setiap tag lokal cocok dengan pola produk (`^v\d+\.\d+\.\d+$`) dan tak satu pun menunjuk ke dalam riwayat upstream sendiri (leluhur `lastSyncCommit`), yang merupakan ciri tag rilis upstream yang terimpor oleh fetch biasa;
+- klon tidak dangkal (ancestry tidak bisa dinilai dari klon dangkal; pemeriksaan menolak, bukan menebak).
+
+**Setiap PR sinkronisasi subtree memperbarui `ops/awcms-subtree.json` di perubahan yang sama**; sinkronisasi belum selesai sebelum itu, dan audit akan mengatakannya. Audit berjalan di [`.github/workflows/governance.yml`](../.github/workflows/governance.yml) pada pull request, push ke `main`, jadwal mingguan, dan dispatch manual (checkout riwayat penuh, remote upstream ditambahkan dipersempit dan `--no-tags`). **`governance / subtree-ancestry` dalam masa percobaan dan BELUM menjadi status check wajib**; ia dipromosikan hanya setelah riwayat run pasca-pengenalan menunjukkan tidak ada kegagalan palsu, jalur yang sama dengan `e2e` dan `template-init-smoke` — dan promosinya adalah perubahan terpisah pada proteksi `main` ditambah `EXPECTED_REQUIRED_CONTEXTS`. Ia sengaja tetap di luar `bun test` akar yang telanjang: butuh riwayat penuh dan ref upstream yang sudah di-fetch, sehingga tes unitnya (`tests/subtree-ancestry.test.mjs`) membangun repositori git sekali pakai.
+
+### Prosedur break-glass
+
+Untuk keadaan darurat yang tidak bisa menunggu review — `main` rusak, rahasia bocor yang perlu perbaikan dalam satu jam — dan hanya itu:
+
+1. **Siapa.** Pemilik repositori (administrator pengaturan). Tak seorang pun selain itu, dan tidak ada otomasi.
+2. **Utamakan tidak menyentuh aturan.** Buka PR dan minta kolaborator menyetujuinya, atau revert commit bermasalah lewat PR biasa. Pengaturan hanya diubah bila keduanya tidak sempat.
+3. **Catat dulu.** Sebelum mengubah apa pun, buka issue berjudul `break-glass: <alasan>` yang menyebut waktu, alasan, dan persis pengaturan mana yang akan diubah, lalu simpan keluaran `gh api repos/ahliweb/omes-web/branches/main/protection` ke issue itu. Keluaran itu adalah bukti apa yang harus dipulihkan.
+4. **Ubah seminimal mungkin, selama sesingkat mungkin.** Turunkan hanya satu pengaturan yang menghalangi (biasanya `required_approving_review_count`, atau `enforce_admins` untuk check wajib yang merah). Jangan pernah mengaktifkan squash atau rebase, jangan menyalakan linear history, dan jangan menyentuh force-push atau penghapusan.
+5. **Masukkan perbaikannya** sebagai PR dengan merge commit, menautkan issue.
+6. **Pulihkan segera,** dari keluaran yang disimpan, lalu jalankan `bun run audit:repo-settings` dan tempel `OK — no violations.` ke issue. Break-glass belum selesai sebelum audit itu hijau.
+7. **Tutup issue dengan catatan singkat** mengapa jalur normal tidak berhasil, dan apa yang akan membuatnya berhasil lain kali.
+
+### Memulihkan ancestry subtree
+
+Bila PR sinkronisasi subtree pernah di-squash atau di-rebase — `audit:subtree` gagal dengan "not an ancestor of HEAD" atau "ancestry broken", atau `git subtree pull` berikutnya berbenturan terhadap riwayat yang tidak bisa disejajarkan git — perbaiki sebelum sinkronisasi apa pun berikutnya:
+
+1. **Berhenti menyinkronkan.** Jangan menutupinya dengan merge manual; menumpuk sinkronisasi di atas dasar yang rusak mengubur masalahnya.
+2. **Revert PR yang di-squash** di sebuah branch (`git revert <commit squash>`) dan merge revert itu sebagai PR biasa dengan merge commit. Pohon `apps/cms` kembali ke sinkronisasi sebelumnya.
+3. **Pastikan ancestry** kembali: `git fetch awcms main`, `git merge-base HEAD awcms/main` adalah commit sinkronisasi sebelum squash, dan `ops/awcms-subtree.json` menamainya. Bila catatan sempat dimajukan oleh PR yang di-squash, revert memulihkannya.
+4. **Ulangi sinkronisasi** dari dasar yang dipulihkan: `git subtree pull --prefix=apps/cms awcms main` di sebuah branch, perbarui `ops/awcms-subtree.json` ke commit upstream baru di PR yang sama, dan merge dengan **merge commit**.
+5. **Jalankan ulang `bun run audit:subtree --require-remote`** dan `bun run audit:repo-settings`. Bila ternyata merge squash atau rebase sempat diaktifkan kembali, perbaiki pengaturan itu lebih dulu — itulah cara hal ini terjadi.
+6. **Bila merge base sudah hilang** (pull tidak menemukan leluhur bersama): jalankan merge ancestry satu kali seperti dijelaskan di "Penyematan subtree" pada [`AGENTS.md`](../AGENTS.md#the-subtree-embed) — `git merge -s ours --allow-unrelated-histories <commit awcms yang cocok dengan apps/cms>`, setelah memastikan pohonnya cocok — lalu lanjutkan dari langkah 4.
+
+Jangan pernah force-push `main` untuk memperbaiki ini; proteksi menolaknya, dan perbaikannya selalu perubahan maju.
 
 ## Changeset buatan-sendiri, bukan `@changesets/cli`
 
@@ -126,4 +181,4 @@ Mengaktifkan kembali blok `bun` tinggal mengembalikan sebuah blok `package-ecosy
 
 ## Belum ditegakkan hari ini
 
-Jumlah review wajib atau syarat code-owner — branch protection di sini menamai status check wajib dan tidak ada apa pun soal reviewer. Langkah CI yang membangun atau mempublikasikan image container, atau men-deploy ke mana pun — lihat [`docs/deployment.md`](deployment.id.md) untuk apa arti "men-deploy repositori ini" hari ini. (Pembatasan strategi-merge untuk PR yang menyentuh `apps/cms`, sebelumnya tercantum di sini sebagai honour-system saja, kini ditegakkan secara mekanis di seluruh repositori — lihat "Branch protection pada `main`" di atas — issue #149.)
+Syarat review code-owner (`require_code_owner_reviews` mati; hanya `apps/cms/.github/CODEOWNERS` yang ada, dan itu milik upstream). Langkah CI yang membangun atau mempublikasikan image container, atau men-deploy ke mana pun — lihat [`docs/deployment.md`](deployment.id.md) untuk apa arti "men-deploy repositori ini" hari ini. (Pembatasan strategi-merge untuk PR yang menyentuh `apps/cms`, sebelumnya tercantum di sini sebagai honour-system saja, kini ditegakkan secara mekanis di seluruh repositori — lihat "Branch protection pada `main`" di atas — issue #149.)

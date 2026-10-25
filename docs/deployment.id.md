@@ -1,10 +1,10 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](deployment.md)
 
-<!-- i18n-source-hash: sha256:058beaf57d130e8db099b511b05c0fcb1b8c4f38d5c57e625440d1c67cf1b87a -->
+<!-- i18n-source-hash: sha256:55ba85cc09d66e0306beda45c974439cd7b84e2dbc47bd3e1269858fc5b73834 -->
 
 # Deployment
 
-Bagaimana `apps/storefront` di-build dan dilayani, variabel environment-nya, dan — terus terang, karena itu mengubah apa arti "men-deploy repositori ini" hari ini — bahwa `apps/cms` belum bisa di-deploy terhadap basis data nyata di infrastruktur borneojek sendiri.
+Bagaimana `apps/storefront` di-build dan dilayani, variabel environment-nya, dan — terus terang, karena itu mengubah apa arti "men-deploy repositori ini" hari ini — apa yang sudah dan belum disediakan untuk `apps/cms` terhadap basis data nyata. Sebagian dokumen ini ditulis pada era template untuk deployment referensi BjekMart (`mart.borneojek.com`); di mana tertulis "borneojek", bacalah sebagai referensi template itu, bukan deployment OMES-Web. Nama sumber daya yang masih berbunyi `awcms-one` disengaja: lihat [Identifier persisten warisan awcms-one](#identifier-persisten-warisan-awcms-one).
 
 ## Build, lalu serve — dua langkah terpisah, dua level kepercayaan terpisah
 
@@ -128,7 +128,7 @@ Urutan lengkap, berurutan, dengan nilai nyata (`cp .env.example .env` di root, `
 
 ```bash
 cp .env.example .env                    # root — POSTGRES_*, AWCMS_*_PASSWORD, SEED_*
-bun run db:up                           # postgres:18.4, project "awcms-one", host port 5433
+bun run db:up                           # postgres:18.4, project "omes", host port 5433
 
 # apps/cms/.env's own DATABASE_URL defaults to the OWNER/superuser shape on
 # port 5432 — override it for THIS one command to point at the compose
@@ -222,7 +222,7 @@ Image resmi `postgres:18` menolak volume yang di-mount langsung di `/var/lib/pos
 
 ### Apa yang masih TIDAK di-seed skrip ini, dan mengapa
 
-Gambar produk, media slider, dan gambar bukti konfirmasi-pembayaran di-resolve lewat mekanisme referensi `media_library` yang sudah ada (lihat [`docs/cms.md`](cms.id.md)) tapi tidak diunggah lewat sesi R2 nyata di sini — `tools/seed-assets/` membawa SVG placeholder kecil buatan-sendiri alih-alih foto nyata, dan endpoint unggah bukti-pembayaran anonim selalu menjawab `503 MEDIA_UNAVAILABLE`. Tarif kurir RajaOngkir dan payment gateway tidak punya field pada endpoint mana pun yang diekspos `apps/cms` hari ini, by design — lihat [ADR-0010](adr/0010-manual-payment-and-alternative-courier-first-gateways-via-outbox.id.md) dan [issue #33](https://github.com/ahliweb/awcms-one/issues/33). Akun pelanggan tidak di-seed — pelanggan yang di-seed tidak punya password, cocok dengan [ADR-0009](adr/0009-guest-checkout-by-order-code-and-phone.id.md) dan [issue #32](https://github.com/ahliweb/awcms-one/issues/32).
+Gambar produk, media slider, dan gambar bukti konfirmasi-pembayaran di-resolve lewat mekanisme referensi `media_library` yang sudah ada (lihat [`docs/cms.md`](cms.id.md)) tapi tidak diunggah lewat sesi R2 nyata di sini — `tools/seed-assets/` membawa SVG placeholder kecil buatan-sendiri alih-alih foto nyata, dan endpoint unggah bukti-pembayaran anonim selalu menjawab `503 MEDIA_UNAVAILABLE`. Tarif kurir RajaOngkir dan payment gateway tidak punya field pada endpoint mana pun yang diekspos `apps/cms` hari ini, by design — lihat [ADR-0010](adr/0010-manual-payment-and-alternative-courier-first-gateways-via-outbox.id.md) dan [ahliweb/awcms-one#33](https://github.com/ahliweb/awcms-one/issues/33). Akun pelanggan tidak di-seed — pelanggan yang di-seed tidak punya password, cocok dengan [ADR-0009](adr/0009-guest-checkout-by-order-code-and-phone.id.md) dan [ahliweb/awcms-one#32](https://github.com/ahliweb/awcms-one/issues/32).
 
 **Ad placement (issue #57) adalah satu-satunya resource yang sama sekali tidak bisa dibuat skrip ini secara lokal**, dan ini celah yang lebih berat dari SVG-placeholder di atas: tidak seperti gambar produk, `mediaObjectId` pada `POST /api/v1/news-portal/ad-placements` WAJIB diisi dan diperiksa keberadaan/statusnya terhadap `awcms_news_media_objects` (`ad-placement-reference-validation.ts`) — hanya media object berstatus `verified`/`attached` yang memenuhinya, dan mencapai `verified` butuh `finalizeNewsMediaUploadSession` melakukan `GET` R2 sungguhan + checksum, yang butuh `NEWS_MEDIA_R2_*` dikonfigurasi. Stack compose lokal/CI repositori ini hanya menyediakan PostgreSQL, tidak ada penyimpanan objek kompatibel-R2/S3. tools/seed-data/contoh/borneojek-mart/ad-placements.json dan empat PNG placeholder berukuran-benar di bawah `tools/seed-assets/` (`ad-728x90.png`/`ad-970x250.png`/`ad-300x250.png`/`ad-300x600.png`) ada supaya langkah `ensureAdPlacements` skrip seed benar-benar membuat ke-12nya begitu satu deployment SUDAH mengonfigurasi `NEWS_MEDIA_R2_*` (`sidebar_middle` memakai kreatif 300x600 — slot `kiri-tengah` seputarborneo adalah unit half-page — dua slot sidebar lainnya 300x250). Secara lokal ia mencetak satu baris skip yang menjelaskan, menghitung placement yang benar-benar belum diterapkan, alih-alih 12 kegagalan, dan tidak membuat apa pun. **Degradasi itu dicadangkan untuk persis satu penolakan:** `502 PROVIDER_ERROR` dari route create-session ("News media R2 storage is not configured for this deployment", `apps/cms/src/pages/api/v1/media/news-images/upload-sessions/index.ts`), satu-satunya sinyal bahwa deployment sama sekali tidak punya R2. Kegagalan media lain apa pun — penolakan mime/ukuran `400`, `403` pada PUT presigned, `422` atau `502` transien dari finalize, galat jaringan, `POST .../ad-placements` yang ditolak — adalah kegagalan nyata run itu atau aset-asetnya, dilaporkan per placement, dan membuat seed keluar non-nol; tidak pernah ditelan sebagai "tidak ada R2 di sini".
 
@@ -244,7 +244,7 @@ bun run import:seputarborneo                     # menulis tools/out/seputarborn
 bun run import:seputarborneo -- --limit=200       # batasi baris berita_red, untuk run pertama
 ```
 
-Lalu, dari `apps/cms` (terhadap tenant yang SUDAH di-seed dan SUDAH berjalan — `bun run db:seed:cms` dan seed taksonomi seputarborneo, [issue #57](https://github.com/ahliweb/awcms-one/issues/57), dulu):
+Lalu, dari `apps/cms` (terhadap tenant yang SUDAH di-seed dan SUDAH berjalan — `bun run db:seed:cms` dan seed taksonomi seputarborneo, [ahliweb/awcms-one#57](https://github.com/ahliweb/awcms-one/issues/57), dulu):
 
 ```bash
 cd apps/cms
@@ -329,7 +329,7 @@ Dua keputusan bentuk di `redirects.json` ada semata karena cara CMS dan storefro
 
 - **Byline lawas** (lihat di atas).
 - **Pemutar video ter-embed.** `berita_vid` tidak punya field content-block di `legacy-import-record.ts` — hanya `bodyHtml`. `videos.ndjson` menambahkan link polos `<a href="https://youtu.be/{id}">` setelah teks deskripsi video, bukan blok `videoNews` ter-embed; converter menerima link (tidak seperti `<iframe>`, yang ditolaknya mentah-mentah), jadi video terimpor sebagai artikel dengan link untuk menontonnya, bukan pemutar.
-- **Penempatan iklan** (`ikl_online`) dan **logo instansi** (`logo`, untuk `logo_media_id` [issue #59](https://github.com/ahliweb/awcms-one/issues/59)) — exporter ini hanya membaca jumlah barisnya untuk ringkasan; membuat penempatan butuh `mediaObjectId` terverifikasi (`POST /api/v1/news-portal/ad-placements`), dan `awcms_blog_institutions.logo_media_id` belum ada di `apps/cms` repositori ini.
+- **Penempatan iklan** (`ikl_online`) dan **logo instansi** (`logo`, untuk `logo_media_id` [ahliweb/awcms-one#59](https://github.com/ahliweb/awcms-one/issues/59)) — exporter ini hanya membaca jumlah barisnya untuk ringkasan; membuat penempatan butuh `mediaObjectId` terverifikasi (`POST /api/v1/news-portal/ad-placements`), dan `awcms_blog_institutions.logo_media_id` belum ada di `apps/cms` repositori ini.
 - **Run produksi penuh** (seluruh ~25.490 baris `berita_red`, setiap video) sengaja ditunda melewati PR issue #58 sendiri — manager menjalankannya setelah issue #57 merge.
 
 ### `newsletter_subscribers`, dan semua yang lain yang tidak pernah dibaca exporter ini
@@ -338,7 +338,7 @@ Dua keputusan bentuk di `redirects.json` ada semata karena cara CMS dan storefro
 
 ## Topologi produksi (issue #150, ADR-0019)
 
-`apps/cms` hanya-PostgreSQL, dan sampai bagian ini ditulis, infrastruktur produksi borneojek sendiri menjalankan MySQL tanpa PostgreSQL yang disediakan di mana pun di atasnya — celah pengiriman yang disebutkan langsung oleh [issue #150](https://github.com/ahliweb/awcms-one/issues/150). Berikut adalah jalur produksi nyata dan teruji yang sekarang dikirim repositori ini; [ADR-0019](adr/0019-production-topology-two-images-a-jobs-sidecar-and-a-fail-closed-preflight.md) mencatat keputusan di baliknya. Container `postgres:18.4` milik `compose.yaml` sendiri tetap kenyamanan LOKAL/CI — `compose.production.yaml` (di bawah) adalah bentuk produksinya, dan keduanya tidak pernah dimaksudkan berbagi basis data.
+`apps/cms` hanya-PostgreSQL, dan sampai bagian ini ditulis, infrastruktur produksi borneojek sendiri menjalankan MySQL tanpa PostgreSQL yang disediakan di mana pun di atasnya — celah pengiriman yang disebutkan langsung oleh [ahliweb/awcms-one#150](https://github.com/ahliweb/awcms-one/issues/150). Berikut adalah jalur produksi nyata dan teruji yang sekarang dikirim repositori ini; [ADR-0019](adr/0019-production-topology-two-images-a-jobs-sidecar-and-a-fail-closed-preflight.md) mencatat keputusan di baliknya. Container `postgres:18.4` milik `compose.yaml` sendiri tetap kenyamanan LOKAL/CI — `compose.production.yaml` (di bawah) adalah bentuk produksinya, dan keduanya tidak pernah dimaksudkan berbagi basis data.
 
 ### Model basis data dua-peran
 
@@ -375,13 +375,13 @@ Image `runtime`/`jobs` milik `apps/cms` sendiri di atas, sejak issue #187, juga 
 - `ghcr.io/<owner>/<repo>-cms` — target `runtime`, yaitu servis `cms`.
 - `ghcr.io/<owner>/<repo>-cms-jobs` — target `jobs`, yaitu servis `jobs`/`migrate`.
 
-(`<owner>/<repo>` adalah path GitHub repositori ini sendiri, di-lower-case, sehingga repositori turunan-template mempublikasikan ke namespace-nya sendiri tanpa apa pun yang perlu diedit — untuk `ahliweb/awcms-one` itu adalah `ghcr.io/ahliweb/awcms-one-cms` dan `ghcr.io/ahliweb/awcms-one-cms-jobs`.) Setiap push membawa tiga tag — semver yang dirilis (`vX.Y.Z` → `X.Y.Z`), garis `X.Y`, dan `sha` commit yang membangunnya — plus atestasi SBOM dan provenance yang dilekatkan `docker/build-push-action` sendiri (`sbom: true`, `provenance: mode=max`), dan atestasi kedua yang independen, didorong ke registry oleh `actions/attest-build-provenance`. Workflow ini juga berjalan, build-saja, pada `pull_request` yang menyentuh `apps/cms/**`/`apps/storefront/**`/`compose.production.yaml`/dirinya sendiri — ia tidak pernah push pada PR, dan bukan status check wajib (bagian "The gates" AGENTS.md).
+(`<owner>/<repo>` adalah path GitHub repositori ini sendiri, di-lower-case, sehingga repositori turunan-template mempublikasikan ke namespace-nya sendiri tanpa apa pun yang perlu diedit — untuk `ahliweb/omes-web` itu adalah `ghcr.io/ahliweb/omes-web-cms` dan `ghcr.io/ahliweb/omes-web-cms-jobs`.) Setiap push membawa tiga tag — semver yang dirilis (`vX.Y.Z` → `X.Y.Z`), garis `X.Y`, dan `sha` commit yang membangunnya — plus atestasi SBOM dan provenance yang dilekatkan `docker/build-push-action` sendiri (`sbom: true`, `provenance: mode=max`), dan atestasi kedua yang independen, didorong ke registry oleh `actions/attest-build-provenance`. Workflow ini juga berjalan, build-saja, pada `pull_request` yang menyentuh `apps/cms/**`/`apps/storefront/**`/`compose.production.yaml`/dirinya sendiri — ia tidak pernah push pada PR, dan bukan status check wajib (bagian "The gates" AGENTS.md).
 
 **Menarik image yang dipublikasikan alih-alih membangun lokal** — set dua env var yang kini dibaca servis `cms`/`jobs`/`migrate` milik `compose.production.yaml` (ADR-0020 D4; keduanya default ke nama build-lokal hari ini, jadi membiarkannya unset tidak mengubah apa pun dari perilaku berkas ini yang sudah ada):
 
 ```bash
-export AWCMS_ONE_CMS_IMAGE=ghcr.io/ahliweb/awcms-one-cms:0.11.0
-export AWCMS_ONE_CMS_JOBS_IMAGE=ghcr.io/ahliweb/awcms-one-cms-jobs:0.11.0
+export AWCMS_ONE_CMS_IMAGE=ghcr.io/ahliweb/omes-web-cms:<version>
+export AWCMS_ONE_CMS_JOBS_IMAGE=ghcr.io/ahliweb/omes-web-cms-jobs:<version>
 docker compose -f compose.production.yaml pull cms
 docker compose -f compose.production.yaml --profile jobs pull jobs
 docker compose -f compose.production.yaml --profile migrate pull migrate
@@ -391,13 +391,13 @@ docker compose -f compose.production.yaml up -d cms
 **Memverifikasi atestasi** sebelum mempercayai image yang ditarik — `gh` membaca atestasi yang didorong `actions/attest-build-provenance` ke registry:
 
 ```bash
-gh attestation verify oci://ghcr.io/ahliweb/awcms-one-cms:0.11.0 --owner ahliweb
-gh attestation verify oci://ghcr.io/ahliweb/awcms-one-cms-jobs:0.11.0 --owner ahliweb
+gh attestation verify oci://ghcr.io/ahliweb/omes-web-cms:<version> --owner ahliweb
+gh attestation verify oci://ghcr.io/ahliweb/omes-web-cms-jobs:<version> --owner ahliweb
 ```
 
-Sebuah `PASS` menyebutkan persis jalannya workflow dan commit tempat image itu dibangun — jaminan yang sama yang sudah diasumsikan catatan "Rollback/cutover" dokumen ini sendiri ("setiap image ditandai commit/rilis tempat ia dibangun"), kini bisa diperiksa independen, tidak hanya dinyatakan. **SBOM** itu sendiri bisa diperiksa dengan cara yang sama seperti SBOM ber-atestasi buildx mana pun: `docker buildx imagetools inspect ghcr.io/ahliweb/awcms-one-cms:0.11.0 --format '{{ json .SBOM }}'`.
+Sebuah `PASS` menyebutkan persis jalannya workflow dan commit tempat image itu dibangun — jaminan yang sama yang sudah diasumsikan catatan "Rollback/cutover" dokumen ini sendiri ("setiap image ditandai commit/rilis tempat ia dibangun"), kini bisa diperiksa independen, tidak hanya dinyatakan. **SBOM** itu sendiri bisa diperiksa dengan cara yang sama seperti SBOM ber-atestasi buildx mana pun: `docker buildx imagetools inspect ghcr.io/ahliweb/omes-web-cms:<version> --format '{{ json .SBOM }}'`.
 
-**Visibilitas package GHCR** — push pertama ke package baru (`ahliweb/awcms-one-cms`, `ahliweb/awcms-one-cms-jobs`) bisa membuatnya sebagai **privat**, default GHCR sendiri untuk package tanpa pengaturan visibilitas sebelumnya. Package privat butuh kredensial tariknya sendiri (`docker login ghcr.io` dengan token yang membawa `read:packages`) bahkan untuk host deploy yang tidak disebutkan berkas mana pun milik repositori ini rahasianya; pemilik repositori membuat sebuah package publik dari pengaturan GitHub milik package itu sendiri ("Package settings" → "Change visibility") sekali, setelah itu `docker pull` anonim berfungsi. Tidak ada apa pun di `.github/workflows/images.yml` yang mengeset visibilitas sendiri — GHCR mengikat visibilitas pada aksi manual pemilik, bukan pada apa pun yang bisa diminta sendiri oleh sebuah jalannya workflow.
+**Visibilitas package GHCR** — push pertama ke package baru (`ahliweb/omes-web-cms`, `ahliweb/omes-web-cms-jobs`) bisa membuatnya sebagai **privat**, default GHCR sendiri untuk package tanpa pengaturan visibilitas sebelumnya. Package privat butuh kredensial tariknya sendiri (`docker login ghcr.io` dengan token yang membawa `read:packages`) bahkan untuk host deploy yang tidak disebutkan berkas mana pun milik repositori ini rahasianya; pemilik repositori membuat sebuah package publik dari pengaturan GitHub milik package itu sendiri ("Package settings" → "Change visibility") sekali, setelah itu `docker pull` anonim berfungsi. Tidak ada apa pun di `.github/workflows/images.yml` yang mengeset visibilitas sendiri — GHCR mengikat visibilitas pada aksi manual pemilik, bukan pada apa pun yang bisa diminta sendiri oleh sebuah jalannya workflow.
 
 **Kenapa `apps/storefront` tidak dipublikasikan** — lihat [ADR-0020](adr/0020-publish-only-the-cms-images-to-ghcr-with-sbom-and-provenance.md) D2: build-nya memanggang konten katalog/berita live satu tenant memakai token owner CMS sebagai BuildKit secret, sehingga mempublikasikannya dari CI berarti kredensial produksi itu hidup di GitHub secret, runner repositori ini menjangkau produksi, dan tag yang dipublikasikan diam-diam menjadi basi begitu konten berubah tanpa image baru yang sepadan. Ia tetap dibangun di host deploy, persis seperti yang dijelaskan bagian "Image" di atas. `.github/workflows/images.yml` hanya membuktikan `apps/storefront/Dockerfile` masih bisa dibangun — job `storefront-smoke` build-saja, dimatriks atas ketiga nilai `SITE_PROFILE`, terhadap stub CMS repositori ini sendiri (`apps/storefront/scripts/stub-awcms.mjs`) — dan tidak pernah mempublikasikan hasilnya.
 
@@ -438,6 +438,38 @@ Setiap pemeriksaan mencetak satu baris `PASS|FAIL|SKIP` dan alasannya, tidak per
 **Rollback/cutover:** setiap image ditandai dengan commit/rilis tempat ia dibangun; rollback adalah men-deploy ulang tag sebelumnya, tidak pernah mengedit kontainer yang berjalan. Migrasi maju-saja dengan checksum immutable (`validateAppliedChecksums` milik `apps/cms/scripts/db-migrate.ts` menolak menerapkan ulang migrasi yang sudah diterapkan yang isinya berubah) — migrasi yang salah dikoreksi lewat migrasi BARU, tidak pernah edit-tangan yang sudah diterapkan.
 
 **Backup/restore:** lihat "Jaminan backup" tepat di bawah — jalur terenkripsi, terautentikasi, tersalin off-site, dan teruji-drill yang kini dipakai topologi produksi repositori ini sendiri, memakai ulang `apps/cms/deploy/backup/*.sh` milik upstream lewat servis `backup`/`restore-drill`/`offsite-copy` milik `compose.production.yaml` sendiri. (`apps/cms/ops/backup-awcms.sh`/`restore-drill-awcms.sh` adalah pasangan skrip lain yang lebih lama, khusus-host, yang masih dibawa upstream untuk cron deployment lain — bukan yang dipasang topologi produksi repositori ini sendiri; jangan mencampuradukkan keduanya.)
+
+## Identifier persisten warisan awcms-one
+
+OMES-Web dibuat dari template `ahliweb/awcms-one`, dan sejumlah nama yang dibaca mesin masih memakai nama template. Itu **bukan salah ketik yang perlu dirapikan**: beberapa di antaranya menamai sumber daya yang mungkin sudah ada di host operator (proyek Compose, volume bernama yang menyimpan data database dan backup terenkripsi, berkas cron host, tag image) atau tertanam dalam data tersimpan dan migrasi yang sudah diterapkan. Mengganti salah satunya di tempat dapat diam-diam mengorbankan sebuah volume, memulai database kosong di samping yang asli, merusak pemilihan/retensi backup, atau membatalkan checksum migrasi yang tercatat. Prosa yang menghadap produk sudah dikoreksi (README, AGENTS.md, status); inventaris ini ada agar tidak satu pun identifier di bawah berubah dalam suntingan sambil lalu. [ADR-0021](adr/0021-separate-omes-product-site-from-native-host-runtime.id.md) sudah melarang penggantian sembarangan proyek Compose produksi, volume, dan kunci env.
+
+| Identifier | Letaknya | Apa yang bergantung padanya |
+| --- | --- | --- |
+| Proyek Compose `awcms-one-production` | `compose.production.yaml` (`name:`) | Awalan setiap sumber daya yang dibuat Compose untuk proyek itu, termasuk jaringan default dan label yang dipakai `docker compose` untuk menemukan kontainer proyek |
+| Kontainer `awcms-one-postgres`, `awcms-one-cms`, `awcms-one-storefront` | `compose.production.yaml` (`container_name:`) | Kebiasaan operator (`docker exec`/log/health) dan pemantauan host yang berkunci pada nama ini |
+| Volume `awcms-one-production-pgdata` | `compose.production.yaml` (`volumes:`, `name:` eksplisit) | **Data database produksi.** Nama baru memulai PostgreSQL kosong di samping yang asli |
+| Volume `awcms-one-production-backups` | `compose.production.yaml` (tiga layanan backup) | Artefak backup terenkripsi, manifest, dan log evidence restore-drill |
+| Nama image lokal `awcms-one/cms`, `awcms-one/cms-jobs`, `awcms-one/storefront:<profil>`, `awcms-one/backup-tools` | `compose.production.yaml` (default) | Image yang dibangun lokal di host deploy; penggantian nama membuat Compose membangun ulang atau gagal menemukan tag sebelumnya, sehingga rollback berbasis image rusak |
+| Kunci env `AWCMS_ONE_CMS_IMAGE`, `AWCMS_ONE_CMS_JOBS_IMAGE`, `AWCMS_ONE_BACKUP_IMAGE` | `compose.production.yaml`, environment operator | `.env`/export shell operator yang ada; kunci yang tak dikenali diabaikan diam-diam dan image default dipakai |
+| Default `BACKUP_LABEL` `awcms-one` | `compose.production.yaml` (tiga layanan), `docker/backup/select-and-offsite-copy.sh` | Label yang tertanam dalam nama artefak backup; retensi dan pemilihan off-site mencocokkannya, sehingga mengubahnya membuat artefak lama keluar dari retensi |
+| Berkas ops host `ops/awcms-one-backup.crontab`, dipasang sebagai `/etc/cron.d/awcms-one-backup`; variabel `AWCMS_ONE_REPO` (`/opt/awcms-one`) dan `AWCMS_ONE_BACKUP_LOG` (`/var/log/awcms-one`) | `ops/` | Berkas cron dan path yang sudah dipasang di host; mengganti nama berkas di repo tidak mengganti salinan terpasang |
+| Database `awcms`, role `awcms_app`, `awcms_worker`, `awcms_setup`, dan kunci `AWCMS_*_PASSWORD`-nya | `.env.example`, `docker/postgres-init/`, upstream `apps/cms/sql/019_awcms_db_role_separation.sql` dan `022_awcms_db_worker_setup_roles.sql` | Nama milik upstream (`ahliweb/awcms`); grant role diatur migrasi yang tidak pernah disunting repo ini |
+| Awalan tabel `awcms_commerce_*` dan rentang migrasi commerce `901`-`999` | `apps/cms/sql/`, ADR-0015 | Migrasi yang sudah diterapkan checksum-nya tak dapat diubah; pembagian rentang dengan upstream (`001`-`899`) dijaga sebuah tes |
+| Kunci penyimpanan browser `awcms-one:akun:v1`, `awcms-one:keranjang:v1`, `awcms-one:wishlist:v1`, `awcms-one:afiliasi:v1`, `awcms-one:pesanan:telepon`, `awcms-one:popup:*` | `apps/storefront/src` | Penggantian nama mengeluarkan pembeli dari sesi dan mengosongkan keranjang; kunci ini hanya ada pada permukaan template `toko`/`berita`, bukan halaman `landing` yang dikirim OMES-Web |
+| Scope paket workspace `@awcms-one/*` (config, gerbang, kontrak, storefront), nama workspace root `omes` | berkas `package.json`, `bun.lock` | Lockfile mencatat setiap nama workspace; mengubahnya perlu regenerasi lockfile oleh bun (lihat di bawah) |
+| Namespace image terpublikasi | `.github/workflows/images.yml` | Diturunkan dari path repositori, sehingga OMES-Web menerbitkan `ghcr.io/ahliweb/omes-web-cms` dan `ghcr.io/ahliweb/omes-web-cms-jobs`; paket `ghcr.io/ahliweb/awcms-one-*` milik template |
+
+Sudah diganti namanya dan karena itu aman dikutip sebagai milik OMES-Web: stack pengembangan lokal (`compose.yaml`: proyek `omes`, kontainer `omes-postgres`, volume `omes-pgdata`), tenant seed di `.env.example` root (`SEED_TENANT_CODE=omes`), URL repositori dan deskripsi pada `package.json` root, serta namespace image di atas.
+
+**Mengganti identifier mana pun dalam tabel memerlukan issue tersendiri yang disetujui operator; jangan digabung ke perubahan dokumentasi atau fitur.** Issue semacam itu minimal memuat:
+
+1. inventaris apa yang benar-benar ada di tiap host (`docker compose ls`, `docker volume ls`, berkas `/etc/cron.d` terpasang, tag image yang dipakai) — dokumen ini mendaftar apa yang dapat dibuat repositori, bukan apa yang dimiliki operator;
+2. nama target dan, untuk volume, migrasi yang menjaga data (dump atau salin ke volume baru, verifikasi jumlah baris dan restore drill terhadap salinan) dengan jendela pemeliharaan yang dinyatakan;
+3. jalur rollback yang membiarkan proyek dan volume lama tak tersentuh sampai stack baru lolos verifikasi, dan tidak menjalankan kedua stack pada data yang sama;
+4. kontinuitas backup: bagaimana artefak di bawah `BACKUP_LABEL` lama tetap terpilih dan terretensi, plus hasil restore-drill baru di bawah nama baru;
+5. masa transisi untuk kunci env `AWCMS_ONE_*` yang membaca kunci baru lebih dulu dan kunci lama sebagai cadangan, dengan tanggal penghapusan;
+6. untuk nama workspace root atau scope `@awcms-one/*`: regenerasi lockfile yang dilakukan hanya dengan `bun` (tidak pernah disunting tangan), ditinjau untuk perubahan versi dependency, dengan `bun run check:lockfile` dan setiap gerbang profil build hijau;
+7. pengecualian eksplisit: tidak ada migrasi yang dinomori ulang atau disunting, dan nama database serta role `awcms_*` tetap milik upstream.
 
 ## Jaminan backup (issue #213)
 

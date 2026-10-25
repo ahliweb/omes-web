@@ -1,16 +1,18 @@
 🇬🇧 English (source) · 🇮🇩 [Bahasa Indonesia](README.id.md)
 
-[![CI](https://github.com/ahliweb/awcms-one/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ahliweb/awcms-one/actions/workflows/ci.yml) [![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE) [![runtime](https://img.shields.io/badge/runtime-Bun-blue?logo=bun&logoColor=white)](https://bun.sh)
+[![CI](https://github.com/ahliweb/omes-web/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ahliweb/omes-web/actions/workflows/ci.yml) [![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE) [![runtime](https://img.shields.io/badge/runtime-Bun-blue?logo=bun&logoColor=white)](https://bun.sh)
 
-# awcms-one
+# OMES-Web
 
-**OMES** is a deployment created from the [awcms-one](https://github.com/ahliweb/awcms-one) template — Bun, Astro, and PostgreSQL under row-level security. Its build profile is `landing` and its canonical domain is `omes.ahlikoding.com` (see [`docs/template.md`](docs/template.md)).
+**OMES-Web** (`ahliweb/omes-web`) is the public website, the product-owned CMS, and the deployment of the **OMES** product site. It was created from the [`ahliweb/awcms-one`](https://github.com/ahliweb/awcms-one) template — Bun, Astro, and PostgreSQL under row-level security — and is now its own product repository: its build profile is `landing` (`SITE_PROFILE=landing`) and its canonical domain is `omes.ahlikoding.com`. The native OMES host, CLI, and installer live in a different repository, [`ahliweb/omes`](https://github.com/ahliweb/omes); this repository never builds or ships them (boundary: [ADR-0021](docs/adr/0021-separate-omes-product-site-from-native-host-runtime.md)). Where the template's inherited text still says "awcms-one", "BjekMart", or "borneojek-mart", it is history or retained template capability, not this product — see [`docs/template.md`](docs/template.md).
 
 ## Where this sits in the AWCMS family
 
 | | |
 | --- | --- |
-| **This repo** | `ahliweb/awcms-one` — a Bun monorepo: one commerce/news backend (`apps/cms`), one public storefront (`apps/storefront`), one shared DTO contract (`packages/kontrak`) |
+| **This repo** | `ahliweb/omes-web` — a Bun monorepo: the product-owned AWCMS CMS and database (`apps/cms`), the public storefront built with `SITE_PROFILE=landing` (`apps/storefront`), one shared DTO contract (`packages/kontrak`) |
+| **Template** | [`ahliweb/awcms-one`](https://github.com/ahliweb/awcms-one) — the reusable template this repository was created from; reusable features belong there or upstream in `ahliweb/awcms`, not only here |
+| **Native OMES** | [`ahliweb/omes`](https://github.com/ahliweb/omes) — CLI, host services, installer, and the worker protocol; a different repository from `omes-web` |
 | **Backend / system of record** | `apps/cms`, in this repo — `ahliweb/awcms` embedded whole via `git subtree`, preserving upstream history |
 | **Model repo** | [`ahliweb/media-lenterakalteng`](https://github.com/ahliweb/media-lenterakalteng) — the workspace layout, audit gates, changeset convention, and governance-document structure in this repo are adapted from it |
 
@@ -18,9 +20,9 @@
 
 The commerce module this platform needs cannot stand on its own — it depends on `awcms` shared infrastructure that has no standalone package: `withTenant` (RLS tenant context), `authorizeInTransaction` (RBAC/ABAC), `appendDomainEvent` (outbox), `recordAuditEvent`, `_shared/module-contract` (`defineModule`), `getDatabaseClient`, the SQL migration runner, and `_shared/api-response`. So `awcms` is embedded whole, via `git subtree`, rather than depended on as a package — see [`AGENTS.md`](AGENTS.md#the-subtree-embed) for the sync mechanics and the one rule that protects them.
 
-## Use this as a template
+## Template origin
 
-This repository was created from the [`ahliweb/awcms-one`](https://github.com/ahliweb/awcms-one) template using its own `bun run template:init` — see that repository's [`docs/template.md`](https://github.com/ahliweb/awcms-one/blob/main/docs/template.md) for the walkthrough and [ADR-0018](https://github.com/ahliweb/awcms-one/blob/main/docs/adr/0018-awcms-one-is-a-template-with-build-profiles-and-an-idempotent-init.md) for the design decisions behind it.
+This repository was created from the [`ahliweb/awcms-one`](https://github.com/ahliweb/awcms-one) template using its own `bun run template:init`. The mechanism is retained here — [`docs/template.md`](docs/template.md) records what it does, the build-profile matrix, and how this repository relates to it — and [ADR-0018](docs/adr/0018-awcms-one-is-a-template-with-build-profiles-and-an-idempotent-init.md) holds the design decisions. Do not re-run `template:init` against this repository.
 
 ## Documentation
 
@@ -56,7 +58,7 @@ This repo is **Bun-only**: Bun is both the runtime and the package manager, its 
 | `bun run check:cms` | `apps/cms`'s own full gate chain (53 steps — lint, docs, inventories, spec, gates, typecheck, its own tests, its own build) |
 | `bun run db:up` / `db:down` / `db:reset` | Starts/stops/resets the disposable local `postgres:18.4` (`compose.yaml`) |
 | `bun run db:migrate:cms` | Runs `apps/cms`'s migrations against `DATABASE_URL` — see `apps/cms/.env.example` |
-| `bun run db:seed:cms` | Seeds the `borneojek-mart` tenant, catalog, marketing surfaces, and sample orders through `apps/cms`'s own public API — see [`docs/deployment.md`](docs/deployment.md) |
+| `bun run db:seed:cms` | Seeds the template's `borneojek-mart` reference tenant (template sample data, not OMES content), catalog, marketing surfaces, and sample orders through `apps/cms`'s own public API — see [`docs/deployment.md`](docs/deployment.md) |
 | `bun run deploy:preflight` | Fail-closed production preflight — storefront build-env shape, then delegates to `apps/cms`'s own `commerce:deploy:preflight` — see [`docs/deployment.md`](docs/deployment.md) and ADR-0019 |
 | `bun run release` | Cuts a tagged release from the waiting changesets — see [`CONTRIBUTING.md`](CONTRIBUTING.md) |
 | `dev` / `build` / `check` / `serve` | Delegate into `apps/storefront` — `bun run build` type-checks, fetches the catalog/marketing/news content from `apps/cms` at build time, and bakes static output including the derived CSP; `bun run serve` runs the built `apps/storefront/server/penyaji.mjs`. All three build-time commands honour `SITE_PROFILE` (`toko` default) — see [`docs/deployment.md`](docs/deployment.md) |

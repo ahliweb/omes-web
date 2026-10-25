@@ -1,12 +1,12 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](CODE_OF_CONDUCT.md)
 
-<!-- i18n-source-hash: sha256:499d9b1ed8680f620839fe5cd223561e20e5b1b5712bef0e00cf106374972369 -->
+<!-- i18n-source-hash: sha256:b0ab02e7a857c4151c258323a4931346e2fa3f0a526c1a300612490d69d1b5f3 -->
 
 # Kode Etik
 
 ## Komitmen
 
-Repo ini melakukan re-platform toko komersial sungguhan, borneojek-mart. Kontributornya datang dari latar belakang berbeda — insinyur, orang yang memahami skema sumber dan bisnis yang dilayaninya, serta reviewer dari sisi AWCMS maupun sisi borneojek-mart. Semuanya diperlakukan setara.
+Repo ini adalah situs produk OMES, dibangun di atas template yang me-re-platform toko komersial sungguhan. Kontributornya datang dari latar belakang berbeda — insinyur, orang yang memahami produk dan data yang dilayaninya, serta reviewer dari sisi AWCMS, template, maupun OMES native. Semuanya diperlakukan setara.
 
 Kami berkomitmen menjadikan partisipasi di repo ini bebas dari pelecehan bagi siapa pun, tanpa memandang usia, ukuran tubuh, disabilitas, etnis, identitas dan ekspresi gender, tingkat pengalaman, pendidikan, status sosial-ekonomi, kebangsaan, penampilan, ras, agama, atau identitas dan orientasi seksual.
 
@@ -17,7 +17,7 @@ Perilaku yang diharapkan:
 - Menggunakan bahasa yang ramah dan inklusif.
 - Menghormati sudut pandang dan pengalaman yang berbeda.
 - Menerima kritik yang membangun dengan lapang dada.
-- Mengutamakan kebenaran data yang di-re-platform dan penggunanya kelak, di atas preferensi pribadi.
+- Mengutamakan kebenaran data produk dan penggunanya, di atas preferensi pribadi.
 - Memperlakukan perbedaan pendapat soal skema sumber, atau soal bagaimana ia seharusnya diekspresikan ulang, sebagai pertanyaan teknis yang diselesaikan dengan bukti — bukan soal siapa yang menyatakannya paling percaya diri.
 
 Perilaku yang tidak dapat diterima:

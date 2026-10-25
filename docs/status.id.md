@@ -1,14 +1,14 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](status.md)
 
-<!-- i18n-source-hash: sha256:e3b95301b1566307d95f80902566937a81de58312a0ddbfe988c06243ae574ed -->
+<!-- i18n-source-hash: sha256:4fb3b69a4767dd854fcaaac22b29c64aafe92750eec943222600951e68f84d3a -->
 
 # Status
 
-Referensi keadaan-terkini tunggal untuk `awcms-one` — apa yang ada, per permukaan, dan apa yang belum, masing-masing item menaut ke dokumen atau ADR yang punya detailnya. Bukan kronik increment: riwayat hidup di [`CHANGELOG.md`](../CHANGELOG.md) dan [indeks ADR](adr/README.id.md); halaman ini hanya menyatakan apa yang benar tentang tree hari ini. Di mana halaman ini dan dokumen lain berbeda, detail dokumen lain itu yang menang dan halaman ini sudah usang — ajukan issue.
+Referensi keadaan-terkini tunggal untuk `omes-web` (situs produk OMES, dibuat dari template `awcms-one`) — apa yang ada, per permukaan, dan apa yang belum, masing-masing item menaut ke dokumen atau ADR yang punya detailnya. Bukan kronik increment: riwayat hidup di [`CHANGELOG.md`](../CHANGELOG.md) dan [indeks ADR](adr/README.id.md); halaman ini hanya menyatakan apa yang benar tentang tree hari ini. Di mana halaman ini dan dokumen lain berbeda, detail dokumen lain itu yang menang dan halaman ini sudah usang — ajukan issue.
 
 ## Platform ini
 
-`awcms-one` mem-replatform toko commerce borneojek-mart — PHP/Laravel/MySQL/React-Inertia — ke Bun, Astro, dan PostgreSQL di bawah row-level security: sebuah re-platform, bukan refactor, dengan skema sumber dibaca dari basis data MySQL `commerce_bj_mart` yang hidup dan dinyatakan ulang sebagai tabel modul AWCMS (framing: [issue #1](https://github.com/ahliweb/awcms-one/issues/1)). Ia juga sebuah repositori template GitHub tempat aplikasi lain bermula — lihat "Mekanisme template dan profil build" di bawah.
+`ahliweb/omes-web` adalah website publik, CMS AWCMS dan database milik produk, serta deployment situs produk OMES — profil build `landing` di `omes.ahlikoding.com`. Repo ini dibuat dari template `ahliweb/awcms-one`, yang sendiri me-replatform toko commerce borneojek-mart (PHP/Laravel/MySQL/React-Inertia) ke Bun, Astro, dan PostgreSQL di bawah row-level security (framing template: [ahliweb/awcms-one#1](https://github.com/ahliweb/awcms-one/issues/1)). Modul commerce itu, profil build `toko`/`berita`, dan seed referensi BjekMart dipertahankan sebagai **kapabilitas template**; semuanya bukan fitur produk OMES dan OMES-Web tidak mengirimkannya. Batas kepemilikan dengan repositori host/CLI native OMES (`ahliweb/omes`): [ADR-0021](adr/0021-separate-omes-product-site-from-native-host-runtime.id.md). Lihat "Mekanisme template" di bawah.
 
 ## Workspace
 

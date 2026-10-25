@@ -3,11 +3,11 @@
   "type": "module",
   "version": "0.2.0",
   "private": true,
-  "description": "OMES — dibuat dari template awcms-one.",
+  "description": "OMES-Web — public website, CMS, and deployment for the OMES product (derived from the ahliweb/awcms-one template).",
   "homepage": "https://omes.ahlikoding.com",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/GANTI-ORG/omes.git"
+    "url": "git+https://github.com/ahliweb/omes-web.git"
   },
   "license": "MIT",
   "packageManager": "bun@1.4.2",

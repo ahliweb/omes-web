@@ -1,10 +1,10 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](CONTRIBUTING.md)
 
-<!-- i18n-source-hash: sha256:0b4fd47eb06cc8061630ca6b9309c6bf156398ba345b9d405b4b4619db4abe54 -->
+<!-- i18n-source-hash: sha256:c5384011067ad4e7fbe3301a8d35fca9d49bcae306ce349fa73d91740a7cd0a2 -->
 
 # Panduan Kontribusi
 
-Terima kasih atas niat Anda untuk membantu. Sebelum yang lain: repo ini me-re-platform toko komersial borneojek-mart ke stack AWCMS ([issue #1](https://github.com/ahliweb/awcms-one/issues/1)), dan menyematkan `ahliweb/awcms` utuh sebagai `apps/cms` lewat `git subtree`. Baca [`AGENTS.md`](AGENTS.md) sebelum menyentuh apa pun — ia adalah kontrak kerja yang mengikat, bukan ringkasan, dan memuat satu aturan (syarat merge commit untuk subtree) yang mudah dilanggar karena kebiasaan dan mahal untuk dipulihkan.
+Terima kasih atas niat Anda untuk membantu. Sebelum yang lain: repo ini (`ahliweb/omes-web`) adalah situs produk OMES — website publik, CMS milik produk, dan deployment — yang dibuat dari template `ahliweb/awcms-one` (re-platform toko borneojek-mart oleh template itu: [ahliweb/awcms-one#1](https://github.com/ahliweb/awcms-one/issues/1)), dan menyematkan `ahliweb/awcms` utuh sebagai `apps/cms` lewat `git subtree`. Baca [`AGENTS.md`](AGENTS.md) sebelum menyentuh apa pun — ia adalah kontrak kerja yang mengikat, bukan ringkasan, dan memuat satu aturan (syarat merge commit untuk subtree) yang mudah dilanggar karena kebiasaan dan mahal untuk dipulihkan.
 
 Kontributor agen AI: `AGENTS.md` ditulis untuk Anda sama seriusnya dengan untuk manusia. Baca dulu, sampai tuntas.
 
@@ -30,7 +30,7 @@ bun test                # rangkaian gerbang akar
 | `bun audit` | Kerentanan rantai dependency |
 | `bun run release` | Memotong rilis bertag dari changeset yang menunggu (tindakan maintainer) |
 
-Skrip akar `dev`/`build`/`check`/`serve` mendelegasikan ke `apps/storefront` (`cd apps/storefront && bun run <skrip>`) — workspace itu sudah membawa seluruh situs publik dan rangkaian gerbangnya sendiri sejak increment 2 ([issue #5](https://github.com/ahliweb/awcms-one/issues/5)).
+Skrip akar `dev`/`build`/`check`/`serve` mendelegasikan ke `apps/storefront` (`cd apps/storefront && bun run <skrip>`) — workspace itu sudah membawa seluruh situs publik dan rangkaian gerbangnya sendiri sejak increment 2 ([ahliweb/awcms-one#5](https://github.com/ahliweb/awcms-one/issues/5)).
 
 ## Alur kontribusi
 

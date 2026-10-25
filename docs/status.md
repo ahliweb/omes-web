@@ -2,11 +2,11 @@
 
 # Status
 
-The single, current-state reference for `awcms-one` — what exists, by surface, and what does not, each item linking to the document or ADR that has the detail. No increment chronicle: history lives in [`CHANGELOG.md`](../CHANGELOG.md) and the [ADR index](adr/README.md); this page only states what is true of the tree today. Where this page and another document disagree, the other document's own detail wins and this page is stale — file an issue.
+The single, current-state reference for `omes-web` (the OMES product site, created from the `awcms-one` template) — what exists, by surface, and what does not, each item linking to the document or ADR that has the detail. No increment chronicle: history lives in [`CHANGELOG.md`](../CHANGELOG.md) and the [ADR index](adr/README.md); this page only states what is true of the tree today. Where this page and another document disagree, the other document's own detail wins and this page is stale — file an issue.
 
 ## The platform
 
-`awcms-one` re-platforms the borneojek-mart commerce store — PHP/Laravel/MySQL/React-Inertia — onto Bun, Astro, and PostgreSQL under row-level security: a re-platform, not a refactor, with the source schema read from the live `commerce_bj_mart` MySQL database and re-expressed as AWCMS module tables (framing: [issue #1](https://github.com/ahliweb/awcms-one/issues/1)). It is also a GitHub template repository other applications start from — see "Template and build profiles" below.
+`ahliweb/omes-web` is the public website, the product-owned AWCMS CMS and database, and the deployment of the OMES product site — the `landing` build profile at `omes.ahlikoding.com`. It was created from the `ahliweb/awcms-one` template, which itself re-platformed the borneojek-mart commerce store (PHP/Laravel/MySQL/React-Inertia) onto Bun, Astro, and PostgreSQL under row-level security (template framing: [ahliweb/awcms-one#1](https://github.com/ahliweb/awcms-one/issues/1)). That commerce module, the `toko`/`berita` build profiles, and the BjekMart reference seed are retained as **template capability**; they are not OMES product features and OMES-Web does not ship them. Ownership boundary with the native OMES host/CLI repository (`ahliweb/omes`): [ADR-0021](adr/0021-separate-omes-product-site-from-native-host-runtime.md). See "Template mechanism" below.
 
 ## Workspace
 

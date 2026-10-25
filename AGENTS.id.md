@@ -1,16 +1,27 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](AGENTS.md)
 
-<!-- i18n-source-hash: sha256:57a62b58e23be1eaa6e60afa3e98bc91067976a164219ade506a30e29cae66fe -->
+<!-- i18n-source-hash: sha256:532f2b7898d52d25ed98f1f7c4f42f8a715de18d9dea359a77935b47baa0b799 -->
 
-# AGENTS.md — kontrak kerja awcms-one
+# AGENTS.md — kontrak kerja omes-web
 
 Berlaku untuk manusia maupun agen AI yang bekerja di repo ini. Baca ini sebelum melakukan apa pun yang lain. Bila sebuah aturan di sini berbenturan dengan kebiasaan yang terasa alami, aturan di sinilah yang menang — setiap butir ada karena melanggarnya sudah, atau akan, menyebabkan cacat yang tidak terlihat sampai seseorang bertindak atas asumsi yang salah.
 
 ## Apa repo ini
 
-**awcms-one** me-re-platform toko komersial borneojek-mart — PHP/Laravel/MySQL/React-Inertia — ke stack AWCMS: Bun, Astro, dan PostgreSQL di bawah row-level security. Ini adalah **re-platform, bukan refactor**: tidak ada kode Laravel yang dibawa. Skema sumber dibaca dari basis data MySQL `commerce_bj_mart` yang hidup dan diekspresikan ulang sebagai tabel modul AWCMS di bawah RLS PostgreSQL. Kerangka lengkap: [issue #1](https://github.com/ahliweb/awcms-one/issues/1).
+**omes-web** (`ahliweb/omes-web`) adalah website publik, CMS AWCMS dan database milik produk, serta deployment situs produk **OMES** (`SITE_PROFILE=landing`, `omes.ahlikoding.com`). Ini adalah produk yang **diturunkan dari template `ahliweb/awcms-one`**, yang sendirinya me-re-platform toko komersial borneojek-mart ke stack AWCMS (Bun, Astro, PostgreSQL di bawah row-level security; kerangka template: [ahliweb/awcms-one#1](https://github.com/ahliweb/awcms-one/issues/1)). Modul commerce, profil build `toko`/`berita`, dan seed referensi BjekMart dipertahankan sebagai **kapabilitas template**, bukan fitur produk OMES. Batas produk: [ADR-0021](docs/adr/0021-separate-omes-product-site-from-native-host-runtime.id.md).
 
-Tata letak workspace, mekanisme gerbang, dan konvensi changeset dokumen ini diadaptasi dari [`ahliweb/media-lenterakalteng`](https://github.com/ahliweb/media-lenterakalteng). Di mana sebuah aturan di bawah diwarisi dari pelajaran mahal repo itu sendiri alih-alih ditemukan sendiri oleh repo ini, itu dinyatakan.
+**Kepemilikan, agar pekerjaan mendarat di repositori yang tepat:**
+
+| Repositori | Memiliki |
+| --- | --- |
+| `ahliweb/omes-web` (repo ini) | Website dan tema/konfigurasi OMES, database CMS dan deployment milik produk, rilis dan versinya, halaman admin dari subtree `apps/cms`. Tidak memfork modul `omes_control` dan tidak menambah runtime (AI/agen) kedua |
+| [`ahliweb/awcms-one`](https://github.com/ahliweb/awcms-one) | Template yang dapat dipakai ulang: profil build, `template:init`, kapabilitas commerce. Fitur yang dapat dipakai produk lain berada di sana (atau upstream), lalu masuk ke sini — bukan dependency runtime aktif OMES-Web |
+| [`ahliweb/awcms`](https://github.com/ahliweb/awcms) | Platform CMS yang disematkan sebagai `apps/cms`; perubahan CMS generik dibuat di sana lebih dulu, lalu ditarik |
+| [`ahliweb/omes`](https://github.com/ahliweb/omes) | Host native, CLI, installer, dan protokol worker. **Repositori berbeda** dari `omes-web` — jangan pernah dicampuradukkan |
+
+**Nomor issue dan ADR.** Banyak referensi `#NNN` di pohon ini, dan setiap ADR hingga 0020, mendahului OMES-Web dan merujuk ke `ahliweb/awcms-one`; ditulis `ahliweb/awcms-one#NNN` bila ambigu. `#NNN` polos pada dokumen baru berarti issue `ahliweb/omes-web`. **Identifier persisten** (proyek Compose produksi, volume, nama image, role database, kunci penyimpanan browser `awcms-one:*`, rentang migrasi) sengaja masih memakai nama template; semuanya diinventarisasi di [`docs/deployment.md`](docs/deployment.id.md#identifier-persisten-warisan-awcms-one) dan tidak pernah diganti dalam suntingan sambil lalu.
+
+Tata letak workspace, mekanisme gerbang, dan konvensi changeset dokumen ini diadaptasi dari [`ahliweb/media-lenterakalteng`](https://github.com/ahliweb/media-lenterakalteng) lewat template `awcms-one`. Di mana sebuah aturan di bawah diwarisi dari pelajaran mahal repo itu sendiri alih-alih ditemukan sendiri oleh repo ini, itu dinyatakan.
 
 ## Yang ada hari ini, dan yang tidak
 
@@ -93,7 +104,7 @@ Ini adalah workspace Bun (`workspaces: ["apps/*", "packages/*"]`); setiap direkt
 
 **`bun run template:init`** (`tools/template-init.ts` + `tools/template-init/**`) adalah CLI idempoten yang dijalankan sekali oleh repo turunan untuk menulis ulang permukaan mereknya — nama, domain, warna, kontak, profil pilihan — lihat [ADR-0018 D4/D5](docs/adr/0018-awcms-one-is-a-template-with-build-profiles-and-an-idempotent-init.id.md) dan referensi CLI `docs/template.md` untuk daftar flag dan exit code persisnya. **Ia tidak pernah menyentuh `apps/cms/**` di bawah flag mana pun** — pohon itu milik upstream sendiri, disematkan lewat subtree (lihat "Penyematan subtree" di atas), dan data merek deployment turunan hidup di apa yang disajikan `apps/cms` atau di fallback `site.ts` saat-build milik `apps/storefront` sendiri, tidak pernah di source `apps/cms`. Yang ditulis-ulangnya adalah daftar pendek bernama di bagian "What it rewrites" `docs/template.md` (`site.ts`, `package.json` akar, `compose.yaml`, `README*.md`/`SUPPORT*.md`, kedua berkas `.env.example`, default `tools/seed-cms.ts`, `CHANGELOG.md`, `.changesets/*.md`) — tidak ada yang di luar daftar itu, dan tidak pernah menebak pemilik/nama GitHub repo turunan sendiri (`repository.url` di `package.json` menjadi placeholder mencolok `GANTI-ORG`). `.github/workflows/template-init-smoke.yml` menjalankan matriks `template:init` atas ketiga profil ke checkout sementara di setiap push.
 
-**Tata letak seed (issue #139):** `tools/seed-cms.ts --profil <toko|berita|landing|contoh:borneojek-mart>` (`bun run db:seed:cms:profil <name>`) membaca konten netral dan fiktif per profil dari `tools/seed-data/profil/{toko,berita,landing}/**` (tidak ada orang sungguhan/nomor telepon/e-mail/nama merek) plus SVG placeholder dari `tools/seed-assets/profil/<profile>/`. Konten referensi BjekMart sendiri hidup di tools/seed-data/contoh/borneojek-mart/**; `bun run db:seed:cms` tanpa `--profil` masih menargetkannya secara default, sehingga deployment hidup repo ini sendiri tidak terpengaruh. `tools/lib/seed-profil.mjs` menyimpan validator schema/no-PII/aset bersama yang dipakai `--dry-run` maupun `tests/seed-profil.test.mjs`. Jangan pernah men-seed profil netral ke basis data dev lokal bersama repo ini sendiri (lihat "Seeding a profile locally" di `docs/alur-kerja-pengembangan.md`).
+**Tata letak seed (issue #139):** `tools/seed-cms.ts --profil <toko|berita|landing|contoh:borneojek-mart>` (`bun run db:seed:cms:profil <name>`) membaca konten netral dan fiktif per profil dari `tools/seed-data/profil/{toko,berita,landing}/**` (tidak ada orang sungguhan/nomor telepon/e-mail/nama merek) plus SVG placeholder dari `tools/seed-assets/profil/<profile>/`. `bun run db:seed:cms` menjalankan `--profil landing` (lihat `package.json`), dan default CLI-nya sendiri juga `landing`. Checkout ini tidak memuat direktori `tools/seed-data/contoh/borneojek-mart/`, sehingga kunci `contoh:borneojek-mart` tidak punya set seed untuk dimuat di sini. `tools/lib/seed-profil.mjs` menyimpan validator schema/no-PII/aset bersama yang dipakai `--dry-run` maupun `tests/seed-profil.test.mjs`. Jangan pernah men-seed profil netral ke basis data dev lokal bersama repo ini sendiri (lihat "Seeding a profile locally" di `docs/alur-kerja-pengembangan.md`).
 
 ## Gerbang
 

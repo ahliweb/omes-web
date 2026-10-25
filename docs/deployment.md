@@ -2,7 +2,7 @@
 
 # Deployment
 
-How `apps/storefront` is built and served, its environment variables, and — plainly, because it changes what "deploying this repository" even means today — that `apps/cms` cannot yet be deployed against a real database on borneojek's own infrastructure.
+How `apps/storefront` is built and served, its environment variables, and — plainly, because it changes what "deploying this repository" even means today — what is and is not provisioned for `apps/cms` against a real database. Parts of this document were written in the template's era for the BjekMart reference deployment (`mart.borneojek.com`); where it says "borneojek", read it as that template reference, not as an OMES-Web deployment. Resource names that still say `awcms-one` are deliberate: see [Persistent identifiers inherited from awcms-one](#persistent-identifiers-inherited-from-awcms-one).
 
 ## Build, then serve — two separate steps, two separate trust levels
 
@@ -124,7 +124,7 @@ The full sequence, in order, with real values (`cp .env.example .env` at the roo
 
 ```bash
 cp .env.example .env                    # root — POSTGRES_*, AWCMS_*_PASSWORD, SEED_*
-bun run db:up                           # postgres:18.4, project "awcms-one", host port 5433
+bun run db:up                           # postgres:18.4, project "omes", host port 5433
 
 # apps/cms/.env's own DATABASE_URL defaults to the OWNER/superuser shape on
 # port 5432 — override it for THIS one command to point at the compose
@@ -218,7 +218,7 @@ bun run db:reset                        # drop the volume too — a clean slate
 
 ### What this script still does not seed, and why
 
-Product images, slider media, and payment-confirmation proof images are resolved through `media_library`'s existing reference mechanism (see [`docs/cms.md`](cms.md)) but not uploaded through a real R2 session here — `tools/seed-assets/` carries small, self-generated placeholder SVGs instead of real photos, and the anonymous payment-proof upload endpoints always answer `503 MEDIA_UNAVAILABLE`. RajaOngkir courier rates and a payment gateway have no field on any endpoint `apps/cms` exposes today, by design — see [ADR-0010](adr/0010-manual-payment-and-alternative-courier-first-gateways-via-outbox.md) and [issue #33](https://github.com/ahliweb/awcms-one/issues/33). Customer accounts are not seeded — the seeded customer has no password, matching [ADR-0009](adr/0009-guest-checkout-by-order-code-and-phone.md) and [issue #32](https://github.com/ahliweb/awcms-one/issues/32).
+Product images, slider media, and payment-confirmation proof images are resolved through `media_library`'s existing reference mechanism (see [`docs/cms.md`](cms.md)) but not uploaded through a real R2 session here — `tools/seed-assets/` carries small, self-generated placeholder SVGs instead of real photos, and the anonymous payment-proof upload endpoints always answer `503 MEDIA_UNAVAILABLE`. RajaOngkir courier rates and a payment gateway have no field on any endpoint `apps/cms` exposes today, by design — see [ADR-0010](adr/0010-manual-payment-and-alternative-courier-first-gateways-via-outbox.md) and [ahliweb/awcms-one#33](https://github.com/ahliweb/awcms-one/issues/33). Customer accounts are not seeded — the seeded customer has no password, matching [ADR-0009](adr/0009-guest-checkout-by-order-code-and-phone.md) and [ahliweb/awcms-one#32](https://github.com/ahliweb/awcms-one/issues/32).
 
 **Ad placements (issue #57) are the one resource this script cannot create locally, at all**, and this is a harder gap than the placeholder-SVG one above: unlike a product image, `POST /api/v1/news-portal/ad-placements`'s `mediaObjectId` is REQUIRED and existence/status-checked against `awcms_news_media_objects` (`ad-placement-reference-validation.ts`) — only a `verified`/`attached` media object satisfies it, and reaching `verified` needs `finalizeNewsMediaUploadSession` to perform a real R2 `GET` + checksum, which needs `NEWS_MEDIA_R2_*` configured. This repo's local/CI compose stack provisions PostgreSQL only, no R2/S3-compatible object storage. tools/seed-data/contoh/borneojek-mart/ad-placements.json and the four correctly-sized placeholder PNGs under `tools/seed-assets/` (`ad-728x90.png`/`ad-970x250.png`/`ad-300x250.png`/`ad-300x600.png`) exist so the seed script's `ensureAdPlacements` step genuinely creates all 12 the moment a deployment DOES have `NEWS_MEDIA_R2_*` configured (`sidebar_middle` takes the 300x600 creative — seputarborneo's `kiri-tengah` slot is a half-page unit — the other two sidebar slots 300x250). Locally it prints one explanatory skip line, counting the placements actually left unapplied, instead of 12 failures, and creates nothing. **That degradation is reserved for exactly one refusal:** the create-session route's `502 PROVIDER_ERROR` ("News media R2 storage is not configured for this deployment", `apps/cms/src/pages/api/v1/media/news-images/upload-sessions/index.ts`), the only signal that the deployment has no R2 at all. Any other media failure — a `400` mime/size refusal, a `403` on the presigned PUT, a `422` or transient `502` from finalize, a network error, a rejected `POST .../ad-placements` — is a real failure of that run or its assets, is reported per placement, and makes the seed exit non-zero; it is never swallowed as "no R2 here".
 
@@ -240,7 +240,7 @@ bun run import:seputarborneo                     # writes tools/out/seputarborne
 bun run import:seputarborneo -- --limit=200       # cap berita_red rows, for a first pass
 ```
 
-Then, from `apps/cms` (against an ALREADY-SEEDED, ALREADY-RUNNING tenant — `bun run db:seed:cms` and the seputarborneo taxonomy seed, [issue #57](https://github.com/ahliweb/awcms-one/issues/57), first):
+Then, from `apps/cms` (against an ALREADY-SEEDED, ALREADY-RUNNING tenant — `bun run db:seed:cms` and the seputarborneo taxonomy seed, [ahliweb/awcms-one#57](https://github.com/ahliweb/awcms-one/issues/57), first):
 
 ```bash
 cd apps/cms
@@ -322,7 +322,7 @@ Two shape decisions in `redirects.json` exist only because of how the CMS and th
 
 - **A legacy byline** (see above).
 - **An embedded video player.** `berita_vid` has no content-block field in `legacy-import-record.ts` — only `bodyHtml`. `videos.ndjson` appends a plain `<a href="https://youtu.be/{id}">` link after the video's description text instead of an embedded `videoNews` block; the converter accepts a link (unlike an `<iframe>`, which it refuses outright), so the video imports as an article with a link to watch it, not a player.
-- **Ad placements** (`ikl_online`) and **institution logos** (`logo`, for [issue #59](https://github.com/ahliweb/awcms-one/issues/59)'s `logo_media_id`) — this exporter reads their row counts for the summary only; creating a placement needs a verified `mediaObjectId` (`POST /api/v1/news-portal/ad-placements`), and `awcms_blog_institutions.logo_media_id` does not exist in this repository's `apps/cms` yet.
+- **Ad placements** (`ikl_online`) and **institution logos** (`logo`, for [ahliweb/awcms-one#59](https://github.com/ahliweb/awcms-one/issues/59)'s `logo_media_id`) — this exporter reads their row counts for the summary only; creating a placement needs a verified `mediaObjectId` (`POST /api/v1/news-portal/ad-placements`), and `awcms_blog_institutions.logo_media_id` does not exist in this repository's `apps/cms` yet.
 - **The full production run** (all ~25,490 `berita_red` rows, every video) is deliberately deferred past this issue's own PR — the manager runs it after issue #57 merges.
 
 ### `newsletter_subscribers`, and everything else this exporter never reads
@@ -331,7 +331,7 @@ Two shape decisions in `redirects.json` exist only because of how the CMS and th
 
 ## Production topology (issue #150, ADR-0019)
 
-`apps/cms` is PostgreSQL-only, and until this section was written, borneojek's own production infrastructure ran MySQL with no PostgreSQL provisioned anywhere on it — the delivery gap [issue #150](https://github.com/ahliweb/awcms-one/issues/150) named directly. What follows is the real, tested production path this repository now ships; [ADR-0019](adr/0019-production-topology-two-images-a-jobs-sidecar-and-a-fail-closed-preflight.md) records the decisions behind it. `compose.yaml`'s own `postgres:18.4` container remains a LOCAL/CI convenience — `compose.production.yaml` (below) is the production shape, and the two are never meant to share a database.
+`apps/cms` is PostgreSQL-only, and until this section was written, borneojek's own production infrastructure ran MySQL with no PostgreSQL provisioned anywhere on it — the delivery gap [ahliweb/awcms-one#150](https://github.com/ahliweb/awcms-one/issues/150) named directly. What follows is the real, tested production path this repository now ships; [ADR-0019](adr/0019-production-topology-two-images-a-jobs-sidecar-and-a-fail-closed-preflight.md) records the decisions behind it. `compose.yaml`'s own `postgres:18.4` container remains a LOCAL/CI convenience — `compose.production.yaml` (below) is the production shape, and the two are never meant to share a database.
 
 ### The two-role database model
 
@@ -368,13 +368,13 @@ DOCKER_BUILDKIT=1 docker build \
 - `ghcr.io/<owner>/<repo>-cms` — the `runtime` target, i.e. the `cms` service.
 - `ghcr.io/<owner>/<repo>-cms-jobs` — the `jobs` target, i.e. the `jobs`/`migrate` services.
 
-(`<owner>/<repo>` is this repository's own GitHub path, lower-cased, so a template-derived repository publishes to its own namespace with nothing to edit — for `ahliweb/awcms-one` that is `ghcr.io/ahliweb/awcms-one-cms` and `ghcr.io/ahliweb/awcms-one-cms-jobs`.) Each push carries three tags — the released semver (`vX.Y.Z` → `X.Y.Z`), the `X.Y` line, and the building commit's `sha` — plus an SBOM and a provenance attestation attached by `docker/build-push-action` itself (`sbom: true`, `provenance: mode=max`), and a second, independent attestation pushed to the registry by `actions/attest-build-provenance`. The workflow also runs, build-only, on a `pull_request` touching `apps/cms/**`/`apps/storefront/**`/`compose.production.yaml`/itself — it never pushes on a PR, and it is not a required status check (AGENTS.md's "The gates").
+(`<owner>/<repo>` is this repository's own GitHub path, lower-cased, so a template-derived repository publishes to its own namespace with nothing to edit — for `ahliweb/omes-web` that is `ghcr.io/ahliweb/omes-web-cms` and `ghcr.io/ahliweb/omes-web-cms-jobs`.) Each push carries three tags — the released semver (`vX.Y.Z` → `X.Y.Z`), the `X.Y` line, and the building commit's `sha` — plus an SBOM and a provenance attestation attached by `docker/build-push-action` itself (`sbom: true`, `provenance: mode=max`), and a second, independent attestation pushed to the registry by `actions/attest-build-provenance`. The workflow also runs, build-only, on a `pull_request` touching `apps/cms/**`/`apps/storefront/**`/`compose.production.yaml`/itself — it never pushes on a PR, and it is not a required status check (AGENTS.md's "The gates").
 
 **Pulling a published image instead of building locally** — set the two env vars `compose.production.yaml`'s `cms`/`jobs`/`migrate` services now read (ADR-0020 D4; both default to today's local-build names, so leaving them unset changes nothing about this file's existing behaviour):
 
 ```bash
-export AWCMS_ONE_CMS_IMAGE=ghcr.io/ahliweb/awcms-one-cms:0.11.0
-export AWCMS_ONE_CMS_JOBS_IMAGE=ghcr.io/ahliweb/awcms-one-cms-jobs:0.11.0
+export AWCMS_ONE_CMS_IMAGE=ghcr.io/ahliweb/omes-web-cms:<version>
+export AWCMS_ONE_CMS_JOBS_IMAGE=ghcr.io/ahliweb/omes-web-cms-jobs:<version>
 docker compose -f compose.production.yaml pull cms
 docker compose -f compose.production.yaml --profile jobs pull jobs
 docker compose -f compose.production.yaml --profile migrate pull migrate
@@ -384,13 +384,13 @@ docker compose -f compose.production.yaml up -d cms
 **Verifying the attestation** before trusting a pulled image — `gh` reads the attestation `actions/attest-build-provenance` pushed to the registry:
 
 ```bash
-gh attestation verify oci://ghcr.io/ahliweb/awcms-one-cms:0.11.0 --owner ahliweb
-gh attestation verify oci://ghcr.io/ahliweb/awcms-one-cms-jobs:0.11.0 --owner ahliweb
+gh attestation verify oci://ghcr.io/ahliweb/omes-web-cms:<version> --owner ahliweb
+gh attestation verify oci://ghcr.io/ahliweb/omes-web-cms-jobs:<version> --owner ahliweb
 ```
 
-A `PASS` names the exact workflow run and commit the image was built from — the same guarantee this document's own "Rollback/cutover" note already assumes ("every image is tagged by the commit/release it was built from"), now independently checkable rather than only asserted. The **SBOM** itself is inspectable the same way any buildx-attested SBOM is: `docker buildx imagetools inspect ghcr.io/ahliweb/awcms-one-cms:0.11.0 --format '{{ json .SBOM }}'`.
+A `PASS` names the exact workflow run and commit the image was built from — the same guarantee this document's own "Rollback/cutover" note already assumes ("every image is tagged by the commit/release it was built from"), now independently checkable rather than only asserted. The **SBOM** itself is inspectable the same way any buildx-attested SBOM is: `docker buildx imagetools inspect ghcr.io/ahliweb/omes-web-cms:<version> --format '{{ json .SBOM }}'`.
 
-**GHCR package visibility** — the first push to a new package (`ahliweb/awcms-one-cms`, `ahliweb/awcms-one-cms-jobs`) may create it as **private**, GHCR's own default for a package with no prior visibility setting. A private package needs its own pull credential (`docker login ghcr.io` with a token carrying `read:packages`) even for a deploy host this repository's own files name no secret for; the repository owner makes a package public from that package's own GitHub settings (its "Package settings" → "Change visibility") once, after which an anonymous `docker pull` works. Nothing in `.github/workflows/images.yml` sets visibility itself — GHCR ties it to manual owner action, not to anything a workflow run can request on its own behalf.
+**GHCR package visibility** — the first push to a new package (`ahliweb/omes-web-cms`, `ahliweb/omes-web-cms-jobs`) may create it as **private**, GHCR's own default for a package with no prior visibility setting. A private package needs its own pull credential (`docker login ghcr.io` with a token carrying `read:packages`) even for a deploy host this repository's own files name no secret for; the repository owner makes a package public from that package's own GitHub settings (its "Package settings" → "Change visibility") once, after which an anonymous `docker pull` works. Nothing in `.github/workflows/images.yml` sets visibility itself — GHCR ties it to manual owner action, not to anything a workflow run can request on its own behalf.
 
 **Why `apps/storefront` is not published** — see [ADR-0020](adr/0020-publish-only-the-cms-images-to-ghcr-with-sbom-and-provenance.md) D2: its build bakes a tenant's live catalog/news content using the CMS owner token as a BuildKit secret, so publishing it from CI would mean that production credential living in a GitHub secret, this repository's runners reaching production, and a published tag silently going stale the moment content changes with no corresponding new image. It stays built on the deploy host, exactly as the "Images" section above describes. `.github/workflows/images.yml` only proves `apps/storefront/Dockerfile` still builds — a build-only `storefront-smoke` job, matrixed over all three `SITE_PROFILE` values, against this repository's own stub CMS (`apps/storefront/scripts/stub-awcms.mjs`) — and never publishes the result.
 
@@ -431,6 +431,38 @@ Every check prints one `PASS|FAIL|SKIP` line and a reason, never a secret value.
 **Rollback/cutover:** every image is tagged by the commit/release it was built from; a rollback is redeploying the previous tag, never editing a running container. Migrations are forward-only with immutable checksums (`apps/cms/scripts/db-migrate.ts`'s `validateAppliedChecksums` refuses to re-apply an already-applied migration whose file content changed) — a bad migration is corrected by a NEW migration, never a hand-edit of an applied one.
 
 **Backup/restore:** see "Backup assurance" immediately below — the encrypted, authenticated, off-site-copied, drill-tested path this repository's own production topology now uses, reusing upstream `apps/cms/deploy/backup/*.sh` through `compose.production.yaml`'s own `backup`/`restore-drill`/`offsite-copy` services. (`apps/cms/ops/backup-awcms.sh`/`restore-drill-awcms.sh` are a different, older, host-specific pair of scripts upstream still carries for a different deployment's own cron — not what this repository's own production topology installs; do not confuse the two.)
+
+## Persistent identifiers inherited from awcms-one
+
+OMES-Web was created from the `ahliweb/awcms-one` template, and a number of machine-facing names still carry the template's name. They are **not typos to tidy**: several name resources that may already exist on an operator's host (a Compose project, named volumes holding database data and encrypted backups, host cron files, image tags) or that are embedded in stored data or applied migrations. Renaming any of them in place can silently orphan a volume, start an empty database beside the real one, break backup selection/retention, or invalidate a recorded migration checksum. Product-facing prose has been corrected (README, AGENTS.md, status); this inventory exists so that none of the identifiers below is changed in a drive-by edit. [ADR-0021](adr/0021-separate-omes-product-site-from-native-host-runtime.md) already forbids renaming the production Compose project, volumes, and env keys casually.
+
+| Identifier | Where it lives | What depends on it |
+| --- | --- | --- |
+| Compose project `awcms-one-production` | `compose.production.yaml` (`name:`) | The prefix of every resource Compose creates for the project, including its default network and the labels `docker compose` uses to find the project's containers |
+| Containers `awcms-one-postgres`, `awcms-one-cms`, `awcms-one-storefront` | `compose.production.yaml` (`container_name:`) | Operator `docker exec`/log/health habits and any host-side monitoring keyed on these names |
+| Volume `awcms-one-production-pgdata` | `compose.production.yaml` (`volumes:`, explicit `name:`) | **The production database's data.** A new name starts an empty PostgreSQL beside the real one |
+| Volume `awcms-one-production-backups` | `compose.production.yaml` (three backup services) | Encrypted backup artifacts, manifests, and the restore-drill evidence log |
+| Local image names `awcms-one/cms`, `awcms-one/cms-jobs`, `awcms-one/storefront:<profile>`, `awcms-one/backup-tools` | `compose.production.yaml` (defaults) | Locally built images on a deploy host; a rename makes Compose rebuild or fail to find the previous tag, which breaks image-based rollback |
+| Env keys `AWCMS_ONE_CMS_IMAGE`, `AWCMS_ONE_CMS_JOBS_IMAGE`, `AWCMS_ONE_BACKUP_IMAGE` | `compose.production.yaml`, operator environment | Existing operator `.env`/shell exports; an unrecognised key is silently ignored and the default image is used instead |
+| `BACKUP_LABEL` default `awcms-one` | `compose.production.yaml` (three services), `docker/backup/select-and-offsite-copy.sh` | The label embedded in backup artifact names; retention and off-site selection match on it, so changing it leaves earlier artifacts outside retention |
+| Host ops files `ops/awcms-one-backup.crontab`, installed as `/etc/cron.d/awcms-one-backup`; variables `AWCMS_ONE_REPO` (`/opt/awcms-one`) and `AWCMS_ONE_BACKUP_LOG` (`/var/log/awcms-one`) | `ops/` | Cron files and paths already installed on a host; renaming the file in the repo does not rename the installed copy |
+| Database `awcms`, roles `awcms_app`, `awcms_worker`, `awcms_setup`, and their `AWCMS_*_PASSWORD` keys | `.env.example`, `docker/postgres-init/`, upstream `apps/cms/sql/019_awcms_db_role_separation.sql` and `022_awcms_db_worker_setup_roles.sql` | Upstream-owned names (`ahliweb/awcms`); the roles' grants are set by migrations this repository never edits |
+| Table prefix `awcms_commerce_*` and the commerce migration range `901`-`999` | `apps/cms/sql/`, ADR-0015 | Applied migrations are checksum-immutable; the range split with upstream (`001`-`899`) is enforced by a test |
+| Browser storage keys `awcms-one:akun:v1`, `awcms-one:keranjang:v1`, `awcms-one:wishlist:v1`, `awcms-one:afiliasi:v1`, `awcms-one:pesanan:telepon`, `awcms-one:popup:*` | `apps/storefront/src` | A rename logs shoppers out and empties carts; these exist only on the `toko`/`berita` template surface, not in the `landing` pages OMES-Web ships |
+| Workspace package scope `@awcms-one/*` (config, gerbang, kontrak, storefront), root workspace name `omes` | `package.json` files, `bun.lock` | The lockfile records every workspace name; changing one needs a bun-driven lockfile regeneration (see below) |
+| Published image namespace | `.github/workflows/images.yml` | Derived from the repository path, so OMES-Web publishes `ghcr.io/ahliweb/omes-web-cms` and `ghcr.io/ahliweb/omes-web-cms-jobs`; the `ghcr.io/ahliweb/awcms-one-*` packages belong to the template |
+
+Already renamed and therefore safe to cite as OMES-Web's own: the local development stack (`compose.yaml`: project `omes`, container `omes-postgres`, volume `omes-pgdata`), the root `.env.example` seed tenant (`SEED_TENANT_CODE=omes`), the repository URL and description in the root `package.json`, and the image namespace above.
+
+**Renaming any identifier in the table requires its own operator-approved issue; do not fold it into a docs or feature change.** Such an issue should contain, at minimum:
+
+1. an inventory of what actually exists on each host (`docker compose ls`, `docker volume ls`, installed `/etc/cron.d` files, image tags in use) — this document lists what the repository can create, not what an operator has;
+2. the target names and, for volumes, a data-preserving migration (dump or copy into the new volume, verify row counts and a restore drill against the copy) with a stated maintenance window;
+3. a rollback path that keeps the old project and volumes untouched until the new stack has passed verification, and does not run both stacks against the same data;
+4. backup continuity: how artifacts under the old `BACKUP_LABEL` stay selected and retained, and a fresh restore-drill result under the new names;
+5. a transition for the `AWCMS_ONE_*` env keys that reads the new key first and the old key as a fallback, with a dated removal;
+6. for the root workspace name or the `@awcms-one/*` scope: a lockfile regeneration performed with `bun` only (never hand-edited), reviewed for dependency-version churn, with `bun run check:lockfile` and every build-profile gate green;
+7. explicit exclusions: no migration is renumbered or edited, and the `awcms_*` database and role names stay with upstream.
 
 ## Backup assurance (issue #213)
 

@@ -102,7 +102,7 @@ bun run screenshots:readme -- --profil landing --pages home --viewport desktop -
 
 ## 3. `apps/cms` (`check-cms` CI job): a real, provisioned PostgreSQL
 
-Unlike increment 1, this is no longer a manual-only procedure — [issue #25](https://github.com/ahliweb/awcms-one/issues/25) provisioned PostgreSQL for both local development and CI. `apps/cms` carries its own large gate chain (`apps/cms/package.json`'s `check` script: 53 `&&`-joined steps — lint, docs/i18n, every registry/consistency gate, typecheck, `bun test`, `bun run build`) plus its own `bun test` (roughly 7,170 tests as of the affiliates PR) and a `tests/integration/` suite that needs a live database.
+Unlike increment 1, this is no longer a manual-only procedure — [ahliweb/awcms-one#25](https://github.com/ahliweb/awcms-one/issues/25) provisioned PostgreSQL for both local development and CI. `apps/cms` carries its own large gate chain (`apps/cms/package.json`'s `check` script: 53 `&&`-joined steps — lint, docs/i18n, every registry/consistency gate, typecheck, `bun test`, `bun run build`) plus its own `bun test` (roughly 7,170 tests as of the affiliates PR) and a `tests/integration/` suite that needs a live database.
 
 ### Running it locally
 

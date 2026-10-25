@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](cms.md)
 
-<!-- i18n-source-hash: sha256:e3f669cfa5ef3d964c18bcff05699884e8d3a55388a2d4d889cc46e228d695f9 -->
+<!-- i18n-source-hash: sha256:6e1a824cc2bd177b09de8e1ae7d257d7e346dedaecc3151427633f5fb4e9acb7 -->
 
 # CMS: authoring, publikasi, izin, audit, media, taksonomi
 
@@ -293,7 +293,7 @@ Layar "Fitur" BjekMart adalah `settings.defaults.features` milik `module.ts` `co
 
 ## Sengaja tidak ada di sini
 
-- **Tanpa ubah e-mail/telepon pada akun yang sudah ada, atau verifikasi telepon** — [ADR-0016](adr/0016-customer-accounts-are-otp-verified-commerce-accounts-with-bearer-sessions.id.md) D6, ditangguhkan sebagai tambahan ketat atas kontrak wave-0 [issue #32](https://github.com/ahliweb/awcms-one/issues/32). Akun pelanggan, login OTP (e-mail dan WhatsApp — [issue #108](https://github.com/ahliweb/awcms-one/issues/108)), sesi bearer, dashboard akun (alamat/wishlist/pesanan/ulasan), program afiliasi, toggle fitur dan harga bertingkat saat quote (issue #118, lihat di atas) sudah selesai. WhatsApp adalah kanal login-saja untuk akun yang sudah ada; pendaftaran tetap hanya OTP e-mail, sehingga akun yang benar-benar hanya-telepon tetap terbuka (dicatat di catatan tindak lanjut ADR-0016 sendiri, tidak dibuka kembali sebagai keputusan baru di sini).
+- **Tanpa ubah e-mail/telepon pada akun yang sudah ada, atau verifikasi telepon** — [ADR-0016](adr/0016-customer-accounts-are-otp-verified-commerce-accounts-with-bearer-sessions.id.md) D6, ditangguhkan sebagai tambahan ketat atas kontrak wave-0 [ahliweb/awcms-one#32](https://github.com/ahliweb/awcms-one/issues/32). Akun pelanggan, login OTP (e-mail dan WhatsApp — [ahliweb/awcms-one#108](https://github.com/ahliweb/awcms-one/issues/108)), sesi bearer, dashboard akun (alamat/wishlist/pesanan/ulasan), program afiliasi, toggle fitur dan harga bertingkat saat quote (issue #118, lihat di atas) sudah selesai. WhatsApp adalah kanal login-saja untuk akun yang sudah ada; pendaftaran tetap hanya OTP e-mail, sehingga akun yang benar-benar hanya-telepon tetap terbuka (dicatat di catatan tindak lanjut ADR-0016 sendiri, tidak dibuka kembali sebagai keputusan baru di sini).
 - **Tarif kurir RajaOngkir, gerbang pembayaran Midtrans Snap (termasuk rute intake webhook dan job reconcile), dan laporan penjualan sudah semuanya selesai** — lihat "Tarif kurir" (issue #107), "Gerbang pembayaran … issue #113" dan "Laporan penjualan" (issue #117) di atas.
 - **`apps/cms/tests/integration/commerce-orders.integration.test.ts` ada** (`apps/cms/tests/integration/`) dan mencakup persis daftar penerimaan issue #29 — pengurangan stok, double-submit idempoten, pelacakan telepon-salah, expire-lalu-restock, dan isolasi RLS lintas-tenant — terhadap instans Postgres nyata yang sudah dimigrasikan. Suite itu di-commit setelah teks PR issue #29 sendiri ditulis (teks PR itu sendiri berkata suite "was not written as a formal automated test" — pohon yang sudah digabung tidak sependapat, dan dokumen ini mengikuti pohon itu; lihat [`docs/pengujian.md`](pengujian.id.md)).
 - **Tanpa full-text ranked search** pada filter `q` daftar produk owner — hanya pencocokan substring/trigram (`pg_trgm`, `sql/907`), tanpa integrasi `site_search`.

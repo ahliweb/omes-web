@@ -7,15 +7,12 @@
  * ALREADY MIGRATED `apps/cms` (`bun run db:up && bun run db:migrate:cms`
  * first — see `docs/deployment.md`'s "Local database").
  *
- * ## Why `contoh:borneojek-mart` is still the default
+ * ## Default profile
  *
- * `bun run db:seed:cms` with NO `--profil` flag targets
- * `contoh:borneojek-mart` — the full BjekMart reference content this
- * repository's own live deployment has always seeded (moved here, verbatim
- * in shape, from the file this issue renames — see
- * `tools/seed-borneojek-mart.ts`, now a one-release deprecation shim). ADR-
- * 0018 D6's own "keeps running unmodified" premise: the live reference
- * deployment's own `db:seed:cms` invocation does not change.
+ * `bun run db:seed:cms` runs `--profil landing` (`package.json`), and the
+ * CLI's own default (`let profil = "landing"` below) is `landing` too. The
+ * `contoh:borneojek-mart` key still maps to `tools/seed-data/contoh/borneojek-mart/`,
+ * which this repository does not carry, so that key has no seed set to load here.
  *
  * `toko`, `berita`, and `landing` are neutral, fictional, small sample
  * content sets for a repository DERIVED from this template (`template:init`,

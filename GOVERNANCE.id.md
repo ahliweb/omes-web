@@ -1,12 +1,12 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](GOVERNANCE.md)
 
-<!-- i18n-source-hash: sha256:8e9351f468efd0545f73698dec822944b5f9e07adba3e89004e3432bdc801a49 -->
+<!-- i18n-source-hash: sha256:aee58c68b6886dcf9d579a8f0766649772ed42d31abc82d28598ff4e68b55a8f -->
 
 # Governance
 
 ## Prinsip yang mengikat setiap keputusan
 
-**Repo ini me-re-platform data toko komersial sungguhan dan, pada akhirnya, lalu lintas produksinya.** Cacat di sini bukan sesuatu yang abstrak: skema sumbernya berasal dari basis data MySQL produksi yang melayani pesanan sungguhan, dan tujuannya adalah platform berbasis PostgreSQL yang kelak akan menanggung transaksi sungguhan. Setiap keputusan dinilai terhadap itu.
+**Repo ini adalah wajah publik, sistem konten, dan deployment sebuah produk (OMES), yang dibangun di atas template yang sendirinya merupakan re-platform toko komersial sungguhan.** Cacat di sini bukan sesuatu yang abstrak: CMS menyimpan data milik produk di bawah row-level security, situs publik adalah yang dibaca dan dijadikan sumber instalasi oleh pengunjung, dan modul commerce warisan template dirancang untuk menanggung transaksi sungguhan. Setiap keputusan dinilai terhadap itu.
 
 Konsekuensinya:
 
@@ -23,13 +23,13 @@ Konsekuensinya:
 | **Penerjemah** | Mengisi dan menyunting cermin Indonesia dokumen governance |
 | **Agen AI** | Boleh melakukan apa pun yang diizinkan [`AGENTS.md`](AGENTS.md) |
 
-Peran di dalam `apps/cms` untuk kemampuan generiknya sendiri — admission modul, kebijakan RBAC/ABAC — mengikuti governance `awcms` sendiri sebagaimana dibawa di `apps/cms/GOVERNANCE.md`; dokumen ini mengatur `awcms-one` sebagai repositori, bukan otoritas desain internal `awcms` sendiri.
+Peran di dalam `apps/cms` untuk kemampuan generiknya sendiri — admission modul, kebijakan RBAC/ABAC — mengikuti governance `awcms` sendiri sebagaimana dibawa di `apps/cms/GOVERNANCE.md`; dokumen ini mengatur `omes-web` sebagai repositori, bukan otoritas desain internal `awcms` sendiri.
 
 ## Mencatat sebuah keputusan
 
-Repo ini belum punya log architecture-decision-record formal (`docs/adr/`) — [issue #7](https://github.com/ahliweb/awcms-one/issues/7) mencakup dokumentasi arsitektur dan referensi, dan mungkin akan memperkenalkannya. Sampai saat itu, keputusan yang mengubah struktur repo ini, model datanya, atau sebuah aturan di `AGENTS.md` dicatat di pull request yang membuatnya dan, bila perubahannya publik atau struktural, di changeset-nya (lihat [`.changesets/README.md`](.changesets/README.md)).
+Repo ini punya log architecture-decision-record formal di [`docs/adr/`](docs/adr/), dengan indeks di [`docs/adr/README.md`](docs/adr/README.md). Keputusan yang mengubah struktur repo ini, model datanya, atau sebuah aturan di `AGENTS.md` dicatat sebagai ADR di sana, bersama pull request yang membuatnya dan, bila perubahannya publik atau struktural, changeset-nya (lihat [`.changesets/README.md`](.changesets/README.md)).
 
-`bun run audit:dokumen` sudah membawa pemeriksaan yang dibutuhkan sebuah indeks `docs/adr/` — indeks dua arah yang lengkap, tanpa baris ganda, kesesuaian status, dan kutipan `ADR-NNNN` yang resolve — dan melewati dirinya sendiri sampai direktori itu ada, alih-alih ditambal belakangan di bawah tekanan yang sama yang biasanya membuat hal semacam ini setengah jadi.
+`bun run audit:dokumen` menegakkan indeks itu: indeks dua arah yang lengkap, tanpa baris ganda, kesesuaian status, dan kutipan `ADR-NNNN` yang resolve.
 
 Sebuah changeset saja cukup untuk perbaikan bug, perubahan gaya, komponen baru yang mengikuti kontrak yang sudah ada, atau pembaruan dependency rutin.
 

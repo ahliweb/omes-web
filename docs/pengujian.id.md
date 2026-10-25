@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](pengujian.md)
 
-<!-- i18n-source-hash: sha256:4065ad633c7aa8f3373040efb979d7d459c7cbd6ab4403f6bcabb65783d71a40 -->
+<!-- i18n-source-hash: sha256:1a7d42bea7691442359273c357aee437095e294b2a49c66f8066e88b19e77ad2 -->
 
 # Pengujian
 
@@ -103,7 +103,7 @@ bun run screenshots:readme -- --profil landing --pages home --viewport desktop -
 
 ## 3. `apps/cms` (job CI `check-cms`): PostgreSQL nyata yang disediakan
 
-Berbeda dari increment 1, ini bukan lagi prosedur manual-saja — [issue #25](https://github.com/ahliweb/awcms-one/issues/25) menyediakan PostgreSQL baik untuk pengembangan lokal maupun CI. `apps/cms` membawa rantai gate besarnya sendiri (skrip `check` milik `apps/cms/package.json`: 53 langkah gabungan-`&&` — lint, docs/i18n, setiap gate registry/konsistensi, typecheck, `bun test`, `bun run build`) plus `bun test`-nya sendiri (sekitar 7.170 tes per PR afiliasi) dan suite `tests/integration/` yang butuh basis data hidup.
+Berbeda dari increment 1, ini bukan lagi prosedur manual-saja — [ahliweb/awcms-one#25](https://github.com/ahliweb/awcms-one/issues/25) menyediakan PostgreSQL baik untuk pengembangan lokal maupun CI. `apps/cms` membawa rantai gate besarnya sendiri (skrip `check` milik `apps/cms/package.json`: 53 langkah gabungan-`&&` — lint, docs/i18n, setiap gate registry/konsistensi, typecheck, `bun test`, `bun run build`) plus `bun test`-nya sendiri (sekitar 7.170 tes per PR afiliasi) dan suite `tests/integration/` yang butuh basis data hidup.
 
 ### Menjalankannya secara lokal
 

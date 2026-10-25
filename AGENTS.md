@@ -1,14 +1,25 @@
 🇬🇧 English (source) · 🇮🇩 [Bahasa Indonesia](AGENTS.id.md)
 
-# AGENTS.md — awcms-one's working contract
+# AGENTS.md — omes-web's working contract
 
 Applies to humans and AI agents working in this repo alike. Read this before doing anything else. Where a rule here collides with a habit that feels natural, the rule here wins — every item exists because breaking it has caused, or would cause, a defect that is invisible until someone acts on the wrong assumption.
 
 ## What this repo is
 
-**awcms-one** re-platforms the borneojek-mart commerce store — PHP/Laravel/MySQL/React-Inertia — onto the AWCMS stack: Bun, Astro, and PostgreSQL under row-level security. This is a **re-platform, not a refactor**: no Laravel code is carried over. The source schema is read from the live `commerce_bj_mart` MySQL database and re-expressed as AWCMS module tables under PostgreSQL RLS. Full framing: [issue #1](https://github.com/ahliweb/awcms-one/issues/1).
+**omes-web** (`ahliweb/omes-web`) is the public website, the product-owned AWCMS CMS and database, and the deployment of the **OMES** product site (`SITE_PROFILE=landing`, `omes.ahlikoding.com`). It is a product **derived from the `ahliweb/awcms-one` template**, which in turn re-platformed the borneojek-mart commerce store onto the AWCMS stack (Bun, Astro, PostgreSQL under row-level security; template framing: [ahliweb/awcms-one#1](https://github.com/ahliweb/awcms-one/issues/1)). The commerce module, the `toko`/`berita` build profiles, and the BjekMart reference seed are retained **template capability**, not OMES product features. Product boundary: [ADR-0021](docs/adr/0021-separate-omes-product-site-from-native-host-runtime.md).
 
-This document's own workspace layout, gate mechanism, and changeset convention are adapted from [`ahliweb/media-lenterakalteng`](https://github.com/ahliweb/media-lenterakalteng). Where a rule below is inherited from that repo's own hard-won lesson rather than one this repo has found for itself, it says so.
+**Ownership, so work lands in the right repository:**
+
+| Repository | Owns |
+| --- | --- |
+| `ahliweb/omes-web` (this repo) | OMES website and theme/config, the product's CMS database and deployment, its releases and versions, the admin pages that come from the `apps/cms` subtree. Never forks the `omes_control` module and never adds a second (AI/agent) runtime |
+| [`ahliweb/awcms-one`](https://github.com/ahliweb/awcms-one) | The reusable template: build profiles, `template:init`, commerce capability. A feature reusable by other products belongs there (or upstream), then arrives here — it is not an active runtime dependency of OMES-Web |
+| [`ahliweb/awcms`](https://github.com/ahliweb/awcms) | The CMS platform embedded as `apps/cms`; generic CMS changes are made there first, then pulled in |
+| [`ahliweb/omes`](https://github.com/ahliweb/omes) | The native host, CLI, installer, and worker protocol. A **different repository** from `omes-web` — never conflate the two |
+
+**Issue and ADR numbers.** Many `#NNN` references in this tree, and every ADR through 0020, predate OMES-Web and refer to `ahliweb/awcms-one`; they are written `ahliweb/awcms-one#NNN` where ambiguous. A bare `#NNN` in a new document means an `ahliweb/omes-web` issue. **Persistent identifiers** (the production Compose project, volumes, image names, database roles, `awcms-one:*` browser-storage keys, migration ranges) still carry the template's name on purpose; they are inventoried in [`docs/deployment.md`](docs/deployment.md#persistent-identifiers-inherited-from-awcms-one) and are never renamed in a drive-by edit.
+
+This document's own workspace layout, gate mechanism, and changeset convention are adapted from [`ahliweb/media-lenterakalteng`](https://github.com/ahliweb/media-lenterakalteng) via the `awcms-one` template. Where a rule below is inherited from that repo's own hard-won lesson rather than one this repo has found for itself, it says so.
 
 ## What is here today, and what is not
 
@@ -91,7 +102,7 @@ This is a Bun workspace (`workspaces: ["apps/*", "packages/*"]`); each directory
 
 **`bun run template:init`** (`tools/template-init.ts` + `tools/template-init/**`) is an idempotent CLI a derived repository runs once to rewrite its brand surface — name, domain, colours, contact, chosen profile — see [ADR-0018 D4/D5](docs/adr/0018-awcms-one-is-a-template-with-build-profiles-and-an-idempotent-init.md) and `docs/template.md`'s CLI reference for the exact flag list and exit codes. **It never touches `apps/cms/**` under any flag** — that tree is upstream's own, embedded via subtree (see "The subtree embed" above), and a derived deployment's brand data lives in what `apps/cms` serves or in `apps/storefront`'s own build-time `site.ts` fallback, never in `apps/cms`'s source. What it *does* rewrite is the short, named list in `docs/template.md`'s "What it rewrites" section (`site.ts`, root `package.json`, `compose.yaml`, `README*.md`/`SUPPORT*.md`, both `.env.example` files, `tools/seed-cms.ts`'s default, `CHANGELOG.md`, `.changesets/*.md`) — nothing outside that list, and never a guess at a derived repo's own GitHub owner/name (`package.json`'s `repository.url` becomes a loud `GANTI-ORG` placeholder instead). `.github/workflows/template-init-smoke.yml` matrices `template:init` over the three profiles into a temporary checkout on every push.
 
-**Seed layout (issue #139):** `tools/seed-cms.ts --profil <toko|berita|landing|contoh:borneojek-mart>` (`bun run db:seed:cms:profil <name>`) reads neutral, fictional per-profile content from `tools/seed-data/profil/{toko,berita,landing}/**` (no real people/phone numbers/e-mails/brand names) plus placeholder SVGs from `tools/seed-assets/profil/<profile>/`. The BjekMart reference content itself lives at tools/seed-data/contoh/borneojek-mart/**; `bun run db:seed:cms` with no `--profil` still targets it by default, so this repo's own live deployment is unaffected. `tools/lib/seed-profil.mjs` holds the shared schema/no-PII/asset validators `--dry-run` and `tests/seed-profil.test.mjs` both use. Never seed a neutral profile into this repo's own shared local dev database (see `docs/alur-kerja-pengembangan.md`'s "Seeding a profile locally").
+**Seed layout (issue #139):** `tools/seed-cms.ts --profil <toko|berita|landing|contoh:borneojek-mart>` (`bun run db:seed:cms:profil <name>`) reads neutral, fictional per-profile content from `tools/seed-data/profil/{toko,berita,landing}/**` (no real people/phone numbers/e-mails/brand names) plus placeholder SVGs from `tools/seed-assets/profil/<profile>/`. `bun run db:seed:cms` runs `--profil landing` (see `package.json`), and the CLI's own default is `landing` too. This checkout carries no `tools/seed-data/contoh/borneojek-mart/` directory, so the `contoh:borneojek-mart` key has no seed set to load here. `tools/lib/seed-profil.mjs` holds the shared schema/no-PII/asset validators `--dry-run` and `tests/seed-profil.test.mjs` both use. Never seed a neutral profile into this repo's own shared local dev database (see `docs/alur-kerja-pengembangan.md`'s "Seeding a profile locally").
 
 ## The gates
 

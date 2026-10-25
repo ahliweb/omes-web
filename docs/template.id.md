@@ -1,8 +1,16 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](template.md)
 
-<!-- i18n-source-hash: sha256:1ac1745c630c12eab3194a6b07af4b14d3dcdc99bd300ca8c4034260fb654046 -->
+<!-- i18n-source-hash: sha256:3348a8f5160ec3716dd13a95b2e98ea3b60afab0a27adad98fd42487eaa05492 -->
 
-# Menggunakan awcms-one sebagai template
+# Mekanisme template (dipertahankan dari awcms-one)
+
+> **Baca ini dulu — repositori ini adalah OMES-Web, bukan template.** `ahliweb/omes-web` dibuat dari template [`ahliweb/awcms-one`](https://github.com/ahliweb/awcms-one) dan kini menjadi repositori produk tersendiri: website publik, CMS/database milik produk, dan deployment situs produk OMES (`SITE_PROFILE=landing`, `omes.ahlikoding.com`; batas dalam [ADR-0021](adr/0021-separate-omes-product-site-from-native-host-runtime.id.md)). Mekanisme di bawah — profil build, `template:init`, seed per profil — **dipertahankan** karena kode dan tesnya masih ada dan masih dijaga gerbang, tetapi instruksi berikutnya ditulis untuk template dan disimpan sebagai referensinya. Secara konkret:
+>
+> - "Use this template" / langkah 1 di bawah berlaku untuk repositori **template** (`ahliweb/awcms-one`), bukan repo ini. Jangan menjalankan ulang `bun run template:init` pada `omes-web`; perintah itu sudah dijalankan sekali dan tidak dimaksudkan untuk diterapkan ulang pada produk yang berjalan.
+> - `toko` dan `berita` tetap dapat dibangun sebagai kapabilitas template; OMES-Web sendiri hanya mengirim `landing`. Modul commerce dan seed referensi BjekMart (`contoh:borneojek-mart`) adalah konten template, bukan konten produk OMES.
+> - Fitur yang dapat dipakai ulang lintas produk berada di upstream `ahliweb/awcms` atau template `ahliweb/awcms-one`, lalu masuk ke sini; pekerjaan host native, CLI, dan installer berada di [`ahliweb/omes`](https://github.com/ahliweb/omes) (repositori berbeda dari `omes-web`). Tidak ada runtime AI terpisah di sini.
+> - Nomor issue dan ADR di dokumen ini yang mendahului repositori ini (`#137`, `#138`, `#139`, `ADR-0018`...) adalah nomor era template: issue-nya berada di `ahliweb/awcms-one`, ADR-nya dibawa ke pohon ini.
+> - Nama Docker, Compose, volume, dan role yang masih berawalan `awcms-one` adalah identifier persisten, diinventarisasi di [`deployment.md`](deployment.id.md#identifier-persisten-warisan-awcms-one) dan sengaja tidak diganti namanya.
 
 `awcms-one` adalah produk BjekMart sekaligus **template** yang menjadi titik awal aplikasi lain: `SITE_PROFILE` saat build memutuskan halaman mana yang dikirim sebuah deployment, dan `bun run template:init` yang idempoten menulis ulang permukaan merek untuk repo yang dibuat lewat flag *template repository* milik GitHub sendiri. Dokumen ini adalah referensi kerja yang dijanjikan [ADR-0018](adr/0018-awcms-one-is-a-template-with-build-profiles-and-an-idempotent-init.id.md): bagaimana aplikasi baru dimulai dari `awcms-one`, apa yang dilakukan `template:init` untuk menjadikan repo turunan miliknya sendiri, matriks profil build yang memutuskan halaman mana yang dikirim sebuah deployment, dan di mana BjekMart sendiri berada sekarang repo ini juga menjadi template. Setiap mekanisme yang dijelaskan dokumen ini adalah kode nyata, teruji, dan berjalan — perilaku penyaringan halaman `SITE_PROFILE` (`apps/storefront/src/config/profil.ts`, `src/profil/**`, issue #137), `bun run template:init` (`tools/template-init.ts` + `tools/template-init/**`, diuji oleh `tests/template-init.test.mjs`, dimatriks di CI oleh `.github/workflows/template-init-smoke.yml`, issue #138), dan set seed netral per profil (`tools/seed-cms.ts`, issue #139). Lihat "Status" di bagian bawah untuk riwayat landing bertanggal dan apa yang ditutup increment 6 (issue #140).
 

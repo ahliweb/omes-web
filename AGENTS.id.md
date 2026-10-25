@@ -1,16 +1,27 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](AGENTS.md)
 
-<!-- i18n-source-hash: sha256:57a62b58e23be1eaa6e60afa3e98bc91067976a164219ade506a30e29cae66fe -->
+<!-- i18n-source-hash: sha256:17f8fd0cce9d0d0e32b3d8484aef32bb7c053dc79c7706559dd318ff64544dc4 -->
 
-# AGENTS.md — kontrak kerja awcms-one
+# AGENTS.md — kontrak kerja omes-web
 
 Berlaku untuk manusia maupun agen AI yang bekerja di repo ini. Baca ini sebelum melakukan apa pun yang lain. Bila sebuah aturan di sini berbenturan dengan kebiasaan yang terasa alami, aturan di sinilah yang menang — setiap butir ada karena melanggarnya sudah, atau akan, menyebabkan cacat yang tidak terlihat sampai seseorang bertindak atas asumsi yang salah.
 
 ## Apa repo ini
 
-**awcms-one** me-re-platform toko komersial borneojek-mart — PHP/Laravel/MySQL/React-Inertia — ke stack AWCMS: Bun, Astro, dan PostgreSQL di bawah row-level security. Ini adalah **re-platform, bukan refactor**: tidak ada kode Laravel yang dibawa. Skema sumber dibaca dari basis data MySQL `commerce_bj_mart` yang hidup dan diekspresikan ulang sebagai tabel modul AWCMS di bawah RLS PostgreSQL. Kerangka lengkap: [issue #1](https://github.com/ahliweb/awcms-one/issues/1).
+**omes-web** (`ahliweb/omes-web`) adalah website publik, CMS AWCMS dan database milik produk, serta deployment situs produk **OMES** (`SITE_PROFILE=landing`, `omes.ahlikoding.com`). Ini adalah produk yang **diturunkan dari template `ahliweb/awcms-one`**, yang sendirinya me-re-platform toko komersial borneojek-mart ke stack AWCMS (Bun, Astro, PostgreSQL di bawah row-level security; kerangka template: [ahliweb/awcms-one#1](https://github.com/ahliweb/awcms-one/issues/1)). Modul commerce, profil build `toko`/`berita`, dan seed referensi BjekMart dipertahankan sebagai **kapabilitas template**, bukan fitur produk OMES. Batas produk: [ADR-0021](docs/adr/0021-separate-omes-product-site-from-native-host-runtime.id.md).
 
-Tata letak workspace, mekanisme gerbang, dan konvensi changeset dokumen ini diadaptasi dari [`ahliweb/media-lenterakalteng`](https://github.com/ahliweb/media-lenterakalteng). Di mana sebuah aturan di bawah diwarisi dari pelajaran mahal repo itu sendiri alih-alih ditemukan sendiri oleh repo ini, itu dinyatakan.
+**Kepemilikan, agar pekerjaan mendarat di repositori yang tepat:**
+
+| Repositori | Memiliki |
+| --- | --- |
+| `ahliweb/omes-web` (repo ini) | Website dan tema/konfigurasi OMES, database CMS dan deployment milik produk, rilis dan versinya, halaman admin dari subtree `apps/cms`. Tidak memfork modul `omes_control` dan tidak menambah runtime (AI/agen) kedua |
+| [`ahliweb/awcms-one`](https://github.com/ahliweb/awcms-one) | Template yang dapat dipakai ulang: profil build, `template:init`, kapabilitas commerce. Fitur yang dapat dipakai produk lain berada di sana (atau upstream), lalu masuk ke sini — bukan dependency runtime aktif OMES-Web |
+| [`ahliweb/awcms`](https://github.com/ahliweb/awcms) | Platform CMS yang disematkan sebagai `apps/cms`; perubahan CMS generik dibuat di sana lebih dulu, lalu ditarik |
+| [`ahliweb/omes`](https://github.com/ahliweb/omes) | Host native, CLI, installer, dan protokol worker. **Repositori berbeda** dari `omes-web` — jangan pernah dicampuradukkan |
+
+**Nomor issue dan ADR.** Banyak referensi `#NNN` di pohon ini, dan setiap ADR hingga 0020, mendahului OMES-Web dan merujuk ke `ahliweb/awcms-one`; ditulis `ahliweb/awcms-one#NNN` bila ambigu. `#NNN` polos pada dokumen baru berarti issue `ahliweb/omes-web`. **Identifier persisten** (proyek Compose produksi, volume, nama image, role database, kunci penyimpanan browser `awcms-one:*`, rentang migrasi) sengaja masih memakai nama template; semuanya diinventarisasi di [`docs/deployment.md`](docs/deployment.id.md#identifier-persisten-warisan-awcms-one) dan tidak pernah diganti dalam suntingan sambil lalu.
+
+Tata letak workspace, mekanisme gerbang, dan konvensi changeset dokumen ini diadaptasi dari [`ahliweb/media-lenterakalteng`](https://github.com/ahliweb/media-lenterakalteng) lewat template `awcms-one`. Di mana sebuah aturan di bawah diwarisi dari pelajaran mahal repo itu sendiri alih-alih ditemukan sendiri oleh repo ini, itu dinyatakan.
 
 ## Yang ada hari ini, dan yang tidak
 

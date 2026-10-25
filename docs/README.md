@@ -2,7 +2,7 @@
 
 # Documentation
 
-Architecture, schema, API, CMS workflow, storefront behaviour, testing, deployment, and process documentation for `awcms-one` — describing the repository **as it actually is in the tree today**, never as it was originally planned. Where the tree and an issue's original text disagree, these documents follow the tree, and say so. [`status.md`](status.md) is the single current-state summary these documents' own detail backs up; history — which issue or epic built which piece — lives in [`CHANGELOG.md`](../CHANGELOG.md) and the [ADR index](adr/README.md).
+Architecture, schema, API, CMS workflow, storefront behaviour, testing, deployment, and process documentation for `omes-web` (the OMES product site, created from the `awcms-one` template) — describing the repository **as it actually is in the tree today**, never as it was originally planned. Where the tree and an issue's original text disagree, these documents follow the tree, and say so. [`status.md`](status.md) is the single current-state summary these documents' own detail backs up; history — which issue or epic built which piece — lives in [`CHANGELOG.md`](../CHANGELOG.md) and the [ADR index](adr/README.md).
 
 | Document | Contents |
 | --- | --- |
@@ -21,7 +21,7 @@ Architecture, schema, API, CMS workflow, storefront behaviour, testing, deployme
 | [`pengujian.md`](pengujian.md) | The four test tiers — which need PostgreSQL, which drive a real browser, and which do not |
 | [`deployment.md`](deployment.md) | Build vs. serve, environment variables, the production topology, published images, what the container may and may not reach |
 | [`alur-kerja-pengembangan.md`](alur-kerja-pengembangan.md) | Branching, real branch protection settings, changesets, the release cut |
-| [`template.md`](template.md) | Using awcms-one as a template: `template:init`, the build-profile matrix, per-profile seeds, BjekMart as the reference example |
+| [`template.md`](template.md) | The retained template mechanism (from awcms-one): `template:init`, the build-profile matrix, per-profile seeds, BjekMart as the reference example |
 
 ## What this directory does not duplicate
 

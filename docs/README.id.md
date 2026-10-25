@@ -1,10 +1,10 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](README.md)
 
-<!-- i18n-source-hash: sha256:2316165cb384dc93622cb09d7c9122d28a6e43f692da7e68f859ce6f82eb14af -->
+<!-- i18n-source-hash: sha256:40fd97ca4e3315ac186020be062973d3e96f6cedd5c34bae69f1540517c3257c -->
 
 # Dokumentasi
 
-Dokumentasi arsitektur, skema, API, alur kerja CMS, perilaku storefront, pengujian, deployment, dan proses untuk `awcms-one` — mendeskripsikan repositori **sebagaimana ia benar-benar ada di tree hari ini**, tidak pernah sebagaimana direncanakan semula. Di mana tree dan teks asli suatu issue berbeda, dokumen-dokumen ini mengikuti tree, dan menyatakannya. [`status.md`](status.id.md) adalah ringkasan keadaan-terkini tunggal yang didukung detail dokumen-dokumen ini sendiri; riwayat — issue atau epic mana yang membangun bagian mana — hidup di [`CHANGELOG.md`](../CHANGELOG.md) dan [indeks ADR](adr/README.id.md).
+Dokumentasi arsitektur, skema, API, alur kerja CMS, perilaku storefront, pengujian, deployment, dan proses untuk `omes-web` (situs produk OMES, dibuat dari template `awcms-one`) — mendeskripsikan repositori **sebagaimana ia benar-benar ada di tree hari ini**, tidak pernah sebagaimana direncanakan semula. Di mana tree dan teks asli suatu issue berbeda, dokumen-dokumen ini mengikuti tree, dan menyatakannya. [`status.md`](status.id.md) adalah ringkasan keadaan-terkini tunggal yang didukung detail dokumen-dokumen ini sendiri; riwayat — issue atau epic mana yang membangun bagian mana — hidup di [`CHANGELOG.md`](../CHANGELOG.md) dan [indeks ADR](adr/README.id.md).
 
 | Dokumen | Isi |
 | --- | --- |
@@ -23,7 +23,7 @@ Dokumentasi arsitektur, skema, API, alur kerja CMS, perilaku storefront, penguji
 | [`pengujian.md`](pengujian.id.md) | Empat tingkat tes — mana yang butuh PostgreSQL, mana yang menjalankan browser sungguhan, dan mana yang tidak |
 | [`deployment.md`](deployment.id.md) | Build vs. serve, variabel environment, topologi produksi, image yang dipublikasikan, apa yang boleh dan tidak boleh dijangkau container |
 | [`alur-kerja-pengembangan.md`](alur-kerja-pengembangan.id.md) | Branching, pengaturan branch protection nyata, changeset, pemotongan rilis |
-| [`template.md`](template.id.md) | Menggunakan awcms-one sebagai template: `template:init`, matriks profil build, seed per profil, BjekMart sebagai contoh referensi |
+| [`template.md`](template.id.md) | Mekanisme template yang dipertahankan (dari awcms-one): `template:init`, matriks profil build, seed per profil, BjekMart sebagai contoh referensi |
 
 ## Apa yang tidak diduplikasi direktori ini
 

@@ -2,7 +2,7 @@
 
 # Contributing Guide
 
-Thank you for intending to help. Before anything else: this repo re-platforms the borneojek-mart commerce store onto the AWCMS stack ([issue #1](https://github.com/ahliweb/awcms-one/issues/1)), and it embeds `ahliweb/awcms` whole as `apps/cms` via `git subtree`. Read [`AGENTS.md`](AGENTS.md) before touching anything — it is the binding working contract, not a summary, and it carries one rule (the subtree merge-commit requirement) that is easy to break by habit and expensive to recover from.
+Thank you for intending to help. Before anything else: this repo (`ahliweb/omes-web`) is the OMES product site — public website, product-owned CMS, and deployment — created from the `ahliweb/awcms-one` template (whose re-platform of the borneojek-mart store is [ahliweb/awcms-one#1](https://github.com/ahliweb/awcms-one/issues/1)), and it embeds `ahliweb/awcms` whole as `apps/cms` via `git subtree`. Read [`AGENTS.md`](AGENTS.md) before touching anything — it is the binding working contract, not a summary, and it carries one rule (the subtree merge-commit requirement) that is easy to break by habit and expensive to recover from.
 
 AI agent contributors: `AGENTS.md` is written for you as much as for a human. Read it first, in full.
 
@@ -28,7 +28,7 @@ bun test                # the root gate suite
 | `bun audit` | Dependency-chain vulnerabilities |
 | `bun run release` | Cuts a tagged release from the waiting changesets (a maintainer's action) |
 
-The root `dev`/`build`/`check`/`serve` scripts delegate into `apps/storefront` (`cd apps/storefront && bun run <script>`) — that workspace has carried the full public site and its own gate chain since increment 2 ([issue #5](https://github.com/ahliweb/awcms-one/issues/5)).
+The root `dev`/`build`/`check`/`serve` scripts delegate into `apps/storefront` (`cd apps/storefront && bun run <script>`) — that workspace has carried the full public site and its own gate chain since increment 2 ([ahliweb/awcms-one#5](https://github.com/ahliweb/awcms-one/issues/5)).
 
 ## The contribution flow
 

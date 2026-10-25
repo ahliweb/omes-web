@@ -4,7 +4,7 @@
 
 ## The principle that binds every decision
 
-**This repo re-platforms a real commerce store's data and, eventually, its live traffic.** A defect here is not abstract: the source schema comes from a production MySQL database serving real orders, and the destination is a PostgreSQL-backed platform that will eventually carry real transactions. Every decision is judged against that.
+**This repo is the public face, the content system, and the deployment of a product (OMES), built on a template that was itself a re-platform of a real commerce store.** A defect here is not abstract: the CMS holds the product's own data under row-level security, the public site is what visitors read and install from, and the commerce module inherited from the template was designed to carry real transactions. Every decision is judged against that.
 
 What follows from it:
 
@@ -21,11 +21,11 @@ What follows from it:
 | **Translator** | Fills in and edits the Indonesian mirrors of the governance documents |
 | **AI agent** | May do anything [`AGENTS.md`](AGENTS.md) permits |
 
-Roles inside `apps/cms` for its own general-purpose capabilities — module admission, RBAC/ABAC policy — follow `awcms`'s own governance as carried in `apps/cms/GOVERNANCE.md`; this document governs `awcms-one` as a repository, not `awcms`'s own internal design authority.
+Roles inside `apps/cms` for its own general-purpose capabilities — module admission, RBAC/ABAC policy — follow `awcms`'s own governance as carried in `apps/cms/GOVERNANCE.md`; this document governs `omes-web` as a repository, not `awcms`'s own internal design authority.
 
 ## Recording a decision
 
-This repo does not yet have a formal architecture-decision-record log (`docs/adr/`) — [issue #7](https://github.com/ahliweb/awcms-one/issues/7) covers architecture and reference documentation and may introduce one. Until then, a decision that changes this repo's structure, its data model, or a rule in `AGENTS.md` is recorded in the pull request that makes it and, where the change is public or structural, in its changeset (see [`.changesets/README.md`](.changesets/README.md)).
+This repo does not yet have a formal architecture-decision-record log (`docs/adr/`) — [ahliweb/awcms-one#7](https://github.com/ahliweb/awcms-one/issues/7) covers architecture and reference documentation and may introduce one. Until then, a decision that changes this repo's structure, its data model, or a rule in `AGENTS.md` is recorded in the pull request that makes it and, where the change is public or structural, in its changeset (see [`.changesets/README.md`](.changesets/README.md)).
 
 `bun run audit:dokumen` already carries the checks a `docs/adr/` index would need — a complete two-way index, no duplicate rows, status agreement, and `ADR-NNNN` citations that resolve — and self-skips until that directory exists, rather than being bolted on after the fact under the same pressure that tends to leave such things half-done.
 

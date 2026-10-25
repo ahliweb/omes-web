@@ -1,18 +1,20 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](README.md)
 
-<!-- i18n-source-hash: sha256:5f140aacd2afa01fc5645a99437f82d61d47f82d81dcd9b63c1ef3f42815bcab -->
+<!-- i18n-source-hash: sha256:2d164050ddf4540bf21d0df9b9c7dcc17c9a01f0527ddf65ff62a1a93bbc6ec6 -->
 
-[![CI](https://github.com/ahliweb/awcms-one/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ahliweb/awcms-one/actions/workflows/ci.yml) [![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE) [![runtime](https://img.shields.io/badge/runtime-Bun-blue?logo=bun&logoColor=white)](https://bun.sh)
+[![CI](https://github.com/ahliweb/omes-web/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ahliweb/omes-web/actions/workflows/ci.yml) [![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE) [![runtime](https://img.shields.io/badge/runtime-Bun-blue?logo=bun&logoColor=white)](https://bun.sh)
 
-# awcms-one
+# OMES-Web
 
-**OMES** adalah deployment yang dibuat dari template [awcms-one](https://github.com/ahliweb/awcms-one) — Bun, Astro, dan PostgreSQL dengan row-level security. Profil build-nya adalah `landing` dan domain kanoniknya adalah `omes.ahlikoding.com` (lihat [`docs/template.md`](docs/template.id.md)).
+**OMES-Web** (`ahliweb/omes-web`) adalah website publik, CMS milik produk, dan deployment situs produk **OMES**. Repo ini dibuat dari template [`ahliweb/awcms-one`](https://github.com/ahliweb/awcms-one) — Bun, Astro, dan PostgreSQL dengan row-level security — dan kini menjadi repositori produk tersendiri: profil build-nya `landing` (`SITE_PROFILE=landing`) dan domain kanoniknya `omes.ahlikoding.com`. Host native OMES, CLI, dan installer berada di repositori lain, [`ahliweb/omes`](https://github.com/ahliweb/omes); repo ini tidak pernah membangun atau mengirimkannya (batas: [ADR-0021](docs/adr/0021-separate-omes-product-site-from-native-host-runtime.id.md)). Bila teks warisan template masih menyebut "awcms-one", "BjekMart", atau "borneojek-mart", itu adalah sejarah atau kapabilitas template yang dipertahankan, bukan produk ini — lihat [`docs/template.md`](docs/template.id.md).
 
 ## Letak repo ini di keluarga AWCMS
 
 | | |
 | --- | --- |
-| **Repo ini** | `ahliweb/awcms-one` — monorepo Bun: satu backend commerce/berita (`apps/cms`), satu storefront publik (`apps/storefront`), satu kontrak DTO bersama (`packages/kontrak`) |
+| **Repo ini** | `ahliweb/omes-web` — monorepo Bun: CMS AWCMS dan database milik produk (`apps/cms`), storefront publik yang dibangun dengan `SITE_PROFILE=landing` (`apps/storefront`), satu kontrak DTO bersama (`packages/kontrak`) |
+| **Template** | [`ahliweb/awcms-one`](https://github.com/ahliweb/awcms-one) — template yang dapat dipakai ulang dan menjadi asal repo ini; fitur yang dapat dipakai ulang berada di sana atau di upstream `ahliweb/awcms`, bukan hanya di sini |
+| **OMES native** | [`ahliweb/omes`](https://github.com/ahliweb/omes) — CLI, layanan host, installer, dan protokol worker; repositori yang berbeda dari `omes-web` |
 | **Backend / system of record** | `apps/cms`, di repo ini — `ahliweb/awcms` disematkan utuh lewat `git subtree`, menjaga riwayat upstream tetap ada |
 | **Repo model** | [`ahliweb/media-lenterakalteng`](https://github.com/ahliweb/media-lenterakalteng) — tata letak workspace, gerbang audit, konvensi changeset, dan struktur dokumen governance di repo ini diadaptasi darinya |
 
@@ -20,9 +22,9 @@
 
 Modul commerce yang dibutuhkan platform ini tidak bisa berdiri sendiri — ia bergantung pada infrastruktur bersama `awcms` yang tidak punya paket mandiri: `withTenant` (konteks tenant RLS), `authorizeInTransaction` (RBAC/ABAC), `appendDomainEvent` (outbox), `recordAuditEvent`, `_shared/module-contract` (`defineModule`), `getDatabaseClient`, runner migrasi SQL, dan `_shared/api-response`. Jadi `awcms` disematkan utuh, lewat `git subtree`, alih-alih dijadikan dependency sebagai paket — lihat [`AGENTS.md`](AGENTS.md#the-subtree-embed) untuk mekanika sinkronisasi dan satu aturan yang melindunginya.
 
-## Gunakan sebagai template
+## Asal template
 
-Repositori ini dibuat dari template [`ahliweb/awcms-one`](https://github.com/ahliweb/awcms-one) menggunakan `bun run template:init` milik template itu sendiri — lihat [`docs/template.md`](https://github.com/ahliweb/awcms-one/blob/main/docs/template.md) repositori tersebut untuk panduannya dan [ADR-0018](https://github.com/ahliweb/awcms-one/blob/main/docs/adr/0018-awcms-one-is-a-template-with-build-profiles-and-an-idempotent-init.md) untuk keputusan desain di baliknya.
+Repositori ini dibuat dari template [`ahliweb/awcms-one`](https://github.com/ahliweb/awcms-one) menggunakan `bun run template:init` miliknya. Mekanismenya dipertahankan di sini — [`docs/template.md`](docs/template.id.md) mencatat apa yang dilakukannya, matriks profil build, dan hubungan repo ini dengan template — dan [ADR-0018](docs/adr/0018-awcms-one-is-a-template-with-build-profiles-and-an-idempotent-init.id.md) memuat keputusan desainnya. Jangan menjalankan ulang `template:init` pada repositori ini.
 
 ## Dokumentasi
 
@@ -58,7 +60,7 @@ Repo ini **hanya-Bun**: Bun adalah runtime sekaligus package manager, versinya d
 | `bun run check:cms` | Rangkaian gerbang penuh `apps/cms` sendiri (53 langkah — lint, docs, inventaris, spec, gerbang, typecheck, tesnya sendiri, build-nya sendiri) |
 | `bun run db:up` / `db:down` / `db:reset` | Menyalakan/mematikan/mereset `postgres:18.4` lokal sekali-pakai (`compose.yaml`) |
 | `bun run db:migrate:cms` | Menjalankan migrasi `apps/cms` terhadap `DATABASE_URL` — lihat `apps/cms/.env.example` |
-| `bun run db:seed:cms` | Men-seed tenant `borneojek-mart`, katalog, permukaan marketing, dan contoh pesanan lewat API publik `apps/cms` sendiri — lihat [`docs/deployment.md`](docs/deployment.id.md) |
+| `bun run db:seed:cms` | Men-seed tenant referensi `borneojek-mart` milik template (data contoh template, bukan konten OMES), katalog, permukaan marketing, dan contoh pesanan lewat API publik `apps/cms` sendiri — lihat [`docs/deployment.md`](docs/deployment.id.md) |
 | `bun run deploy:preflight` | Preflight produksi fail-closed — bentuk env build storefront, lalu mendelegasikan ke `commerce:deploy:preflight` milik `apps/cms` sendiri — lihat [`docs/deployment.md`](docs/deployment.id.md) dan ADR-0019 |
 | `bun run release` | Memotong rilis bertag dari changeset yang menunggu — lihat [`CONTRIBUTING.md`](CONTRIBUTING.md) |
 | `dev` / `build` / `check` / `serve` | Mendelegasikan ke `apps/storefront` — `bun run build` men-type-check, mengambil konten katalog/marketing/berita dari `apps/cms` saat build, dan memanggang output statis termasuk CSP turunan; `bun run serve` menjalankan `apps/storefront/server/penyaji.mjs` yang sudah di-build. Ketiga perintah saat-build ini menuruti `SITE_PROFILE` (default `toko`) — lihat [`docs/deployment.md`](docs/deployment.id.md) |

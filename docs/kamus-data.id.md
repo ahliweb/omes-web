@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](kamus-data.md)
 
-<!-- i18n-source-hash: sha256:1cc0af95121b8d2c9537687bce6cc23a9c20e5669ab1e169f0a8404f24063ec5 -->
+<!-- i18n-source-hash: sha256:7f520aed3fbfe6a269f0f821d259a7b052b57bb66eb21db636b7dd6b0855f723 -->
 
 # Kamus data
 
@@ -62,7 +62,7 @@ Daftar kolom lawas **dicatat dari basis data `commerce_bj_mart` yang live pada 2
 | `is_featured`/`is_recommended` | `is_featured`/`is_recommended` | Flag penempatan di halaman utama | Boolean |
 | `created_at`/`updated_at`/`deleted_at`/`restored_at` | *(timestamp / baru)* | Siklus-hidup baris | `timestamptz` |
 
-**Tidak di-porting dari `commerce_bj_mart.products`:** setiap kolom lawas `affiliate_*`, dan tabel lawas `product_affiliate_links`. Program afiliasi dibangun ulang dari nol, sesuai keputusan D5 [ADR-0016](adr/0016-customer-accounts-are-otp-verified-commerce-accounts-with-bearer-sessions.id.md) dan [issue #92](https://github.com/ahliweb/awcms-one/issues/92): `awcms_commerce_affiliates` (satu baris per pelanggan yang bergabung — `code` alfabet 8 karakter tanpa ambiguitas, unik per tenant; `commission_rate` snapshot `numeric(5,2)` disalin dari `awcms_commerce_store_settings.affiliate_commission_rate` saat pendaftaran; `status` `active`/`suspended`) dan `awcms_commerce_affiliate_commissions` (satu baris per pesanan yang pernah menghasilkan komisi — `order_id` unik per tenant, selamanya; snapshot `base_amount`/`rate`/`amount`; `status` `pending → approved/void → paid`). Tidak ada kolom atau tabel lawas yang bertahan — ini rancangan baru, bukan porting. Lihat [`docs/skema-basis-data.md`](skema-basis-data.id.md) untuk kolom persisnya.
+**Tidak di-porting dari `commerce_bj_mart.products`:** setiap kolom lawas `affiliate_*`, dan tabel lawas `product_affiliate_links`. Program afiliasi dibangun ulang dari nol, sesuai keputusan D5 [ADR-0016](adr/0016-customer-accounts-are-otp-verified-commerce-accounts-with-bearer-sessions.id.md) dan [ahliweb/awcms-one#92](https://github.com/ahliweb/awcms-one/issues/92): `awcms_commerce_affiliates` (satu baris per pelanggan yang bergabung — `code` alfabet 8 karakter tanpa ambiguitas, unik per tenant; `commission_rate` snapshot `numeric(5,2)` disalin dari `awcms_commerce_store_settings.affiliate_commission_rate` saat pendaftaran; `status` `active`/`suspended`) dan `awcms_commerce_affiliate_commissions` (satu baris per pesanan yang pernah menghasilkan komisi — `order_id` unik per tenant, selamanya; snapshot `base_amount`/`rate`/`amount`; `status` `pending → approved/void → paid`). Tidak ada kolom atau tabel lawas yang bertahan — ini rancangan baru, bukan porting. Lihat [`docs/skema-basis-data.md`](skema-basis-data.id.md) untuk kolom persisnya.
 
 ## `awcms_commerce_product_images` / `awcms_commerce_product_variants` ← `commerce_bj_mart.product_images` / `.product_variants`
 
@@ -131,7 +131,7 @@ Jumlah baris dibaca untuk ringkasan export saja — exporter ini tidak menulis b
 
 ### `logo` → logo instansi (untuk issue #59)
 
-Jumlah baris dibaca untuk ringkasan export saja. `awcms_blog_institutions` belum punya kolom `logo_media_id` di `apps/cms` repositori ini (itu datang lewat subtree pull upstream [issue #59](https://github.com/ahliweb/awcms-one/issues/59)); mencocokkan `nama` terhadap 24 instansi yang di-seed [issue #57](https://github.com/ahliweb/awcms-one/issues/57) adalah tugas issue itu setelah kolomnya ada.
+Jumlah baris dibaca untuk ringkasan export saja. `awcms_blog_institutions` belum punya kolom `logo_media_id` di `apps/cms` repositori ini (itu datang lewat subtree pull upstream [ahliweb/awcms-one#59](https://github.com/ahliweb/awcms-one/issues/59)); mencocokkan `nama` terhadap 24 instansi yang di-seed [ahliweb/awcms-one#57](https://github.com/ahliweb/awcms-one/issues/57) adalah tugas issue itu setelah kolomnya ada.
 
 ### `config` → `tools/out/seputarborneo/site-profile.json`, di-merge ke `PUT /api/v1/site-profile`
 

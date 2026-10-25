@@ -4,7 +4,7 @@
 
 ## Commitment
 
-This repo re-platforms a real commerce business's store. Its contributors come from different backgrounds — engineers, the people who understand the source schema and the business it serves, and reviewers on both the AWCMS and the borneojek-mart side. All of them are treated as equals.
+This repo is the OMES product site, built on a template that re-platformed a real commerce business's store. Its contributors come from different backgrounds — engineers, the people who understand the product and the data it serves, and reviewers on the AWCMS, template, and native OMES sides. All of them are treated as equals.
 
 We are committed to making participation in this repo free of harassment for everyone, regardless of age, body size, disability, ethnicity, gender identity and expression, level of experience, education, socio-economic status, nationality, appearance, race, religion, or sexual identity and orientation.
 
@@ -15,7 +15,7 @@ Expected behaviour:
 - Using welcoming and inclusive language.
 - Respecting differing viewpoints and experiences.
 - Accepting constructive criticism gracefully.
-- Putting what is correct for the re-platformed data and its eventual users first, ahead of personal preference.
+- Putting what is correct for the product's data and its users first, ahead of personal preference.
 - Treating a disagreement about the source schema, or about how it should be re-expressed, as a technical question to resolve with evidence — not a matter of who asserts it more confidently.
 
 Unacceptable behaviour:

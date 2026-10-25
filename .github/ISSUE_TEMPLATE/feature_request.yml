@@ -7,7 +7,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        See [`AGENTS.md`](https://github.com/ahliweb/awcms-one/blob/main/AGENTS.md)'s "Workspace boundaries" before proposing — a change usually belongs to exactly one workspace, and that shapes how it should be scoped.
+        See [`AGENTS.md`](https://github.com/ahliweb/omes-web/blob/main/AGENTS.md)'s "Workspace boundaries" before proposing — a change usually belongs to exactly one workspace, and that shapes how it should be scoped.
 
         _Bahasa Indonesia: Ajukan usulan fitur pada formulir ini. Jelaskan masalahnya, usulan solusinya, dan kriteria penerimaannya — dalam bahasa apa pun yang Anda kuasai._
   - type: textarea

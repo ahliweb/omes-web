@@ -6,7 +6,7 @@
 
 **This repo holds the code and documentation for OMES, not its live storefront or customer support.** There is no live production deployment of this platform yet — see [`docs/deployment.md`](docs/deployment.md) and [`SECURITY.md`](SECURITY.md) for exactly what is and is not provisioned — and even once there is, a customer's order, payment, or account issue on the running store is not something this repository's issue tracker handles.
 
-Questions about the code, the workspace, the re-platform's scope, or integration with `apps/cms` are welcome through GitHub Issues.
+Questions about the code, the workspace, the product's scope, or integration with `apps/cms` are welcome through GitHub Issues.
 
 ## What can be helped with here
 
@@ -14,7 +14,7 @@ Questions about the code, the workspace, the re-platform's scope, or integration
 | --- | --- |
 | A broken gate, a wrong CI result, a workspace that does not build | Open an issue with the **Bug report** template |
 | A question about this repo's structure, its gates, or the subtree embed of `apps/cms` | Open an issue; start from [`AGENTS.md`](AGENTS.md) |
-| A question about the re-platform's scope for the current increment | See [issue #1](https://github.com/ahliweb/awcms-one/issues/1) first, then open an issue if it is still unclear |
+| A question about this product's scope or ownership boundary | Read [ADR-0021](docs/adr/0021-separate-omes-product-site-from-native-host-runtime.md) first, then open an issue in `ahliweb/omes-web` if it is still unclear. Native OMES host, CLI, or installer questions belong in [`ahliweb/omes`](https://github.com/ahliweb/omes); a reusable-feature or template question belongs in [`ahliweb/awcms-one`](https://github.com/ahliweb/awcms-one) |
 | Wanting to help translate a governance document's Indonesian mirror | Open an issue, then see [`CONTRIBUTING.md`](CONTRIBUTING.md#translation) |
 | Finding a security vulnerability | **Do not open a public issue.** Follow [`SECURITY.md`](SECURITY.md) |
 | A live storefront or account issue | Not here — this repository has no live deployment yet; once it does, that channel will be documented here |

@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](arsitektur.md)
 
-<!-- i18n-source-hash: sha256:f6e10b63862a6b3c182f84e04c02682f5b7644a422a20ec035c8e94a9cca7ba3 -->
+<!-- i18n-source-hash: sha256:1db14150fd7960f4cfbf61ec22ea507329c53eaac5bdf5ff45ebab95e42d22a1 -->
 
 # Arsitektur
 
@@ -185,7 +185,7 @@ flowchart TB
 
 ## Satu hal lagi yang dilakukan server: memperbaiki halaman yang terbayangi
 
-`apps/storefront/server/penyaji.mjs` tetap server berkas statis tanpa token API, tetapi kini melakukan satu penulisan ulang internal di luar dua lapisan pengalihan: di bawah `build.format: "file"`, halaman landing yang juga punya anak dipancarkan sebagai berkas **di samping** direktori bernama sama (`berita.html` di sebelah `berita/`), dan static handler `@astrojs/node` menulis ulang permintaan berbentuk direktori menjadi `index.html` yang tidak pernah ditulis build ini — sehingga `/berita`, `/video`, dan setiap `/rubrik/{slug}` menjawab 404 di situs yang disajikan padahal semua gerbang build hijau ([issue #75](https://github.com/ahliweb/awcms-one/issues/75)). Server menemukan halaman terbayangi itu sekali saat startup dan menulis ulang `req.url` menjadi `{path}.html` sebagai langkah **terakhir** sebelum adapter, setelah `/healthz`, redirect `/products`, dan kedua lapisan pengalihan lawas, sehingga tidak ada yang dilakukannya bisa membayangi sebuah pengalihan. Lihat [`docs/routing.id.md`](routing.id.md) dan [ADR-0013](adr/0013-rule-based-legacy-redirects-beside-the-row-based-map.md).
+`apps/storefront/server/penyaji.mjs` tetap server berkas statis tanpa token API, tetapi kini melakukan satu penulisan ulang internal di luar dua lapisan pengalihan: di bawah `build.format: "file"`, halaman landing yang juga punya anak dipancarkan sebagai berkas **di samping** direktori bernama sama (`berita.html` di sebelah `berita/`), dan static handler `@astrojs/node` menulis ulang permintaan berbentuk direktori menjadi `index.html` yang tidak pernah ditulis build ini — sehingga `/berita`, `/video`, dan setiap `/rubrik/{slug}` menjawab 404 di situs yang disajikan padahal semua gerbang build hijau ([ahliweb/awcms-one#75](https://github.com/ahliweb/awcms-one/issues/75)). Server menemukan halaman terbayangi itu sekali saat startup dan menulis ulang `req.url` menjadi `{path}.html` sebagai langkah **terakhir** sebelum adapter, setelah `/healthz`, redirect `/products`, dan kedua lapisan pengalihan lawas, sehingga tidak ada yang dilakukannya bisa membayangi sebuah pengalihan. Lihat [`docs/routing.id.md`](routing.id.md) dan [ADR-0013](adr/0013-rule-based-legacy-redirects-beside-the-row-based-map.md).
 
 ## Apa yang masih belum ada di sini
 

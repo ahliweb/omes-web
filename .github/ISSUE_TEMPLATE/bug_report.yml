@@ -7,7 +7,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for reporting. Please read [`AGENTS.md`](https://github.com/ahliweb/awcms-one/blob/main/AGENTS.md) first if you have not — it is this repo's working contract and may already explain what you are seeing.
+        Thanks for reporting. Please read [`AGENTS.md`](https://github.com/ahliweb/omes-web/blob/main/AGENTS.md) first if you have not — it is this repo's working contract and may already explain what you are seeing.
 
         _Bahasa Indonesia: Laporkan bug pada formulir ini. Sertakan langkah reproduksi, hasil yang diharapkan, dan hasil sebenarnya — dalam bahasa apa pun yang Anda kuasai._
   - type: dropdown

@@ -60,7 +60,7 @@ The legacy column list was **recorded from the live `commerce_bj_mart` database 
 | `is_featured`/`is_recommended` | `is_featured`/`is_recommended` | Home-page placement flags | Boolean |
 | `created_at`/`updated_at`/`deleted_at`/`restored_at` | *(timestamps / new)* | Row lifecycle | `timestamptz` |
 
-**Not ported from `commerce_bj_mart.products`:** every legacy `affiliate_*` column, and the legacy `product_affiliate_links` table. The affiliate program was rebuilt fresh instead, per [ADR-0016](adr/0016-customer-accounts-are-otp-verified-commerce-accounts-with-bearer-sessions.md)'s D5 decision and [issue #92](https://github.com/ahliweb/awcms-one/issues/92): `awcms_commerce_affiliates` (one row per enrolled customer — `code` an 8-char unambiguous alphabet, unique per tenant; `commission_rate` a `numeric(5,2)` snapshot copied from `awcms_commerce_store_settings.affiliate_commission_rate` at enrolment time; `status` `active`/`suspended`) and `awcms_commerce_affiliate_commissions` (one row per order that ever earned a commission — `order_id` unique per tenant, forever; `base_amount`/`rate`/`amount` snapshots; `status` `pending → approved/void → paid`). No legacy column or table survives — this is a fresh design, not a port. See [`docs/skema-basis-data.md`](skema-basis-data.md) for the exact columns.
+**Not ported from `commerce_bj_mart.products`:** every legacy `affiliate_*` column, and the legacy `product_affiliate_links` table. The affiliate program was rebuilt fresh instead, per [ADR-0016](adr/0016-customer-accounts-are-otp-verified-commerce-accounts-with-bearer-sessions.md)'s D5 decision and [ahliweb/awcms-one#92](https://github.com/ahliweb/awcms-one/issues/92): `awcms_commerce_affiliates` (one row per enrolled customer — `code` an 8-char unambiguous alphabet, unique per tenant; `commission_rate` a `numeric(5,2)` snapshot copied from `awcms_commerce_store_settings.affiliate_commission_rate` at enrolment time; `status` `active`/`suspended`) and `awcms_commerce_affiliate_commissions` (one row per order that ever earned a commission — `order_id` unique per tenant, forever; `base_amount`/`rate`/`amount` snapshots; `status` `pending → approved/void → paid`). No legacy column or table survives — this is a fresh design, not a port. See [`docs/skema-basis-data.md`](skema-basis-data.md) for the exact columns.
 
 ## `awcms_commerce_product_images` / `awcms_commerce_product_variants` ← `commerce_bj_mart.product_images` / `.product_variants`
 
@@ -129,7 +129,7 @@ Row count read for the export summary only — this exporter writes no file for 
 
 ### `logo` → institution logos (for issue #59)
 
-Row count read for the export summary only. `awcms_blog_institutions` carries no `logo_media_id` column in this repository's `apps/cms` yet (that lands via [issue #59](https://github.com/ahliweb/awcms-one/issues/59)'s upstream subtree pull); matching `nama` against [issue #57](https://github.com/ahliweb/awcms-one/issues/57)'s 24 seeded institutions is that issue's to do once the column exists.
+Row count read for the export summary only. `awcms_blog_institutions` carries no `logo_media_id` column in this repository's `apps/cms` yet (that lands via [ahliweb/awcms-one#59](https://github.com/ahliweb/awcms-one/issues/59)'s upstream subtree pull); matching `nama` against [ahliweb/awcms-one#57](https://github.com/ahliweb/awcms-one/issues/57)'s 24 seeded institutions is that issue's to do once the column exists.
 
 ### `config` → `tools/out/seputarborneo/site-profile.json`, merged into `PUT /api/v1/site-profile`
 

@@ -249,14 +249,19 @@ export function rewriteReadme(content, flags, opts) {
   // this is idempotent regardless of what a PRIOR run already wrote there
   // (see text.mjs's `replaceBetweenAnchors` docblock for why a literal-text
   // match cannot survive a second run with different flags).
-  const heroMarkers =
-    opts.lang === "en"
-      ? { start: "# awcms-one\n\n", end: "\n\n## Where this sits in the AWCMS family" }
-      : { start: "# awcms-one\n\n", end: "\n\n## Letak repo ini di keluarga AWCMS" };
+  //
+  // The H1 is matched structurally (the README's first `# …` heading,
+  // whatever it says) and the template section by any of its known
+  // headings, so a derived repository that has retitled its own README
+  // (e.g. "# OMES-Web" / "## Template origin") can still run this.
+  const heroMarkers = {
+    start: firstH1Marker(content, opts.lang === "en" ? "README.md" : "README.id.md"),
+    end: opts.lang === "en" ? "\n\n## Where this sits in the AWCMS family" : "\n\n## Letak repo ini di keluarga AWCMS"
+  };
   const templateSectionMarkers =
     opts.lang === "en"
-      ? { start: "## Use this as a template\n\n", end: "\n\n## Documentation" }
-      : { start: "## Gunakan sebagai template\n\n", end: "\n\n## Dokumentasi" };
+      ? { start: presentHeading(content, ["## Use this as a template\n\n", "## Template origin\n\n"]), end: "\n\n## Documentation" }
+      : { start: presentHeading(content, ["## Gunakan sebagai template\n\n", "## Asal template\n\n"]), end: "\n\n## Dokumentasi" };
 
   const hero =
     opts.lang === "en"
@@ -272,6 +277,32 @@ export function rewriteReadme(content, flags, opts) {
   let next = extractHeroBlock(content, heroMarkers, hero, `${label} hero`);
   next = extractHeroBlock(next, templateSectionMarkers, templateSection, `${label} template section`);
   return next;
+}
+
+/**
+ * The README's first H1 line plus its blank line, used verbatim as a start
+ * marker. Throws (like `extractBlock`) when the file has no H1 at all.
+ *
+ * @param {string} content
+ * @param {string} label
+ * @returns {string}
+ */
+function firstH1Marker(content, label) {
+  const match = /^# [^\n]+\n\n/m.exec(content);
+  if (!match) throw new Error(`${label} hero: no H1 heading found`);
+  return match[0];
+}
+
+/**
+ * The first of `candidates` that occurs in `content`, or the first candidate
+ * when none does — `extractBlock` then reports it as the missing marker.
+ *
+ * @param {string} content
+ * @param {string[]} candidates
+ * @returns {string}
+ */
+function presentHeading(content, candidates) {
+  return candidates.find((c) => content.includes(c)) ?? candidates[0];
 }
 
 /** Small local wrapper around `extractBlock`/`withBlock` for a whole-block replacement. */

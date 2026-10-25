@@ -1,0 +1,8 @@
+{
+  "upstream": "https://github.com/ahliweb/awcms.git",
+  "remote": "awcms",
+  "branch": "main",
+  "prefix": "apps/cms",
+  "lastSyncCommit": "8e9bce0cc6c1afde9244f25cee7e74346fe775b8",
+  "productTagPattern": "^v\\d+\\.\\d+\\.\\d+$"
+}

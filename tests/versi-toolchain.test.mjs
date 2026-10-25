@@ -24,7 +24,7 @@
  */
 import { test, describe } from "bun:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 
 const pkg = JSON.parse(readFileSync("package.json", "utf8"));
 const ci = readFileSync(".github/workflows/ci.yml", "utf8");
@@ -75,6 +75,22 @@ describe("the Bun version agrees everywhere it is used", () => {
     for (const version of used) {
       assert.equal(version, VERSION, "bun-version in ci.yml");
     }
+  });
+
+  test("every root workflow's bun-version equals packageManager (issue #23 extends the pin list)", () => {
+    const workflows = readdirSync(".github/workflows").filter((n) => n.endsWith(".yml"));
+    assert.ok(workflows.includes("governance.yml"), "governance.yml (issue #23) is missing");
+
+    let total = 0;
+    for (const name of workflows) {
+      const text = readFileSync(`.github/workflows/${name}`, "utf8");
+      // Only real declarations: a quoted version in a `bun-version:` key, not a comment that mentions it.
+      for (const m of text.matchAll(/^\s*bun-version:\s*"([^"]+)"/gm)) {
+        total += 1;
+        assert.equal(m[1], VERSION, `bun-version in ${name}`);
+      }
+    }
+    assert.ok(total >= 8, `expected at least 8 bun-version declarations across the workflows, found ${total}`);
   });
 
   test("apps/cms's own packageManager is a known, accepted divergence", () => {

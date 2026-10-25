@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](ui-ux.md)
 
-<!-- i18n-source-hash: sha256:b81c1a06c83951af80c60c89c3ea72e4a7751021db9e13b063cf0c6e29570c5a -->
+<!-- i18n-source-hash: sha256:d9138084ec94b12957b2be2314216268bbf3d4bde925118ccdfa772662193779 -->
 
 # UI / UX
 
@@ -273,6 +273,8 @@ Strip siklus (Bootstrap → Check → Diff → Apply → Verify → Rollback), g
 
 - **Pratinjau Control Center** (`.omes-cc-mock`) — mock sidebar + KPI-tile dari layar overview armada, `role="img"` dengan `aria-label` deskriptif penuh, dan label "◇ Ilustrasi" yang terlihat di prosa di atasnya.
 - **Orkestrasi Hermes** (`.omes-hermes`) — pohon planner → agent → subagent (`.omes-tree`, `role="img"`) plus contoh log activity-stream; kursor berkedip pada log adalah satu-satunya animasi di halaman ini dan dibekukan (bukan sekadar diperlambat) di bawah `prefers-reduced-motion: reduce`.
+
+Chip status, kalimat pengantar bagian instalasi, blok kode instalasi, tombol **Salin**, dan tautan catatan rilis/panduan instalasi dirender dari `apps/storefront/src/config/omes-rilis.json` (issue #16) — chip berbunyi `Pre-alpha · <tag>`, dan halaman tidak memuat versi OMES lain. Blok kode menampilkan satu perintah yang dipin (`… | bash -s -- --ref <tag>`), tanpa salinan kedua; semuanya HTML statis, sehingga CSP turunan tidak menambah origin (tautan GitHub adalah navigasi, bukan fetch). Cara menggantinya: [`alur-kerja-pengembangan.md`](alur-kerja-pengembangan.md#bumping-the-omes-release-the-landing-page-presents).
 
 ### Defek template lama yang ditemukan dan diperbaiki oleh pekerjaan ini: nav utama desktop tak terlihat
 

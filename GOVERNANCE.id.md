@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](GOVERNANCE.md)
 
-<!-- i18n-source-hash: sha256:0b9041055491b550cb0eb14957a6434c2fca78c5393c11628316f77a71b65052 -->
+<!-- i18n-source-hash: sha256:aee58c68b6886dcf9d579a8f0766649772ed42d31abc82d28598ff4e68b55a8f -->
 
 # Governance
 
@@ -27,9 +27,9 @@ Peran di dalam `apps/cms` untuk kemampuan generiknya sendiri — admission modul
 
 ## Mencatat sebuah keputusan
 
-Repo ini belum punya log architecture-decision-record formal (`docs/adr/`) — [ahliweb/awcms-one#7](https://github.com/ahliweb/awcms-one/issues/7) mencakup dokumentasi arsitektur dan referensi, dan mungkin akan memperkenalkannya. Sampai saat itu, keputusan yang mengubah struktur repo ini, model datanya, atau sebuah aturan di `AGENTS.md` dicatat di pull request yang membuatnya dan, bila perubahannya publik atau struktural, di changeset-nya (lihat [`.changesets/README.md`](.changesets/README.md)).
+Repo ini punya log architecture-decision-record formal di [`docs/adr/`](docs/adr/), dengan indeks di [`docs/adr/README.md`](docs/adr/README.md). Keputusan yang mengubah struktur repo ini, model datanya, atau sebuah aturan di `AGENTS.md` dicatat sebagai ADR di sana, bersama pull request yang membuatnya dan, bila perubahannya publik atau struktural, changeset-nya (lihat [`.changesets/README.md`](.changesets/README.md)).
 
-`bun run audit:dokumen` sudah membawa pemeriksaan yang dibutuhkan sebuah indeks `docs/adr/` — indeks dua arah yang lengkap, tanpa baris ganda, kesesuaian status, dan kutipan `ADR-NNNN` yang resolve — dan melewati dirinya sendiri sampai direktori itu ada, alih-alih ditambal belakangan di bawah tekanan yang sama yang biasanya membuat hal semacam ini setengah jadi.
+`bun run audit:dokumen` menegakkan indeks itu: indeks dua arah yang lengkap, tanpa baris ganda, kesesuaian status, dan kutipan `ADR-NNNN` yang resolve.
 
 Sebuah changeset saja cukup untuk perbaikan bug, perubahan gaya, komponen baru yang mengikuti kontrak yang sudah ada, atau pembaruan dependency rutin.
 

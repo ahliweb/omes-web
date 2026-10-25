@@ -25,9 +25,9 @@ Roles inside `apps/cms` for its own general-purpose capabilities — module admi
 
 ## Recording a decision
 
-This repo does not yet have a formal architecture-decision-record log (`docs/adr/`) — [ahliweb/awcms-one#7](https://github.com/ahliweb/awcms-one/issues/7) covers architecture and reference documentation and may introduce one. Until then, a decision that changes this repo's structure, its data model, or a rule in `AGENTS.md` is recorded in the pull request that makes it and, where the change is public or structural, in its changeset (see [`.changesets/README.md`](.changesets/README.md)).
+This repo keeps a formal architecture-decision-record log in [`docs/adr/`](docs/adr/), indexed by [`docs/adr/README.md`](docs/adr/README.md). A decision that changes this repo's structure, its data model, or a rule in `AGENTS.md` is recorded as an ADR there, alongside the pull request that makes it and, where the change is public or structural, its changeset (see [`.changesets/README.md`](.changesets/README.md)).
 
-`bun run audit:dokumen` already carries the checks a `docs/adr/` index would need — a complete two-way index, no duplicate rows, status agreement, and `ADR-NNNN` citations that resolve — and self-skips until that directory exists, rather than being bolted on after the fact under the same pressure that tends to leave such things half-done.
+`bun run audit:dokumen` enforces that index: a complete two-way index, no duplicate rows, status agreement, and `ADR-NNNN` citations that resolve.
 
 A changeset alone is enough for a bug fix, a style change, a new component following an existing contract, or a routine dependency update.
 

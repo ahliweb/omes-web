@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](alur-kerja-pengembangan.md)
 
-<!-- i18n-source-hash: sha256:87e1af0e74bc13f4990c881d4f157b6ef615e4c89f498f26daec3a10cc81a258 -->
+<!-- i18n-source-hash: sha256:6d3358d15190e9e3f680c1e4554769a3f844ffc7dbc886d841759e92a4ebe5e6 -->
 
 # Alur kerja pengembangan
 
@@ -98,6 +98,22 @@ Temuan mendarat di tab Security → Code scanning milik repositori ini sendiri, 
 - **`CodeQL`** — app `GitHub Advanced Security` (`app_id` 57789), check **hasil** code-scanning. GitHub membuat/memperbarui check ini hanya setelah unggahan SARIF berhasil, dari data alert dalam unggahan itu; ia tidak mengatakan apa pun tentang apakah run analisis itu sendiri selesai.
 
 Kebijakan failure/triase milik issue itu sendiri mensyaratkan sebuah check CodeQL wajib "gagal tertutup untuk kegagalan workflow/analyzer" — temuan itu sendiri tetap memakai semantik severity/triase code-scanning biasa milik GitHub, bukan gate merge. `Analyze (javascript-typescript)` adalah yang benar-benar melakukan ini: ia terikat langsung ke status keluar job workflow itu sendiri, sehingga crash analyzer atau kesalahan konfigurasi melaporkan `failure` (atau tidak pernah selesai, yang juga memblokir check wajib) alih-alih diam-diam tidak meninggalkan check hasil code-scanning sama sekali untuk dievaluasi aturan wajib. `CodeQL`, karena hilir dari unggahan SARIF yang berhasil, tidak bisa membedakan "analisis berjalan bersih" dari "analisis tidak pernah cukup jauh untuk menghasilkan SARIF sama sekali" dalam kasus yang justru penting untuk sebuah gate merge. `Analyze (javascript-typescript)` karena itu ditambahkan ke status check wajib `main`, secara aditif, di samping sebelas context yang sudah dibangun issue #215 (lihat "Branch protection pada `main`" di atas).
+
+<a id="bumping-the-omes-release-the-landing-page-presents"></a>
+
+## Mengganti rilis OMES yang ditampilkan halaman landing
+
+Beranda profil `landing` menyebut sebuah rilis OMES, tautan catatan rilis, tautan panduan instalasi, dan perintah instalasi. Keempatnya berasal dari SATU berkas, `apps/storefront/src/config/omes-rilis.json` (dibaca lewat `apps/storefront/src/config/omes-rilis.ts`, yang memvalidasinya dan menggagalkan build bila berkas rusak atau tidak konsisten); tidak ada komponen yang meng-hardcode versi (issue #16). Berkas itu mencatat tag, objek tag teranotasi, commit, tanggal terbit, blob sha git dan sha256 installer, serta bagaimana/kapan diverifikasi. Manifes kompatibilitas tingkat root dapat merujuk berkas ini lewat path; jaga nama kolomnya tetap stabil.
+
+**Perintah instalasi memin `--ref <tag>`, dengan sengaja.** Pada `v0.6.0`, `install/bootstrap.sh` OMES masih menetapkan `OMES_DEFAULT_STABLE_TAG="v0.4.0"`, sehingga `curl …/v0.6.0/install/bootstrap.sh | bash` akan memasang `v0.4.0`. Kanal stabil bawaan menerima `--ref <tag>`, jadi halaman menampilkan `curl -fsSL <URL raw pada tag> | bash -s -- --ref <tag>`. README `v0.6.0` OMES sendiri masih menampilkan perintah lama: ketidaksesuaian di hulu yang dicatat di sini, bukan disalin. Bila rilis OMES berikutnya memperbaiki tag bawaannya, `--ref` tetap tidak berbahaya; hapus hanya secara sengaja, bersama aturan `installCommand` di `omes-rilis.ts` dan tesnya.
+
+Untuk pindah ke rilis OMES baru:
+
+1. Ubah `omes-rilis.json`: `tag`, `tagObjectSha`, `commitSha`, `publishedAt`, ketiga URL, `installer.rawUrl`/`gitBlobSha`/`sha256`, `installCommand`, dan `verification`. Hanya `vX.Y.Z` yang sudah terbit dan bukan prarilis yang diterima.
+2. Jalankan `bun run verify:omes-release`. Ia bertanya ke REST API GitHub (rilis terbit dan bukan prarilis, objek tag, commit yang ditunjuk, blob sha `install/bootstrap.sh` pada commit itu) dan tidak pernah mengunduh atau menjalankan installer; hitung `sha256` sendiri dari berkas raw satu kali. Kode keluar `0` terverifikasi, `1` berkas berbeda dari GitHub, `2` GitHub tidak dapat ditanya (gagal tertutup — ulangi atau setel `GITHUB_TOKEN`), `3` berkas tidak terbaca.
+3. Jalankan `cd apps/storefront && SITE_PROFILE=landing bun test tests/omes-rilis.test.ts` lalu buka PR beserta changeset.
+
+`.github/workflows/omes-release-verify.yml` mengulang langkah 2 pada pull request yang menyentuh berkas, alat, atau workflow itu, setiap pekan, dan sesuai permintaan. Workflow ini **bukan** status check wajib: ia butuh jaringan dan batas laju api.github.com, dan check wajib yang bisa gagal karena sebab di luar repositori ini akan menghambat merge yang tak terkait. Anggap run terjadwal yang merah sebagai "rilis yang dipin tak lagi cocok dengan GitHub — periksa".
 
 ## Pembaruan dependensi
 

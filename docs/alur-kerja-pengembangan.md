@@ -97,6 +97,20 @@ Findings land on this repository's own Security → Code scanning tab, separate 
 
 The issue's own failure/triage policy requires a required CodeQL check to "fail closed for workflow/analyzer failure" — findings themselves stay on GitHub's ordinary code-scanning severity/triage semantics, not the merge gate. `Analyze (javascript-typescript)` is the one that actually does this: it is tied directly to the workflow job's own exit status, so an analyzer crash or a misconfiguration reports `failure` (or never completes, which also blocks a required check) rather than silently leaving no code-scanning results check behind for a required rule to even evaluate. `CodeQL`, being downstream of a successful SARIF upload, cannot distinguish "the analysis ran clean" from "the analysis never got far enough to produce a SARIF at all" in the case that actually matters for a merge gate. `Analyze (javascript-typescript)` was therefore added to `main`'s required status checks, additively, alongside the eleven contexts issue #215 had already established (see "Branch protection on `main`" above).
 
+## Bumping the OMES release the landing page presents
+
+The `landing` home page names an OMES release, a release-notes link, the install-guide link and an install command. All four come from ONE file, `apps/storefront/src/config/omes-rilis.json` (read through `apps/storefront/src/config/omes-rilis.ts`, which validates it and fails the build on a malformed or inconsistent file); no component hardcodes a version (issue #16). The file records the tag, the annotated tag object, the commit, the publish date, the installer's git blob sha and sha256, and how/when it was verified. A root-level compatibility manifest may cross-reference this file by path; keep its field names stable.
+
+**The install command pins `--ref <tag>`, deliberately.** At `v0.6.0`, OMES's `install/bootstrap.sh` still sets `OMES_DEFAULT_STABLE_TAG="v0.4.0"`, so `curl …/v0.6.0/install/bootstrap.sh | bash` would install `v0.4.0`. The default stable channel accepts `--ref <tag>`, so the page prints `curl -fsSL <raw URL at the tag> | bash -s -- --ref <tag>`. OMES's own `v0.6.0` README still shows the older command: an upstream discrepancy recorded here rather than copied. When a later OMES release fixes its default tag, `--ref` stays harmless; drop it only deliberately, together with the `installCommand` rule in `omes-rilis.ts` and its test.
+
+To move to a new OMES release:
+
+1. Edit `omes-rilis.json`: `tag`, `tagObjectSha`, `commitSha`, `publishedAt`, the three URLs, `installer.rawUrl`/`gitBlobSha`/`sha256`, `installCommand` and `verification`. Only a published, non-prerelease `vX.Y.Z` is accepted.
+2. Run `bun run verify:omes-release`. It asks the GitHub REST API (release published and not a prerelease, the tag object, the commit it targets, `install/bootstrap.sh`'s blob sha in that commit) and never downloads or executes the installer; compute `sha256` yourself from the raw file once. Exit `0` verified, `1` the file disagrees with GitHub, `2` GitHub could not be asked (fails closed — retry or set `GITHUB_TOKEN`), `3` the file is unreadable.
+3. Run `cd apps/storefront && SITE_PROFILE=landing bun test tests/omes-rilis.test.ts` and open a PR with a changeset.
+
+`.github/workflows/omes-release-verify.yml` repeats step 2 on pull requests that touch the file, the tool or the workflow, weekly, and on demand. It is **not** a required status check: it needs the network and api.github.com's rate limits, and a required check that can fail for reasons outside this repository would block unrelated merges. Treat a red scheduled run as "the pinned release no longer matches GitHub — look".
+
 ## Dependency updates
 
 `.github/dependabot.yml` (issue #180) opens version-update pull requests — separately from Dependabot *security* updates, which were already on (see "Branch protection on `main`" above) and cover any ecosystem regardless of this file. One `updates` block today:

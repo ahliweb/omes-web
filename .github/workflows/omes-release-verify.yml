@@ -1,0 +1,46 @@
+name: OMES release verify
+
+# Checks that apps/storefront/src/config/omes-rilis.json (the OMES release the
+# landing page presents and the install command it prints) is true of the real
+# ahliweb/omes repository — issue #16. Read-only GitHub API calls; the installer
+# is never downloaded or executed.
+#
+# Deliberately NOT a required status check on main: it depends on the network
+# and on api.github.com's availability/rate limits, and a required check that
+# can go red for reasons outside this repository would block unrelated merges.
+# It runs on PRs that touch the metadata/tool/workflow (so a bump is verified
+# before merge), weekly (so upstream drift is noticed), and on demand. Exit 1 =
+# the metadata is wrong; exit 2 = GitHub could not be asked (fails closed).
+
+on:
+  pull_request:
+    paths:
+      - "apps/storefront/src/config/omes-rilis.json"
+      - "tools/omes-release-verify.mjs"
+      - ".github/workflows/omes-release-verify.yml"
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify OMES release
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Must equal packageManager in the root package.json (AGENTS.md,
+      # "Configuration and toolchain").
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: "1.4.2"
+
+      - name: Verify the pinned OMES release against GitHub
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bun run verify:omes-release

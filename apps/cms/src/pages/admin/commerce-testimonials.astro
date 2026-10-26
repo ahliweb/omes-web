@@ -162,7 +162,12 @@ const showActions = canUpdate || canDelete;
   )}
 
   {canRead && !loadError && (
-    <div class="data-table-scroll fade-in-up">
+    <div
+      class="data-table-scroll fade-in-up"
+      role="region"
+      tabindex="0"
+      aria-label={t("Testimonials")}
+    >
       <table
         class="data-table data-table--stack"
         id="commerce-testimonials-table"
@@ -207,7 +212,7 @@ const showActions = canUpdate || canDelete;
             testimonials.map((testimonial) => (
               <tr data-testimonial-row={testimonial.id}>
                 <td
-                  data-label="Author"
+                  data-label={t("Author")}
                   class={canUpdate ? "stacked-block" : ""}
                 >
                   {canUpdate ? (
@@ -221,7 +226,10 @@ const showActions = canUpdate || canDelete;
                     testimonial.authorName
                   )}
                 </td>
-                <td data-label="Quote" class={canUpdate ? "stacked-block" : ""}>
+                <td
+                  data-label={t("Quote")}
+                  class={canUpdate ? "stacked-block" : ""}
+                >
                   {canUpdate ? (
                     <input
                       class="testimonial-body-input"
@@ -234,7 +242,7 @@ const showActions = canUpdate || canDelete;
                   )}
                 </td>
                 <td
-                  data-label="Rating"
+                  data-label={t("Rating")}
                   class={canUpdate ? "stacked-block" : ""}
                 >
                   {canUpdate ? (
@@ -252,7 +260,7 @@ const showActions = canUpdate || canDelete;
                   )}
                 </td>
                 <td
-                  data-label="Active"
+                  data-label={t("Active")}
                   class={canUpdate ? "stacked-block" : ""}
                 >
                   {canUpdate ? (
@@ -269,7 +277,7 @@ const showActions = canUpdate || canDelete;
                   )}
                 </td>
                 {showActions && (
-                  <td data-label="Actions" class="stacked-block">
+                  <td data-label={t("Actions")} class="stacked-block">
                     <div class="row-actions">
                       {canUpdate && (
                         <button
@@ -303,6 +311,7 @@ const showActions = canUpdate || canDelete;
 </AdminLayout>
 
 <script>
+  import { confirmAction } from "../../lib/ui/confirm-dialog-client";
   import {
     checkboxChecked,
     field,
@@ -377,7 +386,7 @@ const showActions = canUpdate || canDelete;
     const id = button.dataset.testimonialId;
     if (!id) return;
     const author = button.dataset.testimonialAuthor ?? "this testimonial";
-    if (!window.confirm(`Delete ${author}'s testimonial?`)) return;
+    if (!(await confirmAction(`Delete ${author}'s testimonial?`))) return;
 
     await mutateAndReload(
       button,

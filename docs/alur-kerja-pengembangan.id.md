@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](alur-kerja-pengembangan.md)
 
-<!-- i18n-source-hash: sha256:87e1af0e74bc13f4990c881d4f157b6ef615e4c89f498f26daec3a10cc81a258 -->
+<!-- i18n-source-hash: sha256:32900004bfd0b0eddc468b612a7b5cebe66867485cc0343b47326c2c130314a6 -->
 
 # Alur kerja pengembangan
 
@@ -57,7 +57,7 @@ Mendorong (push) tag itulah yang benar-benar mempublikasikannya (issue #181). [`
 
 **`check`** (`name: Check`, `timeout-minutes: 15`) berjalan pada setiap push ke `main`, setiap pull request, dan dispatch manual, tidak butuh build, tidak butuh `apps/cms` hidup, dan tidak butuh basis data. Sejak increment 6 (issue #137, [ADR-0018 D7](adr/0018-awcms-one-is-a-template-with-build-profiles-and-an-idempotent-init.id.md)), ia adalah **matriks 3-leg** (`strategy.matrix.profile: [toko, berita, landing]`, `fail-fast: false`) — GitHub menampilkan tiap leg sebagai `Check (toko)`, `Check (berita)`, `Check (landing)`. Setiap leg menjalankan `bun run check:lockfile`, `bun install --frozen-lockfile`, lalu `SITE_PROFILE=<leg> bun run check` (type-check storefront yang mencakup `src/profil/**` tanpa memandang group mana yang aktif) dan `cd apps/storefront && SITE_PROFILE=<leg> bun test tests/profil-build-smoke.test.ts tests/profil-routes.test.ts` — build milik leg itu sendiri terhadap stub CMS, membuktikan group halaman yang dikecualikan sungguh-sungguh absen dari `dist/` dan sitemap. `bun test` root, `audit:dokumen`, `audit:translation`, `audit:graf`, `audit:rilis`, dan `bun audit --audit-level=low` tidak bergantung pada profil, jadi ia berjalan **sekali saja, di leg `toko`** (`if: matrix.profile == 'toko'`), tanpa `SITE_PROFILE` diatur — di langkah itu, `profil-build-smoke` sendiri membangun ketiga profil, jadi leg `toko` sendiri sudah membuktikan seluruh matriks. Tidak ada apa pun di job ini yang membangun image container atau men-deploy apa pun.
 
-**`check-cms`** (`name: check-cms`, `needs: check`, `timeout-minutes: 20`) berjalan terhadap container layanan `postgres:18.4` nyata (`POSTGRES_USER=awcms`, `POSTGRES_DB=awcms`, port 5432, health-checked dengan `pg_isready`):
+**`check-cms`** (`name: check-cms`, `needs: check`, `timeout-minutes: 45`) berjalan terhadap container layanan `postgres:18.4` nyata (`POSTGRES_USER=awcms`, `POSTGRES_DB=awcms`, port 5432, health-checked dengan `pg_isready`):
 
 1. `bun install --frozen-lockfile` di root.
 2. `cd apps/cms && DATABASE_URL="" bun run check` — rantai penuh ~53 langkah (lint, docs/i18n, setiap gate registry/konsistensi, typecheck, `bun test` dengan setiap suite ber-gate-DB skip bersih, `bun run build`).
@@ -98,6 +98,22 @@ Temuan mendarat di tab Security → Code scanning milik repositori ini sendiri, 
 - **`CodeQL`** — app `GitHub Advanced Security` (`app_id` 57789), check **hasil** code-scanning. GitHub membuat/memperbarui check ini hanya setelah unggahan SARIF berhasil, dari data alert dalam unggahan itu; ia tidak mengatakan apa pun tentang apakah run analisis itu sendiri selesai.
 
 Kebijakan failure/triase milik issue itu sendiri mensyaratkan sebuah check CodeQL wajib "gagal tertutup untuk kegagalan workflow/analyzer" — temuan itu sendiri tetap memakai semantik severity/triase code-scanning biasa milik GitHub, bukan gate merge. `Analyze (javascript-typescript)` adalah yang benar-benar melakukan ini: ia terikat langsung ke status keluar job workflow itu sendiri, sehingga crash analyzer atau kesalahan konfigurasi melaporkan `failure` (atau tidak pernah selesai, yang juga memblokir check wajib) alih-alih diam-diam tidak meninggalkan check hasil code-scanning sama sekali untuk dievaluasi aturan wajib. `CodeQL`, karena hilir dari unggahan SARIF yang berhasil, tidak bisa membedakan "analisis berjalan bersih" dari "analisis tidak pernah cukup jauh untuk menghasilkan SARIF sama sekali" dalam kasus yang justru penting untuk sebuah gate merge. `Analyze (javascript-typescript)` karena itu ditambahkan ke status check wajib `main`, secara aditif, di samping sebelas context yang sudah dibangun issue #215 (lihat "Branch protection pada `main`" di atas).
+
+<a id="bumping-the-omes-release-the-landing-page-presents"></a>
+
+## Mengganti rilis OMES yang ditampilkan halaman landing
+
+Beranda profil `landing` menyebut sebuah rilis OMES, tautan catatan rilis, tautan panduan instalasi, dan perintah instalasi. Keempatnya berasal dari SATU berkas, `apps/storefront/src/config/omes-rilis.json` (dibaca lewat `apps/storefront/src/config/omes-rilis.ts`, yang memvalidasinya dan menggagalkan build bila berkas rusak atau tidak konsisten); tidak ada komponen yang meng-hardcode versi (issue #16). Berkas itu mencatat tag, objek tag teranotasi, commit, tanggal terbit, blob sha git dan sha256 installer, serta bagaimana/kapan diverifikasi. Manifes kompatibilitas tingkat root dapat merujuk berkas ini lewat path; jaga nama kolomnya tetap stabil.
+
+**Perintah instalasi memin `--ref <tag>`, dengan sengaja.** Pada `v0.6.0`, `install/bootstrap.sh` OMES masih menetapkan `OMES_DEFAULT_STABLE_TAG="v0.4.0"`, sehingga `curl …/v0.6.0/install/bootstrap.sh | bash` akan memasang `v0.4.0`. Kanal stabil bawaan menerima `--ref <tag>`, jadi halaman menampilkan `curl -fsSL <URL raw pada tag> | bash -s -- --ref <tag>`. README `v0.6.0` OMES sendiri masih menampilkan perintah lama: ketidaksesuaian di hulu yang dicatat di sini, bukan disalin. Bila rilis OMES berikutnya memperbaiki tag bawaannya, `--ref` tetap tidak berbahaya; hapus hanya secara sengaja, bersama aturan `installCommand` di `omes-rilis.ts` dan tesnya.
+
+Untuk pindah ke rilis OMES baru:
+
+1. Ubah `omes-rilis.json`: `tag`, `tagObjectSha`, `commitSha`, `publishedAt`, ketiga URL, `installer.rawUrl`/`gitBlobSha`/`sha256`, `installCommand`, dan `verification`. Hanya `vX.Y.Z` yang sudah terbit dan bukan prarilis yang diterima.
+2. Jalankan `bun run verify:omes-release`. Ia bertanya ke REST API GitHub (rilis terbit dan bukan prarilis, objek tag, commit yang ditunjuk, blob sha `install/bootstrap.sh` pada commit itu) dan tidak pernah mengunduh atau menjalankan installer; hitung `sha256` sendiri dari berkas raw satu kali. Kode keluar `0` terverifikasi, `1` berkas berbeda dari GitHub, `2` GitHub tidak dapat ditanya (gagal tertutup — ulangi atau setel `GITHUB_TOKEN`), `3` berkas tidak terbaca.
+3. Jalankan `cd apps/storefront && SITE_PROFILE=landing bun test tests/omes-rilis.test.ts` lalu buka PR beserta changeset.
+
+`.github/workflows/omes-release-verify.yml` mengulang langkah 2 pada pull request yang menyentuh berkas, alat, atau workflow itu, setiap pekan, dan sesuai permintaan. Workflow ini **bukan** status check wajib: ia butuh jaringan dan batas laju api.github.com, dan check wajib yang bisa gagal karena sebab di luar repositori ini akan menghambat merge yang tak terkait. Anggap run terjadwal yang merah sebagai "rilis yang dipin tak lagi cocok dengan GitHub — periksa".
 
 ## Pembaruan dependensi
 

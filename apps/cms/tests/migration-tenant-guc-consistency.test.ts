@@ -31,6 +31,8 @@ import path from "node:path";
 
 import { describe, expect, test } from "bun:test";
 
+import { compareMigrationNames } from "../scripts/lib/migrations";
+
 /** The one GUC `withTenant()` sets. Anything else in a policy is a typo with teeth. */
 const TENANT_GUC = "app.current_tenant_id";
 
@@ -46,7 +48,12 @@ const CURRENT_SETTING = /current_setting\(\s*'([^']+)'/g;
  * Names that are legitimately not the tenant GUC. Empty today, and an addition
  * here should be rare enough to argue for in review.
  */
-const ALLOWED_OTHER_GUCS = new Set<string>([]);
+const ALLOWED_OTHER_GUCS = new Set<string>([
+  // A built-in PostgreSQL parameter, not an application GUC: the shift overlap
+  // guard (sql/184, Issue #946) refuses to run outside READ COMMITTED because
+  // its advisory-lock argument depends on re-reading committed rows.
+  "transaction_isolation"
+]);
 
 /**
  * Strip `--` line comments and `/* *\/` block comments.
@@ -64,7 +71,7 @@ async function readMigrations(): Promise<{ name: string; sql: string }[]> {
   const dir = path.resolve(process.cwd(), "sql");
   const names = (await readdir(dir))
     .filter((name) => name.endsWith(".sql"))
-    .sort();
+    .sort(compareMigrationNames);
 
   return Promise.all(
     names.map(async (name) => ({

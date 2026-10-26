@@ -1,0 +1,282 @@
+asyncapi: 3.0.0
+info:
+  title: AWCMS Cross-Domain Events (PROVISIONAL)
+  version: 0.1.0
+  x-awcms-status: provisional
+  x-awcms-emitted-by-code: false
+  description: |-
+    PROVISIONAL. NOT part of the live event contract and NOT emitted by any
+    code today. This document holds the event schemas that the hr_payroll
+    design pack settled on (the whatsapp_delivery events went live with its
+    implementation, Issue #963, and the nine booking reservation events with
+    the reservation routes, Issue #941), validated by
+    `bun run asyncapi:provisional:check`, so that the names and payloads are
+    reviewed as data before any module exists.
+
+    An event lives in exactly ONE of two places: this file, or
+    `asyncapi/awcms-domain-events.asyncapi.yaml` plus
+    `DOMAIN_EVENT_TYPE_REGISTRY`. The implementation PR of each module moves
+    its events out of this file into the live pair, and the check fails if an
+    event is in both (or is in the live pair and still here).
+
+    Same AsyncAPI version and the same `DomainEventEnvelope` as the live
+    file; the check compares the envelope byte-for-byte as data. Payloads carry
+    identifiers, enums, counts and UTC instants only: no personal data, no
+    amount, no payment state, no phone number.
+
+    See docs/awcms/cross-domain-contracts.md for the capability ports,
+    consumer idempotency and the provisional-to-live migration.
+channels:
+  awcms.hr.attendance.recorded:
+    address: awcms.hr.attendance.recorded
+    x-awcms-status: provisional
+    messages:
+      HrAttendanceRecorded:
+        $ref: "#/components/messages/HrAttendanceRecorded"
+    description: >-
+      PROVISIONAL. A new, non-replayed attendance event was stored. Owner: hr_payroll (ADR-0132 / docs/awcms/hr-payroll.md section 10).
+      Becomes live with: hr_workforce phase 1.
+  awcms.hr.shift.assigned:
+    address: awcms.hr.shift.assigned
+    x-awcms-status: provisional
+    messages:
+      HrShiftAssigned:
+        $ref: "#/components/messages/HrShiftAssigned"
+    description: >-
+      PROVISIONAL. A shift assignment became published, or was cancelled (cancelled: true). Owner: hr_payroll (ADR-0132 / docs/awcms/hr-payroll.md section 10).
+      Becomes live with: hr_workforce phase 1.
+  awcms.hr.commission.accrued:
+    address: awcms.hr.commission.accrued
+    x-awcms-status: provisional
+    messages:
+      HrCommissionAccrued:
+        $ref: "#/components/messages/HrCommissionAccrued"
+    description: >-
+      PROVISIONAL. A new commission accrual was posted; a replay publishes nothing. Owner: hr_payroll (ADR-0132 / docs/awcms/hr-payroll.md section 10).
+      Becomes live with: hr phase 2.
+  awcms.hr.commission.approved:
+    address: awcms.hr.commission.approved
+    x-awcms-status: provisional
+    messages:
+      HrCommissionApproved:
+        $ref: "#/components/messages/HrCommissionApproved"
+    description: >-
+      PROVISIONAL. A commission accrual was approved. Owner: hr_payroll (ADR-0132 / docs/awcms/hr-payroll.md section 10).
+      Becomes live with: hr phase 2.
+  awcms.hr.payroll.finalized:
+    address: awcms.hr.payroll.finalized
+    x-awcms-status: provisional
+    messages:
+      HrPayrollFinalized:
+        $ref: "#/components/messages/HrPayrollFinalized"
+    description: >-
+      PROVISIONAL. A payroll run was finalized. Owner: hr_payroll (ADR-0132 / docs/awcms/hr-payroll.md section 10).
+      Becomes live with: hr phase 3.
+  awcms.hr.payroll.reversed:
+    address: awcms.hr.payroll.reversed
+    x-awcms-status: provisional
+    messages:
+      HrPayrollReversed:
+        $ref: "#/components/messages/HrPayrollReversed"
+    description: >-
+      PROVISIONAL. A payroll run was reversed by a reversal run. Owner: hr_payroll (ADR-0132 / docs/awcms/hr-payroll.md section 10).
+      Becomes live with: hr phase 3.
+components:
+  messages:
+    HrAttendanceRecorded:
+      name: HrAttendanceRecorded
+      title: awcms.hr.attendance.recorded
+      contentType: application/json
+      x-awcms-status: provisional
+      x-awcms-owner: "hr_payroll (ADR-0132 / docs/awcms/hr-payroll.md section 10)"
+      payload:
+        allOf:
+          - $ref: "#/components/schemas/DomainEventEnvelope"
+          - type: object
+            properties:
+              eventType: { const: awcms.hr.attendance.recorded }
+              eventVersion: { const: "1.0" }
+              aggregateType: { const: attendance_event }
+              payload:
+                $ref: "#/components/schemas/HrAttendanceRecordedPayload"
+    HrShiftAssigned:
+      name: HrShiftAssigned
+      title: awcms.hr.shift.assigned
+      contentType: application/json
+      x-awcms-status: provisional
+      x-awcms-owner: "hr_payroll (ADR-0132 / docs/awcms/hr-payroll.md section 10)"
+      payload:
+        allOf:
+          - $ref: "#/components/schemas/DomainEventEnvelope"
+          - type: object
+            properties:
+              eventType: { const: awcms.hr.shift.assigned }
+              eventVersion: { const: "1.0" }
+              aggregateType: { const: shift_assignment }
+              payload:
+                $ref: "#/components/schemas/HrShiftAssignedPayload"
+    HrCommissionAccrued:
+      name: HrCommissionAccrued
+      title: awcms.hr.commission.accrued
+      contentType: application/json
+      x-awcms-status: provisional
+      x-awcms-owner: "hr_payroll (ADR-0132 / docs/awcms/hr-payroll.md section 10)"
+      payload:
+        allOf:
+          - $ref: "#/components/schemas/DomainEventEnvelope"
+          - type: object
+            properties:
+              eventType: { const: awcms.hr.commission.accrued }
+              eventVersion: { const: "1.0" }
+              aggregateType: { const: commission_accrual }
+              payload:
+                $ref: "#/components/schemas/HrCommissionAccruedPayload"
+    HrCommissionApproved:
+      name: HrCommissionApproved
+      title: awcms.hr.commission.approved
+      contentType: application/json
+      x-awcms-status: provisional
+      x-awcms-owner: "hr_payroll (ADR-0132 / docs/awcms/hr-payroll.md section 10)"
+      payload:
+        allOf:
+          - $ref: "#/components/schemas/DomainEventEnvelope"
+          - type: object
+            properties:
+              eventType: { const: awcms.hr.commission.approved }
+              eventVersion: { const: "1.0" }
+              aggregateType: { const: commission_accrual }
+              payload:
+                $ref: "#/components/schemas/HrCommissionApprovedPayload"
+    HrPayrollFinalized:
+      name: HrPayrollFinalized
+      title: awcms.hr.payroll.finalized
+      contentType: application/json
+      x-awcms-status: provisional
+      x-awcms-owner: "hr_payroll (ADR-0132 / docs/awcms/hr-payroll.md section 10)"
+      payload:
+        allOf:
+          - $ref: "#/components/schemas/DomainEventEnvelope"
+          - type: object
+            properties:
+              eventType: { const: awcms.hr.payroll.finalized }
+              eventVersion: { const: "1.0" }
+              aggregateType: { const: payroll_run }
+              payload:
+                $ref: "#/components/schemas/HrPayrollFinalizedPayload"
+    HrPayrollReversed:
+      name: HrPayrollReversed
+      title: awcms.hr.payroll.reversed
+      contentType: application/json
+      x-awcms-status: provisional
+      x-awcms-owner: "hr_payroll (ADR-0132 / docs/awcms/hr-payroll.md section 10)"
+      payload:
+        allOf:
+          - $ref: "#/components/schemas/DomainEventEnvelope"
+          - type: object
+            properties:
+              eventType: { const: awcms.hr.payroll.reversed }
+              eventVersion: { const: "1.0" }
+              aggregateType: { const: payroll_run }
+              payload:
+                $ref: "#/components/schemas/HrPayrollReversedPayload"
+  schemas:
+    DomainEventEnvelope:
+      type: object
+      required:
+        [
+          eventId,
+          eventType,
+          eventVersion,
+          tenantId,
+          aggregateType,
+          aggregateId,
+          occurredAt,
+          payload,
+          metadata
+        ]
+      properties:
+        eventId: { type: string, format: uuid }
+        eventType: { type: string }
+        eventVersion: { type: string }
+        tenantId: { type: string, format: uuid }
+        nodeId: { type: string, format: uuid }
+        aggregateType: { type: string }
+        aggregateId: { type: string }
+        occurredAt: { type: string, format: date-time }
+        actor:
+          type: object
+          properties:
+            tenantUserId: { type: string, format: uuid }
+            profileId: { type: string, format: uuid }
+        correlationId: { type: string }
+        causationId: { type: string }
+        payload: {}
+        metadata:
+          type: object
+          required: [sourceModule, schemaVersion]
+          properties:
+            sourceModule: { type: string }
+            schemaVersion: { type: string }
+    HrAttendanceRecordedPayload:
+      type: object
+      additionalProperties: false
+      required: [eventId, employmentId, kind, occurredAt, source]
+      description: eventId here is the attendance event's id, not the envelope's.
+      properties:
+        eventId: { type: string, format: uuid }
+        employmentId: { type: string, format: uuid }
+        kind: { type: string }
+        occurredAt: { type: string, format: date-time }
+        source: { type: string }
+        officeId: { type: [string, "null"], format: uuid }
+    HrShiftAssignedPayload:
+      type: object
+      additionalProperties: false
+      required: [assignmentId, employmentId, kind, startsAt, endsAt, cancelled]
+      properties:
+        assignmentId: { type: string, format: uuid }
+        employmentId: { type: string, format: uuid }
+        kind: { type: string, enum: [work, time_off] }
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+        cancelled: { type: boolean }
+    HrCommissionAccruedPayload:
+      type: object
+      additionalProperties: false
+      required:
+        [accrualId, employmentId, sourceType, ruleKey, ruleVersion, operation]
+      description: No amount, by pack rule; totals are read through an authorized read.
+      properties:
+        accrualId: { type: string, format: uuid }
+        employmentId: { type: string, format: uuid }
+        sourceType: { type: string }
+        ruleKey: { type: string }
+        ruleVersion: { type: integer, minimum: 1 }
+        operation: { type: string }
+    HrCommissionApprovedPayload:
+      type: object
+      additionalProperties: false
+      required: [accrualId, employmentId]
+      properties:
+        accrualId: { type: string, format: uuid }
+        employmentId: { type: string, format: uuid }
+    HrPayrollFinalizedPayload:
+      type: object
+      additionalProperties: false
+      required: [runId, periodKey, kind, employeeCount, currencyCode]
+      description: No amount, by pack rule; currencyCode is an ISO 4217 code, not a value.
+      properties:
+        runId: { type: string, format: uuid }
+        periodKey: { type: string }
+        kind: { type: string }
+        employeeCount: { type: integer, minimum: 0 }
+        currencyCode: { type: string, pattern: "^[A-Z]{3}$" }
+    HrPayrollReversedPayload:
+      type: object
+      additionalProperties: false
+      required: [runId, reversalRunId, periodKey, employeeCount]
+      properties:
+        runId: { type: string, format: uuid }
+        reversalRunId: { type: string, format: uuid }
+        periodKey: { type: string }
+        employeeCount: { type: integer, minimum: 0 }

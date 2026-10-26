@@ -77,7 +77,12 @@ const showActions = canUpdate || canDelete;
   )}
 
   {canRead && !loadError && (
-    <div class="data-table-scroll fade-in-up">
+    <div
+      class="data-table-scroll fade-in-up"
+      role="region"
+      tabindex="0"
+      aria-label={t("Reviews")}
+    >
       <table class="data-table data-table--stack" id="commerce-reviews-table">
         <caption>
           {tn("{count} review", "{count} reviews", reviews.length, {
@@ -114,15 +119,15 @@ const showActions = canUpdate || canDelete;
           ) : (
             reviews.map((review) => (
               <tr data-review-row={review.id}>
-                <td data-label="Product">
+                <td data-label={t("Product")}>
                   <span class="cell-code">{review.productId}</span>
                 </td>
-                <td data-label="Rating">{review.rating} / 5</td>
-                <td data-label="Body">{review.body}</td>
-                <td data-label="Status">{review.status}</td>
-                <td data-label="Submitted">{review.createdAt}</td>
+                <td data-label={t("Rating")}>{review.rating} / 5</td>
+                <td data-label={t("Body")}>{review.body}</td>
+                <td data-label={t("Status")}>{review.status}</td>
+                <td data-label={t("Submitted")}>{review.createdAt}</td>
                 {showActions && (
-                  <td data-label="Actions" class="stacked-block">
+                  <td data-label={t("Actions")} class="stacked-block">
                     <div class="row-actions">
                       {canUpdate && review.status === "pending" && (
                         <>
@@ -164,6 +169,7 @@ const showActions = canUpdate || canDelete;
 </AdminLayout>
 
 <script>
+  import { confirmAction } from "../../lib/ui/confirm-dialog-client";
   import {
     messageBox,
     mutateAndReload,
@@ -208,7 +214,7 @@ const showActions = canUpdate || canDelete;
   onAction(".review-delete-btn", async (button) => {
     const id = button.dataset.reviewId;
     if (!id) return;
-    if (!window.confirm("Delete this review?")) return;
+    if (!(await confirmAction("Delete this review?"))) return;
 
     await mutateAndReload(
       button,

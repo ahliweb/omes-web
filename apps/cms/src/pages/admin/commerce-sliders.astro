@@ -160,7 +160,12 @@ const showActions = canUpdate || canDelete;
   )}
 
   {canRead && !loadError && (
-    <div class="data-table-scroll fade-in-up">
+    <div
+      class="data-table-scroll fade-in-up"
+      role="region"
+      tabindex="0"
+      aria-label={t("Home sliders")}
+    >
       <table class="data-table data-table--stack" id="commerce-sliders-table">
         <caption>
           {tn("{count} slider", "{count} sliders", sliders.length, {
@@ -193,7 +198,10 @@ const showActions = canUpdate || canDelete;
           ) : (
             sliders.map((slider) => (
               <tr data-slider-row={slider.id}>
-                <td data-label="Title" class={canUpdate ? "stacked-block" : ""}>
+                <td
+                  data-label={t("Title")}
+                  class={canUpdate ? "stacked-block" : ""}
+                >
                   {canUpdate ? (
                     <input
                       class="slider-title-input"
@@ -206,7 +214,7 @@ const showActions = canUpdate || canDelete;
                   )}
                 </td>
                 <td
-                  data-label="Sort order"
+                  data-label={t("Sort order")}
                   class={canUpdate ? "stacked-block" : ""}
                 >
                   {canUpdate ? (
@@ -222,7 +230,7 @@ const showActions = canUpdate || canDelete;
                   )}
                 </td>
                 <td
-                  data-label="Active"
+                  data-label={t("Active")}
                   class={canUpdate ? "stacked-block" : ""}
                 >
                   {canUpdate ? (
@@ -239,7 +247,7 @@ const showActions = canUpdate || canDelete;
                   )}
                 </td>
                 {showActions && (
-                  <td data-label="Actions" class="stacked-block">
+                  <td data-label={t("Actions")} class="stacked-block">
                     <div class="row-actions">
                       {canUpdate && (
                         <button
@@ -273,6 +281,7 @@ const showActions = canUpdate || canDelete;
 </AdminLayout>
 
 <script>
+  import { confirmAction } from "../../lib/ui/confirm-dialog-client";
   import {
     checkboxChecked,
     field,
@@ -340,7 +349,7 @@ const showActions = canUpdate || canDelete;
     const id = button.dataset.sliderId;
     if (!id) return;
     const title = button.dataset.sliderTitle ?? "this slider";
-    if (!window.confirm(`Delete ${title}?`)) return;
+    if (!(await confirmAction(`Delete ${title}?`))) return;
 
     await mutateAndReload(
       button,

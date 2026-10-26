@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](database-migrations.md)
 
-<!-- i18n-source-hash: sha256:429043b4f4496858cc18de4800001bb92f736d025af1107a2e655f7101de17ac -->
+<!-- i18n-source-hash: sha256:55d9c67b97bac4ed707d56f3927fd5fbda6133d92a7ec5033b20cc9120b37fa3 -->
 
 # Database Migration Runner
 
@@ -70,8 +70,8 @@ DATABASE_URL=postgres://awcms:awcms_password@localhost:5432/awcms bun run db:mig
 
 - Runtime memakai Bun melalui `bun scripts/db-migrate.ts`.
 - Driver memakai `Bun.SQL`, bukan `pg` atau adapter Node.js.
-- File migrasi dibaca dari `sql/` dan diurutkan berdasarkan nama file.
-- Nama file wajib mengikuti `NNN_awcms_<area>_<description>.sql`.
+- File migrasi dibaca dari `sql/` dan diurutkan berdasarkan nilai numerik awalan mereka, dengan nama file lengkap sebagai tie-break (lihat ADR-0130, Issue #911).
+- Nama file wajib mengikuti `NNN_awcms_<area>_<description>.sql` (norma upstream) atau `NNNN_awcms_<area>_<description>.sql` (aplikasi turunan dengan band terjaga ≥ 1000). Tepat tiga atau empat digit; awalan lima-digit dan dua-digit ditolak, begitu pula satu nomor yang ditulis dalam dua lebar (`0100_` di samping `100_`).
 - Runner memastikan tabel `awcms_schema_migrations` tersedia.
 - Migration yang sudah tercatat akan di-skip.
 - Checksum SHA-256 disimpan untuk setiap migration yang applied.
@@ -106,3 +106,4 @@ flowchart TD
 4. Schema tenant-scoped (termasuk entitas ERP: ledger, inventory, procurement, manufacturing, HR/payroll) wajib mengikuti standar PostgreSQL + RLS pada dokumen governance/ADR terkait (lihat ADR-0001 dan ADR foundation lain yang akan menyusul untuk RLS/RBAC-ABAC).
 5. Resource yang bisa dihapus wajib memakai kolom soft delete sesuai standar ADR soft-delete/immutability yang diwarisi dari base.
 </content>
+6. Setiap trigger function (`RETURNS trigger`) dan setiap fungsi `SECURITY DEFINER` wajib berakhir dengan `SET search_path = pg_catalog, public, pg_temp` (Issue #1046). `awcms_app` dan `awcms_worker` memegang `TEMP`, dan PostgreSQL mencari schema temp _sebelum_ `public` untuk nama relasi tanpa schema, sehingga sebuah role bisa `CREATE TEMP TABLE` bayangan bernama sama dan menyuapi guard dengan baris palsu. `pg_temp` harus disebut, dan di posisi terakhir: `SET search_path = public` saja tidak menolong. Taruh klausa itu pada `CREATE`, dan ulangi di setiap `CREATE OR REPLACE` (yang mengganti seluruh definisi, termasuk `SET`); atau tambahkan `ALTER FUNCTION … SET search_path = …` di migration berikutnya. `bun run db:function-search-path:check` melipat `sql/` secara berurutan, menilai definisi AKHIR tiap fungsi, dan menjadi bagian dari `bun run check`; `tests/integration/function-search-path.integration.test.ts` memeriksa `pg_proc.proconfig` pada database yang sudah dimigrasi.

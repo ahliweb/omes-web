@@ -122,7 +122,12 @@ const notFound = screen.state === "allowed" && !order;
       <div class="admin-order-detail-grid">
         <div class="admin-order-detail-panel">
           <h2 class="admin-dashboard-panel-title">{t("Lines")}</h2>
-          <div class="data-table-scroll">
+          <div
+            class="data-table-scroll"
+            role="region"
+            tabindex="0"
+            aria-label={t("Lines")}
+          >
             <table class="data-table data-table--stack">
               <caption class="sr-only">{t("Order lines")}</caption>
               <thead>
@@ -136,13 +141,13 @@ const notFound = screen.state === "allowed" && !order;
               <tbody>
                 {order.lines.map((line) => (
                   <tr>
-                    <td data-label="Product">
+                    <td data-label={t("Product")}>
                       {line.name}
                       {line.variantName && <> &mdash; {line.variantName}</>}
                     </td>
-                    <td data-label="Unit price">{line.unitPrice}</td>
-                    <td data-label="Qty">{line.quantity}</td>
-                    <td data-label="Line total">{line.lineTotal}</td>
+                    <td data-label={t("Unit price")}>{line.unitPrice}</td>
+                    <td data-label={t("Qty")}>{line.quantity}</td>
+                    <td data-label={t("Line total")}>{line.lineTotal}</td>
                   </tr>
                 ))}
               </tbody>

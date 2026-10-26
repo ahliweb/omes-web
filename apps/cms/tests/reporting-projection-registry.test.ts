@@ -218,12 +218,28 @@ describe("validateProjectionRegistry (Issue #753)", () => {
     const result = validateProjectionRegistry(listModules());
     expect(result.valid).toBe(true);
     expect(result.issues).toEqual([]);
-    // `reporting`'s own three plus `commerce`'s three sales-report projections
-    // (Issue #117) — the first descriptors contributed by a module OTHER than
-    // `reporting`, which is the shape this registry exists for.
-    expect(result.descriptors.length).toBe(6);
+    // Three from `reporting` itself, plus `inventory.low_stock` (ADR-0126) and
+    // `tax.snapshot_activity` (ADR-0127) — the first two projections DOMAIN
+    // modules contribute to the engine — plus the two `procurement.*` counters
+    // over its document-event log (ADR-0128), plus the three `booking.*`
+    // projections over its reservation history (Issue #944), plus
+    // `hr_workforce.attendance_events` over the attendance history (Issue #953).
+    // Plus `commerce`'s three sales-report projections (awcms-one Issue #117) —
+    // the first descriptors contributed by a module that is not upstream's.
+    expect(result.descriptors.length).toBe(14);
     expect(
       result.descriptors.filter((d) => d.ownerModuleKey === "commerce").length
     ).toBe(3);
+    expect(result.descriptors.map((d) => d.key)).toEqual(
+      expect.arrayContaining([
+        "booking.reservations",
+        "booking.time",
+        "booking.nights",
+        "hr_workforce.attendance_events"
+      ])
+    );
+    expect(result.descriptors.map((d) => d.key)).toContain(
+      "tax.snapshot_activity"
+    );
   });
 });

@@ -21,7 +21,7 @@ Memory agent Claude Code disimpan di `~/.claude/projects/<slug-cwd>/memory/` —
 - Repo ini **publik**. Jangan pernah menulis secret/kredensial nyata ke memory — nilai seperti `awcms_password` adalah placeholder yang sama dengan `.env.example` dan memang sudah publik.
 - `MEMORY.md` adalah indeks yang dimuat tiap sesi; file lain dimuat sesuai relevansi.
 
-**Jumlah memory saat snapshot terakhir: 129.**
+**Jumlah memory saat snapshot terakhir: 133.**
 
 ## Sengaja TIDAK disertakan
 
@@ -40,134 +40,138 @@ Konsekuensi yang disengaja: `MEMORY.md` dan beberapa memory lain **tetap** meruj
 <!-- memory-file: MEMORY.md -->
 
 `````markdown
-- [ATURAN: keluarga = template dipakai-langsung](awcms-family-direct-use-rule.md) — ADR-0034/0035: template SEJAJAR, TIDAK ada repo derivatif
-- [PENGEMBANGAN hanya di awcms + awcms-astro](awcms-mini-freeze-foundation-here.md) — ADR-0055: mini/micro = ARSIP; kapabilitas dibangun di sini lewat ADR admission
-- [WAJIB: otorisasi lewat authorizeInTransaction](awcms-authorize-chokepoint-rule.md) — ADR-0063 gerbang per-HANDLER; `ownershipGrant` MELEBARKAN; `blog/posts/[id].ts` BUKAN pola benar
-- [Token bearer APA PUN dapat skema 77 endpoint](awcms-api-body-auth-boundary.md) — `prepare` sebelum otorisasi; gerbang STATIS buta (297/305 palsu); sapuan API bisa me-LOGOUT dirinya
-- [Cari gerbang yang membaca SATU dari sepasang](awcms-gate-reads-one-of-a-pair.md) — #727/#729: hash i18n tak lihat isi mirror; `memory:docs:check` TANPA PEMANGGIL; label ≠ identitas
-- [Grep CALL-nya, bukan DEFINISInya](awcms-grep-the-call-not-the-definition.md) — 3× berulang: `seo_title()` 9 definisi/0 panggilan masuk ADR ter-merge; kolasi ci MySQL vs kesamaan Postgres
-- [Cari SAUDARA endpoint-nya dulu](awcms-check-the-sibling-endpoint.md) — 2× berulang (#716 sync, #722 analytics): satu kembar diperkeras, satunya tidak; rasional registry MEMBENARKAN keputusan
-- [Sapuan N+1 berbasis SINTAKS itu buta](awcms-n1-scanner-syntax-blind-spot.md) — pindai fungsi penerbit SQL transitif (34→45); `LIMIT` telanjang pada baca ganti-seluruhnya = DATA HILANG; gerbang kontrak konsumen membekukan PROSA
-- [`bun run check` berhenti di gerbang KE-4](awcms-memory-docs-check-blocks-gate-chain.md) — `memory:docs:check` melenceng = typecheck/test/build LOKAL tak pernah jalan; CI buta soal ini
-- [`sql/NNN` baru membasikan 4 KLAIM RENTANG](awcms-sql-nnn-range-cascade.md) — menggantung DUA subagent berturut-turut; historis ≠ rentang
-- [Asersi plan mengukur PLANNER, bukan indeks](awcms-query-plan-assertions-measure-the-planner.md) — "no Seq Scan" hampa saat `enable_seqscan=off`; KOREKSI #780: nama indeks pun FLAKY, asersikan NODE (`Bitmap Index Scan **on**`, bukan `using`)
-- [E2E dulu TANPA uji viewport sama sekali](awcms-e2e-had-no-viewport-testing.md) — gerbang 360px (#777) menemukan 2 layar; penyebabnya containing-block `sr-only` & `min-width:auto` flex, BUKAN wrapper hilang
-- [Standar keamanan/performa = dokumen HIDUP](awcms-standards-anchor-and-second-pass.md) — C19 ledger hanya-mengecil 121→11 (pindahkan JAWABANNYA bukan pekerjaannya); `sql/NNN` baru menyentuh 6 dokumen
-- [Skill DIGERBANGI CI](awcms-skills-now-gated.md) — ADR-0062 `skills:check`; path arsip WAJIB `awcms-mini:src/…`; ekstraktor hanya lihat backtick SATU BARIS
-- [Skill "FIKTIF" bisa salah ARAH](awcms-stale-skill-flips-direction.md) — banner "belum ada" menua sebalik arah dan agen MENGIKUTI skill; wajib §Peta ke artefak nyata
-- [Tautan changeset TAK PUNYA bentuk relatif yang benar](awcms-changeset-links-have-no-correct-relative-form.md) — dua lokasi, dua ejaan, saling meniadakan; sebut nomor ADR saja
-- [Gerbang approval berjalan SESUDAH penerbitan](awcms-approval-gate-ran-after-the-publish.md) — ADR-0117: `:latest` pindah sebelum ada yang mengklik; 4 rilis tak bertanda tangan; backfill MEMBALIK flag "Latest"
-- [Gerbang yang hanya menyala saat RILIS](awcms-gates-that-only-fire-at-release.md) — v10.0.0: `pending.length > 0` + tautan `../docs/…` di changeset; fix WAJIB mendarat di main lebih dulu
-- [Pelajaran desain gate](awcms-gate-design-lessons.md) — gate CAKUPAN hijau sambil jawabannya salah; uji dengan cacat ASLI; `.generated` tanpa generator
-- ["Jalankan, jangan dibaca" — 4 cacat lolos 37 gerbang](awcms-run-it-dont-read-it.md) — migrasi tak-apply, `isBlockedAddress` non-IP, `withTenant` MENGEMBALIKAN Response
-- [Retensi outbox SELESAI — dua registry](awcms-lifecycle-two-registries-and-bounded-list.md) — #468: 5 deskriptor + `BOUNDED_BY_DESIGN`; ADR-0076 registry KEDUA
-- [Satu outbox + cursor sequence TIDAK aman](awcms-one-outbox-and-cursor-visibility.md) — ADR-0077: identity terlihat saat COMMIT, `sequence >` bisa melewati event
-- [Sesi self-service + jebakan hash IP](awcms-session-self-service-and-ip-hash.md) — `hashClientIp` berkunci per-proses TIDAK boleh dipersistenkan
-- [Gelombang 2 SELESAI + 3 koreksi rencana](awcms-gelombang-2-session-surface-complete.md) — `requireStepUp` tanpa syarat = jebakan ADR-0058 §E; asersi source WAJIB buang komentar dulu
-- [Grant ber-scope mendarat (ADR-0078)](awcms-access-policies-scoped-grant.md) — BUKAN dual write tapi pencabutan cari di DUA tempat; FK komposit memerahkan teardown e2e
-- [Penulis pindah, pembacanya TIDAK](awcms-writer-moved-readers-did-not.md) — 5 cacat senyap lolos 38 gerbang; ADR-0079: `activeRoleGrants` satu-satunya definisi
-- [Gerbang privilege memeriksa MATRIKSNYA](awcms-gate-checks-matrix-not-need.md) — bukan kebutuhan kode; setup wizard rusak berminggu sambil gate hijau
-- [Lockout login dulu TIDAK atomik](awcms-lockout-not-atomic-and-false-doc-claims.md) — K percobaan paralel = 1 increment; 4 dokumen menyatakan sebaliknya
-- [Modul push_delivery LENGKAP & `active`](awcms-push-delivery-complete.md) — outbox KEDUA (ADR-0074), FCM v1 + Web Push VAPID tanpa dependensi
-- [Aturan dalam URUTAN pernyataan = aturan TANPA tes](awcms-rule-in-statement-order-has-no-test.md) — ADR-0111: presedensi 2 `await` menelan 23.906 redirect
-- [Kesiapan CMS berita /news/](awcms-news-site-readiness.md) — backend matang, AUTHORING & PRESENTASI putus; 9 pemblokir
-- [Putaran gap portal berita 19 Agu 2026](awcms-news-portal-gap-round-2026-08-19.md) — 132 fitur legacy → #588–#599; TipTap menabrak postur 2-dependency
-- [Situs legacy SeputarBorneo = RUJUKAN FITUR, bukan sumber migrasi](seputarborneo-legacy-site-is-on-this-machine.md) — ADR-0116 mencabut cutover 301; #599/#711 DITUTUP. Faktanya tetap: EMPAT bentuk URL hidup, dump 0-byte UMPAN PALSU, data di volume `seputarborneocom_db_data`
-- [Tanya: pemanggilnya ADA di jalur permintaan?](awcms-is-the-caller-even-in-the-request-path.md) — ADR-0114: `awcms_seo_redirects` 1 call site di `src/middleware.ts`, targetnya disajikan `awcms-astro`; TEPI yang memikul 301
-- [PRD LenteraKalteng menggerakkan kerja awcms](lenterakalteng-prd-drives-awcms-work.md) — PRD di ~/Downloads BUKAN di repo; awcms-astro TIDAK boleh jadi situs Lentera
-- [Rekomendasi WAJIB ditulis ke PROJECT_STATE §4](awcms-recommendation-rounds-live-in-project-state.md) — termasuk penolakan DAN pelaksanaannya; menurunkan ulang = satu audit penuh
-- [State proyek → docs/PROJECT_STATE.md](awcms-project-state-doc.md) — baca §4 DULU; §2 + 5 artefak ter-generate, jangan disunting tangan
-- [Hak subjek data LENGKAP (ADR-0094)](awcms-subject-rights-complete.md) — ledger 139→0; maker/checker EMPAT lapis; jawab SELURUH populasi
-- [Gap permission seed vs tenant lama](awcms-permission-seed-existing-tenant-gap.md) — seed hanya menjangkau tenant SETELAHnya; tenant lama diam-diam 403
-- [Tarian kontrak lintas-repo](awcms-astro-cross-repo-contract-dance.md) — permukaan baru = TIGA perubahan berurutan (COMMITTED → panggil → CONSUMED)
-- [Verifikasi build awcms-astro pakai stub](awcms-astro-stub-build-verification.md) — CI-nya MELEWATI build; stub `Bun.serve` di :8899 membuka gerbang `audit:konten`
-- [`LIMIT` tanpa cursor & `type: object` = tanpa bentuk](awcms-bounded-list-and-no-shape.md) — array telanjang tak bisa berkata "masih ada lagi"
+- [ATURAN: keluarga = template dipakai-langsung](awcms-family-direct-use-rule.md) — ADR-0034/0035: template SEJAJAR, TIDAK ada repo…
+- [Konektor MCP sengaja DITUTUP — belum diperlukan](mcp-connectors-not-needed-yet.md) — Slack/Linear/Notion/+64 di `deniedMcpServers`…
+- [PENGEMBANGAN hanya di awcms + awcms-astro](awcms-mini-freeze-foundation-here.md) — ADR-0055: mini/micro = ARSIP; kapabilitas…
+- [WAJIB: otorisasi lewat authorizeInTransaction](awcms-authorize-chokepoint-rule.md) — ADR-0063 gerbang per-HANDLER; `ownershipGrant`…
+- [Token bearer APA PUN dapat skema 77 endpoint](awcms-api-body-auth-boundary.md) — `prepare` sebelum otorisasi; gerbang STATIS…
+- [Cari gerbang yang membaca SATU dari sepasang](awcms-gate-reads-one-of-a-pair.md) — #727/#729: hash i18n tak lihat isi mirror…
+- [Grep CALL-nya, bukan DEFINISInya](awcms-grep-the-call-not-the-definition.md) — 3× berulang: `seo_title()` 9 definisi/0…
+- [Cari SAUDARA endpoint-nya dulu](awcms-check-the-sibling-endpoint.md) — 2× berulang (#716 sync, #722 analytics): satu…
+- [Sapuan N+1 berbasis SINTAKS itu buta](awcms-n1-scanner-syntax-blind-spot.md) — pindai fungsi penerbit SQL transitif (34→45)…
+- [`bun run check` berhenti di gerbang KE-4](awcms-memory-docs-check-blocks-gate-chain.md) — `memory:docs:check` melenceng =…
+- [`sql/NNN` baru membasikan 4 KLAIM RENTANG](awcms-sql-nnn-range-cascade.md) — menggantung DUA subagent berturut-turut…
+- [Asersi plan mengukur PLANNER, bukan indeks](awcms-query-plan-assertions-measure-the-planner.md) — "no Seq Scan" hampa saat `enable_seqscan=off`…
+- [E2E dulu TANPA uji viewport sama sekali](awcms-e2e-had-no-viewport-testing.md) — gerbang 360px (#777) menemukan 2 layar…
+- [Standar keamanan/performa = dokumen HIDUP](awcms-standards-anchor-and-second-pass.md) — C19 ledger hanya-mengecil 121→11 (pindahkan…
+- [Skill DIGERBANGI CI](awcms-skills-now-gated.md) — ADR-0062 `skills:check`; path arsip WAJIB…
+- [Skill "FIKTIF" bisa salah ARAH](awcms-stale-skill-flips-direction.md) — banner "belum ada" menua sebalik arah dan agen…
+- [Tautan changeset TAK PUNYA bentuk relatif yang benar](awcms-changeset-links-have-no-correct-relative-form.md) — dua lokasi, dua ejaan, saling meniadakan; sebut…
+- [Gerbang approval berjalan SESUDAH penerbitan](awcms-approval-gate-ran-after-the-publish.md) — ADR-0117: `:latest` pindah sebelum ada yang…
+- [Gerbang yang hanya menyala saat RILIS](awcms-gates-that-only-fire-at-release.md) — v10.0.0: `pending.length > 0` + tautan…
+- [Bundle perbaikan EKSTERNAL: verifikasi dulu](awcms-external-fix-bundle-verify-first.md) — bug-hunt 16 Okt: 1 tak terkompilasi, 1 tak…
+- [Pelajaran desain gate](awcms-gate-design-lessons.md) — gate CAKUPAN hijau sambil jawabannya salah; uji…
+- ["Jalankan, jangan dibaca" — 4 cacat lolos 37 gerbang](awcms-run-it-dont-read-it.md) — migrasi tak-apply, `isBlockedAddress` non-IP…
+- [Retensi outbox SELESAI — dua registry](awcms-lifecycle-two-registries-and-bounded-list.md) — #468: 5 deskriptor + `BOUNDED_BY_DESIGN`…
+- [Satu outbox + cursor sequence TIDAK aman](awcms-one-outbox-and-cursor-visibility.md) — ADR-0077: identity terlihat saat COMMIT…
+- [Sesi self-service + jebakan hash IP](awcms-session-self-service-and-ip-hash.md) — `hashClientIp` berkunci per-proses TIDAK boleh…
+- [Gelombang 2 SELESAI + 3 koreksi rencana](awcms-gelombang-2-session-surface-complete.md) — `requireStepUp` tanpa syarat = jebakan ADR-0058…
+- [Grant ber-scope mendarat (ADR-0078)](awcms-access-policies-scoped-grant.md) — BUKAN dual write tapi pencabutan cari di DUA…
+- [Penulis pindah, pembacanya TIDAK](awcms-writer-moved-readers-did-not.md) — 5 cacat senyap lolos 38 gerbang; ADR-0079…
+- [Gerbang privilege memeriksa MATRIKSNYA](awcms-gate-checks-matrix-not-need.md) — bukan kebutuhan kode; setup wizard rusak…
+- [Lockout login dulu TIDAK atomik](awcms-lockout-not-atomic-and-false-doc-claims.md) — K percobaan paralel = 1 increment; 4 dokumen…
+- [Modul push_delivery LENGKAP & `active`](awcms-push-delivery-complete.md) — outbox KEDUA (ADR-0074), FCM v1 + Web Push…
+- [Aturan dalam URUTAN pernyataan = aturan TANPA tes](awcms-rule-in-statement-order-has-no-test.md) — ADR-0111: presedensi 2 `await` menelan 23.906…
+- [Kesiapan CMS berita /news/](awcms-news-site-readiness.md) — backend matang, AUTHORING & PRESENTASI putus; 9…
+- [Putaran gap portal berita 19 Agu 2026](awcms-news-portal-gap-round-2026-08-19.md) — 132 fitur legacy → #588–#599; TipTap menabrak…
+- [Situs legacy SeputarBorneo = RUJUKAN FITUR, bukan sumber migrasi](seputarborneo-legacy-site-is-on-this-machine.md) — ADR-0116 mencabut cutover 301; #599/#711…
+- [Tanya: pemanggilnya ADA di jalur permintaan?](awcms-is-the-caller-even-in-the-request-path.md) — ADR-0114: `awcms_seo_redirects` 1 call site di…
+- [PRD LenteraKalteng menggerakkan kerja awcms](lenterakalteng-prd-drives-awcms-work.md) — PRD di ~/Downloads BUKAN di repo; awcms-astro…
+- [Rekomendasi WAJIB ditulis ke PROJECT_STATE §4](awcms-recommendation-rounds-live-in-project-state.md) — termasuk penolakan DAN pelaksanaannya…
+- [State proyek → docs/PROJECT_STATE.md](awcms-project-state-doc.md) — baca §4 DULU; §2 + 5 artefak ter-generate…
+- [Hak subjek data LENGKAP (ADR-0094)](awcms-subject-rights-complete.md) — ledger 139→0; maker/checker EMPAT lapis; jawab…
+- [Gap permission seed vs tenant lama](awcms-permission-seed-existing-tenant-gap.md) — seed hanya menjangkau tenant SETELAHnya; tenant…
+- [Tarian kontrak lintas-repo](awcms-astro-cross-repo-contract-dance.md) — permukaan baru = TIGA perubahan berurutan…
+- [Verifikasi build awcms-astro pakai stub](awcms-astro-stub-build-verification.md) — CI-nya MELEWATI build; stub `Bun.serve` di…
+- [`LIMIT` tanpa cursor & `type: object` = tanpa bentuk](awcms-bounded-list-and-no-shape.md) — array telanjang tak bisa berkata "masih ada…
 - ["closes Issue #NNN item 6" menutup SELURUHNYA](github-closes-issue-nnn-closes-everything.md) — pakai "item 6 of #NNN"
-- [Kesiapan awcms-astro](awcms-astro-readiness-verified.md) — permukaan yang dikonsumsi SUDAH lengkap (ADR-0059/0060) → sisa milik awcms: NOL
-- [Porting Jualanku.info](awcms-jualanku-porting.md) — ADR-0045: dua repo, BFF wajib, **merchant = business scope**; RLS tak memisahkan merchant
-- [awcms-astro kini Bun-only](awcms-astro-bun-runtime.md) — ADR-0015; `bun install` tak menolak peer mismatch
+- [Kesiapan awcms-astro](awcms-astro-readiness-verified.md) — permukaan yang dikonsumsi SUDAH lengkap…
+- [Porting Jualanku.info](awcms-jualanku-porting.md) — ADR-0045: dua repo, BFF wajib, **merchant =…
+- [awcms-astro kini Bun-only](awcms-astro-bun-runtime.md) — ADR-0015; `bun install` tak menolak peer…
 - [awcms-micro sudah remediasi arsitektur duluan](awcms-micro-arch-remediation-ahead.md) — cek ke sana SEBELUM merancang
-- [withTenant kini DUA fungsi](awcms-withtenant-two-forms.md) — `withTenant` (`T | Response`) vs `withTenantOrThrow`; `.astro` blind spot gate berbasis tipe
-- [Codemod: heuristik membaca KOMENTAR & STRING](codemod-heuristics-read-comments-and-strings.md) — 4 bug lolos `tsc`; skrip WAJIB menolak yang tak terbukti
-- [Jebakan `bun run`: script menutupi biner](bun-run-script-shadows-binary.md) — nama sama = rekursi tak terbatas, matinya berbunyi `E2BIG`
+- [withTenant kini DUA fungsi](awcms-withtenant-two-forms.md) — `withTenant` (`T | Response`) vs…
+- [Codemod: heuristik membaca KOMENTAR & STRING](codemod-heuristics-read-comments-and-strings.md) — 4 bug lolos `tsc`; skrip WAJIB menolak yang tak…
+- [Jebakan `bun run`: script menutupi biner](bun-run-script-shadows-binary.md) — nama sama = rekursi tak terbatas, matinya…
 - [`${JSON.stringify(x)}::jsonb` menyimpan STRING](bun-sql-stringify-into-jsonb.md) — senyap; digerbangi `db:jsonb-binding:check`
 - [SQLSTATE ada di `errno`, bukan `code`](bun-sql-sqlstate-on-errno.md) — `error.code === "23505"` tak pernah benar
-- [Jebakan array Bun.SQL + assertRejected](bun-sql-array-binding-trap.md) — `${array}` tiba sebagai teks gabung-koma (22P02); `expect().rejects` MENG-HANG
-- [Bun.SQL: array TAK BISA membawa NULL](bun-sql-array-cannot-carry-null.md) — menulis STRING `'null'` tanpa melempar; sentinel + `NULLIF`, atau `jsonb_to_recordset` bila kolom nullable-nya banyak
-- [Jebakan test HTTP di Bun](bun-test-server-spawn-and-fetch-timeout.md) — `Bun.serve` di `bun test` + `spawnSync` = DEADLOCK; `fetch` punya idle timeout ~10s yang MENUTUPI `AbortSignal` hilang
-- [Bun buang method HTTP non-standar](bun-drops-nonstandard-http-methods.md) — `BAN`/`PURGE` terkirim sebagai **GET**; uji dengan `Bun.serve` nyata
+- [Jebakan array Bun.SQL + assertRejected](bun-sql-array-binding-trap.md) — `${array}` tiba sebagai teks gabung-koma…
+- [Bun.SQL: array TAK BISA membawa NULL](bun-sql-array-cannot-carry-null.md) — menulis STRING `'null'` tanpa melempar…
+- [Jebakan test HTTP di Bun](bun-test-server-spawn-and-fetch-timeout.md) — `Bun.serve` di `bun test` + `spawnSync` =…
+- [Bun buang method HTTP non-standar](bun-drops-nonstandard-http-methods.md) — `BAN`/`PURGE` terkirim sebagai **GET**; uji…
 - [`ON CONFLICT` menuntut SELECT](postgres-on-conflict-needs-select.md) — GRANT INSERT saja = `permission denied`
 - [`hidden` kalah dari aturan `display`](html-hidden-loses-to-display-rule.md) — obatnya `[hidden]{display:none!important}`
-- [`now()` = instant MULAI TRANSAKSI](postgres-now-is-transaction-start.md) — CHECK yang mengaitkannya dengan jam APLIKASI menolak baris normal
-- [Anggaran query dulu hanya mengukur BACA](awcms-query-budgets-only-measure-reads.md) — anggaran TULIS/job kini ada (assignment 2, sapuan 6/7/4); fixture wajib > anggaran
-- [Benchmark WAJIB mengikat parameter seperti pemanggilnya](awcms-benchmark-must-bind-like-caller.md) — subquery/InitPlan tak di-konstanta-lipat → planner pakai selektivitas generik: 48.832 buffer vs 27
-- [Presisi keyset cursor](awcms-keyset-precision-notes.md) — timestamptz mikrodetik vs `Date` JS milidetik; bawa `created_at` sebagai teks
-- [Migration terapan itu immutable](awcms-applied-migration-immutable.md) — edit `sql/NNN` terapan (bahkan komentar) memblokir `db:migrate` di deployment jalan
+- [`now()` = instant MULAI TRANSAKSI](postgres-now-is-transaction-start.md) — CHECK yang mengaitkannya dengan jam APLIKASI…
+- [Anggaran query dulu hanya mengukur BACA](awcms-query-budgets-only-measure-reads.md) — anggaran TULIS/job kini ada (assignment 2…
+- [Benchmark WAJIB mengikat parameter seperti pemanggilnya](awcms-benchmark-must-bind-like-caller.md) — subquery/InitPlan tak di-konstanta-lipat →…
+- [Presisi keyset cursor](awcms-keyset-precision-notes.md) — timestamptz mikrodetik vs `Date` JS milidetik…
+- [Migration terapan itu immutable](awcms-applied-migration-immutable.md) — edit `sql/NNN` terapan (bahkan komentar)…
 - [PaaS bikin superuser → FORCE RLS inert](awcms-paas-superuser-rls-inert.md) — Coolify; verifikasi WAJIB sebagai `awcms_app`
-- [Konkurensi workflow & DML vs FORCE RLS](awcms-workflow-concurrency-notes.md) — migration ber-DML hijau di CI kosong tapi jebol di produksi
-- [Role separation DB (sql/019)](awcms-db-role-separation-notes.md) — `ALTER ROLE SET` GUC hanya saat LOGIN; DROP DATABASE dulu baru DROP ROLE
-- [DB test terjangkau host: `--network host`](awcms-local-postgres-network-host.md) — env LENGKAP untuk 567 pass/0 fail; `export A=.. B=$A` menghasilkan string KOSONG; `APP_URL` menentukan skema
-- [Postgres lokal via Docker](awcms-local-postgres-docker.md) — `docker ps -a` DULU; `.env` menunjuk `awcms_app` yang NOLOGIN by design
-- [Bootstrap owner dev lokal](awcms-local-dev-bootstrap.md) — resep netns + `bootstrapPlatformTenant`; container menulis root ke bind mount
-- [Jebakan test & transaksi](awcms-test-and-txn-traps.md) — `mock.module` memutasi live namespace; 4xx yang di-`return` dari `withTenant` itu COMMIT
-- [Jebakan fixture test integrasi](awcms-integration-test-fixture-traps.md) — anchor waktu WAJIB dari DB; tabel media menolak 3 bentuk baris "masuk akal"
-- [Integration harness (#154)](awcms-integration-harness-notes.md) — env-repoint ala mini UNSOUND di sini; dua-world + reset circuit-breaker per `beforeEach`
+- [Konkurensi workflow & DML vs FORCE RLS](awcms-workflow-concurrency-notes.md) — migration ber-DML hijau di CI kosong tapi jebol…
+- [Role separation DB (sql/019)](awcms-db-role-separation-notes.md) — `ALTER ROLE SET` GUC hanya saat LOGIN; DROP…
+- [DB test terjangkau host: `--network host`](awcms-local-postgres-network-host.md) — env LENGKAP untuk 567 pass/0 fail; `export A=..…
+- [Postgres lokal via Docker](awcms-local-postgres-docker.md) — `docker ps -a` DULU; `.env` menunjuk…
+- [Bootstrap owner dev lokal](awcms-local-dev-bootstrap.md) — resep netns + `bootstrapPlatformTenant`…
+- [Jebakan test & transaksi](awcms-test-and-txn-traps.md) — `mock.module` memutasi live namespace; 4xx yang…
+- [Jebakan fixture test integrasi](awcms-integration-test-fixture-traps.md) — anchor waktu WAJIB dari DB; tabel media menolak…
+- [Integration harness (#154)](awcms-integration-harness-notes.md) — env-repoint ala mini UNSOUND di sini; dua-world…
 - [Artefak ter-generate DRIFT setelah dua squash-merge](awcms-generated-artifact-merge-drift.md) — regenerasi, jangan tangan
-- [Berkas untracked IKUT `git checkout`](awcms-untracked-file-follows-checkout.md) — `check:docs` cuma lihat berkas ter-track → `git add -A` DULU
-- [Full check sebelum PR](awcms-full-check-before-pr.md) — `bun run check` PENUH; paritas CI = `DATABASE_URL="" bun run test` + `build`
-- [Bun lokal > Bun CI = artefak "STALE" PALSU](awcms-local-bun-newer-than-ci-fakes-stale-artifacts.md) — 1.4.0 vs 1.3.14; JANGAN commit bundle regenerasi, itu justru memerahkan CI
-- [Security readiness gate](awcms-security-readiness-notes.md) — cek harus dibuktikan GAGAL pada kondisi seharusnya; role-check sengaja warning
-- [PR stacked = NOL CI](awcms-stacked-pr-no-ci.md) — workflow hanya trigger `branches: [main]`; GitGuardian tetap `pass` sehingga tampak hijau
-- [False-positive scanner keamanan](awcms-security-scanner-falsepos.md) — GitGuardian scan SEMUA commit PR; ia GitHub App, tak bisa ditutup dari env ini
+- [Berkas untracked IKUT `git checkout`](awcms-untracked-file-follows-checkout.md) — `check:docs` cuma lihat berkas ter-track → `git…
+- [Full check sebelum PR](awcms-full-check-before-pr.md) — `bun run check` PENUH; paritas CI =…
+- [Bundle STALE: dulu palsu, KINI nyata](awcms-local-bun-newer-than-ci-fakes-stale-artifacts.md) — lokal=CI=Bun (1.4.4 sejak Okt 2026; 1.4.3 sejak Okt 2026; 1.4.2 sejak Sep 2026); ubah…
+- [Security readiness gate](awcms-security-readiness-notes.md) — cek harus dibuktikan GAGAL pada kondisi…
+- [PR stacked = NOL CI](awcms-stacked-pr-no-ci.md) — workflow hanya trigger `branches: [main]`…
+- [False-positive scanner keamanan](awcms-security-scanner-falsepos.md) — GitGuardian scan SEMUA commit PR; ia GitHub…
 - [CodeQL `js/bad-tag-filter` menandai SATU bentuk per putaran](codeql-bad-tag-filter-iterates.md) — tambal sekaligus `</script(?:[\s/][^>]*)?>`
-- [Merge PR dependabot](awcms-dependabot-merge-notes.md) — `package.json` & workflow TAK exempt gate changeset; astro bump memerahkan `family:conformance`
-- [Antrean merge WAJIB serial](awcms-serial-merge-queue-tax.md) — auto-merge MATI + up-to-date wajib; update-branch paralel MEMBAKAR CI; resolusi rebase = KEDUA sisi per baris lalu regenerasi
-- [Hazard branch subagent](awcms-subagent-branch-hazard.md) — verifikasi `git branch --show-current` SEBELUM commit
-- [Subagent MENDELEGASI ULANG → agen yatim](subagent-redelegation-orphans.md) — 2 dari 4 lapor "selesai" tanpa kerja; anak tak bisa di-`TaskStop`; larang spawn di prompt, cek commit count
-- [Hazard cwd Bash lintas-repo](bash-cwd-persists-cross-repo-audit-hazard.md) — `cd` persisten antar panggilan; pakai path absolut
-- [Gerbang lockfile npm itu buta](npm-lockfile-gates-are-blind.md) — `npm ci` menerima lockfile BERLEBIH dengan exit 0
-- [Sync HMAC versioning](awcms-sync-hmac-versioning-notes.md) — v2 ikat tenant+node; tak cukup tanpa `SYNC_HMAC_ALLOW_LEGACY=false`
-- [Catatan masking identifier](awcms-identifier-masking-notes.md) — cabang email deteksi-`@`; 23505→409 wajib di-catch DI DALAM `withTenant`
-- [Catatan login hardening](awcms-login-hardening-notes.md) — jalur login awcms lebih keras dari mini; port berikutnya bisa meregresinya
-- [Catatan email dispatch](awcms-email-dispatch-notes.md) — lease dispatcher, batch INSERT unnest, test SQL tanpa Postgres
-- [Catatan reporting rebuild](awcms-reporting-rebuild-notes.md) — CSP wajib lewat middleware bukan `astro.config`; TOCTOU rebuild
-- [Halaman APIRoute & blokir iframe](awcms-apiroute-client-script-and-frame-block.md) — script klien WAJIB bundle ter-commit di `public/`
-- [Catatan admin UI](awcms-admin-ui-notes.md) — CSP single-owner (script HARUS import→bundle eksternal); Astro `<script>` di-hoist build-time
-- [Catatan admin roles write](awcms-admin-roles-write-notes.md) — guard role CRUD dengan action `configure`; system role tak bisa soft-delete
-- [Catatan admin ABAC policy write](awcms-admin-abac-write-notes.md) — guard authoring dengan `configure`, BUKAN create/update (latent-authz trap)
-- [Catatan admin users RBAC/status](awcms-admin-users-rbac-notes.md) — deactivate = status inactive; existence-check anti-oracle di dalam `withTenant`
-- [Catatan offices soft-delete/restore](awcms-admin-offices-lifecycle-notes.md) — DELETE butuh SEED MIGRATION bukan cuma descriptor
+- [Merge PR dependabot](awcms-dependabot-merge-notes.md) — `package.json` & workflow TAK exempt gate…
+- [Antrean merge WAJIB serial](awcms-serial-merge-queue-tax.md) — auto-merge MATI + up-to-date wajib…
+- [Penanda konflik DISAMARKAN prettier](rebase-markers-survive-prettier.md) — jadi `> > > > >`; cek penanda SEBELUM format…
+- [Hazard branch subagent](awcms-subagent-branch-hazard.md) — verifikasi `git branch --show-current` SEBELUM…
+- [Subagent MENDELEGASI ULANG → agen yatim](subagent-redelegation-orphans.md) — 2 dari 4 lapor "selesai" tanpa kerja; anak tak…
+- [Hazard cwd Bash lintas-repo](bash-cwd-persists-cross-repo-audit-hazard.md) — `cd` persisten antar panggilan; pakai path…
+- [Gerbang lockfile npm itu buta](npm-lockfile-gates-are-blind.md) — `npm ci` menerima lockfile BERLEBIH dengan exit…
+- [Sync HMAC versioning](awcms-sync-hmac-versioning-notes.md) — v2 ikat tenant+node; tak cukup tanpa…
+- [Catatan masking identifier](awcms-identifier-masking-notes.md) — cabang email deteksi-`@`; 23505→409 wajib…
+- [Catatan login hardening](awcms-login-hardening-notes.md) — jalur login awcms lebih keras dari mini; port…
+- [Catatan email dispatch](awcms-email-dispatch-notes.md) — lease dispatcher, batch INSERT unnest, test SQL…
+- [Catatan reporting rebuild](awcms-reporting-rebuild-notes.md) — CSP wajib lewat middleware bukan…
+- [Halaman APIRoute & blokir iframe](awcms-apiroute-client-script-and-frame-block.md) — script klien WAJIB bundle ter-commit di…
+- [Catatan admin UI](awcms-admin-ui-notes.md) — CSP single-owner (script HARUS import→bundle…
+- [Catatan admin roles write](awcms-admin-roles-write-notes.md) — guard role CRUD dengan action `configure`…
+- [Catatan admin ABAC policy write](awcms-admin-abac-write-notes.md) — guard authoring dengan `configure`, BUKAN…
+- [Catatan admin users RBAC/status](awcms-admin-users-rbac-notes.md) — deactivate = status inactive; existence-check…
+- [Catatan offices soft-delete/restore](awcms-admin-offices-lifecycle-notes.md) — DELETE butuh SEED MIGRATION bukan cuma…
 - [Office FK & keyset cursor (#149)](awcms-tenant-admin-office-notes.md) — FK melewati RLS (perlu composite `tenant_id` FK)
-- [Modular OpenAPI pipeline (ADR-0026)](awcms-modular-openapi-notes.md) — satu berkas per MODUL bukan per-tag; snapshot beku
-- [Port module composition (#178)](awcms-module-composition-port-notes.md) — engine di `module-management/domain` BUKAN `_shared`
-- [Family compatibility manifest (#183)](awcms-family-conformance-notes.md) — gate PURE (no DB); divergence wajib reason+owner+reviewDate+ADR
-- [Port ABAC evaluator (#179)](awcms-abac-evaluator-port-notes.md) — `is_dsl_managed` membuat flat INERT; tolak DSL deny unscoped
-- [ABAC evaluator: build mini (referensi)](awcms-abac-evaluator-mini-build.md) — DSL AST jsonb ber-allow-list; cache invalidasi POST-commit
-- [Port business-scope (#180)](awcms-business-scope-port-notes.md) — `businessScopeFacts` param ke-4 (`resolved:false` → deny HIGH-RISK)
-- [Port SoD (#181)](awcms-sod-port-notes.md) — base ship 0 rule; enforcement 2 titik (409 assignment + 403 action-time)
-- [MFA kini milik PRINCIPAL (ADR-0087)](awcms-mfa-moved-to-principal.md) — skrip per-tenant WAJIB predikat `tenant_id` eksplisit
-- [Port MFA TOTP/step-up (#184)](awcms-mfa-port-notes.md) — lockout & replay counter WAJIB atomik di-DB (CAS + FOR UPDATE)
-- [Port OIDC/SSO (#185)](awcms-oidc-sso-port-notes.md) — SSRF guard MEMBALIK keputusan mini; JWT native + alg-confusion
-- [Port Turnstile (#186)](awcms-turnstile-port-notes.md) — satu `isTurnstileRequired` menggerbangi widget+CSP-origin+enforcement
-- [media = SATU modul (inversi)](awcms-media-library-inversion-note.md) — ADR-0036: registry per-tenant, konsumen lewat port
-- [Astro me-INLINE script tanpa import → CSP menolak](awcms-astro-inlines-import-free-scripts.md) — juga `checkOrigin` membunuh form POST; verifikasi di artefak build
-- [E2E = DUA GELOMBANG + asersi `200` itu BUTA](awcms-e2e-shared-tenant-state.md) — `setup → read → write` digerbangi RUNTIME; layar MENOLAK juga 200
-- [Render yang MELEMPAR = 404, bukan 500](awcms-render-throw-is-404-not-500.md) — `ReferenceError` cuma di LOG SERVER; assert `200` PERSIS
+- [Modular OpenAPI pipeline (ADR-0026)](awcms-modular-openapi-notes.md) — satu berkas per MODUL bukan per-tag; snapshot…
+- [Port module composition (#178)](awcms-module-composition-port-notes.md) — engine di `module-management/domain` BUKAN…
+- [Family compatibility manifest (#183)](awcms-family-conformance-notes.md) — gate PURE (no DB); divergence wajib…
+- [Port ABAC evaluator (#179)](awcms-abac-evaluator-port-notes.md) — `is_dsl_managed` membuat flat INERT; tolak DSL…
+- [ABAC evaluator: build mini (referensi)](awcms-abac-evaluator-mini-build.md) — DSL AST jsonb ber-allow-list; cache invalidasi…
+- [Port business-scope (#180)](awcms-business-scope-port-notes.md) — `businessScopeFacts` param ke-4…
+- [Port SoD (#181)](awcms-sod-port-notes.md) — base ship 0 rule; enforcement 2 titik (409…
+- [MFA kini milik PRINCIPAL (ADR-0087)](awcms-mfa-moved-to-principal.md) — skrip per-tenant WAJIB predikat `tenant_id`…
+- [Port MFA TOTP/step-up (#184)](awcms-mfa-port-notes.md) — lockout & replay counter WAJIB atomik di-DB…
+- [Port OIDC/SSO (#185)](awcms-oidc-sso-port-notes.md) — SSRF guard MEMBALIK keputusan mini; JWT native…
+- [Port Turnstile (#186)](awcms-turnstile-port-notes.md) — satu `isTurnstileRequired` menggerbangi…
+- [media = SATU modul (inversi)](awcms-media-library-inversion-note.md) — ADR-0036: registry per-tenant, konsumen lewat…
+- [Astro me-INLINE script tanpa import → CSP menolak](awcms-astro-inlines-import-free-scripts.md) — juga `checkOrigin` membunuh form POST…
+- [E2E = DUA GELOMBANG + asersi `200` itu BUTA](awcms-e2e-shared-tenant-state.md) — `setup → read → write` digerbangi RUNTIME…
+- [Render yang MELEMPAR = 404, bukan 500](awcms-render-throw-is-404-not-500.md) — `ReferenceError` cuma di LOG SERVER; assert…
 - [Frontmatter `.astro` KINI ditype-check](awcms-astro-frontmatter-now-typechecked.md) — ADR-0112; props komponen TETAP tak diperiksa
-- [`.astro` <script> TAK ter-typecheck](awcms-astro-scripts-are-untypechecked.md) — ditutup `check:astro-scripts:check` (ekstrak ke berkas BERSEBELAHAN)
-- [Field dideklarasikan, divalidasi, tak pernah DIBACA](awcms-declared-but-never-read-fields.md) — gerbang registry cek BENTUK bukan MAKNA; grep pembaca runtime dulu
+- [`.astro` <script> TAK ter-typecheck](awcms-astro-scripts-are-untypechecked.md) — ditutup `check:astro-scripts:check` (ekstrak ke…
+- [Field dideklarasikan, divalidasi, tak pernah DIBACA](awcms-declared-but-never-read-fields.md) — gerbang registry cek BENTUK bukan MAKNA; grep…
 - [Konsistensi skill .claude/skills](awcms-skills-consistency-notes.md) — skill yang salah lebih berbahaya dari docs basi
-- [Konsistensi CI vs skill (audit 2026-07-18)](awcms-repo-audit-2026-07-18.md) — dua suite DB-gated bentrok bila dijalankan bersama
-- [Status konsistensi awcms (2026-07-17, historis)](awcms-consistency-status.md) — masih berlaku: RLS `ENABLE`-tanpa-`FORCE` itu inert
-- [Relasi awcms vs awcms-mini (historis)](awcms-mini-relationship.md) — framing "turunan" DICABUT oleh [[awcms-family-direct-use-rule]]
-- [Pilot turunan #187 (historis)](awcms-derived-pilot-notes.md) — jalur repo turunan DIHAPUS ADR-0034; katalog `awcms_permissions` global tanpa RLS
-- [Image produksi TIDAK BISA menjalankan job](awcms-prod-image-cannot-run-jobs.md) — runtime hanya `dist/`; 29 job = `Script not found`
-- [Resep gladi migrasi produksi](awcms-migration-rehearsal-on-prod-copy.md) — restore dump ke throwaway (buat ROLE dulu); DUA backfill pasca-rilis
-- [Runbook deploy Coolify](awcms-deploy-runbook-coolify.md) — SATU environment; varnish IP HARDCODED; 200 di domain ≠ produksi hidup. KOREKSI 27 Agu: backup terjadwal ADA, image `awcms-jobs` diterbitkan release.yml, peran migrasi = PEMILIK DB bukan `awcms_setup`
+- [Konsistensi CI vs skill (audit 2026-07-18)](awcms-repo-audit-2026-07-18.md) — dua suite DB-gated bentrok bila dijalankan…
+- [Status konsistensi awcms (2026-07-17, historis)](awcms-consistency-status.md) — masih berlaku: RLS `ENABLE`-tanpa-`FORCE` itu…
+- [Relasi awcms vs awcms-mini (historis)](awcms-mini-relationship.md) — framing "turunan" DICABUT oleh…
+- [Pilot turunan #187 (historis)](awcms-derived-pilot-notes.md) — jalur repo turunan DIHAPUS ADR-0034; katalog…
+- [Image produksi TIDAK BISA menjalankan job](awcms-prod-image-cannot-run-jobs.md) — runtime hanya `dist/`; 29 job = `Script not…
+- [Resep gladi migrasi produksi](awcms-migration-rehearsal-on-prod-copy.md) — restore dump ke throwaway (buat ROLE dulu); DUA…
+- [Runbook deploy Coolify](awcms-deploy-runbook-coolify.md) — SATU environment; varnish IP HARDCODED; 200 di…
 - [`graphify install` MENGHAPUS patch skill lokal](graphify-install-wipes-local-skill-patches.md) — backup lalu re-apply tiap upgrade
-- [Kebijakan artefak graphify-out SUDAH settled](awcms-graphify-out-artefact-policy.md) — rebuild graf bebas changeset; JANGAN kecualikan `.changeset/`
-- [graphify butuh extra yang install polos hilangkan](graphify-svg-export-needs-matplotlib.md) — tanpa `[sql]` file `.sql` nol node; svg butuh matplotlib DAN scipy
+- [Kebijakan artefak graphify-out SUDAH settled](awcms-graphify-out-artefact-policy.md) — rebuild graf bebas changeset; JANGAN kecualikan…
+- [graphify butuh extra yang install polos hilangkan](graphify-svg-export-needs-matplotlib.md) — tanpa `[sql]` file `.sql` nol node; svg butuh…
 - [Ref remote basi melahirkan temuan audit PALSU](git-stale-remote-refs-fake-audit-finding.md) — tanya `gh api .../branches`
+- [`pkill -f` di Bash tool membunuh shell-nya sendiri](pkill-f-kills-own-shell.md) — exit 144, langkah berikutnya diam-diam tak…
 `````
 
 <!-- memory-file: awcms-abac-evaluator-mini-build.md -->
@@ -2754,6 +2758,49 @@ Pola resmi repo untuk batch insert ada di `src/pages/api/v1/sync/objects/index.t
 - Semua array satu batch harus sama panjang; kalau tidak, `unnest` mem-pad NULL dan menabrak kolom NOT NULL.
 `````
 
+<!-- memory-file: awcms-external-fix-bundle-verify-first.md -->
+
+`````markdown
+---
+name: awcms-external-fix-bundle-verify-first
+description: "Bundle perbaikan EKSTERNAL (bug-hunt, git bundle + push-to-github.sh) WAJIB diverifikasi dulu — 16 Okt 2026 ditemukan 1 tak terkompilasi, 1 tak memperbaiki apa-apa, 1 sudah ada di main; tag lokal APA PUN memerahkan version:check"
+metadata:
+  node_type: memory
+  type: feedback
+  modified: 2026-10-16T01:14:37.272Z
+---
+
+16 Okt 2026: user memberi `push-to-github.sh` + `awcms-fix-identity-access.bundle`
+(15 grup perbaikan identity_access, dibuat di sandbox TANPA tsc/prettier/Postgres;
+semua tes regresinya memakai fake tx). Menjalankan skripnya apa adanya akan
+mem-push kode rusak. Yang ditemukan sebelum push (→ issue #1055, PR #1057–#1070):
+
+- **Konflik rebase**: main sudah maju dengan perbaikan yang SAMA (g03 ≈ #1035).
+  `set -e` + cherry-pick tanpa penanganan konflik = skrip berhenti di tengah
+  dengan sebagian PR sudah terbuka. Bandingkan dengan main dulu, drop duplikat.
+- **Tak terkompilasi**: `tx.savepoint` pada parameter bertipe `Bun.SQL`
+  (hanya `Bun.TransactionSQL` punya `savepoint`). Fake tx menutupinya.
+- **Tak memperbaiki apa-apa**: predikat `effective_to > now()` di pre-check,
+  padahal yang memblokir adalah partial unique index `WHERE status='active'`
+  — fake tx tak bisa melihat indeks. Ditolak, jadi issue #1056.
+- prettier gagal 21 berkas; mirror `.id.md` tak di-stamp; subjek commit
+  terpotong 100 karakter (judul PR jadi terpotong).
+
+**Why:** tes berbasis fake tx membuktikan BENTUK SQL, bukan bahwa SQL itu
+mengenai skema/indeks nyata. Lihat [[awcms-run-it-dont-read-it]].
+
+**How to apply:** rebase di worktree terpisah → `bun run check` PENUH →
+`tests/integration/` + 17 suite lama terhadap Postgres → review keamanan →
+baru push. Format per-commit pakai `git rebase --exec` (tiap commit jadi PR
+sendiri). Setiap PR yang menambah 1 berkas tes mengubah hitungan di
+`docs/awcms/repo-inventory.md` → konflik berantai saat merge serial; regenerasi.
+
+**Jebakan sendiri:** tag lokal cadangan (`git tag review/...`) memerahkan
+`version:check` ([tag-namespace] — semua tag harus vX.Y.Z). Pakai BRANCH
+cadangan, bukan tag. Juga: jangan pindah branch di worktree tempat suite
+DB sedang berjalan — hasilnya jadi tak berarti.
+`````
+
 <!-- memory-file: awcms-family-conformance-notes.md -->
 
 `````markdown
@@ -4205,11 +4252,11 @@ Lihat [[awcms-outbox-retention-two-blockers]] (superseded), [[awcms-gate-design-
 `````markdown
 ---
 name: awcms-local-bun-newer-than-ci-fakes-stale-artifacts
-description: "Bun lokal 1.4.0 vs CI 1.3.14 membuat gerbang artefak ter-bundle MERAH PALSU; JANGAN regenerasi — commit-nya akan memerahkan CI"
+description: "HISTORIS (1.4.0 vs 1.3.14); sejak Sep 2026 lokal=CI=1.4.2 → STALE bundle kini NYATA, regenerasi bila sumbernya (mis. admin-form-client.ts) berubah"
 metadata: 
   node_type: memory
   type: project
-  modified: 2026-08-27T02:11:28.445Z
+  modified: 2026-09-29T03:58:08.404Z
 ---
 
 `bun run check` lokal bisa GAGAL di gerbang yang membandingkan bundle ter-commit
@@ -4238,6 +4285,14 @@ karena "memperbaiki" merah palsu. Kembalikan dengan
 
 Perbaikan benar bila ingin run lokal setia: pasang Bun 1.3.14. Selain itu,
 percayakan gerbang bundle ke CI dan jalankan sisa rantainya lokal.
+
+**KOREKSI 29 Sep 2026 — mismatch versi itu SUDAH TIDAK ADA:** lokal dan CI
+kini sama-sama Bun 1.4.2. STALE di gerbang ini sekarang hampir pasti NYATA:
+sumbernya berubah (bundle mengimpor `src/lib/ui/admin-form-client.ts`, jadi
+mengubah berkas itu mewajibkan regenerasi). PR #868: subagent menolak STALE
+sebagai "minifier non-deterministik" → CI merah. Uji dulu: `bun --version`
+vs `bun-version` di ci.yml; build DUA kali — byte-identik = deterministik →
+regenerasi dan commit. Beri tahu subagent hal ini di prompt.
 
 Terkait: [[awcms-generated-artifact-merge-drift]] (di sana regenerasi MEMANG
 jawabannya — bedanya di sana sumbernya yang bergerak, di sini toolchain-nya).
@@ -5883,7 +5938,7 @@ description: "GitGuardian & CodeQL adalah required check; cara tangani false-pos
 metadata: 
   node_type: memory
   type: reference
-  modified: 2026-07-20T23:10:20.229Z
+  modified: 2026-10-05T03:03:11.532Z
 ---
 
 Required status check (ruleset "main only") termasuk **GitGuardian Security Checks** DAN **CodeQL** — keduanya bisa MEMBLOKIR merge karena false-positive pada kode auth/kripto. Muncul di PR #189 (#184 MFA); kemungkinan berulang di #185 OIDC (client secret/JWKS/token).
@@ -5894,6 +5949,7 @@ Required status check (ruleset "main only") termasuk **GitGuardian Security Chec
 - Fix kode: pecah literal jadi dua (`"ABC...XYZ" + "234567"`) — tak ada token 32-char entropi-tinggi tunggal. Tak bisa set ignore dashboard dari CI.
 - Detektor **"Username Password"**: menandai pasangan username+password statis — mis. test `const password = "mfa_rls_probe_pw"; ALTER ROLE awcms_app LOGIN PASSWORD '${password}'` + `url.username/url.password` (provisioning role RLS non-superuser). Fix: **generate password saat runtime** (`Math.random().toString(36)`), jangan literal statis. Lokasi persis ada di `output.text` check-run (`gh api repos/.../commits/<sha>/check-runs`), bukan cuma dashboard.
 - Detektor **"Generic Password"**: menandai KONSTRUKSI mirip-password walau RUNTIME-generated — `p_${randomBytes(12).toString("hex")}` DITANDAI (pola `p_<24hex>` mirip token password) meski tak ada secret statis. Runtime saja TIDAK cukup bila bentuknya mirip password. Fix terbukti lolos: pola `probe_${Math.random().toString(36).slice(2)}...` (base36, prefix `probe_`) — sama seperti MFA RLS-probe. Hindari juga identifier ber-"password" bila ragu.
+- **KOREKSI 5 Okt 2026 (PR #904):** pola base36 TIDAK selalu lolos — `` const OWNER_PASSWORD = `Pw-${Math.random().toString(36).slice(2)}-…!A1` `` DITANDAI "Generic Password". Yang LOLOS: `randomBytes(12).toString("hex") + "-Aa1!"` (konkatenasi `+`, tanpa template literal, tanpa prefix ala-password; sama dgn `probePassword` di `tests/oidc-integration.test.ts`). Detektor ini menilai BENTUK teks sumber, jadi tak ada pola yg "pasti aman" — verifikasi di check-run. Detail file/line/commit KINI ADA di `output.text` check-run (`gh api repos/ahliweb/awcms/commits/<sha>/check-runs -q '.check_runs[]|select(.name|test("GitGuardian"))|.output.text'`), bertentangan dgn catatan lama di bawah.
 - **Amend/rewrite, jangan tambah commit**: GitGuardian scan tiap commit; bila secret ada di commit yg sudah ada, `git commit --amend` + force-push (branch 1 commit) supaya TAK ADA commit memuat secret.
 - Detektor **placeholder `.env.example`** (PR #198 redis): `REDIS_PASSWORD=change-me-with-a-long-random-secret` di file contoh DITANDAI walau jelas placeholder. Check-run GitGuardian **hanya memberi JUMLAH + link dashboard** (`"N secrets uncovered"`, `details_url=dashboard.gitguardian.com`) — TAK ADA file/line/secret di output (beda dari CodeQL yg ekspos lokasi). Jadi finding persis HANYA terlihat di dashboard.
 - **TAK BISA ditutup dari environment ini**: berjalan sbg **GitHub App** (tak ada workflow/ggshield/`GITGUARDIAN_API_KEY`, `.gitguardian.yaml` repo tak dibaca App). Penutupan false-pos = mark di dashboard.gitguardian.com (butuh login), ATAU rewrite history branch supaya tak ada commit memuat literal (untuk draft WIP multi-commit: JANGAN squash sepihak). `gh` tak bisa dismiss check App (beda dari CodeQL yg punya dismiss API).
@@ -7045,7 +7101,7 @@ description: "cwd Bash PERSISTEN antar panggilan — satu `cd` ke awcms-mini mem
 metadata: 
   node_type: memory
   type: feedback
-  modified: 2026-07-25T10:15:14.840Z
+  modified: 2026-10-07T23:01:46.736Z
 ---
 
 Working directory tool Bash **bertahan antar panggilan**. Saat membandingkan
@@ -7064,6 +7120,15 @@ absolut** (`ls /home/data/dev_react/awcms-mini/docs/adr/`) atau bungkus dengan
 subshell `(cd /path && ...)` sehingga cwd tidak bocor. Jangan pernah `cd` telanjang
 saat sedang membandingkan repo. Verifikasi dengan `pwd` sebelum menarik kesimpulan
 apa pun tentang "repo ini punya X".
+
+**Varian 2026-10-08 — `Agent isolation: "worktree"` ikut cwd itu.** Satu `cd
+/home/data/dev_bun/awcms-one` untuk mengecek ADR hilir, lalu dua subagent
+`isolation: "worktree"` di-spawn: keduanya mendapat worktree dari **awcms-one**,
+bukan awcms, lalu direktorinya lenyap di tengah kerja. Hasilnya nol commit dan
+satu putaran agen terbuang. Obatnya: untuk kerja paralel di awcms, buat worktree
+sendiri (`git -C /home/data/dev_bun/awcms worktree add -b <branch>
+/home/data/dev_bun/awcms-wt-<issue> origin/main`, lalu `bun install`), dan beri
+path absolutnya ke agen **tanpa** `isolation`.
 
 Temuan yang benar setelah diulang dengan path absolut tercatat di repo
 (`docs/awcms/absorb-awcms-mini-backbone-roadmap.md`, PR #235): lima modul
@@ -7720,6 +7785,55 @@ institusi/branding Lentera sebagai seed data tenant, bukan konstanta kode
 ([[awcms-family-direct-use-rule]]).
 `````
 
+<!-- memory-file: mcp-connectors-not-needed-yet.md -->
+
+`````markdown
+---
+name: mcp-connectors-not-needed-yet
+description: "Slack, Linear, Notion, Atlassian, Asana, GitHub-plugin, Canva and 60 other MCP connectors are DELIBERATELY blocked (deniedMcpServers) as NOT YET NEEDED — do not suggest authorizing them"
+metadata:
+  node_type: memory
+  type: user
+  modified: 2026-10-08T02:42:16.964Z
+---
+
+On 8 October 2026, the user asked for the MCP connectors that need authentication
+(Slack, Linear, Notion, and the rest) to be closed and documented as **not yet
+needed**. They are not broken and nothing was left half-done: they are **switched
+off on purpose**.
+
+**Where:** `~/.claude/settings.json` → `deniedMcpServers`, 132 `serverUrl`
+patterns for 67 hosts (`https://host` + `https://host/*`; the `/*` form alone
+does not match a bare URL such as `https://mcp.box.com`). Backup before the
+change: `~/.claude/settings.json.bak-2026-10-08`. The host list was derived from
+`~/.claude/plugins/synced/*/.mcp.json` (plugins synced from claude.ai) plus the
+claude.ai Canva connector. The plugins themselves remain ENABLED, so their skills
+(`engineering:code-review`, etc.) keep working; only their MCP servers are
+blocked.
+
+**Still active, on purpose:** Claude Docs, Gmail, Google Calendar, Google Drive,
+Figma (connected claude.ai connectors), Shopify, and the bio-research servers
+that need no login (biorxiv, chembl, c-trials, pubmed, consensus, opentargets).
+`pdf-viewer` (local `npx`) is not blocked either.
+
+**Why:** the user's work (awcms, awcms-astro, servers) needs none of them yet.
+Each one still pinged an endpoint and showed "needs authentication" at the start
+of every session.
+
+**How to apply:**
+- Do NOT suggest authorizing these connectors in the session report. Don't list
+  them as "needs authentication" either; they are blocked on purpose.
+- When a task truly needs one (e.g. Linear for an issue tracker), say that it is
+  blocked by this decision and ask first. To re-enable it, remove both of its
+  `serverUrl` entries from `deniedMcpServers`, then authorize it via the
+  claude.ai connector settings or `/mcp`.
+- A new connector synced later from claude.ai (a new host) is NOT on this list.
+  Add it if the user wants the same treatment.
+- Don't block `mcp.figma.com` or `*.googleapis.com` (Gmail/Calendar/Drive):
+  the same URLs serve claude.ai connectors that are connected and in use. Note
+  that `bigquery.googleapis.com` IS blocked (plugin server, not used).
+`````
+
 <!-- memory-file: npm-lockfile-gates-are-blind.md -->
 
 `````markdown
@@ -7771,6 +7885,26 @@ lockfile Dependabot, jangan hanya baris versinya.
 
 Terkait: [[awcms-gate-design-lessons]] (gate hijau sambil jawabannya salah;
 uji gate dengan mengembalikan cacat ASLI — itu yang dipakai di sini).
+`````
+
+<!-- memory-file: pkill-f-kills-own-shell.md -->
+
+`````markdown
+---
+name: pkill-f-kills-own-shell
+description: "`pkill -f`/`pgrep -f <pattern>` inside a Bash tool call matches the tool's own `bash -c` wrapper and kills it (exit 144) — hit twice in a row on #877"
+metadata:
+  node_type: memory
+  type: feedback
+  modified: 2026-09-29T09:04:22.355Z
+---
+
+The Bash tool runs each command as `bash -c '<whole command string>'`, so the pattern passed to `pkill -f` / `kill $(pgrep -f ...)` is ALSO in that shell's own cmdline. The shell kills itself mid-command (exit 144) and every later step in the same call silently never runs. It happened twice in a row while stopping `bun ./dist/standalone-entry.mjs` on 2026-09-29.
+
+**Why:** a half-run compound command leaves the working tree in an in-between state (e.g. fixes reverted but not re-applied) with no error output.
+
+**How to apply:** match on the exact executable and inspect the cmdline instead:
+`for p in $(pgrep -x bun); do tr '\0' ' ' </proc/$p/cmdline | grep -q standalone-entry && kill $p; done` — or record `$!` when starting the server. Keep destructive/restoring steps in separate tool calls from any kill.
 `````
 
 <!-- memory-file: postgres-now-is-transaction-start.md -->
@@ -7843,6 +7977,45 @@ lain dari [[awcms-gate-checks-matrix-not-need]].
 
 Cek cepat sebelum menambah grant worker: kalau statementnya `ON CONFLICT`
 atau `UPDATE … WHERE`, ia butuh SELECT.
+`````
+
+<!-- memory-file: rebase-markers-survive-prettier.md -->
+
+`````markdown
+---
+name: rebase-markers-survive-prettier
+description: "Penanda konflik yang lolos ke `bun run format` DISAMARKAN prettier jadi `> > > > > > >` — grep `^>>>>>>>` tak lagi melihatnya; jangan rantai `resolve && format && rebase --continue` tanpa cek di antaranya"
+metadata:
+  node_type: memory
+  type: feedback
+  modified: 2026-10-08T11:25:21.722Z
+---
+
+8 Oktober 2026, saat merge serial PR ADR paralel (#928 di atas #925/#926/#927):
+skrip Python resolusi konflik **gagal di tengah** (assert pada `README.id.md`,
+nama berkas mirror berbeda), tetapi perintah berikutnya di baris yang sama
+tetap jalan (`; bun run format; git add -A && git rebase --continue`).
+Hasilnya commit dengan penanda konflik di tiga berkas. Lebih buruk lagi,
+**prettier memformat penanda markdown itu menjadi blockquote bersarang
+`> > > > > > > c0c89eb9 (...)`**, sehingga `grep '^>>>>>>> '` melaporkan bersih.
+
+**Why:** konflik indeks ADR/README terjadi di SETIAP PR ADR paralel. Resolusinya
+selalu diskrip, dan satu skrip yang gagal diam-diam lalu diformat akan
+menghasilkan dokumen rusak yang terlihat sah.
+
+**How to apply:**
+- Pisahkan langkah: jalankan resolusi, lalu **cek penanda SEBELUM format**
+  (`grep -rln '^<<<<<<< \|^=======$\|^>>>>>>> '`), dan baru `rebase --continue`
+  bila kosong. Pakai `set -e` atau `&&`, jangan `;`, di rantai itu.
+- Setelah format, cek juga bentuk yang disamarkan: `grep -rn '^> > > > '`.
+- Bila sudah telanjur ter-commit, lebih bersih **reset ke branch remote
+  pra-rebase lalu rebase ulang** daripada menambal di atas teks yang sudah
+  diformat ulang.
+- Untuk tabel indeks (`docs/adr/README*`, `docs/awcms/README*`) yang bentrok
+  karena prettier meratakan ulang kolom: ambil versi main, lalu SISIPKAN baris
+  branch setelah baris anker (urut nomor), dan regenerasi PROJECT_STATE §2 /
+  `repo-inventory.md` dengan generatornya. Lihat [[awcms-generated-artifact-merge-drift]],
+  [[awcms-serial-merge-queue-tax]].
 `````
 
 <!-- memory-file: seputarborneo-legacy-site-is-on-this-machine.md -->

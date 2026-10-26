@@ -89,7 +89,7 @@ async function seedTenant(id: string, code: string): Promise<void> {
 
 function inTenant<T>(
   tenantId: string,
-  fn: (tx: Bun.SQL) => Promise<T>
+  fn: (tx: Bun.TransactionSQL) => Promise<T>
 ): Promise<T> {
   return withTenantOrThrow(getRuntimeSql(), tenantId, fn);
 }
@@ -638,24 +638,24 @@ suite("commerce POS integration (Issue #116)", () => {
     }
     expect(conflict).toBeInstanceOf(IdempotencyPayloadMismatchError);
 
-    // Same key value, DIFFERENT cashier → the hash is bound to the actor,
-    // so this is a conflict too, never a replay of cashier A's sale.
-    let crossCashier: unknown;
-    try {
-      await inTenant(TENANT_A, (tx) =>
-        createPosOrder(
-          tx,
-          TENANT_A,
-          CASHIER_B,
-          mediaLibraryPortAdapter,
-          posInput(productId),
-          NOW
-        )
-      );
-    } catch (error) {
-      crossCashier = error;
-    }
-    expect(crossCashier).toBeInstanceOf(IdempotencyPayloadMismatchError);
+    // Same key value, DIFFERENT cashier → idempotency records are scoped per
+    // actor (ADR-0129 amendment 1, issue #1000), so cashier B's request is an
+    // independent one: it is NEVER a replay of cashier A's sale and never
+    // reads A's stored response, nor can it be blocked by A holding the key.
+    // (Before the actor scoping this was a 409 conflict.)
+    const crossCashier = await inTenant(TENANT_A, (tx) =>
+      createPosOrder(
+        tx,
+        TENANT_A,
+        CASHIER_B,
+        mediaLibraryPortAdapter,
+        posInput(productId),
+        NOW
+      )
+    );
+    expect(crossCashier.kind).toBe("created");
+    if (crossCashier.kind !== "created") return;
+    expect(crossCashier.order.orderCode).not.toBe(first.order.orderCode);
 
     // Short tender: the transaction throws before any row is written.
     let short: unknown;
@@ -683,8 +683,9 @@ suite("commerce POS integration (Issue #116)", () => {
       (tx) =>
         tx`SELECT count(*)::int AS n FROM awcms_commerce_orders WHERE tenant_id = ${TENANT_A}`
     )) as { n: number }[];
-    expect(after[0]!.n).toBe(1);
-    expect(await stockOf(TENANT_A, productId)).toBe(18);
+    // Cashier A's sale and cashier B's independent sale; the short tender wrote nothing.
+    expect(after[0]!.n).toBe(2);
+    expect(await stockOf(TENANT_A, productId)).toBe(16);
   });
 
   test("with the pos feature disabled the owner-route gate answers 409 FEATURE_DISABLED", async () => {

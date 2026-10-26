@@ -66,6 +66,10 @@ export const PATCH = defineTenantRoute({
       if (!updated) return fail(404, "RESOURCE_NOT_FOUND", "Order not found.");
       return ok({ status: prepared.status });
     } catch (error) {
+      // tx-swallow-ok: healthy transaction:
+      // `IllegalOrderStatusTransitionError` is raised by the directory's own
+      // pre-checks or after its fallible statement ran inside a savepoint, so
+      // the transaction is still valid when this catch returns.
       if (error instanceof IllegalOrderStatusTransitionError) {
         return fail(
           409,

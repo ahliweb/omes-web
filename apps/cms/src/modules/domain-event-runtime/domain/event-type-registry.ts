@@ -108,8 +108,102 @@ export const COMMERCE_VOUCHER_REDEEMED_EVENT_TYPE =
 export const COMMERCE_REVIEW_PUBLISHED_EVENT_TYPE =
   "awcms.commerce.review.published";
 
+/**
+ * `inventory` (ADR-0126). Declared here — not imported from
+ * `inventory/domain/inventory-events.ts` — for the same reason as `comments`
+ * above: this foundation module must not depend on a domain module. The
+ * literals are kept identical by the AsyncAPI parity gate.
+ */
+export const INVENTORY_EVENT_VERSION = "1.0";
+export const INVENTORY_MOVEMENT_POSTED_EVENT_TYPE =
+  "awcms.inventory.movement.posted";
+export const INVENTORY_STOCK_LOW_EVENT_TYPE = "awcms.inventory.stock.low";
+
+/**
+ * `tax` (ADR-0127). Declared here — not imported from `tax/domain/tax-events.ts` —
+ * for the same reason as `comments` above: this foundation module must not depend
+ * on a domain module. The AsyncAPI parity gate keeps the literals identical.
+ */
+export const TAX_EVENT_VERSION = "1.0";
+export const TAX_RULE_VERSION_PUBLISHED_EVENT_TYPE =
+  "awcms.tax.rule_version.published";
+export const TAX_SNAPSHOT_FINALISED_EVENT_TYPE = "awcms.tax.snapshot.finalised";
+export const TAX_SNAPSHOT_REVERSED_EVENT_TYPE = "awcms.tax.snapshot.reversed";
+
+/**
+ * `procurement` (ADR-0128). Declared here — not imported from
+ * `procurement/domain/procurement-events.ts` — for the same reason as
+ * `inventory` above. The literals are kept identical by the AsyncAPI parity gate.
+ */
+export const PROCUREMENT_EVENT_VERSION = "1.0";
+export const PROCUREMENT_DOCUMENT_FINALISED_EVENT_TYPE =
+  "awcms.procurement.document.finalised";
+export const PROCUREMENT_DOCUMENT_REVERSED_EVENT_TYPE =
+  "awcms.procurement.document.reversed";
+
+/**
+ * `whatsapp_delivery` (ADR-0133). Declared here — not imported from
+ * `whatsapp-delivery/domain/whatsapp-events.ts` — for the same reason as
+ * `inventory` above. The literals are kept identical by the AsyncAPI parity gate.
+ */
+export const WHATSAPP_EVENT_VERSION = "1.0";
+export const WHATSAPP_MESSAGE_QUEUED_EVENT_TYPE =
+  "awcms.whatsapp.message.queued";
+export const WHATSAPP_MESSAGE_SENT_EVENT_TYPE = "awcms.whatsapp.message.sent";
+export const WHATSAPP_MESSAGE_FAILED_EVENT_TYPE =
+  "awcms.whatsapp.message.failed";
+export const WHATSAPP_MESSAGE_EXPIRED_EVENT_TYPE =
+  "awcms.whatsapp.message.expired";
+export const WHATSAPP_CONSENT_GRANTED_EVENT_TYPE =
+  "awcms.whatsapp.consent.granted";
+export const WHATSAPP_CONSENT_WITHDRAWN_EVENT_TYPE =
+  "awcms.whatsapp.consent.withdrawn";
+export const WHATSAPP_DISPATCH_FAILED_EVENT_TYPE =
+  "awcms.whatsapp.dispatch.failed";
+
+/**
+ * `hr_commission` (ADR-0132, Issue #1109). Declared here -- not imported from
+ * `hr-commission/domain/hr-commission-events.ts` -- for the same reason as
+ * `inventory` above. The literals are kept identical by the AsyncAPI parity gate.
+ */
+export const HR_COMMISSION_EVENT_VERSION = "1.0";
+export const HR_COMMISSION_ACCRUAL_VOIDED_EVENT_TYPE =
+  "awcms.hr.commission.voided";
+
+/**
+ * `booking` (ADR-0131, Issue #941). Declared here -- not imported from
+ * `booking/domain/booking-reservation-events.ts` -- for the same reason as
+ * `inventory` above. The literals are kept identical by the AsyncAPI parity
+ * gate. The nine reservation events share one payload shape.
+ */
+export const BOOKING_EVENT_VERSION = "1.0";
+export const BOOKING_RESERVATION_CREATED_EVENT_TYPE =
+  "awcms.booking.reservation.created";
+export const BOOKING_RESERVATION_HELD_EVENT_TYPE =
+  "awcms.booking.reservation.held";
+export const BOOKING_RESERVATION_CONFIRMED_EVENT_TYPE =
+  "awcms.booking.reservation.confirmed";
+export const BOOKING_RESERVATION_RESCHEDULED_EVENT_TYPE =
+  "awcms.booking.reservation.rescheduled";
+export const BOOKING_RESERVATION_CANCELLED_EVENT_TYPE =
+  "awcms.booking.reservation.cancelled";
+export const BOOKING_RESERVATION_CHECKED_IN_EVENT_TYPE =
+  "awcms.booking.reservation.checked_in";
+export const BOOKING_RESERVATION_COMPLETED_EVENT_TYPE =
+  "awcms.booking.reservation.completed";
+export const BOOKING_RESERVATION_NO_SHOW_EVENT_TYPE =
+  "awcms.booking.reservation.no_show";
+export const BOOKING_RESERVATION_EXPIRED_EVENT_TYPE =
+  "awcms.booking.reservation.expired";
+
 export const DOMAIN_EVENT_TYPE_REGISTRY: readonly RegisteredDomainEventType[] =
   [
+    {
+      eventType: HR_COMMISSION_ACCRUAL_VOIDED_EVENT_TYPE,
+      eventVersion: HR_COMMISSION_EVENT_VERSION,
+      description:
+        "A commission accrual was voided (a pending or approved accrual, by the HTTP void route or by the CommissionAccrualPort when the sale it came from was voided, refunded or cancelled), in the transaction that voided it. Carries opaque ids, the source TYPE, the rule key and version, the status it left and a coded reason only: never an amount, a source reference, a payment reference or a name."
+    },
     {
       eventType: SAMPLE_RECORDED_EVENT_TYPE,
       eventVersion: SAMPLE_RECORDED_EVENT_VERSION,
@@ -251,6 +345,144 @@ export const DOMAIN_EVENT_TYPE_REGISTRY: readonly RegisteredDomainEventType[] =
       eventVersion: COMMERCE_EVENT_VERSION,
       description:
         "A pending review was moderated to published by an admin. Producer: commerce/application/review-directory.ts's moderateReview — never fired on review creation, since a pending review is not yet a fact worth publishing to anyone."
+    },
+    {
+      eventType: INVENTORY_MOVEMENT_POSTED_EVENT_TYPE,
+      eventVersion: INVENTORY_EVENT_VERSION,
+      description:
+        "A stock movement was posted to the append-only inventory ledger and its balance updated, in one transaction. Carries opaque item and source references and decimal-string quantities only — never a note or anything identifying a person. Ordered per balance (location + item)."
+    },
+    {
+      eventType: INVENTORY_STOCK_LOW_EVENT_TYPE,
+      eventVersion: INVENTORY_EVENT_VERSION,
+      description:
+        "A stock balance crossed to or below its low-stock threshold — by a movement or by a threshold change. Published once per downward crossing, not on every movement while the balance stays low."
+    },
+    {
+      eventType: TAX_RULE_VERSION_PUBLISHED_EVENT_TYPE,
+      eventVersion: TAX_EVENT_VERSION,
+      description:
+        "A tax rule version was published and became the rule in force from its effective date; carries the id of the predecessor version whose window it closed, if any. Identifiers, codes and dates only."
+    },
+    {
+      eventType: TAX_SNAPSHOT_FINALISED_EVENT_TYPE,
+      eventVersion: TAX_EVENT_VERSION,
+      description:
+        "A document's tax was finalised into an immutable snapshot. Carries the opaque document reference, the rule version it was computed under and decimal-string totals — no customer data."
+    },
+    {
+      eventType: TAX_SNAPSHOT_REVERSED_EVENT_TYPE,
+      eventVersion: TAX_EVENT_VERSION,
+      description:
+        "A finalised document's tax was reversed (refund/return) from its original snapshot. Totals are negative decimal strings; carries the original snapshot id."
+    },
+    {
+      eventType: PROCUREMENT_DOCUMENT_FINALISED_EVENT_TYPE,
+      eventVersion: PROCUREMENT_EVENT_VERSION,
+      description:
+        "A procurement document (receive, supplier return, requisition or transfer) was finalised and its inventory movements posted through the ledger, in one transaction. Carries opaque ids, the document number and decimal-string cost only — never a supplier name, identifier, note or reason."
+    },
+    {
+      eventType: PROCUREMENT_DOCUMENT_REVERSED_EVENT_TYPE,
+      eventVersion: PROCUREMENT_EVENT_VERSION,
+      description:
+        "A finalised procurement document was reversed: compensating inventory movements were posted and the document marked reversed, in one transaction. Same payload shape as document.finalised."
+    },
+    {
+      eventType: WHATSAPP_MESSAGE_QUEUED_EVENT_TYPE,
+      eventVersion: WHATSAPP_EVENT_VERSION,
+      description:
+        "A message was accepted into the WhatsApp outbox, in the same transaction as the caller's fact. Carries the message id, template key, purpose and the masked recipient only — never a phone number, body or variable."
+    },
+    {
+      eventType: WHATSAPP_MESSAGE_SENT_EVENT_TYPE,
+      eventVersion: WHATSAPP_EVENT_VERSION,
+      description:
+        "The provider accepted the WhatsApp message. Same payload shape as message.queued."
+    },
+    {
+      eventType: WHATSAPP_MESSAGE_FAILED_EVENT_TYPE,
+      eventVersion: WHATSAPP_EVENT_VERSION,
+      description:
+        "A WhatsApp message reached a terminal failure; carries a coarse failureCode. Same payload shape as message.queued."
+    },
+    {
+      eventType: WHATSAPP_MESSAGE_EXPIRED_EVENT_TYPE,
+      eventVersion: WHATSAPP_EVENT_VERSION,
+      description:
+        "A WhatsApp message passed its expiry before it was sent and was not retried late. Same payload shape as message.queued."
+    },
+    {
+      eventType: WHATSAPP_CONSENT_GRANTED_EVENT_TYPE,
+      eventVersion: WHATSAPP_EVENT_VERSION,
+      description:
+        "A recipient's WhatsApp marketing consent was recorded. Carries the consent id, purpose and the masked recipient only."
+    },
+    {
+      eventType: WHATSAPP_CONSENT_WITHDRAWN_EVENT_TYPE,
+      eventVersion: WHATSAPP_EVENT_VERSION,
+      description:
+        "A recipient's WhatsApp marketing consent was withdrawn; their waiting marketing messages were cancelled in the same transaction. Same payload shape as consent.granted."
+    },
+    {
+      eventType: WHATSAPP_DISPATCH_FAILED_EVENT_TYPE,
+      eventVersion: WHATSAPP_EVENT_VERSION,
+      description:
+        "A WhatsApp dispatcher pass failed as a whole (job level, not one message). Carries a coarse failureCode and the failure instant."
+    },
+    {
+      eventType: BOOKING_RESERVATION_CREATED_EVENT_TYPE,
+      eventVersion: BOOKING_EVENT_VERSION,
+      description:
+        "A reservation exists: held, or confirmed when the offering confirms immediately. Carries ids, the interval, resources, offerings, party size and the adapter's opaque external reference; never a customer reference, note, reason or amount."
+    },
+    {
+      eventType: BOOKING_RESERVATION_HELD_EVENT_TYPE,
+      eventVersion: BOOKING_EVENT_VERSION,
+      description:
+        "A hold was placed (not emitted when the offering confirms immediately). Same payload shape as reservation.created."
+    },
+    {
+      eventType: BOOKING_RESERVATION_CONFIRMED_EVENT_TYPE,
+      eventVersion: BOOKING_EVENT_VERSION,
+      description:
+        "A hold became confirmed, or a reservation was created already confirmed (an immediate offering, or the replacement of a reschedule). Same payload shape as reservation.created."
+    },
+    {
+      eventType: BOOKING_RESERVATION_RESCHEDULED_EVENT_TYPE,
+      eventVersion: BOOKING_EVENT_VERSION,
+      description:
+        "A confirmed reservation was superseded by a replacement in one transaction; carries supersededById. The replacement announces itself with created and confirmed, naming rescheduledFromId."
+    },
+    {
+      eventType: BOOKING_RESERVATION_CANCELLED_EVENT_TYPE,
+      eventVersion: BOOKING_EVENT_VERSION,
+      description:
+        "A held or confirmed reservation was cancelled and its allocations released; carries lateCancellation. Same payload shape as reservation.created."
+    },
+    {
+      eventType: BOOKING_RESERVATION_CHECKED_IN_EVENT_TYPE,
+      eventVersion: BOOKING_EVENT_VERSION,
+      description:
+        "A confirmed reservation was checked in. Same payload shape as reservation.created."
+    },
+    {
+      eventType: BOOKING_RESERVATION_COMPLETED_EVENT_TYPE,
+      eventVersion: BOOKING_EVENT_VERSION,
+      description:
+        "A checked-in reservation was completed (checked out). Same payload shape as reservation.created."
+    },
+    {
+      eventType: BOOKING_RESERVATION_NO_SHOW_EVENT_TYPE,
+      eventVersion: BOOKING_EVENT_VERSION,
+      description:
+        "A confirmed reservation was marked no-show by a person after its start plus the grace. Same payload shape as reservation.created."
+    },
+    {
+      eventType: BOOKING_RESERVATION_EXPIRED_EVENT_TYPE,
+      eventVersion: BOOKING_EVENT_VERSION,
+      description:
+        "A hold expired, found by the sweep job or reclaimed by a claim that wanted its units, and its allocations were released. Same payload shape as reservation.created."
     }
   ];
 

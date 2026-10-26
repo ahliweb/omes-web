@@ -18,6 +18,11 @@
  * `tests/standar-skrip.test.mjs` enforces exactly that discipline for every
  * root script that reaches git or a subprocess) and folds its exit code in.
  *
+ * It also folds in `bun run compat:preflight` (issue #20): a production
+ * preflight fails closed when the OMES release / vendored Control Center
+ * contract / AWCMS sync point / storefront-marketed release combination is not
+ * the one `ops/compat/release-manifest.json` records as verified.
+ *
  * Usage:
  *   bun run deploy:preflight [--file <path>] [--live] [--production] [--dist]
  *
@@ -243,6 +248,27 @@ function runCmsPreflight(args, report) {
   }
 }
 
+/** Spawns `bun tools/compat-preflight.mjs` (issue #20) — argv array, never a shell string. */
+function runCompatPreflight(report) {
+  const result = Bun.spawnSync(["bun", join(REPO_ROOT, "tools/compat-preflight.mjs")], {
+    cwd: REPO_ROOT,
+    stdout: "pipe",
+    stderr: "pipe"
+  });
+  const stdout = new TextDecoder().decode(result.stdout).trim();
+  const stderr = new TextDecoder().decode(result.stderr).trim();
+  if (stdout) for (const line of stdout.split("\n")) report.note(`[compat] ${line}`);
+  if (stderr) for (const line of stderr.split("\n")) report.note(`[compat:stderr] ${line}`);
+
+  if (result.exitCode !== 0) {
+    report.violation(
+      "compat-preflight",
+      "ops/compat/release-manifest.json",
+      `bun run compat:preflight exited ${result.exitCode} — an unsupported OMES/AWCMS/contract combination; see the [compat] lines above.`
+    );
+  }
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const env = await loadEnv(args.file);
@@ -256,6 +282,8 @@ async function main() {
   if (args.dist) {
     await checkDistForToken(env, join(REPO_ROOT, "apps/storefront/dist"), report);
   }
+
+  runCompatPreflight(report);
 
   runCmsPreflight(args, report);
 

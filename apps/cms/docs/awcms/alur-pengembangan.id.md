@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](alur-pengembangan.md)
 
-<!-- i18n-source-hash: sha256:210230d8a050f015bcdb0a78176fd8898b43c416ac9f3b636672ed5ef3c8958e -->
+<!-- i18n-source-hash: sha256:cc2b8f2c7678b0636a5ffea192d2a04220ac405ac83b275124d30077227a5274 -->
 
 # Alur pengembangan AWCMS
 
@@ -180,6 +180,19 @@ Dua batasan yang sering baru ditemukan belakangan: **CSP single-owner** (script
 harus di-import lalu di-bundle, bukan inline) dan setiap layar admin wajib lewat
 `loadAdminScreen` (`access:chokepoint:check` menghitungnya).
 
+**Permukaan produk baru adalah keputusan langkah 8/9, bukan detail
+implementasi** ([ADR-0146](../adr/0146-persona-apps-prefer-lynx-in-consumer-repos-astro-keeps-admin-and-public-web.id.md)): sebelum membangun layar atau
+aplikasi, klasifikasikan dengan tabel permukaan. Apa pun yang mengelola sistem
+atau bagian milik seseorang di sebuah situs adalah admin Astro (`/admin/*` di
+sini, atau `awcms-astro` untuk admin USER); halaman publik yang dapat dirayapi
+adalah Astro; hanya **alur kerja persona** (pelanggan, kurir, pengemudi, mitra,
+petugas gudang atau lapangan) yang menjadi kandidat repo konsumen **LynxJS**
+yang terpisah, dan hanya setelah gerbang proof-of-concept Lynx. "Aplikasi"
+berarti fungsi persona, bukan URL `/app`, tampilan seukuran ponsel, atau
+manifest Add-to-Home-Screen. Pertanyaannya ada di
+[`templates/definition-of-ready.id.md`](templates/definition-of-ready.id.md)
+§Permukaan produk baru.
+
 ## 9. Cross-Spec Review / Definition of Ready
 
 **Menjawab:** apakah langkah 1–8 saling setuju, sebelum ada yang menulis kode.
@@ -237,6 +250,19 @@ proteksi branch di [`branch-protection.md`](branch-protection.md).
 
 Gerbangnya: rantai `bun run check` penuh, suite DB-gated, E2E Playwright,
 CodeQL, GitGuardian, dan changeset wajib untuk perubahan perilaku.
+
+**Sebelum push: `bun run ci:local`** ([`ci-local.md`](ci-local.md), Issue
+#1001). `bun run check` hanyalah job `quality`; `ci:local` juga menjalankan repo
+hygiene, kebijakan changeset, suite integrasi DB-gated terhadap database
+sementara, lantai Bun 1.3.0, dan smoke Playwright, dengan perintah workflow
+sendiri dalam urutannya, lalu mencetak satu tabel. Job yang tidak bisa dijalankan
+di sini dilaporkan `SKIPPED (alasan)` dan exit code-nya bukan nol — tidak pernah
+lulus diam-diam. `tests/ci-local-parity.test.ts` menjaga daftar job-nya tetap
+sejalan dengan `ci.yml` dan `changesets.yml`, sehingga job workflow baru tidak
+bisa hilang tanpa diketahui. **Ini tidak menggantikan gerbang di atas:** required
+checks GitHub (ruleset `11653326`, [`branch-protection.md`](branch-protection.md))
+tetap yang menentukan apakah PR boleh merge; run lokal adalah verifikasi sebelum
+push, bukan penggantinya.
 
 **Jebakan yang sudah pernah menggigit:** PR bertumpuk (base bukan `main`)
 menjalankan **NOL** gerbang, sementara `gh pr checks` tetap tampak hijau karena

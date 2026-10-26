@@ -8,7 +8,8 @@
  * "Control Center" section is a STATIC illustration with example data, not
  * a live embed, and is labelled as such wherever it appears.
  *
- * Content grounded in OMES's own `README.md` (`ahliweb/omes`, `v0.4.0`) —
+ * Content grounded in OMES's own `README.md` (`ahliweb/omes`, at the release pinned in
+ * `config/omes-rilis.json`) —
  * every capability claim below (preflight, idempotent modules with verify,
  * `omes doctor` drift detection, backup/restore/rollback, the hardening
  * baseline, Hermes Agent integration) and the supported-platform table are
@@ -31,6 +32,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import { getSiteIdentity } from "../../lib/awcms/profil";
 import { listStaticPages } from "../../lib/awcms/pages";
 import { ROUTES } from "../../config/routes";
+import { omesRilis } from "../../config/omes-rilis";
 import "../../styles/katalog.css";
 import "../../styles/omes-beranda.css";
 
@@ -39,11 +41,14 @@ const pages = await listStaticPages();
 
 const CONTROL_CENTER_LOGIN = "https://omes-cms.ahlikoding.com/login";
 const GITHUB_REPO = "https://github.com/ahliweb/omes";
-const INSTALL_DOCS = "https://github.com/ahliweb/omes/blob/main/docs/installation.md";
 
-/** README.md "Quick start", step 1 — the pinned v0.4.0 bootstrap one-liner, copied verbatim. */
-const BOOTSTRAP_COMMAND =
-  "curl -fsSL https://raw.githubusercontent.com/ahliweb/omes/v0.4.0/install/bootstrap.sh | bash";
+/**
+ * Every OMES version, URL and the install command come from
+ * `config/omes-rilis.json` (issue #16) — nothing below hardcodes a release.
+ * The command pins `--ref <tag>` because the release's own bootstrap
+ * defaults to an older stable tag.
+ */
+const { tag: OMES_TAG, installCommand: BOOTSTRAP_COMMAND, installGuideUrl: INSTALL_DOCS, releaseUrl: RELEASE_URL } = omesRilis;
 
 const LIFECYCLE = [
   { label: "Bootstrap", detail: "Instal rilis stabil yang immutable dan pasang symlink omes ke ~/.local/bin." },
@@ -98,14 +103,14 @@ const ACTIVITY_LOG = [
 
 const description =
   identity.name === "OMES"
-    ? "OMES: compatibility layer dan toolkit deployment terinspirasi Omarchy untuk Ubuntu Server dan Linux Mint, dengan Hermes Agent sebagai lapisan otomasi. Pre-alpha v0.4.0."
+    ? `OMES: compatibility layer dan toolkit deployment terinspirasi Omarchy untuk Ubuntu Server dan Linux Mint, dengan Hermes Agent sebagai lapisan otomasi. Pre-alpha ${OMES_TAG}.`
     : identity.description;
 ---
 
 <BaseLayout title={identity.name} description={description} canonicalPath="/">
   <div class="container">
     <section class="omes-hero" aria-labelledby="landing-heading">
-      <p class="omes-status-chip"><span class="dot" aria-hidden="true"></span> Pre-alpha · v0.4.0</p>
+      <p class="omes-status-chip"><span class="dot" aria-hidden="true"></span> Pre-alpha · {OMES_TAG}</p>
       <h1 id="landing-heading">{identity.name}</h1>
       <p class="omes-hero-tagline">
         Compatibility layer dan toolkit deployment terinspirasi Omarchy untuk
@@ -266,7 +271,7 @@ const description =
     <section class="omes-section" id="instalasi" aria-labelledby="instalasi-heading">
       <h2 id="instalasi-heading">Instalasi</h2>
       <p class="omes-section-lede">
-        Satu perintah yang sama untuk kedua profil (server/desktop) — profil dipilih lewat flag saat pemeriksaan. Perintah ini adalah bootstrap resmi dari README OMES v0.4.0; tidak ada installer yang di-hosting ulang di sini.
+        Satu perintah yang sama untuk kedua profil (server/desktop) — profil dipilih lewat flag saat pemeriksaan. Perintah ini memakai bootstrap resmi rilis stabil OMES {OMES_TAG} dan menyematkan <code>--ref {OMES_TAG}</code> agar versi yang terpasang pasti sama; tidak ada installer yang di-hosting ulang di sini.
       </p>
       <div class="omes-code-block">
         <div class="omes-code-block-head">
@@ -278,6 +283,7 @@ const description =
         <pre><code>{BOOTSTRAP_COMMAND}</code></pre>
       </div>
       <div class="omes-install-links">
+        <a class="btn btn--quiet" href={RELEASE_URL} rel="noopener noreferrer" target="_blank">Catatan rilis {OMES_TAG} →</a>
         <a class="btn btn--quiet" href={INSTALL_DOCS} rel="noopener noreferrer" target="_blank">Panduan instalasi lengkap →</a>
         <a class="btn btn--quiet" href={GITHUB_REPO} rel="noopener noreferrer" target="_blank">Lihat repositori GitHub →</a>
       </div>

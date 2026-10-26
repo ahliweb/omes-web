@@ -272,6 +272,9 @@ async function main() {
       `db:commerce:renumber complete — ${plan.rename.length} renamed`
     );
   } catch (error) {
+    // tx-swallow-ok: pooled client: `sql` here is an autocommit pooled
+    // connection, so no transaction is open when this catch runs and no
+    // failed statement can abort one.
     console.error(
       `db:commerce:renumber failed — ${safeErrorMessage(error, databaseUrl)}`
     );

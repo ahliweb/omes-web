@@ -201,13 +201,11 @@ export const POST = defineTenantRoute({
       );
       return created(product);
     } catch (error) {
-      // All branches are caught INSIDE the transaction: none of these is a
-      // `Bun.SQL.PostgresError`, and each is safe to turn into a 4xx here
-      // only because of what has NOT been written — `ProductCategoryNotFoundError`
-      // is raised before `createProduct` touches anything, and the two
-      // duplicate errors follow a unique violation that already aborted the
-      // transaction, so the commit `defineTenantRoute` performs on this normal
-      // return degrades to a rollback.
+      // tx-swallow-ok: healthy transaction: `DuplicateProductSkuError`,
+      // `DuplicateProductSlugError`, `ProductCategoryNotFoundError` is raised
+      // by the directory's own pre-checks or after its fallible statement ran
+      // inside a savepoint, so the transaction is still valid when this catch
+      // returns.
       if (error instanceof ProductCategoryNotFoundError) {
         return fail(
           400,

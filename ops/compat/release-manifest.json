@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "product": {
+    "repository": "ahliweb/omes-web",
+    "version": "0.2.0"
+  },
+  "cms": {
+    "upstream": "ahliweb/awcms",
+    "prefix": "apps/cms",
+    "syncCommit": "8ceb80ea34b75ab98f099c5853c8a96f9a3659be"
+  },
+  "omesRelease": {
+    "repository": "ahliweb/omes",
+    "tag": "v0.6.0",
+    "commitSha": "c7c3cf9d89090071a1690d209b7b86ad8ce03d49"
+  },
+  "omesContract": {
+    "area": "control-center",
+    "major": "v1",
+    "pinPath": "apps/cms/src/modules/omes-control/contracts/v1/PIN.json",
+    "pinSourceCommit": "a4026e6338ce917dbd6771c7e1bf02c14e31c38f",
+    "relation": "release-plus-additive",
+    "baseReleaseTag": "v0.6.0",
+    "workerProtocol": {
+      "files": {
+        "worker-enrollment.request.schema.json": "b233de2182ecdb7655db9beda3fc132de23a1de5da4d42636bd370407daac733",
+        "worker-enrollment.response.schema.json": "ee7d0ac0828505d10d5f18f07738a94de5753a2a571bf39d33cb292e9f1c7758",
+        "worker-heartbeat.request.schema.json": "e52884b887d2a5c2baf1cbbde2cadde3bad9836ee94a5d65b98107d0c5779310",
+        "worker-heartbeat.response.schema.json": "9ce7d7e43638681f57b0914f82674f45941f619f7543ca09a3241591e8c9eea3",
+        "worker-poll.request.schema.json": "6f9c79ed63a9a2b7415a3742911ffdbd5846f7b16af02c9d84422b9322249b30",
+        "worker-poll.response.schema.json": "589422f0ad179b26f9063303aa809ed768754b0ca5970cac6442c3d806d015da",
+        "worker-result.request.schema.json": "a6f85dda44fb4c6cee5307504033850fccb1c05e2eb85a758cd7b3a9402ce547",
+        "worker-result.response.schema.json": "0789b71152acffa8a49fb8d4289d92b8240a1e7a4728dd5214c0b25e02c7943a"
+      },
+      "digest": "b470545c1856115012d587316936b64e899f59329ea87bf3a281f2676da3580c"
+    }
+  },
+  "supported": {
+    "contractMajors": [
+      "v1"
+    ],
+    "workerTransport": "signed-outbound-https-poll"
+  },
+  "verifiedAt": "2026-10-26",
+  "notes": "The vendored Control Center contract pin is two commits after the published OMES v0.6.0 release (git describe v0.6.0-2-ga4026e6). Between them only mission-control schemas were added; the eight worker schemas are byte-identical to v0.6.0, so the worker enroll/poll/result/heartbeat protocol is the v0.6.0 one. The contract is therefore NOT claimed tested against an exact published release."
+}

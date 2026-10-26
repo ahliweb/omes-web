@@ -35,6 +35,42 @@ const ROOT = process.cwd();
 
 type AnyRecord = Record<string, unknown>;
 
+/**
+ * ADR-0129 (Issue #896): the `Idempotency-Key` header parameter moved from 93
+ * inline declarations to the shared `components.parameters.IdempotencyKey`, and
+ * gained the runtime bound (`minLength`/`maxLength`/`pattern`). That is the ONE
+ * reviewed change to the frozen pre-migration contract, so the equivalence
+ * checks below set that single parameter aside on BOTH sides (the inline
+ * declaration in the snapshot, the `$ref` in the bundle) instead of editing the
+ * snapshot. The component itself is pinned in
+ * `tests/openapi-idempotency-key-component.test.ts`.
+ */
+const IDEMPOTENCY_KEY_REF = "#/components/parameters/IdempotencyKey";
+
+function withoutIdempotencyKeyParameter(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value
+      .filter((entry) => {
+        const e = entry as AnyRecord | null;
+        return !(
+          e &&
+          typeof e === "object" &&
+          (e.$ref === IDEMPOTENCY_KEY_REF ||
+            (e.in === "header" && e.name === "Idempotency-Key"))
+        );
+      })
+      .map(withoutIdempotencyKeyParameter);
+  }
+  if (value && typeof value === "object") {
+    const out: AnyRecord = {};
+    for (const [k, v] of Object.entries(value as AnyRecord)) {
+      out[k] = withoutIdempotencyKeyParameter(v);
+    }
+    return out;
+  }
+  return value;
+}
+
 function sortDeep(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(sortDeep);
   if (value && typeof value === "object") {
@@ -84,6 +120,7 @@ async function loadFragment(fileName: string): Promise<AnyRecord> {
 }
 
 describe("openapi bundle — fragment resolver", () => {
+  // Whole-repo scan: regenerates the full bundle; exceeds the 5 s default under load.
   test("merges every fragment's paths and schemas into the bundle (nothing lost)", async () => {
     const bundle = (await buildBundledDocument(ROOT)) as AnyRecord;
     const bundlePaths = new Set(Object.keys(bundle.paths as AnyRecord));
@@ -105,8 +142,9 @@ describe("openapi bundle — fragment resolver", () => {
         expect(bundleSchemas.has(schemaName)).toBe(true);
       }
     }
-  });
+  }, 60_000);
 
+  // Whole-repo scan: regenerates the full bundle; exceeds the 5 s default under load.
   test("bundle keys are alphabetically sorted (deterministic ordering)", async () => {
     const bundle = (await buildBundledDocument(ROOT)) as AnyRecord;
     const pathKeys = Object.keys(bundle.paths as AnyRecord);
@@ -117,14 +155,16 @@ describe("openapi bundle — fragment resolver", () => {
     expect(schemaKeys).toEqual(
       [...schemaKeys].sort((a, b) => a.localeCompare(b))
     );
-  });
+  }, 60_000);
 
+  // Whole-repo scan: bundles the full spec twice; exceeds the 5 s default under load.
   test("bundling twice produces byte-identical output (idempotent)", async () => {
     const first = await bundleOpenApi(ROOT);
     const second = await bundleOpenApi(ROOT);
     expect(second).toBe(first);
-  });
+  }, 60_000);
 
+  // Whole-repo scan: regenerates the full bundle; exceeds the 5 s default under load.
   test("committed bundle matches freshly generated bundle (not hand-edited/stale)", async () => {
     const committed = await readFile(
       path.join(ROOT, "openapi/awcms-public-api.openapi.yaml"),
@@ -132,7 +172,7 @@ describe("openapi bundle — fragment resolver", () => {
     );
     const fresh = await bundleOpenApi(ROOT);
     expect(fresh).toBe(committed);
-  });
+  }, 60_000);
 });
 
 describe("openapi bundle — merge conflict detection", () => {
@@ -219,6 +259,7 @@ describe("openapi bundle — truncated scalar detection (Issue #786)", () => {
     ).rejects.toThrow(/genuinely IS an unrelated comment/);
   });
 
+  // Whole-repo scan: regenerates the full bundle; exceeds the 5 s default under load.
   test("the same prose, correctly double-quoted, does not false-positive", async () => {
     const quoted = path.join(
       ROOT,
@@ -233,7 +274,7 @@ describe("openapi bundle — truncated scalar detection (Issue #786)", () => {
     expect(operation.summary).toBe(
       "Fixture endpoint mentioning Issue #999 with the scalar correctly quoted."
     );
-  });
+  }, 60_000);
 
   test("every real fragment currently in the repo is free of this truncation shape", async () => {
     // Regression guard for the specific pre-existing instances Issue #786
@@ -242,7 +283,7 @@ describe("openapi bundle — truncated scalar detection (Issue #786)", () => {
     // failed before they were quoted, and fails again if a future fragment
     // edit reintroduces the shape anywhere in the real fragment set.
     await expect(buildBundledDocument(ROOT)).resolves.toBeTruthy();
-  });
+  }, 60_000);
 });
 
 describe("openapi bundle — contract equivalence to pre-migration monolith", () => {
@@ -274,11 +315,21 @@ describe("openapi bundle — contract equivalence to pre-migration monolith", ()
     for (const key of ["security", "info", "servers"] as const) {
       expect(sortDeep(after[key])).toEqual(sortDeep(before[key]));
     }
-    for (const key of ["parameters", "responses"] as const) {
+    for (const key of ["responses"] as const) {
       expect(sortDeep((after.components as AnyRecord)[key])).toEqual(
         sortDeep((before.components as AnyRecord)[key])
       );
     }
+    // Root parameters: frozen, EXCEPT the deliberately admitted shared
+    // `IdempotencyKey` component (ADR-0129) — the only addition allowed.
+    const afterParameters = {
+      ...((after.components as AnyRecord).parameters as AnyRecord)
+    };
+    expect(afterParameters.IdempotencyKey).toBeDefined();
+    delete afterParameters.IdempotencyKey;
+    expect(sortDeep(afterParameters)).toEqual(
+      sortDeep((before.components as AnyRecord).parameters)
+    );
 
     // `securitySchemes` gets the same additive-only treatment as tags below,
     // not byte equality — Issue #89 (contract #86/ADR-0016) adds
@@ -315,6 +366,14 @@ describe("openapi bundle — contract equivalence to pre-migration monolith", ()
         "#186 optional turnstileToken (backward-compatible)",
       "/api/v1/setup/initialize":
         "#186 optional turnstileToken (backward-compatible)",
+      // #1004 adds an OPTIONAL `currentPassword` body and 400/429 responses to
+      // the TOTP enrolment start; the operation description is untouched.
+      // #1004 follow-up: enroll/verify gains a 429 (rate limit / pending secret
+      // destroyed after five wrong codes).
+      "/api/v1/auth/mfa/totp/enroll/verify":
+        "#1004 added 429 response (backward-compatible)",
+      "/api/v1/auth/mfa/totp/enroll/start":
+        "#1004 optional currentPassword body + 400/429 (backward-compatible for the grant path; a session start now needs the password)",
       // The one entry here that is NOT backward-compatible, and is listed as
       // such on purpose. `events` gains `maxItems: 500` — a document-additive
       // change (no field removed, no type changed, so `isAdditiveSuperset`
@@ -338,11 +397,16 @@ describe("openapi bundle — contract equivalence to pre-migration monolith", ()
       if (pathKey in INTENTIONALLY_EVOLVED_PATHS) {
         // Additive-only: the frozen contract must still be fully contained.
         expect(
-          isAdditiveSuperset(beforePaths[pathKey], afterPaths[pathKey])
+          isAdditiveSuperset(
+            withoutIdempotencyKeyParameter(beforePaths[pathKey]),
+            withoutIdempotencyKeyParameter(afterPaths[pathKey])
+          )
         ).toBe(true);
       } else {
-        expect(sortDeep(afterPaths[pathKey])).toEqual(
-          sortDeep(beforePaths[pathKey])
+        expect(
+          sortDeep(withoutIdempotencyKeyParameter(afterPaths[pathKey]))
+        ).toEqual(
+          sortDeep(withoutIdempotencyKeyParameter(beforePaths[pathKey]))
         );
       }
     }
@@ -409,6 +473,10 @@ describe("openapi bundle — contract equivalence to pre-migration monolith", ()
     const added = [...afterTags].filter((n) => !beforeTags.has(n)).sort();
     expect(added).toEqual([
       "Blog Content",
+      // "Booking" (booking, ADR-0131, Issue #938) -- genuinely new surface:
+      // schedules, schedule exceptions and the availability read. Nothing here
+      // is anonymous.
+      "Booking",
       "Comments",
       // "Commerce" (commerce, Issue #4, epic #1) — genuinely new surface: the
       // catalog slice (categories + products) of the re-platformed
@@ -431,7 +499,19 @@ describe("openapi bundle — contract equivalence to pre-migration monolith", ()
       "Data Lifecycle",
       "Domain Event Runtime",
       "Form Drafts",
+      // "HR Workforce" (hr_workforce, ADR-0132, Issue #945) — genuinely new
+      // surface: the employment context (employments, effective-dated terms,
+      // settings). Nothing here is anonymous.
+      // "HR Commission" (hr_commission, ADR-0132, Issue #950) — genuinely new
+      // surface: versioned commission rules (draft, publish, retire). Nothing
+      // here is anonymous.
+      "HR Commission",
+      "HR Workforce",
       "Indonesia Regions",
+      // "Inventory" (inventory, ADR-0126, Issue #887) — genuinely new surface:
+      // the multi-location stock ledger (locations, movements, adjustments,
+      // transfers, balances, reconciliation). Nothing here is anonymous.
+      "Inventory",
       "News Media",
       "News Portal Ad Placements",
       "News Portal Homepage Sections",
@@ -452,6 +532,10 @@ describe("openapi bundle — contract equivalence to pre-migration monolith", ()
       // diagnostics, cancel and delivery probe. Genuinely new surface, unlike
       // the four below it whose operations had been in the bundle for releases
       // under tags the root catalog never declared.
+      // "Procurement" (procurement, ADR-0128, Issue #888) — genuinely new
+      // surface: suppliers, receiving/return/requisition/transfer documents,
+      // reconciliation and reports. Nothing here is anonymous.
+      "Procurement",
       "Push Delivery",
       "SEO & Distribution",
       // "Site Profile" (site_profile, ADR-0102, Issue #596) — genuinely new
@@ -459,9 +543,24 @@ describe("openapi bundle — contract equivalence to pre-migration monolith", ()
       // composed read a build client uses. Nothing here is anonymous.
       "Site Profile",
       "Site Search",
+      // "Tax" (tax, ADR-0127, Issue #889) — genuinely new surface: the
+      // jurisdiction-neutral calculator (quote, snapshot, reversal), rule-version
+      // authoring and the reconciliation report. Nothing here is anonymous.
+      "Tax",
+      // "Telegram Delivery" (telegram_delivery, ADR-0140, Issue #965) — genuinely
+      // new surface: self-service chat linking and confirmation, queue
+      // diagnostics, templates and the tenant switch. The ONE anonymous
+      // operation is the bot webhook (`receiveTelegramWebhook`), authenticated
+      // by its secret header and individually justified in
+      // ALLOWED_PUBLIC_OPERATIONS.
+      "Telegram Delivery",
       "Tenant Domains",
       "Theming",
-      "Visitor Analytics"
+      "Visitor Analytics",
+      // "WhatsApp Delivery" (whatsapp_delivery, ADR-0133, Issue #963) — genuinely
+      // new surface: queue diagnostics, cancel, templates, suppressions and the
+      // consent store. Nothing here is anonymous.
+      "WhatsApp Delivery"
     ]);
   });
 });

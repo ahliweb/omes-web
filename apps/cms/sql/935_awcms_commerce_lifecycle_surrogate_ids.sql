@@ -1,4 +1,4 @@
--- awcms-one issue #17 (upstream sync of 25 October 2026) — give the four
+-- ahliweb/omes-web#17 (upstream sync of 25 October 2026) — give the four
 -- `commerce` tables that lacked one a surrogate `id`, so the `data_lifecycle`
 -- generic purge engine can retire their rows.
 --

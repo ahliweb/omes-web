@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](alur-kerja-pengembangan.md)
 
-<!-- i18n-source-hash: sha256:87e1af0e74bc13f4990c881d4f157b6ef615e4c89f498f26daec3a10cc81a258 -->
+<!-- i18n-source-hash: sha256:6b3cf87a57fbcce8d76a6e4202f8260c65560063ad554e5951a04137d6394c11 -->
 
 # Alur kerja pengembangan
 
@@ -57,7 +57,7 @@ Mendorong (push) tag itulah yang benar-benar mempublikasikannya (issue #181). [`
 
 **`check`** (`name: Check`, `timeout-minutes: 15`) berjalan pada setiap push ke `main`, setiap pull request, dan dispatch manual, tidak butuh build, tidak butuh `apps/cms` hidup, dan tidak butuh basis data. Sejak increment 6 (issue #137, [ADR-0018 D7](adr/0018-awcms-one-is-a-template-with-build-profiles-and-an-idempotent-init.id.md)), ia adalah **matriks 3-leg** (`strategy.matrix.profile: [toko, berita, landing]`, `fail-fast: false`) — GitHub menampilkan tiap leg sebagai `Check (toko)`, `Check (berita)`, `Check (landing)`. Setiap leg menjalankan `bun run check:lockfile`, `bun install --frozen-lockfile`, lalu `SITE_PROFILE=<leg> bun run check` (type-check storefront yang mencakup `src/profil/**` tanpa memandang group mana yang aktif) dan `cd apps/storefront && SITE_PROFILE=<leg> bun test tests/profil-build-smoke.test.ts tests/profil-routes.test.ts` — build milik leg itu sendiri terhadap stub CMS, membuktikan group halaman yang dikecualikan sungguh-sungguh absen dari `dist/` dan sitemap. `bun test` root, `audit:dokumen`, `audit:translation`, `audit:graf`, `audit:rilis`, dan `bun audit --audit-level=low` tidak bergantung pada profil, jadi ia berjalan **sekali saja, di leg `toko`** (`if: matrix.profile == 'toko'`), tanpa `SITE_PROFILE` diatur — di langkah itu, `profil-build-smoke` sendiri membangun ketiga profil, jadi leg `toko` sendiri sudah membuktikan seluruh matriks. Tidak ada apa pun di job ini yang membangun image container atau men-deploy apa pun.
 
-**`check-cms`** (`name: check-cms`, `needs: check`, `timeout-minutes: 20`) berjalan terhadap container layanan `postgres:18.4` nyata (`POSTGRES_USER=awcms`, `POSTGRES_DB=awcms`, port 5432, health-checked dengan `pg_isready`):
+**`check-cms`** (`name: check-cms`, `needs: check`, `timeout-minutes: 45`) berjalan terhadap container layanan `postgres:18.4` nyata (`POSTGRES_USER=awcms`, `POSTGRES_DB=awcms`, port 5432, health-checked dengan `pg_isready`):
 
 1. `bun install --frozen-lockfile` di root.
 2. `cd apps/cms && DATABASE_URL="" bun run check` — rantai penuh ~53 langkah (lint, docs/i18n, setiap gate registry/konsistensi, typecheck, `bun test` dengan setiap suite ber-gate-DB skip bersih, `bun run build`).

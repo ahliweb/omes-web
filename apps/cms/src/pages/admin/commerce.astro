@@ -417,7 +417,12 @@ const showActions = canUpdate || canDelete;
   )}
 
   {canRead && !loadError && (
-    <div class="data-table-scroll fade-in-up">
+    <div
+      class="data-table-scroll fade-in-up"
+      role="region"
+      tabindex="0"
+      aria-label={t("Products")}
+    >
       <table class="data-table data-table--stack" id="commerce-products-table">
         <caption>
           {tn("{count} product", "{count} products", products.length, {
@@ -459,35 +464,35 @@ const showActions = canUpdate || canDelete;
             products.map((product) => (
               <>
                 <tr data-product-row={product.id}>
-                  <td data-label="Select">
+                  <td data-label={t("Select")}>
                     <input
                       type="checkbox"
                       class="product-bulk-checkbox"
                       aria-label={t("Select this product")}
                     />
                   </td>
-                  <td data-label="SKU">
+                  <td data-label={t("SKU")}>
                     <span class="cell-code">{product.sku}</span>
                   </td>
-                  <td data-label="Name">{product.name}</td>
-                  <td data-label="Type">
+                  <td data-label={t("Name")}>{product.name}</td>
+                  <td data-label={t("Type")}>
                     <span class="cell-muted">{product.type}</span>
                   </td>
-                  <td data-label="Price">{product.price}</td>
-                  <td data-label="Stock">{product.stock}</td>
-                  <td data-label="Status">
+                  <td data-label={t("Price")}>{product.price}</td>
+                  <td data-label={t("Stock")}>{product.stock}</td>
+                  <td data-label={t("Status")}>
                     <span
-                      class="status-badge"
-                      data-variant={
+                      class="admin-status-pill"
+                      data-tone={
                         product.status === "active" ? "success" : "neutral"
                       }
                     >
-                      <span class="status-dot" aria-hidden="true" />
+                      <span class="admin-status-pill-dot" aria-hidden="true" />
                       {product.status}
                     </span>
                   </td>
                   {showActions && (
-                    <td data-label="Actions" class="stacked-block">
+                    <td data-label={t("Actions")} class="stacked-block">
                       <div class="row-actions">
                         {canDelete && (
                           <button
@@ -757,7 +762,12 @@ const showActions = canUpdate || canDelete;
         {t("Deleted products")}
         <span class="count-pill">{deletedProducts.length}</span>
       </h2>
-      <div class="data-table-scroll">
+      <div
+        class="data-table-scroll"
+        role="region"
+        tabindex="0"
+        aria-label={t("Deleted products")}
+      >
         <table class="data-table data-table--stack" id="deleted-products-table">
           <thead>
             <tr>
@@ -769,11 +779,11 @@ const showActions = canUpdate || canDelete;
           <tbody>
             {deletedProducts.map((product) => (
               <tr data-deleted-product-row={product.id}>
-                <td data-label="SKU">
+                <td data-label={t("SKU")}>
                   <span class="cell-code">{product.sku}</span>
                 </td>
-                <td data-label="Name">{product.name}</td>
-                <td data-label="Actions" class="stacked-block">
+                <td data-label={t("Name")}>{product.name}</td>
+                <td data-label={t("Actions")} class="stacked-block">
                   <div class="row-actions">
                     <button
                       type="button"
@@ -795,6 +805,7 @@ const showActions = canUpdate || canDelete;
 </AdminLayout>
 
 <script>
+  import { confirmAction } from "../../lib/ui/confirm-dialog-client";
   import {
     field,
     messageBox,
@@ -859,7 +870,8 @@ const showActions = canUpdate || canDelete;
     const id = button.dataset.productId;
     if (!id) return;
     const sku = button.dataset.productSku ?? "this product";
-    if (!window.confirm(`Delete ${sku}? It can be restored later.`)) return;
+    if (!(await confirmAction(`Delete ${sku}? It can be restored later.`)))
+      return;
 
     await mutateAndReload(
       button,

@@ -79,7 +79,7 @@ const PROVIDER = createLogPaymentGatewayProvider({
 
 function inTenant<T>(
   tenantId: string,
-  fn: (tx: Bun.SQL) => Promise<T>
+  fn: (tx: Bun.TransactionSQL) => Promise<T>
 ): Promise<T> {
   return withTenantOrThrow(getRuntimeSql(), tenantId, fn);
 }
@@ -262,7 +262,11 @@ async function seedCustomerBearerSession(
 
   const token = generateCustomerSessionToken();
   const tokenHash = hashCustomerSessionToken(token);
-  const expiresAt = new Date(NOW.getTime() + 30 * 24 * 60 * 60 * 1000);
+  // Relative to the REAL clock, not the fixed `NOW`: `findSessionByTokenHash`
+  // compares `expires_at` with the wall clock, so an expiry derived from a
+  // fixed past date silently expires the session once that date + 30 days has
+  // passed (this test began failing on 2026-10-19).
+  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
   await inTenant(
     tenantId,

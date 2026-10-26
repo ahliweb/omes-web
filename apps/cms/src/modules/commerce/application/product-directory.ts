@@ -514,7 +514,7 @@ async function fetchProductRowIncludingDeleted(
  * plain column list.
  */
 export async function createProduct(
-  tx: Bun.SQL,
+  tx: Bun.TransactionSQL,
   tenantId: string,
   actorTenantUserId: string,
   input: CreateProductInput,
@@ -528,7 +528,8 @@ export async function createProduct(
   let rows: ProductRow[];
 
   try {
-    rows = (await tx`
+    rows = (await tx.savepoint(
+      (sp) => sp`
       INSERT INTO awcms_commerce_products (
         tenant_id, category_id, type, sku, name, slug, description, digital_note,
         price, discount_percent, stock, status, label, label_color,
@@ -557,8 +558,9 @@ export async function createProduct(
         ${input.allowDp}, ${input.allowFreeShipping}, ${input.variantAttributes}::jsonb,
         ${input.isFeatured}, ${input.isRecommended}
       )
-      RETURNING ${tx.unsafe(PRODUCT_COLUMNS)}
-    `) as ProductRow[];
+      RETURNING ${sp.unsafe(PRODUCT_COLUMNS)}
+    `
+    )) as ProductRow[];
   } catch (error) {
     if (error instanceof Bun.SQL.PostgresError) {
       if (
@@ -624,7 +626,7 @@ export async function createProduct(
  * @throws {DuplicateProductSkuError} `sku` is set and already taken.
  */
 export async function updateProduct(
-  tx: Bun.SQL,
+  tx: Bun.TransactionSQL,
   tenantId: string,
   actorTenantUserId: string,
   productId: string,
@@ -689,7 +691,8 @@ export async function updateProduct(
   let rows: ProductRow[];
 
   try {
-    rows = (await tx`
+    rows = (await tx.savepoint(
+      (sp) => sp`
       UPDATE awcms_commerce_products
       SET
         category_id = ${input.categoryId === undefined ? existing.categoryId : input.categoryId},
@@ -735,8 +738,9 @@ export async function updateProduct(
         is_recommended = ${input.isRecommended ?? existing.isRecommended},
         updated_at = now()
       WHERE tenant_id = ${tenantId} AND id = ${productId} AND deleted_at IS NULL
-      RETURNING ${tx.unsafe(PRODUCT_COLUMNS)}
-    `) as ProductRow[];
+      RETURNING ${sp.unsafe(PRODUCT_COLUMNS)}
+    `
+    )) as ProductRow[];
   } catch (error) {
     if (error instanceof Bun.SQL.PostgresError) {
       if (
@@ -893,7 +897,7 @@ export async function listDeletedProductsForAdmin(
  *   this product's sku.
  */
 export async function restoreProduct(
-  tx: Bun.SQL,
+  tx: Bun.TransactionSQL,
   tenantId: string,
   actorTenantUserId: string,
   productId: string,
@@ -909,12 +913,14 @@ export async function restoreProduct(
   let rows: ProductRow[];
 
   try {
-    rows = (await tx`
+    rows = (await tx.savepoint(
+      (sp) => sp`
       UPDATE awcms_commerce_products
       SET deleted_at = NULL, restored_at = now(), updated_at = now()
       WHERE tenant_id = ${tenantId} AND id = ${productId} AND deleted_at IS NOT NULL
-      RETURNING ${tx.unsafe(PRODUCT_COLUMNS)}
-    `) as ProductRow[];
+      RETURNING ${sp.unsafe(PRODUCT_COLUMNS)}
+    `
+    )) as ProductRow[];
   } catch (error) {
     if (error instanceof Bun.SQL.PostgresError) {
       if (

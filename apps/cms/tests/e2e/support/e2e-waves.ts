@@ -67,12 +67,25 @@
  * because those are the ones that change what another spec's screen renders.
  */
 export const READ_WAVE: readonly string[] = [
+  // ahliweb/awcms#877 — `@axe-core/playwright` smoke over representative
+  // routes changed by epic #858, plus the ADR-0125 ConfirmDialog/ReasonPanel
+  // opened-then-cancelled. Every mutation it might otherwise attempt is
+  // cancelled before any request is sent, so it belongs here rather than in
+  // WRITE_WAVE.
+  "a11y-axe.e2e.ts",
   "admin-deny-path.e2e.ts",
   // ahliweb/awcms#831 — injects a synthetic `.cell-muted` element via
   // `page.evaluate` (a client-side DOM mutation only) to assert the CSS
   // contract; it sends no non-GET request of its own beyond the shared
   // `setup` project's login.
   "admin-sidebar-long-content.e2e.ts",
+  // Issue #894 — loads `/admin/inventory` and `/admin/tax` and every view of
+  // each, and asserts the sidebar entry, the forms the owner is owed and the
+  // empty states. GETs only.
+  "admin-inventory-tax-read.e2e.ts",
+  // Issue #905 — loads every view of `/admin/procurement`, the sidebar entry,
+  // the mode-dependent form fields and the 360px width. GETs only.
+  "admin-procurement-read.e2e.ts",
   "admin-offices.e2e.ts",
   "admin-read-only-access.e2e.ts",
   "admin-screens-render.e2e.ts",
@@ -98,6 +111,11 @@ export const READ_WAVE: readonly string[] = [
  */
 export const WRITE_WAVE: readonly string[] = [
   "admin-abac-policies.e2e.ts",
+  // Issue #942 — drives the six booking screens by keyboard and mutates
+  // tenant-wide booking configuration (a policy, an offering, a resource with
+  // units in a pool, schedules, a closure, a reservation placed through the
+  // route, its confirm and cancel, a block and its release, a resource delete).
+  "admin-booking.e2e.ts",
   // Nothing here mutates — every request it sends is refused by construction —
   // but it sends non-GET requests, and classifying by what a spec ATTEMPTS
   // rather than by what it happens to achieve is the rule that stays true when
@@ -105,6 +123,14 @@ export const WRITE_WAVE: readonly string[] = [
   "api-authorization-first.e2e.ts",
   "api-body-auth-boundary.e2e.ts",
   "admin-email-templates-create.e2e.ts",
+  // Issue #894 — posts an adjustment, reverses it, authors and publishes a tax
+  // rule version. It writes only inventory and tax rows, which no other spec's
+  // screen counts, but it mutates through the app, so it is a write.
+  "admin-inventory-tax-write.e2e.ts",
+  // Issue #905 — registers a supplier, adds and reveals an identifier, receives,
+  // transfers and reverses stock through documents, and cancels a draft. It
+  // writes only procurement/inventory rows, but it mutates through the app.
+  "admin-procurement-write.e2e.ts",
   "admin-modules-toggle.e2e.ts",
   "admin-offices-create.e2e.ts",
   "admin-offices-edit.e2e.ts",

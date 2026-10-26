@@ -86,6 +86,86 @@ export const NO_SUBJECT_DATA: readonly { table: string; reason: string }[] = [
       "ADR-0102. One row per TENANT holding the PUBLISHER's own published identity — masthead tagline, footer copyright, editorial address, and the contact channels the newsroom prints on its own contact page. It records nothing the tenant holds ABOUT a third party, which is what a subject-access request asks for; a reader exercising their rights against this site is not asking for the site's own address. The honest edge case, stated rather than skipped: a small newsroom may type a person's address into `contact_email` or `whatsapp_number`. That value is still the publisher's own, published deliberately by the person who typed it, and erasing it is editing the field on `/admin/site-profile` — not a subject-rights workflow, which would have no way to distinguish it from the masthead it sits beside. It is also why the audit row for a change records WHICH FIELDS are set and never their values: the values do not need a second copy in a store more people read."
   },
   {
+    table: "awcms_hr_geofences",
+    reason:
+      "ADR-0138 / Issue #970. A tenant-defined work site: an office reference, a label and a circle or small polygon around a place of business. It describes a PLACE, not a person, and no employee's position is ever compared by writing it here. The only person-shaped columns are the `created_by` / `updated_by` / `deleted_by` stamps of the administrator who drew it, which are the tenant's own configuration record and resolve to nobody once the identity is anonymised."
+  },
+  {
+    table: "awcms_hr_geolocation_notices",
+    reason:
+      "ADR-0138 / Issue #970. Append-only published notice versions: the tenant's own text per locale telling employees what the feature captures, why and for how long. It records nothing about an employee. The only person-shaped column is the `created_by` stamp of the administrator who published it. Whether a given employee saw a version is the acknowledgement table, which has its own descriptor."
+  },
+  {
+    table: "awcms_hr_geolocation_settings",
+    reason:
+      "ADR-0138 / Issue #970. One row per tenant: the geolocation evidence switch (off by default), the accuracy ceiling, a REFERENCE to the tenant's data-protection impact assessment and the current notice id. It is the controller's own configuration and says nothing about a person; the only person-shaped column is the `updated_by` stamp of the administrator who last changed it."
+  },
+  {
+    table: "awcms_inventory_balances",
+    reason:
+      "ADR-0126 / Issue #887. A derived read model of stock quantities: tenant, location, an OPAQUE consumer item reference, a unit, a decimal and a threshold. No column can be traced to a person — there is no actor stamp on the row at all (the actor is on the immutable movement that changed it, which is answered by its own descriptor). The one residual risk is the consumer's choice of `item_ref`: ADR-0126 §8 requires it to be an opaque catalogue key, never a person's name or an identifier of one, and the validators bound its alphabet but cannot read its meaning."
+  },
+  {
+    table: "awcms_inventory_low_stock_signals",
+    reason:
+      "ADR-0126 / Issue #887. An append-only log of a balance crossing its low-stock line: tenant, location, opaque item reference, a kind and two decimals. No actor, no free text, nothing about a person — it records what happened to goods. Immutable by trigger, so there is also nothing an erasure could rewrite."
+  },
+  {
+    table: "awcms_procurement_settings",
+    reason:
+      "ADR-0128 / Issue #888. One row per tenant holding the document approval threshold — a decimal. The only person-shaped column is the `updated_by` stamp on a configuration row, which is the tenant's own setting, not data it holds about someone."
+  },
+  {
+    table: "awcms_procurement_supplier_labels",
+    reason:
+      "ADR-0128 / Issue #888. A supplier's category and tag labels: tenant, supplier id, a kind and a lower-case label of at most 64 characters. No actor, no free text, nothing that can name a person; it classifies a vendor."
+  },
+  {
+    table: "awcms_procurement_document_lines",
+    reason:
+      "ADR-0128 / Issue #888. Line snapshots of a purchase or stock-movement document: opaque item reference, SKU, item name, unit and exact quantity/cost. No actor stamp and no person column — the actor is on the parent document, which has its own descriptor. Immutable once the document leaves draft, so there is nothing an erasure could rewrite."
+  },
+  {
+    table: "awcms_procurement_document_movements",
+    reason:
+      "ADR-0128 / Issue #888. Append-only links from a document line to inventory ledger movement ids: tenant, document id, line number, an operation and a movement id. No actor and no free text; the person who posted is on the ledger movement and the document, each with its own descriptor."
+  },
+  {
+    table: "awcms_hr_workforce_settings",
+    reason:
+      "ADR-0132 / Issue #945. One row per tenant holding a clock-skew bound (an integer) and a workflow key (a lower-case identifier). The only person-shaped column is the `updated_by` stamp on a configuration row, which is the tenant's own setting, not data it holds about someone."
+  },
+  {
+    table: "awcms_booking_resource_units",
+    reason:
+      "ADR-0131 / Issue #937. The capacity units of a resource: tenant, resource id, an ordinal, an optional short label of at most 100 characters and a status. No actor and no person column; it says how many rooms a room-type has, not who sleeps in them."
+  },
+  {
+    table: "awcms_booking_reservation_items",
+    reason:
+      "ADR-0131 / Issue #937. Immutable snapshot of what a reservation booked: offering code and name, duration, buffers, instants and stay dates. No actor stamp, no customer reference and no free text; the customer reference and note live on the parent reservation, which has its own descriptor."
+  },
+  {
+    table: "awcms_booking_reminder_intents",
+    reason:
+      "ADR-0131, ADR-0133 / Issue #943. One row per (reservation, kind, occurrence): a reservation id, a kind, a status, a short lower-case outcome code and the opaque id of the delivery queue row. No actor, no customer reference, no contact, no body and no free text -- the recipient is resolved at dispatch time and never stored here. The person is the customer of the parent reservation, which has its own descriptor, and the delivery module's queue row (its own descriptor) holds the message; erasing the customer at the authority leaves this row naming nobody."
+  },
+  {
+    table: "awcms_booking_resource_allocations",
+    reason:
+      "ADR-0131 / Issue #937. One row per claimed unit: item id, resource and unit ids, an interval or date range and a release stamp. No actor and no person column -- it records that a unit was occupied, never by whom; the reservation it hangs off has its own descriptor."
+  },
+  {
+    table: "awcms_booking_staff_assignments",
+    reason:
+      "ADR-0131, ADR-0132 / Issue #949. One row per claimed (item, resource) of a resource that names the people who serve it: item and resource ids, an OPAQUE staff reference (an employment id, resolved only by the hr_workforce port; no name, contact or number), an interval and a release stamp. No actor stamp and no free text. The person is an employment of hr_workforce, which has its own descriptors; erasing the person there leaves this row naming nobody."
+  },
+  {
+    table: "awcms_hr_shift_templates",
+    reason:
+      "ADR-0132 / Issue #946. A shift pattern: a code, a label, a local start time, a duration, a break and a zone. It names no person; the only person-shaped columns are the actor stamps (`created_by`, `updated_by`, `deleted_by`) on a configuration row, which are the tenant's own administration, not data it holds about someone."
+  },
+  {
     table: "awcms_permissions",
     reason:
       "The global catalogue of permission NAMES, written only by migrations. Every row is a string an author chose; no column can be traced to a person, and none is scoped to a tenant."
@@ -124,11 +204,6 @@ export const NO_SUBJECT_DATA: readonly { table: string; reason: string }[] = [
     table: "awcms_edge_cache_purges",
     reason:
       "ADR-0042. A queue of surrogate keys the edge cache must invalidate. A surrogate key names a CONTENT surface, never a visitor, and the rows are written by infrastructure in `src/lib/` that no module owns."
-  },
-  {
-    table: "awcms_idempotency_keys",
-    reason:
-      "The replay guard for high-risk mutations: a scope, a key, a request hash and the response that was returned. It holds no column linking a row to a person — the key is chosen by the CALLER and the tenant is the only identity on it — so no subject request can find its rows. The cached `response_body` can echo personal data from the mutation it replays, which is why this table carries a short retention of its own rather than a subject answer it cannot honour."
   },
   {
     table: "awcms_commerce_courier_destinations",

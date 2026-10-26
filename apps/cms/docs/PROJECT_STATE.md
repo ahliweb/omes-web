@@ -107,6 +107,21 @@ The used-directly/no-derived-repo governance model (ADR-0034 §2/§3) is **uncha
   differ on audit — the HTTP endpoint now writes its `awcms_audit_events` row to the platform
   tenant's log, while the job writes none, unchanged from ADR-0052's accepted cost.
 
+**Change of 20 October 2026 — which technology each product surface uses (ADR-0146, Proposed):**
+
+- [ADR-0146](adr/0146-persona-apps-prefer-lynx-in-consumer-repos-astro-keeps-admin-and-public-web.md)
+  refines ADR-0055 and ADR-0070 (it supersedes neither). **Every admin surface and every
+  public web surface stays Astro**; **persona apps** (customer, courier, driver, partner,
+  warehouse and field staff) **prefer LynxJS + ReactLynx** as a _candidate_, in their **own
+  consumer repos**, as clients of the official API contracts. "App" is defined by persona
+  function, not URL, device or installability; Lynx for Web needs a passing proof of concept;
+  no Lynx app ships before the PoC gate (Android/iOS/HarmonyOS/Web + Bun) is recorded. Status
+  is **Proposed** until maintainer review. **Nothing Lynx-related exists in this repo and
+  `tests/product-surface-policy.test.ts` fails if it appears** (a `@lynx-js/*` dependency, an
+  import under `src/`, a `lynx.config.*`); the surface table and classifier are
+  `scripts/lib/product-surface-policy.ts`. Consumer-specific work lives in consumer repos
+  (e.g. `ahliweb/awcms-one#445`).
+
 ## 2. Inventory at a glance
 
 <!-- project-state-inventory:mulai -->
@@ -115,16 +130,16 @@ The used-directly/no-derived-repo governance model (ADR-0034 §2/§3) is **uncha
 
 | Aspect                            | Value (generated)                                                                      | Source of truth                                                                         |
 | --------------------------------- | -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| Version                           | **10.3.0**                                                                             | `package.json`                                                                          |
+| Version                           | **10.10.2**                                                                            | `package.json`                                                                          |
 | Pending changesets (by bump type) | _run the command in the right-hand column_                                             | `grep -h '^"awcms":' .changeset/*.md \| sort \| uniq -c`                                |
-| Commits since the last release    | _run the command in the right-hand column_                                             | `git rev-list --count v10.3.0..HEAD`                                                    |
-| Base modules                      | **26** (see the list in ARCHITECTURE.md)                                               | `src/modules/index.ts`                                                                  |
-| Migrations                        | **201** (`sql/001`–`934`)                                                              | `ls sql/`                                                                               |
-| ADR                               | **0000**–**0124** (`0000` = template; highest ADR status: **Accepted**)                | `ls docs/adr/`                                                                          |
-| Admin screens                     | **82** `.astro` files in `src/pages/admin/`; **0 of 26** modules without `navigation:` | `find src/pages/admin -name '*.astro'`, `grep -L 'navigation:' src/modules/*/module.ts` |
-| `.astro` files                    | **97** (50.594 lines) — on typechecking see §6                                         | `find src -name '*.astro'`                                                              |
-| Gates                             | **61** in the `bun run check` chain                                                    | `scripts.check` in `package.json`, split on `&&`                                        |
-| Contracts                         | Modular per-module OpenAPI + AsyncAPI; `MODULE_CONTRACT_VERSION` **4.2.0**             | `openapi/`, `asyncapi/`, `_shared/module-contract.ts`                                   |
+| Commits since the last release    | _run the command in the right-hand column_                                             | `git rev-list --count v10.10.2..HEAD`                                                   |
+| Base modules                      | **34** (see the list in ARCHITECTURE.md)                                               | `src/modules/index.ts`                                                                  |
+| Migrations                        | **265** (`sql/001`–`935`)                                                              | `ls sql/`                                                                               |
+| ADR                               | **0000**–**0148** (`0000` = template; highest ADR status: **Accepted**)                | `ls docs/adr/`                                                                          |
+| Admin screens                     | **99** `.astro` files in `src/pages/admin/`; **0 of 34** modules without `navigation:` | `find src/pages/admin -name '*.astro'`, `grep -L 'navigation:' src/modules/*/module.ts` |
+| `.astro` files                    | **118** (67.663 lines) — on typechecking see §6                                        | `find src -name '*.astro'`                                                              |
+| Gates                             | **68** in the `bun run check` chain                                                    | `scripts.check` in `package.json`, split on `&&`                                        |
+| Contracts                         | Modular per-module OpenAPI + AsyncAPI; `MODULE_CONTRACT_VERSION` **4.7.0**             | `openapi/`, `asyncapi/`, `_shared/module-contract.ts`                                   |
 
 <!-- project-state-inventory:selesai -->
 
@@ -201,7 +216,7 @@ pioneered directly here after the ADR-0047 freeze.)
 
 ## 3. What is already done (do not rebuild it)
 
-- **26 modules** registered with `FORCE` RLS, DB role separation
+- **34 modules** registered with `FORCE` RLS, DB role separation
   (`awcms_app`/`awcms_worker`/`awcms_setup`), admin SSR read+write (Issue #166/#171).
 - **Advanced auth**: MFA TOTP + session-assurance/step-up (`sql/024`), tenant-aware
   OIDC/SSO + SSRF guard + break-glass (`sql/025`/`026`), profile-aware Turnstile bot
@@ -390,6 +405,141 @@ pioneered directly here after the ADR-0047 freeze.)
   §Baseline/§Obsidian workflow/§Security and privacy.
 
 ## 4. Backlog / next steps
+
+- **IDENTITY_ACCESS BUG HUNT — 16 October 2026: 13 of 15 fix groups landed
+  (#1057–#1069, docs #1070, tracking #1055 closed); one follow-up open, #1056.**
+  An external bug hunt over `src/modules/identity-access` at `78acbe8` confirmed
+  21 bugs and delivered 15 fix groups as a git bundle. The bundle was built
+  without tsc, prettier or Postgres, and its regression tests use fake
+  transactions. Checks before landing:
+  - rebase onto main and prettier, applied per commit;
+  - the full `bun run check`;
+  - against Postgres 18.4, `tests/integration/` (2,025 pass, 0 fail) and the
+    17 legacy DB suites (172 pass, 0 fail);
+  - an independent security review.
+
+  **Not landed, and why:**
+  - **g03** (password change revokes the other sessions before the epoch bump)
+    duplicated #1053 (#1035), which was already on main.
+  - **g07** (a lapsed grant blocks re-granting the same role) is **rejected as a
+    fix**. Its pre-check predicate never reaches the partial unique index
+    `WHERE status = 'active'` (`sql/102`, `sql/104`), so the 409 stays. The bug
+    itself is real and permanent, because nothing moves `awcms_access_policies`
+    rows to `expired`. The options and a recommendation are in #1056.
+
+  **Corrected during review:**
+  - g14 did not compile: `savepoint` exists only on `Bun.TransactionSQL`.
+  - g08's changeset now carries the upgrade query for stored DSL policies with
+    offset-less date-times. Such policies fail closed (deny) after the upgrade.
+
+  **Never checked:** about 60 lower-rated suspicions from the same hunt were
+  never given to a prover. The hunt's report is not in the repo, so these
+  examples are recorded here so they are not lost:
+  - `evaluateAccess` skips the scope check when the scope fields are malformed,
+    which fails open.
+  - `planEntitlementBackfill` grants the entitlement when a date is invalid.
+  - `isPasswordLoginDisabledForIdentity` ignores `sso_required`.
+  - `validateForgotIdentifierInput` returns the identifier untrimmed.
+  - `revokeDelegatedAccess` leaves the role policy active.
+
+  Treat each of these as a lead, not a finding: check it against the code and
+  write a failing DB-backed test before fixing it.
+
+- **BOOKING BUILD-OUT — slices #937 to #941 and #1012 (the block
+  create/release routes, `sql/240`/`sql/241`) landed; next #942 (the admin
+  screens, which are what lets the module leave `experimental`).** #937 schema (`sql/180`, `sql/181`), #938
+  availability and schedules (`sql/186`), #939 the slot allocator, holds with
+  expiry and the reconciliation (`sql/200`: `booking:holds:expire` runs as
+  `awcms_worker` through a narrow SECURITY DEFINER sweep), #940 stays and blocked
+  nights through the same allocator (`sql/204`), #941 the reservation routes
+  (`POST/GET /reservations`, `confirm`, `cancel`, `reschedule`, `check-in`,
+  `check-out`, `no-show`) with `Idempotency-Key`, the high-risk `override` as an
+  independent check, the `BookingPort`, the nine events on the live AsyncAPI
+  document and a safe DEFAULT for the hold caps (5 per customer, 500 per tenant;
+  `NULL` in the settings no longer means unlimited). Two small migrations:
+  `sql/208` (the `superseded_by_id` foreign key becomes deferrable so a reschedule
+  can supersede the old reservation before its replacement exists) and `sql/209`
+  (the one event-facts function, and the sweep returning what it expired so the
+  worker can publish `expired`). The map from the pack to the code is
+  [`awcms/booking.md`](awcms/booking.md) §13. What a continuer must know: (1)
+  `placeHold` is the claim, `createReservation` / `transitionReservation` /
+  `rescheduleReservation` are the transitions, and a refusal is a returned value
+  that must be returned BEFORE any write (`withTenant` commits a returned 4xx);
+  (2) correctness never depends on the `booking:holds:expire` job (lazy reclaim
+  covers every claim); (3) every hold-creating path (the future `extend`, a series)
+  must take the per-tenant cap lock before counting; (4) the concurrency evidence
+  is `booking-concurrency` / `booking-stay` (through `placeHold`), and
+  `booking-reservation` / `booking-reservation-api` (through the transitions and
+  the real routes); (5) not built: `extend`, the report
+  and reconciliation routes, `staff_assignments` (T8), the reporting projections.
+
+- **AW BUSINESS PLATFORM WAVE A — 8 October 2026 (v10.7.0): #915–#918 done
+  upstream, the same day downstream ADR-0040 was accepted (awcms-one#335, O0).**
+
+  Four admissions, all docs except ADR-0134: ADR-0131 booking (#927,
+  `docs/awcms/booking.md`), ADR-0132 hr_payroll family (#928,
+  `docs/awcms/hr-payroll.md`), ADR-0133 generic `whatsapp_delivery` (#925),
+  ADR-0134 descriptor-declared domain-event consumers (#926, code), and the
+  cross-domain contracts (#929, `docs/awcms/cross-domain-contracts.md` + 22
+  provisional events in `asyncapi/provisional/`, gated by
+  `asyncapi:provisional:check`). **No module code, migration or live
+  OpenAPI/AsyncAPI path exists for booking, hr or WhatsApp yet.** Each module's
+  phase-1 PR creates its `_shared/ports` file and moves its events from the
+  provisional file to the live contract (the gate forces "exactly one place").
+
+  **Owner decisions (answered 2026-10-10 in the awcms-one DoR).** Recorded in
+  the packs where they bind: booking O8 and O12 (holds excluded from occupancy;
+  commerce stays the customer authority, so no `customer_profile_id`); hr O4
+  (Indonesian profile consumer-owned), O6 (geolocation only, off by default; decided by ADR-0138 as verdict-only evidence, implementation #970) and O7 (SoD configurable per tenant, decided by ADR-0136 including sub-question O7a, enforcement in #957; payroll is additionally gated on payout-account encryption, decided by ADR-0137, plus the security and legal review of #956). Delivery O10/O11: the Telegram adapter is admitted for ops/staff alerts only by ADR-0140 (#964; implemented by #965 as the `telegram_delivery` module, inert behind `TELEGRAM_ENABLED`, on the ADR-0137 field-encryption helper); cross-channel orchestration is not admitted (ADR-0139, with reopening triggers). Booking O2 (first vertical hotel / villa / rental) is answered and admits day-granularity stays into v1 through ADR-0135 (Issue #931); O1, O3, O5 and
+  O9 are not yet reconciled into the packs. Read the pack's open-questions table
+  before writing a migration.
+
+  **Two things to know before touching the consumer registry (#926).**
+  Consumers run regardless of module `status`: an earlier draft that skipped
+  `disabled` modules stranded pending deliveries, broke replay and dropped
+  events, and was removed after the security review. The registry is rebuilt
+  on every call (no cache keyed on array identity). The CI gate is the primary
+  guard against a bad composition; the runtime throw inside the producer's
+  transaction is only the backstop (there is no boot-time validation path).
+  Follow-up: descriptor-declared e-mail categories.
+
+- **ISSUE ROUND — 8 October 2026 (v10.6.0): two fixes, one blocker found on
+  the way, and four design issues deliberately not started.**
+
+  **Done.** #913 (`InventoryLedgerPort.listBalances`, #919). Its keyset is
+  written as an UNCONDITIONAL `(location_id, item_type, item_ref) > (…)`, with a
+  `('', '')` sentinel when there is no cursor, instead of the repo's usual
+  `(after IS NULL OR …)`. Under a generic prepared plan the OR'd form is a
+  Filter, so each page re-walks the location's earlier rows (verified with
+  `plan_cache_mode = force_generic_plan`). The sentinel form is an Index Cond on
+  the primary key. `inventory-balance-directory.ts` still uses the OR'd form;
+  converting it is an open option, not a defect. #914 (#922): the
+  idn-admin-regions rollback had no comparison problem to "tie-break". The strict
+  `activated_at < active.activated_at` filter WAS the defect. `now()` is the
+  transaction start, so the active row can be stamped equal to OR EARLIER than
+  the row it superseded. Rollback now takes the latest superseded row by
+  `(activated_at, id)`, with no comparison. #920 (#921): three new transitive
+  advisories (sharp, shell-quote [critical], source-map-js) turned
+  `deps:audit:check` red on `main` and blocked every PR. They are closed with
+  `overrides`.
+
+  **SUPERSEDED the same day (see the Wave A entry above): NOT started, on purpose: #915 booking, #916 hr_payroll, #917 delivery,
+  #918 consumer registration (awcms-one#280 Wave A).** Each issue is gated
+  "not before the downstream owner accepts ADR-0040". On 8 October 2026,
+  awcms-one ADR-0040 is still `Diusulkan` (Proposed). Re-check that status
+  before picking any of them up. #918 item 1 is described as able to start
+  independently, but its issue carries the same gate.
+
+- **PROCUREMENT (#888, ADR-0128) — follow-ups recorded by its security audit.**
+  Not done, on purpose, each with a reason: (1) **step-up and a rate limit on
+  `suppliers.reveal`** (audited and `no-store`, but a holder can enumerate at API
+  speed); (2) **a stricter permission for payment/contact references**, and
+  **soft-delete of identifiers** (removal is a hard, audited `DELETE`); (3)
+  **keyed hashing and at-rest encryption of `normalized_value`** (the hash is
+  the unkeyed one shared with `profile_identity`; it needs a key-management
+  decision for both); (4) **mode/quantity-based approval gating** (the
+  threshold is cost-based and covers `receive`/`supplier_return` only);
+  (5) **actor-bound idempotency in `inventory`** (procurement binds it).
 
 - **DEPENDENCY & MERGE-QUEUE ROUND — 24 September 2026: a dependency sweep that
   found a live privilege breach in `main`, and two bumps that were unmergeable
@@ -5960,7 +6110,7 @@ scope_id = tenant_id)`. This is the answer to a limit ADR-0080 wrote
      refuses every session that is not currently `aal2`, and somebody with no enrolled
      factor can never reach it — unconditionally, every user
      without MFA is permanently unable to change their password, and the ones who need it most
-     are exactly the ones who just learned their password leaked. The ADR-0058 §E trap in another costume.
+     are exactly the ones who just learned their password leaked. The ADR-0141 §4 trap in another costume.
      The mutation `if (mfa.enabled)` → `if (true)` turns 4 tests red.
 
   **A finding about #430 that changes its value.** The temporary mitigation
@@ -6212,7 +6362,7 @@ scope_id = tenant_id)`. This is the answer to a limit ADR-0080 wrote
   - **A `push_delivery.subscriptions.*` permission** — registering your own device
     is self-service; a permission for it is a wall in front of
     the feature, and an action that is not seeded refuses everybody including the owner
-    (the latent-authz trap, ADR-0058 §E).
+    (the latent-authz trap, `awcms-abac-guard` skill).
   - **Assigning `awcms_edge_cache_purges` to one of the three modules that
     write it** so that its gate turns green — a descriptor naming the wrong
     owner is a false claim that reads as a decision.

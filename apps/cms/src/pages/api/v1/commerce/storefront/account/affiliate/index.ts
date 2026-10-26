@@ -135,6 +135,10 @@ export const POST: APIRoute = async ({ request, clientAddress, locals }) => {
         );
         return { kind: "affiliate", affiliate };
       } catch (error) {
+        // tx-swallow-ok: healthy transaction: `AffiliateProgramDisabledError`
+        // is raised by the directory's own pre-checks or after its fallible
+        // statement ran inside a savepoint, so the transaction is still valid
+        // when this catch returns.
         if (error instanceof AffiliateProgramDisabledError) {
           return { kind: "program_disabled" };
         }

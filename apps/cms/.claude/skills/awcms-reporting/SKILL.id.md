@@ -5,7 +5,7 @@ description: Kelola modul reporting AWCMS — lima view management reporting liv
 
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](SKILL.md)
 
-<!-- i18n-source-hash: sha256:06d0ac5b3b4ff30f7cb14724e61f7e205b07ee71785e1edd541b6ec9c0171d14 -->
+<!-- i18n-source-hash: sha256:a267ac6afa92ad5a6db3c8d1d95b687b78411d59294e0d6b4121d297736ebe33 -->
 
 # AWCMS — Reporting (live views + projections)
 
@@ -76,7 +76,8 @@ sendiri, satu aggregator pusat membaca `listModules()`" yang sama seperti
   di atas sumber yang bisa di-restore/hard-delete tanpa CDC/delta tracking
   yang setara.**
 - **`domain_event`** — update steady-state di-PUSH oleh consumer
-  `domain_event_runtime` terdaftar (Issue #742), reuse job/lock/batching/
+  `domain_event_runtime` terdaftar (Issue #742) yang dideklarasikan di
+  `domainEventConsumers` milik pemilik projection (ADR-0134), reuse job/lock/batching/
   idempotency/retry/pause-resume yang sudah ada, bukan membangun mekanisme
   kedua.
 
@@ -222,3 +223,11 @@ catalog projection/export), `awcms-idempotency` (rebuild/export mutation),
 (pola markup `projections.astro`), `awcms-module-management` (kontrak
 `ProjectionDescriptor`/`listModules()` yang sama dengan
 `dataLifecycle`/`sodRules`).
+
+## Payroll tidak dapat dilaporkan (Issue #978, PS-18)
+
+Proyeksi tidak boleh membaca tabel payroll atau dideklarasikan oleh `hr_payroll`,
+dan ekspor proyeksi menolak hal yang sama saat menulis. Lihat
+`src/modules/_shared/payroll-data-boundary.ts` dan
+`docs/awcms/hr-payroll.id.md` bagian 13.3 (termasuk jalan menuju laporan payroll
+mendatang). Ekspor CSV bebas-formula lewat `src/lib/security/csv-formula.ts`.

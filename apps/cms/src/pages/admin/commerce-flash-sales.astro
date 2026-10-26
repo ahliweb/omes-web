@@ -160,7 +160,12 @@ const showActions = canUpdate || canDelete;
   )}
 
   {canRead && !loadError && (
-    <div class="data-table-scroll fade-in-up">
+    <div
+      class="data-table-scroll fade-in-up"
+      role="region"
+      tabindex="0"
+      aria-label={t("Flash sales")}
+    >
       <table
         class="data-table data-table--stack"
         id="commerce-flash-sales-table"
@@ -200,7 +205,10 @@ const showActions = canUpdate || canDelete;
           ) : (
             flashSales.map((sale) => (
               <tr data-flash-sale-row={sale.id}>
-                <td data-label="Name" class={canUpdate ? "stacked-block" : ""}>
+                <td
+                  data-label={t("Name")}
+                  class={canUpdate ? "stacked-block" : ""}
+                >
                   {canUpdate ? (
                     <input
                       class="flash-sale-name-input"
@@ -213,7 +221,10 @@ const showActions = canUpdate || canDelete;
                     sale.name
                   )}
                 </td>
-                <td data-label="Slug" class={canUpdate ? "stacked-block" : ""}>
+                <td
+                  data-label={t("Slug")}
+                  class={canUpdate ? "stacked-block" : ""}
+                >
                   {canUpdate ? (
                     <input
                       class="flash-sale-slug-input"
@@ -227,7 +238,7 @@ const showActions = canUpdate || canDelete;
                   )}
                 </td>
                 <td
-                  data-label="Starts at"
+                  data-label={t("Starts at")}
                   class={canUpdate ? "stacked-block" : ""}
                 >
                   {canUpdate ? (
@@ -242,7 +253,7 @@ const showActions = canUpdate || canDelete;
                   )}
                 </td>
                 <td
-                  data-label="Ends at"
+                  data-label={t("Ends at")}
                   class={canUpdate ? "stacked-block" : ""}
                 >
                   {canUpdate ? (
@@ -257,7 +268,7 @@ const showActions = canUpdate || canDelete;
                   )}
                 </td>
                 <td
-                  data-label="Status"
+                  data-label={t("Status")}
                   class={canUpdate ? "stacked-block" : ""}
                 >
                   {canUpdate ? (
@@ -280,7 +291,7 @@ const showActions = canUpdate || canDelete;
                   )}
                 </td>
                 {showActions && (
-                  <td data-label="Actions" class="stacked-block">
+                  <td data-label={t("Actions")} class="stacked-block">
                     <div class="row-actions">
                       {canUpdate && (
                         <button
@@ -385,6 +396,7 @@ const showActions = canUpdate || canDelete;
 </AdminLayout>
 
 <script>
+  import { confirmAction } from "../../lib/ui/confirm-dialog-client";
   import {
     field,
     integerValue,
@@ -463,7 +475,7 @@ const showActions = canUpdate || canDelete;
     const id = button.dataset.flashSaleId;
     if (!id) return;
     const name = button.dataset.flashSaleName ?? "this flash sale";
-    if (!window.confirm(`Delete ${name}?`)) return;
+    if (!(await confirmAction(`Delete ${name}?`))) return;
 
     await mutateAndReload(
       button,

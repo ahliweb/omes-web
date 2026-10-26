@@ -168,7 +168,12 @@ const STATUS_TONE: Record<string, string> = {
   )}
 
   {canRead && !loadError && (
-    <div class="data-table-scroll fade-in-up">
+    <div
+      class="data-table-scroll fade-in-up"
+      role="region"
+      tabindex="0"
+      aria-label={t("Affiliates")}
+    >
       <table
         class="data-table data-table--stack"
         id="commerce-affiliates-table"
@@ -212,11 +217,11 @@ const STATUS_TONE: Record<string, string> = {
           ) : (
             affiliates.map((affiliate) => (
               <tr data-affiliate-row={affiliate.id}>
-                <td data-label="Code">
+                <td data-label={t("Code")}>
                   <span class="cell-code">{affiliate.code}</span>
                 </td>
-                <td data-label="Customer">{affiliate.customerName}</td>
-                <td data-label="Rate">
+                <td data-label={t("Customer")}>{affiliate.customerName}</td>
+                <td data-label={t("Rate")}>
                   <span class="stacked-block">
                     <span>{affiliate.commissionRate}</span>
                     {canUpdateAffiliates && (
@@ -239,7 +244,7 @@ const STATUS_TONE: Record<string, string> = {
                     )}
                   </span>
                 </td>
-                <td data-label="Status">
+                <td data-label={t("Status")}>
                   <span
                     class="admin-status-pill"
                     data-tone={STATUS_TONE[affiliate.status] ?? "neutral"}
@@ -249,7 +254,7 @@ const STATUS_TONE: Record<string, string> = {
                   </span>
                 </td>
                 {canUpdateAffiliates && (
-                  <td data-label="Actions" class="stacked-block">
+                  <td data-label={t("Actions")} class="stacked-block">
                     <div class="row-actions">
                       {affiliate.status === "active" ? (
                         <button
@@ -280,7 +285,12 @@ const STATUS_TONE: Record<string, string> = {
   )}
 
   {canRead && canReadCommissions && !loadError && (
-    <div class="data-table-scroll fade-in-up">
+    <div
+      class="data-table-scroll fade-in-up"
+      role="region"
+      tabindex="0"
+      aria-label={t("Affiliate commissions")}
+    >
       <table
         class="data-table data-table--stack"
         id="commerce-affiliate-commissions-table"
@@ -349,14 +359,14 @@ const STATUS_TONE: Record<string, string> = {
           ) : (
             commissions.map((commission) => (
               <tr data-commission-row={commission.id}>
-                <td data-label="Affiliate">
+                <td data-label={t("Affiliate")}>
                   <span class="cell-code">{commission.affiliateCode}</span>
                 </td>
-                <td data-label="Order">
+                <td data-label={t("Order")}>
                   <span class="cell-code">{commission.orderCode}</span>
                 </td>
-                <td data-label="Amount">{commission.amount}</td>
-                <td data-label="Status">
+                <td data-label={t("Amount")}>{commission.amount}</td>
+                <td data-label={t("Status")}>
                   <span
                     class="admin-status-pill"
                     data-tone={STATUS_TONE[commission.status] ?? "neutral"}
@@ -365,9 +375,9 @@ const STATUS_TONE: Record<string, string> = {
                     {commission.status}
                   </span>
                 </td>
-                <td data-label="Created">{commission.createdAt}</td>
+                <td data-label={t("Created")}>{commission.createdAt}</td>
                 {canUpdateCommissions && (
-                  <td data-label="Actions" class="stacked-block">
+                  <td data-label={t("Actions")} class="stacked-block">
                     <div class="row-actions">
                       {commission.status === "pending" && (
                         <>
@@ -418,6 +428,7 @@ const STATUS_TONE: Record<string, string> = {
 </AdminLayout>
 
 <script>
+  import { confirmAction } from "../../lib/ui/confirm-dialog-client";
   import {
     messageBox,
     mutateAndReload,
@@ -460,7 +471,7 @@ const STATUS_TONE: Record<string, string> = {
     onAction(selector, async (button) => {
       const id = button.dataset.commissionId;
       if (!id) return;
-      if (confirmMessage && !window.confirm(confirmMessage)) return;
+      if (confirmMessage && !(await confirmAction(confirmMessage))) return;
       await mutateAndReload(
         button,
         actionError,

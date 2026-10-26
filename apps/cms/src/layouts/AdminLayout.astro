@@ -75,6 +75,7 @@ import TenantBadge from "../components/TenantBadge.astro";
 import ThemeToggle from "../components/ThemeToggle.astro";
 import SyncIndicator from "../components/SyncIndicator.astro";
 import LanguageSwitcher from "../components/LanguageSwitcher.astro";
+import ConfirmDialog from "../components/ConfirmDialog.astro";
 import { getTranslatorFor } from "../lib/i18n";
 import { getDatabaseClient } from "../lib/database/client";
 import { withTenantOrThrow } from "../lib/database/tenant-context";
@@ -92,7 +93,21 @@ import { listModules } from "../modules";
 import { fetchCommerceFeatures } from "../modules/commerce/application/commerce-feature-gate";
 import { THEME_INIT_SCRIPT_BODY } from "../lib/security/theme-init-script";
 import { resolveAdminIcon, ADMIN_ICON_PATHS } from "../lib/ui/admin-icons";
+import {
+  APPLE_TOUCH_ICON_PATH,
+  WEB_APP_MANIFEST_PATH,
+  resolvePwaIdentity
+} from "../lib/pwa/web-app-manifest";
 import packageJson from "../../package.json";
+
+/**
+ * Issue #1105 -- installable admin. Deployment branding for the Home Screen
+ * entry; never the request `Host` or a tenant row (see
+ * `src/lib/pwa/web-app-manifest.ts`). The `<link>`/`<meta>` below are the ONLY
+ * place the manifest is referenced: this is the shared admin shell, so every
+ * `/admin/*` page is installable without each page opting in.
+ */
+const pwa = resolvePwaIdentity(process.env);
 
 /** Shown in the sidebar footer; single source of truth is package.json. */
 const appVersion = packageJson.version;
@@ -403,6 +418,13 @@ const accountInitials =
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title} · AWCMS</title>
+    <link rel="manifest" href={WEB_APP_MANIFEST_PATH} />
+    <link rel="apple-touch-icon" href={APPLE_TOUCH_ICON_PATH} />
+    <meta name="theme-color" content={pwa.themeColor} />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content={pwa.shortName} />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     {/* The one inline script in this repo — must run before body paint or the
         shell flashes the wrong theme. CSP admits it by SHA-256; `set:html`
         guarantees the rendered bytes are exactly the hashed constant. */}
@@ -431,7 +453,27 @@ const accountInitials =
             <span class="admin-nav-toggle-bars" aria-hidden="true"></span>
             <span class="sr-only">{t("Toggle navigation menu")}</span>
           </label>
+          {/* ahliweb/awcms#877 — `aria-label` is load-bearing, not
+              decoration. The comment this replaced claimed the link kept its
+              accessible name at phone widths "because the text is hidden
+              with `display: none` only on the SPAN" — that claim was wrong:
+              `display: none` removes an element from the accessible-name
+              computation exactly as much as it removes it from the visual
+              layout, and `.admin-brand-mark` is `aria-hidden`. Below 768px
+              (`admin.css`'s `.admin-brand-text { display: none }`) the link
+              had NO accessible name at all (axe: "Links must have
+              discernible text", serious).
+
+              The `aria-label` that fixed it then became a defect of its own
+              (WCAG 2.5.3 Label in Name; axe-core 4.14's
+              `label-content-name-mismatch`, serious): an `aria-label`
+              REPLACES the content, and the content's visible text — the tile
+              plus the wordmark, "A AWCMS" — is not contained in "AWCMS". The
+              name now comes from content instead: one `sr-only` span carries
+              it at every width, and both visible children stay `aria-hidden`
+              so nothing is announced twice. */}
           <a href="/admin" class="admin-brand">
+            <span class="sr-only">AWCMS</span>
             {/* ADR-0120 — a letterform tile, not an image file: it costs no
                 request on a page that renders for every `/admin/*` hit, it
                 inherits the theme, and it cannot 404. */}
@@ -441,10 +483,12 @@ const accountInitials =
             {/* Wrapped so the wordmark can be hidden at phone widths while the
                 mark stays. A bare text node cannot be targeted by CSS, and the
                 topbar is a fixed-height row that must fit — see the phone-width
-                block in admin.css. The link keeps its full accessible name
-                either way, because the text is hidden with `display: none`
-                only on the SPAN, and the mark carries `aria-hidden`. */}
-            <span class="admin-brand-text">AWCMS</span>
+                block in admin.css. Purely visual now: the link's accessible
+                name comes from the `sr-only` span above, so this span is also
+                `aria-hidden` to avoid announcing "AWCMS" twice. */}
+            <span class="admin-brand-text" aria-hidden="true">
+              AWCMS
+            </span>
           </a>
         </div>
 
@@ -490,7 +534,7 @@ const accountInitials =
             inactiveLabel={t("Sync inactive")}
           />
           <ThemeToggle
-            ariaLabel={t("Change colour theme")}
+            actionLabel={t("Change colour theme")}
             systemLabel={tx("theme", "System")}
             lightLabel={tx("theme", "Light")}
             darkLabel={tx("theme", "Dark")}
@@ -504,14 +548,21 @@ const accountInitials =
             {/* ADR-0096 — the avatar is a LINK. ADR-0120 turned it into an
                 initials disc: a stroked person-glyph at 26px reads as a smudge,
                 where two letters read as a person. Both the disc and the role
-                line are `aria-hidden`/decorative-adjacent — the accessible name
-                comes from the link's own label, so a screen reader announces
-                "My account", not "OW owner". */}
-            <a
-              href="/admin/account"
-              class="admin-account-link"
-              aria-label={t("My account")}
-            >
+                line are `aria-hidden` — the accessible name comes from the
+                `sr-only` span, so a screen reader announces "My account:
+                owner", not "OW owner".
+
+                That span replaced an `aria-label="My account"`, which failed
+                WCAG 2.5.3 Label in Name (axe-core 4.14
+                `label-content-name-mismatch`, serious): the role line is the
+                link's visible text, and a voice-control user who says "click
+                owner" must reach a link whose name contains "owner". The
+                initials are left out on purpose — they are an avatar, not a
+                label, exactly as an icon's glyph is not. */}
+            <a href="/admin/account" class="admin-account-link">
+              <span class="sr-only">
+                {t("My account")}: {roles}
+              </span>
               <span class="admin-avatar" aria-hidden="true">
                 {accountInitials}
               </span>
@@ -851,6 +902,13 @@ const accountInitials =
         </p>
       </dialog>
     )}
+
+    {/* Issue #854 part 1 — one shared confirm dialog for the whole page.
+        Always rendered (unlike the palette above, which is absent with no
+        nav entries): any admin screen may import `confirmAction` from
+        `../../lib/ui/confirm-dialog-client` and call it, so the dialog it
+        wires must exist unconditionally. See `ConfirmDialog.astro`. */}
+    <ConfirmDialog cancelLabel={t("Cancel")} confirmLabel={t("Confirm")} />
 
     <script>
       // The import forces Astro to bundle this to an EXTERNAL file — an

@@ -113,13 +113,10 @@ export const POST = defineTenantRoute({
       );
       return created(category);
     } catch (error) {
-      // Both branches are caught INSIDE the transaction: neither error is a
-      // `Bun.SQL.PostgresError`, and each is safe to turn into a 4xx here only
-      // because of what has NOT been written — `ParentCategoryNotFoundError`
-      // precedes the INSERT, and `DuplicateCategorySlugError` follows a unique
-      // violation that already aborted the transaction, so the commit
-      // `defineTenantRoute` performs on this normal return degrades to a
-      // rollback.
+      // tx-swallow-ok: healthy transaction: `DuplicateCategorySlugError`,
+      // `ParentCategoryNotFoundError` is raised by the directory's own
+      // pre-checks or after its fallible statement ran inside a savepoint, so
+      // the transaction is still valid when this catch returns.
       if (error instanceof ParentCategoryNotFoundError) {
         return fail(
           400,

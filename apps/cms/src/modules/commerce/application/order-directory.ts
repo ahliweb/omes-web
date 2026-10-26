@@ -49,7 +49,8 @@ import { appendDomainEvent } from "../../domain-event-runtime/application/append
 import {
   computeRequestHash,
   findIdempotencyRecord,
-  saveIdempotencyRecord
+  saveIdempotencyRecord,
+  ANONYMOUS_IDEMPOTENCY_ACTOR
 } from "../../_shared/idempotency";
 import {
   keysetCursorCreatedAtSql,
@@ -628,7 +629,7 @@ const STOREFRONT_CHANNEL = "storefront";
  * `404`.
  */
 export async function fetchOrderForTracking(
-  tx: Bun.SQL,
+  tx: Bun.TransactionSQL,
   tenantId: string,
   mediaPort: MediaLibraryPort,
   orderCode: string,
@@ -669,7 +670,7 @@ export type CreateOrderOutcome =
   | { kind: "invalid_phone" };
 
 async function insertOrderWithRetryableCode(
-  tx: Bun.SQL,
+  tx: Bun.TransactionSQL,
   tenantId: string,
   customerId: string,
   input: CreateOrderInput,
@@ -704,7 +705,8 @@ async function insertOrderWithRetryableCode(
   for (let attempt = 0; attempt < MAX_ORDER_CODE_ATTEMPTS; attempt += 1) {
     const orderCode = generateOrderCode(now);
     try {
-      const rows = (await tx`
+      const rows = (await tx.savepoint(
+        (sp) => sp`
         INSERT INTO awcms_commerce_orders (
           tenant_id, order_code, customer_id, status, payment_method, payment_status,
           shipping_method, shipping_service_name, shipping_cost, address,
@@ -724,7 +726,8 @@ async function insertOrderWithRetryableCode(
                   shipping_method, shipping_service_name, shipping_cost, address,
                   subtotal, discount, voucher_code, voucher_discount, insurance_fee, tax, total,
                   dp_amount, notes, paid_at, shipped_at, completed_at, cancelled_at, expires_at, created_at
-      `) as Omit<
+      `
+      )) as Omit<
         OrderHeaderRow,
         "customer_name" | "customer_phone" | "customer_email"
       >[];
@@ -759,7 +762,7 @@ async function insertOrderWithRetryableCode(
  * that no longer validates, rather than guessing at the client's intent.
  */
 export async function createOrderFromCart(
-  tx: Bun.SQL,
+  tx: Bun.TransactionSQL,
   tenantId: string,
   mediaPort: MediaLibraryPort,
   input: CreateOrderInput,
@@ -794,7 +797,8 @@ export async function createOrderFromCart(
     tx,
     tenantId,
     IDEMPOTENCY_SCOPE,
-    input.idempotencyKey
+    input.idempotencyKey,
+    ANONYMOUS_IDEMPOTENCY_ACTOR
   );
   if (existing) {
     if (existing.requestHash !== requestHash) {
@@ -1016,6 +1020,7 @@ export async function createOrderFromCart(
     tenantId,
     IDEMPOTENCY_SCOPE,
     input.idempotencyKey,
+    ANONYMOUS_IDEMPOTENCY_ACTOR,
     requestHash,
     201,
     publicRecord

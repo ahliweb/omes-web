@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](README.md)
 
-<!-- i18n-source-hash: sha256:d812b9f42475c61e3edccc38eacf805952106b02d376a3b4f151d8a0d783ef3a -->
+<!-- i18n-source-hash: sha256:05dd678bac0559001a41a906b997bc4607a90eb5af8aa2319e048ad7f1439c8a -->
 
 # Scripts AWCMS
 
@@ -27,7 +27,7 @@ lalu membangun duplikatnya.
 
 <!-- Dihasilkan `bun run scripts:inventory:generate`. JANGAN diedit tangan. -->
 
-139 target menjalankan berkas di `scripts/`; 57 di antaranya
+161 target menjalankan berkas di `scripts/`; 64 di antaranya
 ada di rantai `bun run check` (kolom **Gate**), sisanya dijalankan manual,
 terjadwal, atau oleh workflow CI tertentu.
 
@@ -48,6 +48,8 @@ terjadwal, atau oleh workflow CI tertentu.
 | `api:docs:generate`                       | `api-docs-generate.ts`                         | —    |
 | `api:spec:check`                          | `api-spec-check.ts`                            | ✅   |
 | `api:tenant-route:check`                  | `tenant-route-factory-check.ts`                | ✅   |
+| `asyncapi:provisional:check`              | `asyncapi-provisional-check.ts`                | ✅   |
+| `bench:booking`                           | `bench-booking.ts`                             | —    |
 | `blog:ads:drop-readiness`                 | `blog-ads-drop-readiness.ts`                   | —    |
 | `blog:ads:ingest`                         | `blog-ads-ingest.ts`                           | —    |
 | `blog:legacy:article-paths`               | `blog-legacy-article-paths.ts`                 | —    |
@@ -58,6 +60,8 @@ terjadwal, atau oleh workflow CI tertentu.
 | `blog:legacy:rubrik-redirects`            | `blog-legacy-rubrik-redirects.ts`              | —    |
 | `blog:portable-text:backfill`             | `blog-portable-text-backfill.ts`               | —    |
 | `blog:publish:scheduled`                  | `blog-scheduled-publish.ts`                    | —    |
+| `booking:holds:expire`                    | `booking-holds-expire.ts`                      | —    |
+| `booking:reminders:dispatch`              | `booking-reminders-dispatch.ts`                | —    |
 | `build:asset-budget:check`                | `client-asset-budget.ts`                       | —    |
 | `build:inline-scripts:check`              | `build-inline-script-check.ts`                 | —    |
 | `build:preview-overlay`                   | `build-preview-overlay.ts`                     | —    |
@@ -67,6 +71,7 @@ terjadwal, atau oleh workflow CI tertentu.
 | `check:astro-scripts:check`               | `astro-script-typecheck.ts`                    | ✅   |
 | `check:docs`                              | `check-docs.mjs`                               | ✅   |
 | `check:docs:translation`                  | `check-docs-translation.mjs`                   | ✅   |
+| `ci:local`                                | `ci-local.ts`                                  | —    |
 | `comments:resources:check`                | `comments-resources-check.ts`                  | ✅   |
 | `comments:retention`                      | `comments-retention.ts`                        | —    |
 | `commerce:campaigns:dispatch`             | `commerce-campaigns-dispatch.ts`               | —    |
@@ -88,16 +93,20 @@ terjadwal, atau oleh workflow CI tertentu.
 | `data-lifecycle:worker-grants:check`      | `data-lifecycle-worker-grants-check.ts`        | ✅   |
 | `db:commerce:renumber`                    | `commerce-migrations-renumber.ts`              | —    |
 | `db:fk-index:check`                       | `db-fk-index-check.ts`                         | ✅   |
+| `db:function-search-path:check`           | `db-function-search-path-check.ts`             | ✅   |
 | `db:jsonb-binding:check`                  | `jsonb-binding-check.ts`                       | ✅   |
 | `db:migrate`                              | `db-migrate.ts`                                | —    |
 | `db:pool:health`                          | `db-pool-health.ts`                            | —    |
 | `db:tenant-context:check`                 | `tenant-context-usage-check.ts`                | ✅   |
+| `db:transaction-swallow:check`            | `transaction-swallow-check.ts`                 | ✅   |
 | `db:work-class:check`                     | `work-class-registry-check.ts`                 | ✅   |
 | `db:work-class:generate`                  | `work-class-registry-generate.ts`              | —    |
 | `deps:audit:check`                        | `dependency-audit-check.ts`                    | ✅   |
+| `deps:freshness`                          | `dependency-freshness.ts`                      | —    |
 | `design:token-contrast:check`             | `design-token-contrast-check.ts`               | ✅   |
 | `docs:i18n:stamp`                         | `docs-i18n-stamp.mjs`                          | —    |
 | `docs:i18n:stamp:check`                   | `docs-i18n-stamp.mjs`                          | ✅   |
+| `domain-events:consumers:check`           | `domain-event-consumers-check.ts`              | ✅   |
 | `domain-events:deliveries:purge`          | `domain-event-deliveries-purge.ts`             | —    |
 | `domain-events:dispatch`                  | `domain-events-dispatch.ts`                    | —    |
 | `edge-cache:purge`                        | `edge-cache-purge.ts`                          | —    |
@@ -146,11 +155,16 @@ terjadwal, atau oleh workflow CI tertentu.
 | `news-media:reconcile`                    | `news-media-r2-reconcile.ts`                   | —    |
 | `omes:repository-progress:poll`           | `omes-repository-progress-poll.ts`             | —    |
 | `openapi:bundle`                          | `openapi-bundle.ts`                            | —    |
+| `payroll:catalog-boundary:check`          | `payroll-catalog-boundary-check.ts`            | —    |
+| `payroll:sql-boundary:check`              | `payroll-sql-boundary-check.ts`                | ✅   |
 | `project-state:inventory:check`           | `project-state-inventory.ts`                   | ✅   |
 | `project-state:inventory:generate`        | `project-state-inventory.ts`                   | —    |
+| `push:auth-secret:backfill`               | `push-auth-secret-backfill.ts`                 | —    |
+| `push:auth-secret:rekey`                  | `push-auth-secret-backfill.ts`                 | —    |
 | `push:dispatch`                           | `push-dispatch.ts`                             | —    |
 | `push:queue:purge`                        | `push-queue-purge.ts`                          | —    |
 | `push:vapid:generate`                     | `push-vapid-generate.ts`                       | —    |
+| `pwa:icons:generate`                      | `generate-pwa-icons.ts`                        | —    |
 | `redis:health`                            | `redis-health.ts`                              | —    |
 | `release:verify`                          | `release-verify.ts`                            | —    |
 | `repo:inventory:check`                    | `repo-inventory.ts`                            | ✅   |
@@ -161,6 +175,7 @@ terjadwal, atau oleh workflow CI tertentu.
 | `scripts:inventory:check`                 | `scripts-inventory.ts`                         | ✅   |
 | `scripts:inventory:generate`              | `scripts-inventory.ts`                         | —    |
 | `security:readiness`                      | `security-readiness.ts`                        | —    |
+| `sensitive-reads:check`                   | `sensitive-reads-check.ts`                     | ✅   |
 | `site-origin:check`                       | `site-origin-check.ts`                         | ✅   |
 | `site-search:reconcile`                   | `site-search-reconcile.ts`                     | —    |
 | `site-search:sources:check`               | `site-search-sources-check.ts`                 | ✅   |
@@ -169,8 +184,15 @@ terjadwal, atau oleh workflow CI tertentu.
 | `subject-data:registry:check`             | `subject-data-registry-check.ts`               | ✅   |
 | `sync:objects:dispatch`                   | `object-sync-dispatch.ts`                      | —    |
 | `sync:objects:purge`                      | `object-queue-purge.ts`                        | —    |
+| `telegram:chat:rekey`                     | `telegram-chat-rekey.ts`                       | —    |
+| `telegram:dispatch`                       | `telegram-dispatch.ts`                         | —    |
+| `telegram:queue:purge`                    | `telegram-queue-purge.ts`                      | —    |
+| `telegram:templates:check`                | `telegram-templates-check.ts`                  | ✅   |
+| `telegram:webhook:register`               | `telegram-webhook-register.ts`                 | —    |
 | `tenant-domain:dns:sync`                  | `tenant-domain-dns-sync.ts`                    | —    |
 | `version:check`                           | `version-check.ts`                             | ✅   |
+| `whatsapp:dispatch`                       | `whatsapp-dispatch.ts`                         | —    |
+| `whatsapp:queue:purge`                    | `whatsapp-queue-purge.ts`                      | —    |
 | `workflow:escalations:dispatch`           | `workflow-escalations-dispatch.ts`             | —    |
 
 <!-- END GENERATED: script-inventory -->

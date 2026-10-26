@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](README.md)
 
-<!-- i18n-source-hash: sha256:4f1a452f67a2b5bf11393a52d1625230bec958f4c27a0c544d27f4b380b428d9 -->
+<!-- i18n-source-hash: sha256:98c4395c004eff2c27f11e6f765166726c17585c3e876f69733b2447bd4c27eb -->
 
 # `commerce`
 
@@ -1189,7 +1189,7 @@ menulis tiga tabel miliknya sendiri (`sql/933`).
 | Layar          | `src/pages/admin/commerce-reports.astro`                                                                     | Rentang tanggal (formulir GET), tiga tabel, panel kesegaran (`reporting.projections.read`), **Ekspor CSV** per proyeksi lewat `POST /api/v1/reports/exports/trigger` (`reporting.exports.export`), riwayat ekspor terbaru dengan tautan unduh (`reporting.exports.read`). Entri nav urutan 16, digerbangi `reporting.dashboard.read`                                                                                                                                                                                               |
 | Uji            | `tests/commerce-sales-report-domain.test.ts`, `tests/integration/commerce-sales-reports.integration.test.ts` | Aturan murni + pasangan registri; terhadap Postgres nyata: paid → baris, batal-setelah-bayar → dikurangkan di hari yang sama, rebuild identik byte-per-byte dengan live, rekonsiliasi tanpa selisih (dan tabel yang diutak-atik MEMANG ditandai), ekspor tabular, RLS                                                                                                                                                                                                                                                              |
 
-**Satu-satunya perubahan mesin** (`MODULE_CONTRACT_VERSION` 4.1.0 → 4.2.0,
+**Satu-satunya perubahan mesin** (`MODULE_CONTRACT_VERSION` 4.1.0 → 4.2.0 saat ditulis, dinomori ulang 4.7.0 pada sync 25 Oktober 2026 karena upstream memakai 4.2.0–4.6.0 sementara itu,
 aditif): `ProjectionCursorStream.dimensional` (`selectColumns` +
 `applyBatch`) dan `ProjectionDescriptor.dimensional` (empat hook). Worker
 inkremental dan pass rebuild memanggil sink pada setiap batch yang diambil

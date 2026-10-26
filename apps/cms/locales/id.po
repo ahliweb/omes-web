@@ -26,8 +26,35 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #. Admin shell — skip link, drawer, topbar
+msgid "A Safari tab cannot receive background push notifications on iOS or iPadOS, so no button is offered here. This works on iOS or iPadOS 16.4 or later:"
+msgstr "Tab Safari tidak dapat menerima notifikasi push latar belakang di iOS atau iPadOS, jadi tidak ada tombol yang ditawarkan di sini. Ini berfungsi di iOS atau iPadOS 16.4 ke atas:"
+
+msgid "Close the tab and open AWCMS from the new Home Screen icon, then sign in."
+msgstr "Tutup tab, lalu buka AWCMS dari ikon baru di Layar Utama, kemudian masuk."
+
+msgid "Come back to this page in the installed app and choose Enable on this device. iOS asks for permission only at that moment."
+msgstr "Kembali ke halaman ini di aplikasi yang terpasang dan pilih Aktifkan di perangkat ini. iOS baru meminta izin pada saat itu."
+
+msgid "Notifications are blocked for this site. This page cannot ask again — allow them in the browser or iOS Settings for this site or app, then reload. No notification will be sent until you do."
+msgstr "Notifikasi diblokir untuk situs ini. Halaman ini tidak dapat meminta lagi — izinkan di pengaturan peramban atau Pengaturan iOS untuk situs atau aplikasi ini, lalu muat ulang. Tidak ada notifikasi yang dikirim sampai Anda melakukannya."
+
+msgid "Notifications on iPhone and iPad need the installed app."
+msgstr "Notifikasi di iPhone dan iPad memerlukan aplikasi yang terpasang."
+
+msgid "Open this page in Safari and tap Share, then Add to Home Screen, then Add."
+msgstr "Buka halaman ini di Safari, ketuk Bagikan, lalu Tambah ke Layar Utama, lalu Tambah."
+
+msgid "Push needs the device to reach its push service over the internet. It is not available on an offline or LAN-only deployment, and a notification can be delayed or dropped by the operating system."
+msgstr "Push memerlukan perangkat dapat menjangkau layanan push-nya lewat internet. Fitur ini tidak tersedia pada deployment offline atau khusus LAN, dan sebuah notifikasi dapat tertunda atau dibuang oleh sistem operasi."
+
 msgid "Skip to main content"
 msgstr "Lewati ke konten utama"
+
+msgid "This browser does not support push notifications, so nothing can be enabled here. Use a current Chrome, Edge, Firefox or Safari over HTTPS."
+msgstr "Peramban ini tidak mendukung notifikasi push, jadi tidak ada yang dapat diaktifkan di sini. Gunakan Chrome, Edge, Firefox, atau Safari versi terbaru melalui HTTPS."
+
+msgid "This installed app cannot receive push notifications. Web Push on iPhone and iPad needs iOS or iPadOS 16.4 or later — update the device, then open the app again."
+msgstr "Aplikasi terpasang ini tidak dapat menerima notifikasi push. Web Push di iPhone dan iPad memerlukan iOS atau iPadOS 16.4 ke atas — perbarui perangkat, lalu buka aplikasi lagi."
 
 msgid "Toggle navigation menu"
 msgstr "Buka/tutup menu navigasi"
@@ -494,6 +521,15 @@ msgstr "Autentikasi dua faktor sudah aktif untuk akun Anda."
 
 msgid "Could not start setup. Please try again."
 msgstr "Tidak dapat memulai penyiapan. Silakan coba lagi."
+
+msgid "Enter your current password to set up two-factor authentication."
+msgstr "Masukkan kata sandi Anda saat ini untuk menyiapkan autentikasi dua faktor."
+
+msgid "Sign in again through your identity provider, then set up two-factor authentication."
+msgstr "Masuk kembali melalui penyedia identitas Anda, lalu siapkan autentikasi dua faktor."
+
+msgid "For your security, confirm your current password before setting up two-factor authentication. You will get an email telling you it was added."
+msgstr "Demi keamanan Anda, konfirmasi kata sandi Anda saat ini sebelum menyiapkan autentikasi dua faktor. Anda akan menerima email yang memberi tahu bahwa fitur ini ditambahkan."
 
 msgid "That code is not right. Try the next one."
 msgstr "Kode itu tidak tepat. Coba kode berikutnya."
@@ -2261,8 +2297,14 @@ msgstr "Tidak ada node sinkronisasi"
 msgid "not applicable"
 msgstr "tidak berlaku"
 
-msgid ", not a read: it is audited as one, and the reason you give is part of that record. The result appears below and is never stored or downloadable."
-msgstr ", bukan pembacaan: ia diaudit sebagai tindakan, dan alasan yang Anda berikan adalah bagian dari catatan itu. Hasilnya muncul di bawah dan tidak pernah disimpan atau bisa diunduh."
+msgid ", not a read: it is audited as one, and the reason you give is part of that record. The result appears below and is not offered for download. A retried request is answered from a short-lived record (up to 30 days) that holds no pay data."
+msgstr ", bukan pembacaan: ia diaudit sebagai tindakan, dan alasan yang Anda berikan adalah bagian dari catatan itu. Hasilnya muncul di bawah dan tidak ditawarkan untuk diunduh. Permintaan yang diulang dijawab dari catatan berumur pendek (sampai 30 hari) yang tidak memuat data gaji."
+
+msgid "{rows} row(s) across {tables} table(s). {unanswered} table(s) are not covered, {withheld} withheld for lack of permission, {truncated} cut short by the row cap. See below."
+msgstr "{rows} baris di {tables} tabel. {unanswered} tabel tidak tercakup, {withheld} ditahan karena kurang izin, {truncated} terpotong oleh batas baris. Lihat di bawah."
+
+msgid "Withheld columns:"
+msgstr "Kolom yang ditahan:"
 
 msgid "Not covered by this answer"
 msgstr "Tidak tercakup oleh jawaban ini"
@@ -2633,6 +2675,9 @@ msgstr "Bersihkan permanen"
 msgid "Push delivery is switched off on this deployment ({setting} is not {value}), so the dispatcher claims nothing and no notification will be sent. This is the expected state on an offline/LAN deployment."
 msgstr "Pengiriman push dimatikan pada deployment ini ({setting} bukan {value}), jadi dispatcher tidak mengklaim apa pun dan tidak ada notifikasi yang akan dikirim. Ini keadaan yang diharapkan pada deployment offline/LAN."
 
+msgid "Push is enabled but no valid auth-secret key ring ({setting}) is configured, so a browser cannot subscribe: its subscription secret could not be stored."
+msgstr "Push diaktifkan tetapi tidak ada cincin kunci rahasia-auth yang valid ({setting}), jadi peramban tidak dapat berlangganan: rahasia langganannya tidak dapat disimpan."
+
 msgid "push:dispatch"
 msgstr "push:dispatch"
 
@@ -2815,6 +2860,9 @@ msgstr "Alasan pelepasan"
 
 msgid "Remove"
 msgstr "Hapus"
+
+msgid "Remove role {code}"
+msgstr "Hapus peran {code}"
 
 msgid "Removed"
 msgstr "Dihapus"
@@ -4092,6 +4140,21 @@ msgstr "Memuat institusi…"
 msgid "Site profile"
 msgstr "Profil situs"
 
+msgid "Inventory"
+msgstr "Inventori"
+
+msgid "Procurement"
+msgstr "Pengadaan"
+
+msgid "HR Workforce"
+msgstr "Tenaga kerja HR"
+
+msgid "Booking"
+msgstr "Pemesanan"
+
+msgid "HR Commission"
+msgstr "Komisi HR"
+
 msgid "Who this site is, as a reader sees it: masthead, footer, editorial address and contact details."
 msgstr "Siapa situs ini di mata pembaca: kepala halaman, footer, alamat redaksi, dan detail kontak."
 
@@ -4986,9 +5049,6 @@ msgstr "Tanpa batas"
 msgid "No"
 msgstr "Tidak"
 
-msgid "Inactive"
-msgstr "Nonaktif"
-
 msgid "Home sliders"
 msgstr "Slider beranda"
 
@@ -5285,9 +5345,6 @@ msgid "{count} commission"
 msgid_plural "{count} commissions"
 msgstr[0] "{count} komisi"
 
-msgid "Filter by status"
-msgstr "Filter berdasarkan status"
-
 msgid "Approved"
 msgstr "Disetujui"
 
@@ -5372,8 +5429,6 @@ msgstr "Endpoint webhook gerbang pembayaran"
 msgid "Mint a token, paste the resulting URL into Midtrans's own webhook settings. The token is shown exactly once — it is never retrievable again after this."
 msgstr "Buat token, tempel URL hasilnya ke pengaturan webhook Midtrans. Token ditampilkan hanya sekali — tidak dapat diambil lagi setelahnya."
 
-msgid "Label"
-msgstr "Label"
 msgid "Architecture"
 msgstr "Arsitektur"
 
@@ -5569,6 +5624,7 @@ msgstr "QRIS"
 msgid "Amount tendered"
 msgstr "Jumlah dibayar"
 
+msgctxt "pos"
 msgid "Change"
 msgstr "Kembalian"
 
@@ -5889,6 +5945,7 @@ msgstr "Pencarian produk gagal. Silakan coba lagi."
 msgid "Qty"
 msgstr "Jml"
 
+msgctxt "pos"
 msgid "Receipt"
 msgstr "Struk"
 
@@ -5956,9 +6013,6 @@ msgstr "Asuransi"
 
 msgid "Key figures"
 msgstr "Angka utama"
-
-msgid "Lines"
-msgstr "Baris pesanan"
 
 msgid "Lines, totals, and the order's own status timeline."
 msgstr "Baris pesanan, total, dan linimasa status pesanan itu sendiri."
@@ -6052,9 +6106,6 @@ msgstr "Pesanan tidak dapat dimuat saat ini. Silakan coba lagi nanti."
 
 msgid "This order could not be found."
 msgstr "Pesanan ini tidak ditemukan."
-
-msgid "Timeline"
-msgstr "Linimasa"
 
 msgid "Today's orders and revenue, the 14-day trend, and what needs attention."
 msgstr "Pesanan dan pendapatan hari ini, tren 14 hari, dan yang perlu perhatian."
@@ -6884,3 +6935,3110 @@ msgstr "Dokumentasi"
 
 msgid "Other"
 msgstr "Lainnya"
+
+#. Admin v2 primitives (Issue #854 part 1) — ConfirmDialog / SettingsSaveBar / ReasonPanel
+msgid "Confirm"
+msgstr "Konfirmasi"
+
+msgid "Delete {host}?"
+msgstr "Hapus {host}?"
+
+msgid "The hostname becomes reusable by any tenant once deleted."
+msgstr "Nama host menjadi bisa dipakai ulang oleh tenant mana pun setelah dihapus."
+
+msgid "Recorded on the domain's audit row."
+msgstr "Dicatat pada baris audit domain."
+
+msgid "Could not delete the domain. Please try again."
+msgstr "Tidak dapat menghapus domain. Silakan coba lagi."
+
+msgid "Delete {label}?"
+msgstr "Hapus {label}?"
+
+msgid "Every reference to it stops resolving immediately — a published page pointing at it loses its image. Restore undoes this."
+msgstr "Setiap referensi ke sana langsung berhenti ter-resolve — halaman yang diterbitkan yang menunjuk ke sana kehilangan gambarnya. Restore membatalkan ini."
+
+msgid "Recorded on the media object's audit row."
+msgstr "Dicatat pada baris audit objek media."
+
+msgid "Could not delete the media object. Please try again."
+msgstr "Tidak dapat menghapus objek media. Silakan coba lagi."
+
+msgid "Pause {name}?"
+msgstr "Jeda {name}?"
+
+msgid "Its events keep being recorded and keep accruing as backlog — pausing stops delivery, not production."
+msgstr "Event-nya tetap dicatat dan terus menumpuk sebagai backlog — menjeda menghentikan pengiriman, bukan produksi."
+
+msgid "Replay this delivery?"
+msgstr "Putar ulang pengiriman ini?"
+
+msgid "Recorded in the audit trail."
+msgstr "Dicatat dalam jejak audit."
+
+msgid "Could not complete this action. Please try again."
+msgstr "Tidak dapat menyelesaikan aksi ini. Silakan coba lagi."
+
+msgid "Revoke this assignment?"
+msgstr "Cabut assignment ini?"
+
+msgid "Revoke this exception?"
+msgstr "Cabut exception ini?"
+
+msgid "The override stops applying at the next decision."
+msgstr "Override berhenti berlaku pada keputusan berikutnya."
+
+msgid "Suppress {email}?"
+msgstr "Tangguhkan {email}?"
+
+msgid "Why is this address being suppressed? A suppressed address cannot be re-subscribed, including by the person who owns it."
+msgstr "Mengapa alamat ini ditangguhkan? Alamat yang ditangguhkan tidak dapat berlangganan ulang, termasuk oleh pemiliknya sendiri."
+
+msgid "Recorded on the subscriber's audit row."
+msgstr "Dicatat pada baris audit subscriber."
+
+msgid "Could not suppress the subscriber. Please try again."
+msgstr "Tidak dapat menangguhkan subscriber. Silakan coba lagi."
+
+msgid "Disable module \"{name}\"?"
+msgstr "Nonaktifkan modul \"{name}\"?"
+
+msgid "This feature stops working for every user and visitor of this tenant until it is re-enabled. Its data is kept, not deleted."
+msgstr "Fitur ini berhenti bekerja untuk setiap pengguna dan pengunjung tenant ini hingga diaktifkan kembali. Datanya tetap disimpan, tidak dihapus."
+
+msgid "Recorded in the audit log."
+msgstr "Dicatat dalam log audit."
+
+msgid "Could not disable the module. It may have dependencies that block this change."
+msgstr "Tidak dapat menonaktifkan modul. Mungkin ada dependensi yang menghalangi perubahan ini."
+
+#. Admin enum/status labels (Issue #861, item 4 of #854)
+msgid "#"
+msgstr "#"
+
+msgid "Abandoned"
+msgstr "Ditinggalkan"
+
+msgid "Accepted"
+msgstr "Diterima"
+
+msgid "active"
+msgstr "aktif"
+
+msgid "Attached"
+msgstr "Terlampir"
+
+msgid "Bounced"
+msgstr "Terpental"
+
+msgid "Cancelled"
+msgstr "Dibatalkan"
+
+msgid "Complained"
+msgstr "Dikomplain"
+
+msgid "Critical"
+msgstr "Kritis"
+
+msgid "Current"
+msgstr "Terkini"
+
+msgid "Dark"
+msgstr "Gelap"
+
+msgid "Dead letter"
+msgstr "Pesan gagal permanen"
+
+msgid "Decommissioned"
+msgstr "Dinonaktifkan permanen"
+
+msgid "Degraded"
+msgstr "Menurun"
+
+msgid "Delayed"
+msgstr "Tertunda"
+
+msgid "Delivered"
+msgstr "Terkirim"
+
+msgid "Denied"
+msgstr "Ditolak"
+
+msgid "Disclosed"
+msgstr "Diungkapkan"
+
+msgid "Dispatched"
+msgstr "Dikirim"
+
+msgid "Erasure"
+msgstr "Penghapusan"
+
+msgid "Expired"
+msgstr "Kedaluwarsa"
+
+msgid "Export"
+msgstr "Ekspor"
+
+msgid "Failure"
+msgstr "Gagal"
+
+msgid "FCM"
+msgstr "FCM"
+
+msgid "Head office"
+msgstr "Kantor pusat"
+
+msgid "High"
+msgstr "Tinggi"
+
+msgid "inactive"
+msgstr "tidak aktif"
+
+msgid "Inactive"
+msgstr "Tidak aktif"
+
+msgid "Info"
+msgstr "Info"
+
+msgid "In progress"
+msgstr "Sedang berlangsung"
+
+msgid "In review"
+msgstr "Sedang ditinjau"
+
+msgid "Interrupted"
+msgstr "Terhenti"
+
+msgid "IP"
+msgstr "IP"
+
+msgid "Leased"
+msgstr "Disewa"
+
+msgid "Light"
+msgstr "Terang"
+
+msgid "Low"
+msgstr "Rendah"
+
+msgid "Maintenance"
+msgstr "Pemeliharaan"
+
+msgid "Manual"
+msgstr "Manual"
+
+msgid "Medium"
+msgstr "Sedang"
+
+msgid "Merged"
+msgstr "Digabungkan"
+
+msgid "Offline"
+msgstr "Offline"
+
+msgid "Online"
+msgstr "Online"
+
+msgid "Organization"
+msgstr "Organisasi"
+
+msgid "Orphaned"
+msgstr "Tak bertuan"
+
+msgid "Partial"
+msgstr "Sebagian"
+
+msgid "Pending approval"
+msgstr "Menunggu persetujuan"
+
+msgid "Pending upload"
+msgstr "Menunggu unggah"
+
+msgid "Pending verification"
+msgstr "Menunggu verifikasi"
+
+msgid "Person"
+msgstr "Perorangan"
+
+msgid "Private"
+msgstr "Privat"
+
+msgid "Rebuilding"
+msgstr "Membangun ulang"
+
+msgid "Reindex"
+msgstr "Indeks ulang"
+
+msgid "Rejected"
+msgstr "Ditolak"
+
+msgid "Released"
+msgstr "Dilepas"
+
+msgid "Resolved"
+msgstr "Terselesaikan"
+
+msgid "Retry wait"
+msgstr "Menunggu coba ulang"
+
+msgid "Running"
+msgstr "Berjalan"
+
+msgid "Sending"
+msgstr "Mengirim"
+
+msgid "Skipped"
+msgstr "Dilewati"
+
+msgid "Starting"
+msgstr "Memulai"
+
+msgid "Succeeded"
+msgstr "Berhasil"
+
+msgid "Success"
+msgstr "Berhasil"
+
+msgid "Superseded"
+msgstr "Digantikan"
+
+msgid "Suspended"
+msgstr "Ditangguhkan"
+
+msgid "Unknown"
+msgstr "Tidak diketahui"
+
+msgid "Unlisted"
+msgstr "Tidak terdaftar"
+
+msgid "Unsubscribed"
+msgstr "Berhenti berlangganan"
+
+msgid "Unverified"
+msgstr "Belum diverifikasi"
+
+msgid "Uploaded"
+msgstr "Diunggah"
+
+msgid "Validated"
+msgstr "Tervalidasi"
+
+msgid "Verified"
+msgstr "Terverifikasi"
+
+msgid "Warehouse"
+msgstr "Gudang"
+
+msgid "Warning"
+msgstr "Peringatan"
+
+msgid "Web Push"
+msgstr "Web Push"
+
+#. Access-policy simulator verdict pill (Issue #864) — fallback when the
+#. decision had no matched policy to name.
+msgid "no policy matched"
+msgstr "tidak ada kebijakan yang cocok"
+
+
+msgid "Legal holds, newest first"
+msgstr "Penahanan hukum, terbaru lebih dulu"
+
+msgid "open-ended"
+msgstr "tanpa batas akhir"
+
+msgid "No conflict"
+msgstr "Tidak ada konflik"
+
+msgid "Subject:"
+msgstr "Subjek:"
+
+msgid "Trigger:"
+msgstr "Pemicu:"
+
+msgid "Resolved via:"
+msgstr "Diselesaikan lewat:"
+msgid "Awaiting redemption"
+msgstr "Menunggu penukaran"
+
+msgid "Filter by status"
+msgstr "Saring berdasarkan status"
+
+msgid "{count} selected"
+msgstr "{count} dipilih"
+
+msgid "Approve {count} selected comments?"
+msgstr "Setujui {count} komentar yang dipilih?"
+
+msgid "Select all comments"
+msgstr "Pilih semua komentar"
+
+msgid "Select comment from {author}"
+msgstr "Pilih komentar dari {author}"
+
+msgid "The bulk action failed."
+msgstr "Tindakan massal gagal."
+
+msgid "Bulk decision applied."
+msgstr "Keputusan massal diterapkan."
+
+msgid "Reason code for this decision:"
+msgstr "Kode alasan untuk keputusan ini:"
+
+msgid "A reason code is required to reject or mark spam."
+msgstr "Kode alasan diperlukan untuk menolak atau menandai spam."
+
+msgid "Anonymous"
+msgstr "Anonim"
+
+
+#. Mission Control 3D workspace (ahliweb/omes#265, ADR-0031)
+msgid "OMES Mission Control"
+msgstr "Mission Control OMES"
+
+msgid "Health report"
+msgstr "Laporan kesehatan"
+
+msgid "Hermes subagent"
+msgstr "Subagent Hermes"
+
+msgid "Architecture plane"
+msgstr "Bidang arsitektur"
+
+msgid "Capability"
+msgstr "Kapabilitas"
+
+msgid "Repository milestone"
+msgstr "Milestone repositori"
+
+msgid "Approval item"
+msgstr "Item persetujuan"
+
+msgid "Agents"
+msgstr "Agen"
+
+msgid "Infrastructure"
+msgstr "Infrastruktur"
+
+msgid "Governance"
+msgstr "Tata kelola"
+
+msgid "AI privacy"
+msgstr "Privasi AI"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Informational"
+msgstr "Informasional"
+
+msgid "Live"
+msgstr "Langsung"
+
+msgid "Server inventory"
+msgstr "Inventaris server"
+
+msgid "Deployment view"
+msgstr "Tampilan deployment"
+
+msgid "Job status"
+msgstr "Status job"
+
+msgid "Health readiness"
+msgstr "Kesiapan kesehatan"
+
+msgid "Backup status"
+msgstr "Status backup"
+
+msgid "Hermes orchestration"
+msgstr "Orkestrasi Hermes"
+
+msgid "Architecture view"
+msgstr "Tampilan arsitektur"
+
+msgid "Repository progress"
+msgstr "Progres repositori"
+
+msgid "Workflow approvals"
+msgstr "Persetujuan alur kerja"
+
+msgid "Available"
+msgstr "Tersedia"
+
+msgid "Unavailable"
+msgstr "Tidak tersedia"
+
+msgid "OMES"
+msgstr "OMES"
+
+msgid "AWCMS"
+msgstr "AWCMS"
+
+msgid "Open details"
+msgstr "Buka detail"
+
+msgid "Open details for {name}"
+msgstr "Buka detail untuk {name}"
+
+msgid "Observed {time}"
+msgstr "Diamati {time}"
+
+msgid "Not observed"
+msgstr "Belum diamati"
+
+msgid "As of {time}"
+msgstr "Per {time}"
+
+msgid "{shown} of {total} objects shown"
+msgstr "{shown} dari {total} objek ditampilkan"
+
+msgid "{count} objects were left out to keep this view bounded. Use the canonical screens for the full list."
+msgstr "{count} objek tidak ditampilkan agar tampilan ini tetap terbatas. Gunakan layar kanonis untuk daftar lengkapnya."
+
+msgid "Could not refresh the scene — showing the last known state, which may be out of date."
+msgstr "Tidak dapat menyegarkan adegan — menampilkan keadaan terakhir yang diketahui, yang mungkin sudah usang."
+
+msgid "The 3D view is unavailable in this browser. The object list below shows the same information."
+msgstr "Tampilan 3D tidak tersedia di peramban ini. Daftar objek di bawah menampilkan informasi yang sama."
+
+msgid "Mission Control"
+msgstr "Mission Control"
+
+msgid "A read-only 3D view of OMES, Hermes and approval state, composed from the existing screens. The object list is the full, accessible equivalent."
+msgstr "Tampilan 3D baca saja untuk status OMES, Hermes, dan persetujuan, disusun dari layar yang sudah ada. Daftar objek adalah padanan lengkap yang dapat diakses."
+
+msgid "You do not have permission to view Mission Control."
+msgstr "Anda tidak memiliki izin untuk melihat Mission Control."
+
+msgid "Mission Control could not be loaded right now. This is a problem reading it, not a healthy silence — please try again later."
+msgstr "Mission Control tidak dapat dimuat saat ini. Ini adalah masalah membacanya, bukan keheningan yang sehat — silakan coba lagi nanti."
+
+msgid "Additional workspace — the canonical details stay on the existing OMES screens. Every object links back to its screen."
+msgstr "Ruang kerja tambahan — detail kanonis tetap berada di layar OMES yang sudah ada. Setiap objek tertaut kembali ke layarnya."
+
+msgid "Live view"
+msgstr "Tampilan langsung"
+
+msgid "Historical view"
+msgstr "Tampilan historis"
+
+msgid "Sources"
+msgstr "Sumber"
+
+msgid "Mission Control filters"
+msgstr "Filter Mission Control"
+
+msgid "Zone"
+msgstr "Zona"
+
+msgid "All zones"
+msgstr "Semua zona"
+
+msgid "All states"
+msgstr "Semua status"
+
+msgid "Reset view"
+msgstr "Atur ulang tampilan"
+
+msgid "Objects by zone"
+msgstr "Objek menurut zona"
+
+msgid "No objects to show"
+msgstr "Tidak ada objek untuk ditampilkan"
+
+msgid "An empty scene is not a healthy scene — check the source status above. Sources you cannot read are omitted."
+msgstr "Adegan kosong bukan berarti adegan yang sehat — periksa status sumber di atas. Sumber yang tidak dapat Anda baca dihilangkan."
+
+msgid "Selected object"
+msgstr "Objek terpilih"
+
+msgid "Select an object from the list or the scene to see its details."
+msgstr "Pilih objek dari daftar atau adegan untuk melihat detailnya."
+
+msgid "Source status"
+msgstr "Status sumber"
+
+msgid "Source id"
+msgstr "ID sumber"
+
+msgid "Source state"
+msgstr "Keadaan sumber"
+
+msgid "Visual state"
+msgstr "Status visual"
+
+msgid "Freshness"
+msgstr "Kesegaran"
+
+msgid "Observed at"
+msgstr "Diamati pada"
+
+msgid "Drag to orbit and scroll to zoom the 3D view. Keyboard: arrow keys move through the list, Enter selects an object, Escape clears the selection, 0 resets the view."
+msgstr "Seret untuk memutar dan gulir untuk memperbesar tampilan 3D. Papan ketik: tombol panah berpindah di daftar, Enter memilih objek, Escape membatalkan pilihan, 0 mengatur ulang tampilan."
+
+#. Mission Control historical replay (ahliweb/omes#266, ADR-0031)
+msgid "Choose a start before the end, no more than 24 hours apart, and not in the future."
+msgstr "Pilih awal sebelum akhir, selisih paling lama 24 jam, dan tidak di masa depan."
+
+msgid "Could not load the history for this range."
+msgstr "Riwayat untuk rentang ini tidak dapat dimuat."
+
+msgid "Could not load the scene for this time. Still showing the scene as of {time}."
+msgstr "Adegan untuk waktu ini tidak dapat dimuat. Masih menampilkan adegan per {time}."
+
+msgid "Event {n} of {total} — {time}"
+msgstr "Peristiwa {n} dari {total} — {time}"
+
+msgid "Evidence gaps"
+msgstr "Celah bukti"
+
+msgid "Historical view. Showing recorded evidence as of {time}, not live state."
+msgstr "Tampilan historis. Menampilkan bukti tercatat per {time}, bukan keadaan langsung."
+
+msgid "Historical — {time}"
+msgstr "Historis — {time}"
+
+msgid "History is unavailable right now. Showing the live view."
+msgstr "Riwayat tidak tersedia saat ini. Menampilkan tampilan langsung."
+
+msgid "History replay"
+msgstr "Pemutaran ulang riwayat"
+
+msgid "Late arrival"
+msgstr "Datang terlambat"
+
+msgid "Live view resumed. Showing current state."
+msgstr "Tampilan langsung dilanjutkan. Menampilkan keadaan saat ini."
+
+msgid "Load range"
+msgstr "Muat rentang"
+
+msgid "No evidence gaps were reported for this range."
+msgstr "Tidak ada celah bukti yang dilaporkan untuk rentang ini."
+
+msgid "No evidence was retained in this range."
+msgstr "Tidak ada bukti yang tersimpan pada rentang ini."
+
+msgid "Observed events"
+msgstr "Peristiwa teramati"
+
+msgid "Play"
+msgstr "Putar"
+
+msgid "Replay controls"
+msgstr "Kontrol pemutaran ulang"
+
+msgid "Replay range"
+msgstr "Rentang pemutaran ulang"
+
+msgid "Replays recorded evidence only, at most 24 hours at a time. Objects whose source kept no history are shown as unknown, and gaps are listed rather than filled in. No actions are available in History."
+msgstr "Hanya memutar ulang bukti yang tercatat, paling lama 24 jam sekali putar. Objek yang sumbernya tidak menyimpan riwayat ditampilkan sebagai tidak diketahui, dan celah didaftarkan, bukan diisi. Tidak ada aksi di mode Riwayat."
+
+msgid "Return to live"
+msgstr "Kembali ke langsung"
+
+msgid "Showing the first {count} events. Narrow the range to see the rest."
+msgstr "Menampilkan {count} peristiwa pertama. Persempit rentang untuk melihat sisanya."
+
+msgid "Speed"
+msgstr "Kecepatan"
+
+msgid "Step back"
+msgstr "Mundur satu langkah"
+
+msgid "Step forward"
+msgstr "Maju satu langkah"
+
+msgid "Timeline"
+msgstr "Lini masa"
+
+msgid "View mode"
+msgstr "Mode tampilan"
+
+msgid "Window start"
+msgstr "Awal rentang"
+
+msgid "before the first retained observation"
+msgstr "sebelum pengamatan pertama yang tersimpan"
+
+msgid "not retained: only current state exists"
+msgstr "tidak disimpan: hanya keadaan saat ini yang ada"
+
+msgid "retention expired: older evidence was purged"
+msgstr "retensi habis: bukti yang lebih lama telah dihapus"
+
+msgid "source unavailable to you or unreadable"
+msgstr "sumber tidak tersedia untuk Anda atau tidak dapat dibaca"
+
+msgid "{source} — {reason} ({from} to {to})"
+msgstr "{source} — {reason} ({from} sampai {to})"
+
+#. Mission Control contextual actions and command palette items (ahliweb/omes#267, ADR-0031)
+msgid "Request status check"
+msgstr "Minta pemeriksaan status"
+
+msgid "Request preflight check"
+msgstr "Minta pemeriksaan preflight"
+
+msgid "Request start"
+msgstr "Minta mulai"
+
+msgid "Request stop"
+msgstr "Minta hentikan"
+
+msgid "Request restart"
+msgstr "Minta mulai ulang"
+
+msgid "Request update"
+msgstr "Minta pembaruan"
+
+msgid "Request backup"
+msgstr "Minta pencadangan"
+
+msgid "Request rollback"
+msgstr "Minta rollback"
+
+msgid "Cancel queued job"
+msgstr "Batalkan job dalam antrean"
+
+msgid "Approve failed job for retry"
+msgstr "Setujui job gagal untuk dicoba ulang"
+
+msgid "Request restore from this backup"
+msgstr "Minta pemulihan dari cadangan ini"
+
+msgid "Open in approval inbox"
+msgstr "Buka di kotak masuk persetujuan"
+
+msgid "You do not hold the permission this action needs."
+msgstr "Anda tidak memiliki izin yang dibutuhkan aksi ini."
+
+msgid "The object's current state does not allow this action."
+msgstr "Status objek saat ini tidak mengizinkan aksi ini."
+
+msgid "The object could not be found."
+msgstr "Objek tidak ditemukan."
+
+msgid "Not available in History."
+msgstr "Tidak tersedia di Riwayat."
+
+msgid "The target's last report is stale, so its current state is not confirmed. The request is still allowed."
+msgstr "Laporan terakhir target sudah basi, sehingga status saat ini belum terkonfirmasi. Permintaan tetap diizinkan."
+
+msgid "The target server is decommissioned. The request is still allowed."
+msgstr "Server target sudah dinonaktifkan. Permintaan tetap diizinkan."
+
+msgid "This backup is not marked completed or verified. The request is still allowed."
+msgstr "Cadangan ini belum ditandai selesai atau terverifikasi. Permintaan tetap diizinkan."
+
+msgid "Checking available actions…"
+msgstr "Memeriksa aksi yang tersedia…"
+
+msgid "Actions are unavailable right now. Use the canonical screen instead."
+msgstr "Aksi tidak tersedia saat ini. Gunakan layar kanonis sebagai gantinya."
+
+msgid "No actions for this object."
+msgstr "Tidak ada aksi untuk objek ini."
+
+msgid "Approval required"
+msgstr "Perlu persetujuan"
+
+msgid "Review before sending"
+msgstr "Tinjau sebelum mengirim"
+
+msgid "Permission"
+msgstr "Izin"
+
+msgid "Allowed for you (the server checks again when you send)"
+msgstr "Diizinkan untuk Anda (server memeriksa lagi saat Anda mengirim)"
+
+msgid "Required — nothing runs until a workflow decision is approved in the approval inbox"
+msgstr "Wajib — tidak ada yang berjalan sampai keputusan alur kerja disetujui di kotak masuk persetujuan"
+
+msgid "Not required"
+msgstr "Tidak diperlukan"
+
+msgid "Existing endpoint"
+msgstr "Endpoint yang sudah ada"
+
+msgid "Idempotency-Key"
+msgstr "Idempotency-Key"
+
+msgid "Send request"
+msgstr "Kirim permintaan"
+
+msgid "Sending…"
+msgstr "Mengirim…"
+
+msgid "Send “{action}” for {target}? The server checks permission and approval again, and the outcome is not verified until the next refresh."
+msgstr "Kirim “{action}” untuk {target}? Server memeriksa izin dan persetujuan lagi, dan hasilnya belum terverifikasi sampai penyegaran berikutnya."
+
+msgid "Accepted — pending verification."
+msgstr "Diterima — menunggu verifikasi."
+
+msgid "Approval required — a workflow decision is pending in the approval inbox."
+msgstr "Perlu persetujuan — keputusan alur kerja menunggu di kotak masuk persetujuan."
+
+msgid "Approval required, but this tenant has no active destructive-operation approval workflow. Nothing was recorded."
+msgstr "Perlu persetujuan, tetapi tenant ini tidak memiliki alur kerja persetujuan operasi destruktif yang aktif. Tidak ada yang dicatat."
+
+msgid "Rejected by the server (HTTP {status}, {code}). Nothing was changed."
+msgstr "Ditolak oleh server (HTTP {status}, {code}). Tidak ada yang diubah."
+
+msgid "Outcome unknown — check Operations (or Jobs, Backups) before retrying. A retry reuses the same Idempotency-Key, so it cannot duplicate a request the server already recorded."
+msgstr "Hasil tidak diketahui — periksa Operasi (atau Job, Cadangan) sebelum mencoba lagi. Percobaan ulang memakai Idempotency-Key yang sama, sehingga tidak dapat menggandakan permintaan yang sudah dicatat server."
+
+msgid "Open the record"
+msgstr "Buka rekaman"
+
+msgid "Open approval inbox"
+msgstr "Buka kotak masuk persetujuan"
+
+msgid "Availability is advisory: the existing endpoints check permission, approval and state again when you send. Approval decisions are made only in the approval inbox."
+msgstr "Ketersediaan bersifat saran: endpoint yang sudah ada memeriksa izin, persetujuan, dan status lagi saat Anda mengirim. Keputusan persetujuan hanya dibuat di kotak masuk persetujuan."
+
+# ADR-0127 — the `tax` module display name (module registry; the admin screens are a follow-up).
+
+# Issue #894 — the /admin/inventory and /admin/tax screens.
+
+msgid "A balance at or below its threshold is flagged and published as a low-stock signal. Leave the threshold empty to remove it."
+msgstr "Saldo yang berada pada atau di bawah ambangnya ditandai dan diterbitkan sebagai sinyal stok rendah. Kosongkan ambang untuk menghapusnya."
+
+msgid "Adjustment"
+msgstr "Penyesuaian"
+
+msgid "A draft changes nothing until it is published. Using an existing profile code adds the next version of that profile; a new code starts a new profile. This product ships no country profile: the rates and categories are yours to supply and verify."
+msgstr "Draf tidak mengubah apa pun sampai diterbitkan. Memakai kode profil yang sudah ada menambahkan versi berikutnya dari profil itu; kode baru memulai profil baru. Produk ini tidak menyertakan profil negara: tarif dan kategori Anda yang menyediakan dan memverifikasinya."
+
+msgid "All kinds"
+msgstr "Semua jenis"
+
+msgid "All locations"
+msgstr "Semua lokasi"
+
+msgid "Allow negative stock"
+msgstr "Izinkan stok negatif"
+
+msgid "All types"
+msgstr "Semua tipe"
+
+msgid "An adjustment changes stock without a business document behind it, so its reason is the audit trail. Use a negative quantity to remove stock."
+msgstr "Penyesuaian mengubah stok tanpa dokumen bisnis di baliknya, sehingga alasannya adalah jejak auditnya. Gunakan jumlah negatif untuk mengurangi stok."
+
+msgid "A new version must take effect after the latest published version of its profile."
+msgstr "Versi baru harus berlaku setelah versi terbitan terakhir dari profilnya."
+
+msgid "A version cannot take effect in the past, or on a day that already has finalised documents."
+msgstr "Versi tidak boleh berlaku di masa lalu, atau pada hari yang sudah memiliki dokumen final."
+
+msgid "Away from zero"
+msgstr "Menjauhi nol"
+
+msgid "Back to the snapshot list"
+msgstr "Kembali ke daftar snapshot"
+
+msgid "Balance after"
+msgstr "Saldo sesudahnya"
+
+msgid "Balances"
+msgstr "Saldo"
+
+msgid "By component"
+msgstr "Menurut komponen"
+
+msgid "By rule version"
+msgstr "Menurut versi aturan"
+
+msgid "By treatment"
+msgstr "Menurut perlakuan"
+
+msgid "Ceiling"
+msgstr "Pembulatan ke atas"
+
+msgid "Change"
+msgstr "Perubahan"
+
+msgid "Check the fields and the definition. The server rejected something in them."
+msgstr "Periksa isian dan definisinya. Server menolak sesuatu di dalamnya."
+
+msgid "Check the values you entered and try again."
+msgstr "Periksa nilai yang Anda masukkan, lalu coba lagi."
+
+msgid "Choose a period and run the report."
+msgstr "Pilih periode lalu jalankan laporan."
+
+msgid "Component"
+msgstr "Komponen"
+
+msgid "Consistent: {count} balance rows were checked and none drifted."
+msgstr "Konsisten: {count} baris saldo diperiksa dan tidak ada yang menyimpang."
+
+msgid "Could not load inventory. Please try again."
+msgstr "Tidak dapat memuat inventaris. Silakan coba lagi."
+
+msgid "Could not load tax. Please try again."
+msgstr "Tidak dapat memuat pajak. Silakan coba lagi."
+
+msgid "Could not save that. Please try again."
+msgstr "Tidak dapat menyimpan itu. Silakan coba lagi."
+
+msgid "{count} balances are negative although their policy forbids it."
+msgstr "{count} saldo bernilai negatif padahal kebijakannya melarang."
+
+msgid "Country (ISO 3166-1 alpha-2, optional)"
+msgstr "Negara (ISO 3166-1 alpha-2, opsional)"
+
+msgid "Create a draft version"
+msgstr "Buat versi draf"
+
+msgid "Currency"
+msgstr "Mata uang"
+
+msgid "Currency (ISO 4217)"
+msgstr "Mata uang (ISO 4217)"
+
+msgid "Current published version"
+msgstr "Versi terbitan saat ini"
+
+msgid "Damaged goods"
+msgstr "Barang rusak"
+
+msgid "Deactivate {code}? Nothing can be posted to it until it is reactivated. Its history and balances stay."
+msgstr "Nonaktifkan {code}? Tidak ada yang dapat dicatat ke lokasi ini sampai diaktifkan kembali. Riwayat dan saldonya tetap ada."
+
+msgid "Default policy"
+msgstr "Kebijakan bawaan"
+
+msgid "Definition"
+msgstr "Definisi"
+
+msgid "Definition (JSON)"
+msgstr "Definisi (JSON)"
+
+msgid "Document"
+msgstr "Dokumen"
+
+msgid "Document id"
+msgstr "ID dokumen"
+
+msgid "Document type"
+msgstr "Tipe dokumen"
+
+msgid "Effective"
+msgstr "Berlaku"
+
+msgid "Effective from"
+msgstr "Berlaku mulai"
+
+msgid "Exempt"
+msgstr "Dibebaskan"
+
+msgid "Floor"
+msgstr "Pembulatan ke bawah"
+
+msgid "Forbid negative stock"
+msgstr "Larang stok negatif"
+
+msgid "From location"
+msgstr "Dari lokasi"
+
+msgid "From location id"
+msgstr "ID lokasi asal"
+
+msgid "Gross total"
+msgstr "Total bruto"
+
+msgid "Half down"
+msgstr "Setengah ke bawah"
+
+msgid "Half even (banker's)"
+msgstr "Setengah ke genap (bankir)"
+
+msgid "Half up"
+msgstr "Setengah ke atas"
+
+msgid "Inherit the tenant default"
+msgstr "Ikuti bawaan tenant"
+
+msgid "In stock"
+msgstr "Stok cukup"
+
+msgid "Integrity: {count} documents were re-added and all agree."
+msgstr "Integritas: {count} dokumen dijumlahkan ulang dan semuanya cocok."
+
+msgid "Integrity: {lines} documents disagree on their line sums and {components} on their component sums, out of {count} checked."
+msgstr "Integritas: {lines} dokumen tidak cocok pada jumlah barisnya dan {components} pada jumlah komponennya, dari {count} yang diperiksa."
+
+msgid "Inventory sections"
+msgstr "Bagian inventaris"
+
+msgid "Item reference"
+msgstr "Referensi barang"
+
+msgid "Item type"
+msgstr "Tipe barang"
+
+msgid "Jurisdiction"
+msgstr "Yurisdiksi"
+
+msgid "Jurisdiction code"
+msgstr "Kode yurisdiksi"
+
+msgid "Latest version"
+msgstr "Versi terbaru"
+
+msgid "Ledger sum"
+msgstr "Jumlah buku besar"
+
+msgid "Line"
+msgstr "Baris"
+
+msgid "Lines"
+msgstr "Baris"
+
+msgid "Location"
+msgstr "Lokasi"
+
+msgid "Location id"
+msgstr "ID lokasi"
+
+msgid "Locations"
+msgstr "Lokasi"
+
+msgid "Loss or theft"
+msgstr "Kehilangan atau pencurian"
+
+msgid "Lower-case letters, digits, dots, underscores and hyphens. The code is unique per tenant and cannot be changed."
+msgstr "Huruf kecil, angka, titik, garis bawah, dan tanda hubung. Kode unik per tenant dan tidak dapat diubah."
+
+msgid "Low stock"
+msgstr "Stok rendah"
+
+msgid "Low stock only"
+msgstr "Hanya stok rendah"
+
+msgid "Low-stock threshold"
+msgstr "Ambang stok rendah"
+
+msgid "Movement history"
+msgstr "Riwayat pergerakan"
+
+msgid "Movements"
+msgstr "Pergerakan"
+
+msgid "Movement type"
+msgstr "Tipe pergerakan"
+
+msgid "Moves stock between two locations as a balanced pair: one movement out and one in, posted together or not at all."
+msgstr "Memindahkan stok antar dua lokasi sebagai pasangan seimbang: satu pergerakan keluar dan satu masuk, dicatat bersamaan atau tidak sama sekali."
+
+msgid "Negative-stock policy"
+msgstr "Kebijakan stok negatif"
+
+msgid "Net of reversals"
+msgstr "Neto setelah pembalikan"
+
+msgid "Net total"
+msgstr "Total neto"
+
+msgid "No balance is at or below its low-stock threshold."
+msgstr "Tidak ada saldo yang berada pada atau di bawah ambang stok rendahnya."
+
+msgid "No default has been set, so the safe default (forbid) applies."
+msgstr "Belum ada bawaan yang ditetapkan, sehingga bawaan aman (larang) berlaku."
+
+msgid "No movements match. The ledger is empty or the filter excludes everything."
+msgstr "Tidak ada pergerakan yang cocok. Buku besar kosong atau filter mengecualikan semuanya."
+
+msgid "No rule profile exists yet. A profile comes into being with its first draft version."
+msgstr "Belum ada profil aturan. Profil muncul bersama versi draf pertamanya."
+
+msgid "No rule version matches."
+msgstr "Tidak ada versi aturan yang cocok."
+
+msgid "No snapshot falls in this period."
+msgstr "Tidak ada snapshot pada periode ini."
+
+msgid "No snapshot matches. A snapshot is written when a consumer finalises a document."
+msgstr "Tidak ada snapshot yang cocok. Snapshot ditulis ketika konsumen memfinalkan dokumen."
+
+msgid "No stock has been posted yet. Post an opening balance or an adjustment to start the ledger."
+msgstr "Belum ada stok yang dicatat. Catat saldo awal atau penyesuaian untuk memulai buku besar."
+
+msgid "No stock location is registered yet."
+msgstr "Belum ada lokasi stok yang terdaftar."
+
+msgid "Not enough stock, and the negative-stock policy forbids going below zero."
+msgstr "Stok tidak cukup, dan kebijakan stok negatif melarang turun di bawah nol."
+
+msgid "Notes (optional)"
+msgstr "Catatan (opsional)"
+
+msgid "Not found. Reload the page."
+msgstr "Tidak ditemukan. Muat ulang halaman."
+
+msgid "Older movements"
+msgstr "Pergerakan lebih lama"
+
+msgid "Older snapshots"
+msgstr "Snapshot lebih lama"
+
+msgid "Older versions"
+msgstr "Versi lebih lama"
+
+msgid "On hand"
+msgstr "Tersedia"
+
+msgid "Opening balance"
+msgstr "Saldo awal"
+
+msgid "Per document"
+msgstr "Per dokumen"
+
+msgid "Per line"
+msgstr "Per baris"
+
+msgid "Post adjustment"
+msgstr "Catat penyesuaian"
+
+msgid "Post an adjustment"
+msgstr "Catat penyesuaian"
+
+msgid "Posts an equal and opposite adjustment. The original row stays in the ledger, and an adjustment can be reversed only once."
+msgstr "Mencatat penyesuaian yang sama besar dan berlawanan. Baris asli tetap berada di buku besar, dan sebuah penyesuaian hanya dapat dibalik sekali."
+
+msgid "Pricing"
+msgstr "Penetapan harga"
+
+msgid "Profile code"
+msgstr "Kode profil"
+
+msgid "Profile (optional)"
+msgstr "Profil (opsional)"
+
+msgid "{profile} v{version}"
+msgstr "{profile} v{version}"
+
+msgid "Publish {profile} v{version}? It becomes the rule that documents are computed under from {date}, closes the previous version at that date, and can never be edited or unpublished."
+msgstr "Terbitkan {profile} v{version}? Versi ini menjadi aturan yang dipakai untuk menghitung dokumen mulai {date}, menutup versi sebelumnya pada tanggal itu, dan tidak pernah dapat diubah atau dibatalkan penerbitannya."
+
+msgid "Quantity change"
+msgstr "Perubahan jumlah"
+
+msgid "Reactivate"
+msgstr "Aktifkan kembali"
+
+msgid "Read-only proof that every stored balance equals the sum of its movements. It changes nothing."
+msgstr "Bukti baca-saja bahwa setiap saldo tersimpan sama dengan jumlah pergerakannya. Tidak mengubah apa pun."
+
+msgid "Receive"
+msgstr "Terima"
+
+msgid "Reconciliation report"
+msgstr "Laporan rekonsiliasi"
+
+msgid "Recorded on the compensating movement and the audit log."
+msgstr "Dicatat pada pergerakan kompensasi dan log audit."
+
+msgid "Region (optional)"
+msgstr "Wilayah (opsional)"
+
+msgid "Register a location"
+msgstr "Daftarkan lokasi"
+
+msgid "Register location"
+msgstr "Daftarkan lokasi"
+
+msgid "Reversal"
+msgstr "Pembalikan"
+
+msgid "Reversals"
+msgstr "Pembalikan"
+
+msgid "Reverse"
+msgstr "Balikkan"
+
+msgid "Reverse adjustment"
+msgstr "Balikkan penyesuaian"
+
+msgid "Reverses"
+msgstr "Membalikkan"
+
+msgid "(reverses {id})"
+msgstr "(membalikkan {id})"
+
+msgid "Reverse this adjustment"
+msgstr "Balikkan penyesuaian ini"
+
+msgid "Rounding"
+msgstr "Pembulatan"
+
+msgid "Rounding decimal places (0 to 6)"
+msgstr "Jumlah desimal pembulatan (0 sampai 6)"
+
+msgid "Rounding level"
+msgstr "Tingkat pembulatan"
+
+msgid "Rounding mode"
+msgstr "Mode pembulatan"
+
+msgid "Rule profiles"
+msgstr "Profil aturan"
+
+msgid "Rules"
+msgstr "Aturan"
+
+msgid "Rule version"
+msgstr "Versi aturan"
+
+msgid "Rule versions"
+msgstr "Versi aturan"
+
+msgid "Run reconciliation"
+msgstr "Jalankan rekonsiliasi"
+
+msgid "Run report"
+msgstr "Jalankan laporan"
+
+msgid "Sale"
+msgstr "Penjualan"
+
+msgid "Sale return"
+msgstr "Retur penjualan"
+
+msgid "Sales"
+msgstr "Penjualan"
+
+msgid "Save default"
+msgstr "Simpan bawaan"
+
+msgid "Save threshold"
+msgstr "Simpan ambang"
+
+msgid "{scale} decimal places"
+msgstr "{scale} angka desimal"
+
+msgid "Set a low-stock threshold"
+msgstr "Tetapkan ambang stok rendah"
+
+msgid "Signal"
+msgstr "Sinyal"
+
+msgid "Snapshots"
+msgstr "Snapshot"
+
+msgid "Stock balances"
+msgstr "Saldo stok"
+
+msgid "Stock count correction"
+msgstr "Koreksi penghitungan stok"
+
+msgid "Stock found"
+msgstr "Stok ditemukan"
+
+msgid "Stock locations"
+msgstr "Lokasi stok"
+
+msgid "Stock locations, balances and the append-only movement ledger. A balance is always the sum of its movements, so nothing here edits one: stock changes by posting an adjustment or a transfer, and a mistake is corrected by a compensating movement."
+msgstr "Lokasi stok, saldo, dan buku besar pergerakan yang hanya bisa ditambah. Saldo selalu sama dengan jumlah pergerakannya, sehingga tidak ada yang mengubahnya di sini: stok berubah dengan mencatat penyesuaian atau transfer, dan kesalahan dikoreksi dengan pergerakan kompensasi."
+
+msgid "Stored balance"
+msgstr "Saldo tersimpan"
+
+msgid "Supplier return"
+msgstr "Retur ke pemasok"
+
+msgid "Taxable"
+msgstr "Kena pajak"
+
+msgid "Tax added on top (exclusive)"
+msgstr "Pajak ditambahkan di atas harga (eksklusif)"
+
+msgid "Tax by component"
+msgstr "Pajak menurut komponen"
+
+msgid "Tax date"
+msgstr "Tanggal pajak"
+
+msgid "Tax included in price (inclusive)"
+msgstr "Pajak sudah termasuk harga (inklusif)"
+
+msgid "Tax sections"
+msgstr "Bagian pajak"
+
+msgid "Tax snapshots"
+msgstr "Snapshot pajak"
+
+msgid "Tax total"
+msgstr "Total pajak"
+
+msgid "Tenant default negative-stock policy"
+msgstr "Kebijakan stok negatif bawaan tenant"
+
+msgid "That conflicts with the current state. Reload the page and try again."
+msgstr "Itu bertentangan dengan keadaan saat ini. Muat ulang halaman lalu coba lagi."
+
+msgid "That item is stocked in a different unit at this location."
+msgstr "Barang itu distok dalam satuan yang berbeda di lokasi ini."
+
+msgid "That location is inactive. Reactivate it before posting."
+msgstr "Lokasi itu tidak aktif. Aktifkan kembali sebelum mencatat."
+
+msgid "That movement cannot be reversed. It may already have been."
+msgstr "Pergerakan itu tidak dapat dibalik. Mungkin sudah pernah dibalik."
+
+msgid "That rule version was not found."
+msgstr "Versi aturan itu tidak ditemukan."
+
+msgid "That snapshot was not found."
+msgstr "Snapshot itu tidak ditemukan."
+
+msgid "That version is already published."
+msgstr "Versi itu sudah diterbitkan."
+
+msgid "The definition is not valid JSON."
+msgstr "Definisi bukan JSON yang valid."
+
+msgid "The list is truncated; more drift may exist."
+msgstr "Daftar terpotong; mungkin masih ada penyimpangan lain."
+
+msgid "The period is not valid. The end must not be before the start, and it may span at most {days} days."
+msgstr "Periode tidak valid. Akhir tidak boleh sebelum awal, dan rentangnya paling lama {days} hari."
+
+msgid "To location"
+msgstr "Ke lokasi"
+
+msgid "To location id"
+msgstr "ID lokasi tujuan"
+
+msgid "Totals of the finalised snapshots for a tax-date period, by rule version, component and treatment, net of reversals. The integrity block re-adds every stored document from its own lines and reports any that disagree. The period may span at most {days} days."
+msgstr "Total snapshot final untuk suatu periode tanggal pajak, menurut versi aturan, komponen, dan perlakuan, neto setelah pembalikan. Blok integritas menjumlahkan ulang setiap dokumen tersimpan dari barisnya sendiri dan melaporkan yang tidak cocok. Rentang periode paling lama {days} hari."
+
+msgid "Toward zero"
+msgstr "Mendekati nol"
+
+msgid "Transfer in"
+msgstr "Transfer masuk"
+
+msgid "Transfer out"
+msgstr "Transfer keluar"
+
+msgid "Transfer stock"
+msgstr "Transfer stok"
+
+msgid "Treatment"
+msgstr "Perlakuan"
+
+msgid "Treatment is one of {treatments}; a component basis is one of {bases}. The server validates every field and refuses an unknown one."
+msgstr "Perlakuan adalah salah satu dari {treatments}; dasar komponen adalah salah satu dari {bases}. Server memvalidasi setiap isian dan menolak yang tidak dikenal."
+
+msgid "Unit"
+msgstr "Satuan"
+
+msgid "Versioned tax rule profiles, the finalised tax snapshots they produced, and a reconciliation of the two. Tax is always computed by the server from a published rule version; nothing here lets anyone type an amount."
+msgstr "Profil aturan pajak berversi, snapshot pajak final yang dihasilkannya, dan rekonsiliasi keduanya. Pajak selalu dihitung oleh server dari versi aturan yang diterbitkan; tidak ada yang memungkinkan siapa pun mengetik jumlah di sini."
+
+msgid "Versions"
+msgstr "Versi"
+
+msgid "Whether stock may silently go below zero. A location can override this; one that does not follows the default below."
+msgstr "Apakah stok boleh turun di bawah nol tanpa pemberitahuan. Lokasi dapat menimpa ini; lokasi yang tidak menimpanya mengikuti bawaan di bawah."
+
+msgid "You do not have permission to do that."
+msgstr "Anda tidak memiliki izin untuk melakukan itu."
+
+msgid "You do not have permission to view inventory."
+msgstr "Anda tidak memiliki izin untuk melihat inventaris."
+
+msgid "You do not have permission to view tax."
+msgstr "Anda tidak memiliki izin untuk melihat pajak."
+
+msgid "Zero-rated"
+msgstr "Tarif nol"
+
+msgid "Add category"
+msgstr "Tambah kategori"
+
+msgid "Add component"
+msgstr "Tambah komponen"
+
+msgid "Add rule"
+msgstr "Tambah aturan"
+
+msgid "Applies to category"
+msgstr "Berlaku untuk kategori"
+
+msgid "A taxable rule needs at least one component."
+msgstr "Aturan kena pajak membutuhkan setidaknya satu komponen."
+
+msgid "Basis"
+msgstr "Dasar"
+
+msgid "{code} (not declared above)"
+msgstr "{code} (belum dideklarasikan di atas)"
+
+msgid "{count} balance rows were repaired. Reload the page to see them."
+msgstr "{count} baris saldo diperbaiki. Muat ulang halaman untuk melihatnya."
+
+msgid "Definition (JSON), advanced"
+msgstr "Definisi (JSON), lanjutan"
+
+msgid "Drift found in {count} balance rows. Repair them with a balance rebuild."
+msgstr "Ditemukan penyimpangan pada {count} baris saldo. Perbaiki dengan membangun ulang saldo."
+
+msgid "e.g. 7.5"
+msgstr "mis. 7,5"
+
+msgid "Fallback (any other category)"
+msgstr "Cadangan (kategori lainnya)"
+
+msgid "Location id (optional)"
+msgstr "ID lokasi (opsional)"
+
+msgid "More drifted balances remain than one run repairs. Run the rebuild again."
+msgstr "Masih ada saldo menyimpang melebihi yang diperbaiki satu kali jalan. Jalankan pembangunan ulang lagi."
+
+msgid "Name of {code}"
+msgstr "Nama {code}"
+
+msgid "Net amount"
+msgstr "Jumlah neto"
+
+msgid "Net plus earlier components (stacked)"
+msgstr "Neto ditambah komponen sebelumnya (bertumpuk)"
+
+msgid "No office"
+msgstr "Tanpa kantor"
+
+msgid "Nothing to repair: no balance had drifted."
+msgstr "Tidak ada yang perlu diperbaiki: tidak ada saldo yang menyimpang."
+
+msgid "Office"
+msgstr "Kantor"
+
+msgid "Office id"
+msgstr "ID kantor"
+
+msgid "Office of {code}"
+msgstr "Kantor untuk {code}"
+
+msgid "Rate (percent, exact decimal)"
+msgstr "Tarif (persen, desimal eksak)"
+
+msgid "Rebuild balances"
+msgstr "Bangun ulang saldo"
+
+msgid "Rebuild the stored balances from the ledger? Every drifted balance is overwritten with the ledger sum. This is audited and cannot be undone, but the ledger itself is never changed."
+msgstr "Bangun ulang saldo tersimpan dari buku besar? Setiap saldo yang menyimpang ditimpa dengan jumlah buku besar. Ini diaudit dan tidak dapat dibatalkan, tetapi buku besar itu sendiri tidak pernah berubah."
+
+msgid "Repairs drifted balances from the movement ledger: each stored balance is reset to the sum of its movements. It never accepts a quantity, so it cannot assert a balance. Run the reconciliation first; the repair is audited."
+msgstr "Memperbaiki saldo yang menyimpang dari buku besar pergerakan: setiap saldo tersimpan diatur ulang ke jumlah pergerakannya. Ia tidak pernah menerima kuantitas, sehingga tidak dapat menetapkan saldo. Jalankan rekonsiliasi lebih dulu; perbaikan ini diaudit."
+
+msgid "Save details"
+msgstr "Simpan rincian"
+
+msgid "Tax components"
+msgstr "Komponen pajak"
+
+msgid "That office does not exist in this organisation. Pick another."
+msgstr "Kantor itu tidak ada di organisasi ini. Pilih yang lain."
+
+msgid "The JSON cannot be shown as rows. Edit it below; the server validates it."
+msgstr "JSON tidak dapat ditampilkan sebagai baris. Sunting di bawah; server yang memvalidasinya."
+
+msgid "Discard the JSON and start the structured editor"
+msgstr "Buang JSON dan mulai editor terstruktur"
+
+# Issue #905 — the /admin/procurement screen.
+
+msgid "Receipt"
+msgstr "Penerimaan"
+
+msgid "Requisition"
+msgstr "Permintaan barang"
+
+msgid "Location transfer"
+msgstr "Transfer antar lokasi"
+
+msgid "Finalised"
+msgstr "Difinalisasi"
+
+msgid "Reversed"
+msgstr "Dibalikkan"
+
+msgid "Waiting for approval"
+msgstr "Menunggu persetujuan"
+
+msgid "Tax ID"
+msgstr "NPWP/ID pajak"
+
+msgid "Business ID"
+msgstr "ID usaha"
+
+msgid "Payment reference"
+msgstr "Referensi pembayaran"
+
+msgid "Contact reference"
+msgstr "Referensi kontak"
+
+msgid "Suppliers"
+msgstr "Pemasok"
+
+msgid "Approval policy"
+msgstr "Kebijakan persetujuan"
+
+msgid "Suppliers, receiving, supplier returns, requisitions and location transfers over the stock ledger. A document moves no stock until it is finalised, and finalising posts its movements through the ledger: nothing here edits a balance, and a mistake is corrected by reversing the document."
+msgstr "Pemasok, penerimaan, retur pemasok, permintaan barang, dan transfer antar lokasi di atas buku besar stok. Dokumen tidak memindahkan stok sampai difinalisasi, dan finalisasi mencatat pergerakannya lewat buku besar: tidak ada yang mengubah saldo di sini, dan kesalahan dikoreksi dengan membalikkan dokumen."
+
+msgid "You do not have permission to view procurement."
+msgstr "Anda tidak memiliki izin untuk melihat pengadaan."
+
+msgid "Could not load procurement. Please try again."
+msgstr "Tidak dapat memuat pengadaan. Silakan coba lagi."
+
+msgid "A supplier with that vendor code already exists."
+msgstr "Pemasok dengan kode vendor itu sudah ada."
+
+msgid "That supplier still has draft or submitted documents. Finalise or cancel them first."
+msgstr "Pemasok itu masih memiliki dokumen draf atau terkirim. Finalisasi atau batalkan dulu."
+
+msgid "That supplier is deleted. Restore it before editing."
+msgstr "Pemasok itu telah dihapus. Pulihkan sebelum mengubah."
+
+msgid "That supplier is inactive, blocked or deleted and cannot take part in a document."
+msgstr "Pemasok itu nonaktif, diblokir, atau dihapus dan tidak dapat dipakai dalam dokumen."
+
+msgid "That supplier does not exist."
+msgstr "Pemasok itu tidak ada."
+
+msgid "That stock location does not exist in this organisation."
+msgstr "Lokasi stok itu tidak ada di organisasi ini."
+
+msgid "The document is no longer in a state that allows that. Reload the page."
+msgstr "Dokumen tidak lagi dalam status yang mengizinkannya. Muat ulang halaman."
+
+msgid "Not enough stock, and the negative-stock policy forbids going below zero. Nothing was posted."
+msgstr "Stok tidak cukup, dan kebijakan stok negatif melarang di bawah nol. Tidak ada yang dicatat."
+
+msgid "An item is stocked in a different unit at that location. Nothing was posted."
+msgstr "Suatu barang disimpan dalam satuan berbeda di lokasi itu. Tidak ada yang dicatat."
+
+msgid "A stock location is inactive. Reactivate it before posting."
+msgstr "Lokasi stok nonaktif. Aktifkan kembali sebelum mencatat."
+
+msgid "The document is waiting for approval and cannot be finalised yet."
+msgstr "Dokumen menunggu persetujuan dan belum dapat difinalisasi."
+
+msgid "The approval workflow rejected this document. Cancel it instead."
+msgstr "Alur persetujuan menolak dokumen ini. Batalkan saja."
+
+msgid "This document needs approval, but no workflow named procurement.document_approval is published. Nothing was submitted."
+msgstr "Dokumen ini memerlukan persetujuan, tetapi tidak ada alur kerja bernama procurement.document_approval yang diterbitkan. Tidak ada yang dikirim."
+
+msgid "A live document already uses that external reference for this supplier."
+msgstr "Dokumen aktif sudah memakai referensi eksternal itu untuk pemasok ini."
+
+msgid "This action must be performed by a tenant user."
+msgstr "Tindakan ini harus dilakukan oleh pengguna tenant."
+
+msgid "Procurement sections"
+msgstr "Bagian pengadaan"
+
+msgid "That document does not exist, or you cannot read it."
+msgstr "Dokumen itu tidak ada, atau Anda tidak dapat membacanya."
+
+msgid "That supplier does not exist or has been deleted."
+msgstr "Pemasok itu tidak ada atau telah dihapus."
+
+msgid "Back to the list"
+msgstr "Kembali ke daftar"
+
+msgid "Show deleted suppliers"
+msgstr "Tampilkan pemasok yang dihapus"
+
+msgid "Register a supplier"
+msgstr "Daftarkan pemasok"
+
+msgid "Vendor code"
+msgstr "Kode vendor"
+
+msgid "Letters, digits, dots, underscores and hyphens. Unique per organisation, ignoring case."
+msgstr "Huruf, angka, titik, garis bawah, dan tanda hubung. Unik per organisasi, tanpa membedakan huruf besar/kecil."
+
+msgid "Tags"
+msgstr "Tag"
+
+msgid "Separate categories and tags with commas. Lower-case letters, digits, dots, underscores and hyphens."
+msgstr "Pisahkan kategori dan tag dengan koma. Huruf kecil, angka, titik, garis bawah, dan tanda hubung."
+
+msgid "Register supplier"
+msgstr "Daftarkan pemasok"
+
+msgid "No supplier matches. Register one to start."
+msgstr "Tidak ada pemasok yang cocok. Daftarkan satu untuk memulai."
+
+msgid "Open {code}"
+msgstr "Buka {code}"
+
+msgid "Back to the suppliers"
+msgstr "Kembali ke pemasok"
+
+msgid "Save supplier"
+msgstr "Simpan pemasok"
+
+msgid "Delete {code}? Its documents keep referencing it, and it can be restored later."
+msgstr "Hapus {code}? Dokumennya tetap merujuknya, dan ia dapat dipulihkan nanti."
+
+msgid "Delete supplier"
+msgstr "Hapus pemasok"
+
+msgid "Identifiers and references"
+msgstr "Identifier dan referensi"
+
+msgid "Tax and business identifiers and payment or contact references are shown masked. Revealing one is a separate permission and is recorded in the audit log."
+msgstr "Identifier pajak dan usaha serta referensi pembayaran atau kontak ditampilkan tersamar. Menampilkan satu memerlukan izin terpisah dan dicatat di log audit."
+
+msgid "This supplier has no identifier or reference yet."
+msgstr "Pemasok ini belum memiliki identifier atau referensi."
+
+msgid "Label"
+msgstr "Label"
+
+msgid "Value (masked)"
+msgstr "Nilai (tersamar)"
+
+msgid "Reveal this value in clear text? The disclosure is recorded in the audit log."
+msgstr "Tampilkan nilai ini dalam teks polos? Pengungkapan dicatat di log audit."
+
+msgid "Reveal"
+msgstr "Tampilkan"
+
+msgid "Remove this identifier or reference?"
+msgstr "Hapus identifier atau referensi ini?"
+
+msgid "Revealed value"
+msgstr "Nilai yang ditampilkan"
+
+msgid "Shown once. It is not stored, and it disappears when you hide it, after a minute, or when you leave the page."
+msgstr "Ditampilkan sekali. Tidak disimpan, dan hilang saat disembunyikan, setelah semenit, atau saat Anda meninggalkan halaman."
+
+msgid "Hide"
+msgstr "Sembunyikan"
+
+msgid "Add an identifier or reference"
+msgstr "Tambah identifier atau referensi"
+
+msgid "Add identifier"
+msgstr "Tambah identifier"
+
+msgid "New draft document"
+msgstr "Dokumen draf baru"
+
+msgid "A draft moves no stock. Submit it to freeze its lines, then finalise it to post the movements through the stock ledger."
+msgstr "Draf tidak memindahkan stok. Kirim untuk membekukan barisnya, lalu finalisasi untuk mencatat pergerakan lewat buku besar stok."
+
+msgid "Supplier"
+msgstr "Pemasok"
+
+msgid "Supplier id"
+msgstr "ID pemasok"
+
+msgid "Destination location"
+msgstr "Lokasi tujuan"
+
+msgid "Source location"
+msgstr "Lokasi asal"
+
+msgid "Source location id"
+msgstr "ID lokasi asal"
+
+msgid "External reference"
+msgstr "Referensi eksternal"
+
+msgid "Document date"
+msgstr "Tanggal dokumen"
+
+msgid "Remove line {n}"
+msgstr "Hapus baris {n}"
+
+msgid "Line {n}"
+msgstr "Baris {n}"
+
+msgid "Quantity and cost are exact decimals (up to 6 decimals). A receipt and a supplier return need a unit cost; an item appears once per document."
+msgstr "Jumlah dan biaya adalah desimal persis (hingga 6 desimal). Penerimaan dan retur pemasok memerlukan biaya satuan; satu barang muncul sekali per dokumen."
+
+msgid "Add a line"
+msgstr "Tambah baris"
+
+msgid "Item name"
+msgstr "Nama barang"
+
+msgid "Unit cost"
+msgstr "Biaya satuan"
+
+msgid "No document matches. Create a draft to start."
+msgstr "Tidak ada dokumen yang cocok. Buat draf untuk memulai."
+
+msgid "Number"
+msgstr "Nomor"
+
+msgid "Total cost"
+msgstr "Total biaya"
+
+msgid "Back to the documents"
+msgstr "Kembali ke dokumen"
+
+msgid "{count} ledger movements are linked to this document."
+msgstr "{count} pergerakan buku besar terhubung ke dokumen ini."
+
+msgid "Submit this document? Its lines are frozen, and an approval may be started."
+msgstr "Kirim dokumen ini? Barisnya dibekukan, dan persetujuan dapat dimulai."
+
+msgid "Finalise this document? Its stock movements are posted to the ledger, all lines or none, and the document can no longer be edited."
+msgstr "Finalisasi dokumen ini? Pergerakan stoknya dicatat ke buku besar, semua baris atau tidak sama sekali, dan dokumen tidak dapat diubah lagi."
+
+msgid "Finalise"
+msgstr "Finalisasi"
+
+msgid "Cancel this document"
+msgstr "Batalkan dokumen ini"
+
+msgid "No stock was moved, so nothing is compensated. The document is kept, marked cancelled."
+msgstr "Tidak ada stok yang berpindah, jadi tidak ada yang dikompensasi. Dokumen disimpan dan ditandai dibatalkan."
+
+msgid "Cancel document"
+msgstr "Batalkan dokumen"
+
+msgid "Reverse this document"
+msgstr "Balikkan dokumen ini"
+
+msgid "Posts compensating stock movements. The original movements stay in the ledger, and a document can be reversed only once."
+msgstr "Mencatat pergerakan stok kompensasi. Pergerakan asli tetap di buku besar, dan dokumen hanya dapat dibalikkan sekali."
+
+msgid "Reverse document"
+msgstr "Balikkan dokumen"
+
+msgid "When a submitted document's total cost reaches the threshold, it needs approval before it can be finalised, through the workflow named {key}. With no threshold, approval is off. The threshold is cost-based, so a document without a cost, a requisition and a transfer never need it. A change applies only to documents submitted afterwards."
+msgstr "Bila total biaya dokumen terkirim mencapai ambang, dokumen perlu persetujuan sebelum difinalisasi, lewat alur kerja bernama {key}. Tanpa ambang, persetujuan nonaktif. Ambang berbasis biaya, jadi dokumen tanpa biaya, permintaan barang, dan transfer tidak pernah memerlukannya. Perubahan hanya berlaku untuk dokumen yang dikirim sesudahnya."
+
+msgid "Approval is off."
+msgstr "Persetujuan nonaktif."
+
+msgid "Documents with a total cost of {threshold} or more need approval."
+msgstr "Dokumen dengan total biaya {threshold} atau lebih memerlukan persetujuan."
+
+msgid "Approval threshold"
+msgstr "Ambang persetujuan"
+
+msgid "An exact decimal with up to 6 decimals. Leave empty to turn approval off."
+msgstr "Desimal persis hingga 6 desimal. Kosongkan untuk menonaktifkan persetujuan."
+
+msgid "Document date range"
+msgstr "Rentang tanggal dokumen"
+
+msgid "The date range is not valid. Use real dates, with From not after To."
+msgstr "Rentang tanggal tidak valid. Gunakan tanggal nyata, dengan Dari tidak setelah Sampai."
+
+msgid "Documents by kind and status"
+msgstr "Dokumen menurut jenis dan status"
+
+msgid "No document falls in this range."
+msgstr "Tidak ada dokumen dalam rentang ini."
+
+msgid "Activity per supplier"
+msgstr "Aktivitas per pemasok"
+
+msgid "No supplier activity falls in this range."
+msgstr "Tidak ada aktivitas pemasok dalam rentang ini."
+
+msgid "Receipts finalised"
+msgstr "Penerimaan difinalisasi"
+
+msgid "Returns finalised"
+msgstr "Retur difinalisasi"
+
+msgid "Open documents"
+msgstr "Dokumen terbuka"
+
+msgid "Received cost"
+msgstr "Biaya diterima"
+
+msgid "Returned cost"
+msgstr "Biaya diretur"
+
+msgid "Read-only proof that every finalised or reversed document agrees with the stock ledger: the right movements, of the right type, at the right location, in the right quantity. It changes nothing."
+msgstr "Bukti baca-saja bahwa setiap dokumen yang difinalisasi atau dibalikkan sesuai dengan buku besar stok: pergerakan yang benar, bertipe benar, di lokasi benar, dengan jumlah benar. Tidak mengubah apa pun."
+
+msgid "Reconciled: {documents} documents and {lines} lines were checked and all agree with the ledger."
+msgstr "Cocok: {documents} dokumen dan {lines} baris diperiksa dan semuanya sesuai dengan buku besar."
+
+msgid "Discrepancies found. {documents} documents and {lines} lines were checked."
+msgstr "Ditemukan selisih. {documents} dokumen dan {lines} baris diperiksa."
+
+msgid "{count} ledger movements carry a procurement identity with no document line behind them."
+msgstr "{count} pergerakan buku besar membawa identitas pengadaan tanpa baris dokumen di baliknya."
+
+msgid "The list is truncated; more discrepancies may exist."
+msgstr "Daftar dipotong; mungkin ada selisih lain."
+
+msgid "Expected movements"
+msgstr "Pergerakan diharapkan"
+
+msgid "Linked movements"
+msgstr "Pergerakan terhubung"
+
+msgid "Matching movements"
+msgstr "Pergerakan cocok"
+
+msgid "Post"
+msgstr "Posting"
+
+msgid "Recorded on the document and in the audit log."
+msgstr "Dicatat pada dokumen dan di log audit."
+
+msgid "Destination location id"
+msgstr "ID lokasi tujuan"
+
+msgid "Stock movements"
+msgstr "Mutasi stok"
+
+msgid "Partner access grants"
+msgstr "Akses yang diberikan kepada mitra"
+
+msgid "Waiting to retry"
+msgstr "Menunggu percobaan ulang"
+
+msgid "Transactional"
+msgstr "Transaksional"
+
+msgid "Security"
+msgstr "Keamanan"
+
+msgid "Marketing"
+msgstr "Pemasaran"
+
+msgid "Number cannot receive WhatsApp"
+msgstr "Nomor tidak dapat menerima WhatsApp"
+
+msgid "Asked to stop"
+msgstr "Meminta berhenti"
+
+msgid "WhatsApp delivery"
+msgstr "Pengiriman WhatsApp"
+
+msgid "The tenant's WhatsApp queue, who may be messaged, and what modules are allowed to send. Phone numbers are masked everywhere on this page."
+msgstr "Antrean WhatsApp tenant, siapa yang boleh dihubungi, dan apa yang boleh dikirim modul. Nomor telepon disamarkan di seluruh halaman ini."
+
+msgid "You do not have permission to view WhatsApp delivery."
+msgstr "Anda tidak memiliki izin untuk melihat pengiriman WhatsApp."
+
+msgid "Could not load WhatsApp delivery. Please try again."
+msgstr "Pengiriman WhatsApp tidak dapat dimuat. Silakan coba lagi."
+
+msgid "WhatsApp is switched off on this deployment, so nothing is being sent. Messages are refused at enqueue and the dispatcher claims nothing."
+msgstr "WhatsApp dimatikan pada deployment ini, sehingga tidak ada yang terkirim. Pesan ditolak saat masuk antrean dan dispatcher tidak mengambil apa pun."
+
+msgid "WhatsApp is switched on but no provider is configured, so every queued message will fail."
+msgstr "WhatsApp diaktifkan tetapi tidak ada provider yang dikonfigurasi, sehingga setiap pesan dalam antrean akan gagal."
+
+msgid "Provider:"
+msgstr "Provider:"
+
+msgid "Purpose"
+msgstr "Tujuan"
+
+msgid "Recipient"
+msgstr "Penerima"
+
+msgid "No WhatsApp messages recorded."
+msgstr "Belum ada pesan WhatsApp yang tercatat."
+
+msgid "Newest 50 shown; older messages are removed by retention, not browsed."
+msgstr "50 terbaru ditampilkan; pesan yang lebih lama dihapus oleh retensi, bukan untuk dijelajahi."
+
+msgid "Marketing consent"
+msgstr "Persetujuan pemasaran"
+
+msgid "A marketing message is sent only to a recipient with a recorded opt-in. Being in a segment, list or campaign audience never counts as consent."
+msgstr "Pesan pemasaran hanya dikirim ke penerima yang opt-in-nya tercatat. Berada dalam segmen, daftar, atau audiens kampanye tidak pernah dianggap persetujuan."
+
+msgid "Phone number"
+msgstr "Nomor telepon"
+
+msgid "Where the opt-in came from"
+msgstr "Asal opt-in"
+
+msgid "Record opt-in"
+msgstr "Catat opt-in"
+
+msgid "Opted in"
+msgstr "Opt-in"
+
+msgid "Opted out"
+msgstr "Opt-out"
+
+msgid "No consents recorded."
+msgstr "Belum ada persetujuan yang tercatat."
+
+msgid "Record opt-out"
+msgstr "Catat opt-out"
+
+msgid "Suppressed numbers"
+msgstr "Nomor yang ditekan"
+
+msgid "The list shows masked numbers only, so it cannot be searched. Submitting a number that is already suppressed does not add a second entry — it tells you it is already there."
+msgstr "Daftar hanya menampilkan nomor yang disamarkan, sehingga tidak dapat dicari. Mengirim nomor yang sudah ditekan tidak menambah entri kedua — Anda akan diberi tahu bahwa nomor itu sudah ada."
+
+msgid "Suppress number"
+msgstr "Tekan nomor"
+
+msgid "Nothing is suppressed."
+msgstr "Tidak ada yang ditekan."
+
+msgid "A number removed here can receive messages from the next send onwards; messages already cancelled are not resent."
+msgstr "Nomor yang dihapus di sini dapat menerima pesan mulai pengiriman berikutnya; pesan yang sudah dibatalkan tidak dikirim ulang."
+
+msgid "Registered templates"
+msgstr "Templat terdaftar"
+
+msgid "Modules register their templates in code. Each has exactly one purpose, and a variable that is not on its list is dropped before sending."
+msgstr "Modul mendaftarkan templatnya di kode. Setiap templat memiliki tepat satu tujuan, dan variabel yang tidak ada dalam daftarnya dibuang sebelum dikirim."
+
+msgid "Allowed variables"
+msgstr "Variabel yang diizinkan"
+
+msgid "Provider approval"
+msgstr "Persetujuan provider"
+
+msgid "Approved template set"
+msgstr "Templat disetujui tersedia"
+
+msgid "WhatsApp Delivery"
+msgstr "Pengiriman WhatsApp"
+
+msgid "Reverse a recorded opt-out"
+msgstr "Membalik opt-out yang tercatat"
+
+msgid "Only when this person opted out and has since given new, documented consent. The opt-out stays on the record."
+msgstr "Hanya bila orang ini pernah opt-out dan kemudian memberi persetujuan baru yang terdokumentasi. Opt-out tetap tercatat."
+
+msgid "Reinstate over an opt-out"
+msgstr "Pulihkan di atas opt-out"
+
+msgid "Evidence reference"
+msgstr "Referensi bukti"
+
+msgid "Waiting for confirmation"
+msgstr "Menunggu konfirmasi"
+
+msgid "Unlinked by the person"
+msgstr "Diputus oleh orangnya"
+
+msgid "Stopped from Telegram"
+msgstr "Dihentikan dari Telegram"
+
+msgid "Revoked by an administrator"
+msgstr "Dicabut oleh administrator"
+
+msgid "Staff member deactivated"
+msgstr "Staf dinonaktifkan"
+
+msgid "Module switched off"
+msgstr "Modul dimatikan"
+
+msgid "Telegram switched off for the tenant"
+msgstr "Telegram dimatikan untuk tenant"
+
+msgid "Telegram could not reach the chat"
+msgstr "Telegram tidak dapat menjangkau chat"
+
+msgid "Rejected as not theirs"
+msgstr "Ditolak karena bukan miliknya"
+
+msgid "Confirmation expired"
+msgstr "Konfirmasi kedaluwarsa"
+
+msgid "Replaced by a newer chat"
+msgstr "Digantikan chat yang lebih baru"
+
+msgid "Replaced by a newer request"
+msgstr "Digantikan permintaan yang lebih baru"
+
+msgid "Erased"
+msgstr "Dihapus"
+
+msgid "Telegram delivery"
+msgstr "Pengiriman Telegram"
+
+msgid "Operational alerts for staff on Telegram: link your own chat, see whose chats are linked, and check the queue. Chat ids are never shown."
+msgstr "Notifikasi operasional untuk staf di Telegram: tautkan chat Anda sendiri, lihat chat siapa yang tertaut, dan periksa antrean. Id chat tidak pernah ditampilkan."
+
+msgid "You do not have permission to view Telegram delivery."
+msgstr "Anda tidak memiliki izin untuk melihat pengiriman Telegram."
+
+msgid "Could not load Telegram delivery. Please try again."
+msgstr "Pengiriman Telegram tidak dapat dimuat. Silakan coba lagi."
+
+msgid "Telegram carries operational and staff alerts only. It is off unless the deployment, this tenant and the person have each turned it on."
+msgstr "Telegram hanya membawa notifikasi operasional dan staf. Telegram mati kecuali deployment, tenant ini, dan orangnya masing-masing menyalakannya."
+
+msgid "Telegram is switched off on this deployment, so nothing is being sent. Messages are refused at enqueue and the dispatcher claims nothing."
+msgstr "Telegram dimatikan pada deployment ini, sehingga tidak ada yang dikirim. Pesan ditolak saat masuk antrean dan dispatcher tidak mengklaim apa pun."
+
+msgid "Telegram is switched on but the deployment is missing part of its configuration, so no chat can be linked and nothing will be sent."
+msgstr "Telegram dinyalakan tetapi sebagian konfigurasi deployment belum ada, sehingga tidak ada chat yang dapat ditautkan dan tidak ada yang akan dikirim."
+
+msgid "The Telegram delivery module is switched off for this tenant in module management."
+msgstr "Modul pengiriman Telegram dimatikan untuk tenant ini di manajemen modul."
+
+msgid "Tenant setting:"
+msgstr "Pengaturan tenant:"
+
+msgid "On"
+msgstr "Aktif"
+
+msgid "Off"
+msgstr "Nonaktif"
+
+msgid "Turn Telegram off for this tenant"
+msgstr "Matikan Telegram untuk tenant ini"
+
+msgid "Turn Telegram on for this tenant"
+msgstr "Nyalakan Telegram untuk tenant ini"
+
+msgid "Turning it off unlinks every staff member's chat and erases the stored chat ids. Staff must link again if it is turned back on."
+msgstr "Mematikannya akan memutus tautan chat setiap staf dan menghapus id chat yang tersimpan. Staf harus menautkan ulang jika dinyalakan kembali."
+
+msgid "My Telegram chat"
+msgstr "Chat Telegram saya"
+
+msgid "You have no Telegram chat linked. Request a link, open it in Telegram on your phone, and press Start. You will then confirm here that the chat is yours."
+msgstr "Anda belum menautkan chat Telegram. Minta tautan, buka di Telegram pada ponsel Anda, lalu tekan Start. Setelah itu Anda mengonfirmasi di sini bahwa chat tersebut milik Anda."
+
+msgid "Link my Telegram"
+msgstr "Tautkan Telegram saya"
+
+msgid "Open this link in Telegram within 10 minutes. It works once and is shown only now."
+msgstr "Buka tautan ini di Telegram dalam 10 menit. Tautan hanya berlaku sekali dan hanya ditampilkan sekarang."
+
+msgid "A Telegram chat used your link code. Is this you? Only confirm if you recognise it."
+msgstr "Sebuah chat Telegram memakai kode tautan Anda. Apakah ini Anda? Konfirmasi hanya jika Anda mengenalinya."
+
+msgid "(no name)"
+msgstr "(tanpa nama)"
+
+msgid "Verification PIN"
+msgstr "PIN verifikasi"
+
+msgid "Enter the 6-digit PIN the bot sent to that Telegram chat. If you did not receive one, this is not your chat: press No."
+msgstr "Masukkan PIN 6 digit yang dikirim bot ke chat Telegram tersebut. Jika Anda tidak menerimanya, ini bukan chat Anda: tekan Bukan."
+
+msgid "Yes, this is me"
+msgstr "Ya, ini saya"
+
+msgid "No, this is not me"
+msgstr "Bukan, ini bukan saya"
+
+msgid "Your Telegram chat is linked and receives your alerts:"
+msgstr "Chat Telegram Anda tertaut dan menerima notifikasi Anda:"
+
+msgid "Confirmed:"
+msgstr "Dikonfirmasi:"
+
+msgid "Unlink my Telegram"
+msgstr "Putuskan tautan Telegram saya"
+
+msgid "Linked chats"
+msgstr "Chat tertaut"
+
+msgid "Each staff member can link one private chat. The chat is shown masked only; groups and channels cannot be linked."
+msgstr "Setiap staf dapat menautkan satu chat pribadi. Chat hanya ditampilkan disamarkan; grup dan kanal tidak dapat ditautkan."
+
+msgid "Staff member"
+msgstr "Staf"
+
+msgid "Chat"
+msgstr "Chat"
+
+msgid "Linked"
+msgstr "Tertaut"
+
+msgid "No Telegram chats linked."
+msgstr "Belum ada chat Telegram yang tertaut."
+
+msgid "No Telegram messages recorded."
+msgstr "Belum ada pesan Telegram yang tercatat."
+
+msgid "Modules register their templates in code. Every template is an operational alert for staff; variables are typed and cannot carry names, contact details or free text, and anything not on the list is dropped before sending."
+msgstr "Modul mendaftarkan templatenya di kode. Setiap template adalah notifikasi operasional untuk staf; variabel bertipe dan tidak dapat membawa nama, kontak, atau teks bebas, dan apa pun yang tidak ada di daftar dibuang sebelum dikirim."
+
+msgid "Telegram Delivery"
+msgstr "Pengiriman Telegram"
+
+msgid "Tenant suspended"
+msgstr "Tenant ditangguhkan"
+
+#. Booking admin screens (Issue #942)
+msgid "A pool groups interchangeable resources, such as three treatment rooms. A resource joins a pool in its own form."
+msgstr "Pool mengelompokkan resource yang dapat saling menggantikan, misalnya tiga ruang perawatan. Sebuah resource masuk ke pool lewat formulirnya sendiri."
+
+msgid "A unit is never removed. Deactivating it stops new bookings on it; bookings already made stay."
+msgstr "Unit tidak pernah dihapus. Menonaktifkannya menghentikan pemesanan baru pada unit itu; pemesanan yang sudah dibuat tetap berlaku."
+
+msgid "Add a closure or special hours"
+msgstr "Tambah penutupan atau jam khusus"
+
+msgid "Add a resource booked by night before blocking nights."
+msgstr "Tambahkan resource yang dipesan per malam sebelum memblokir malam."
+
+msgid "Add opening hours"
+msgstr "Tambah jam buka"
+
+msgid "Add weekly opening hours"
+msgstr "Tambah jam buka mingguan"
+
+msgid "Add weekly opening hours so slot resources can be booked."
+msgstr "Tambahkan jam buka mingguan agar resource berbasis waktu dapat dipesan."
+
+msgid "An active schedule already covers part of that period. Shorten or deactivate it first."
+msgstr "Jadwal aktif sudah mencakup sebagian periode itu. Persingkat atau nonaktifkan dulu."
+
+msgid "Back on sale"
+msgstr "Kembali dijual"
+
+msgid "Back on sale on"
+msgstr "Kembali dijual pada"
+
+msgid "Back to normal on"
+msgstr "Kembali normal pada"
+
+msgid "Block nights"
+msgstr "Blokir malam"
+
+msgid "Block status"
+msgstr "Status blok"
+
+msgid "Blocked nights"
+msgstr "Malam terblokir"
+
+msgid "Blocked nights apply to stay resources only."
+msgstr "Malam terblokir hanya berlaku untuk resource menginap."
+
+msgid "Blocked nights could not be loaded right now. Please try again later."
+msgstr "Malam terblokir tidak dapat dimuat saat ini. Coba lagi nanti."
+
+msgid "Bookable up to (days ahead)"
+msgstr "Dapat dipesan hingga (hari ke depan)"
+
+msgid "Booked"
+msgstr "Dipesan"
+
+msgid "Booking policy"
+msgstr "Kebijakan pemesanan"
+
+msgid "By night"
+msgstr "Per malam"
+
+msgid "By time"
+msgstr "Per waktu"
+
+msgid "Cancel reservation"
+msgstr "Batalkan reservasi"
+
+msgid "Cancel reservation {number}? Its resource is released."
+msgstr "Batalkan reservasi {number}? Resource-nya dilepas."
+
+msgid "Capacity can only grow. Deactivate a unit instead of removing it."
+msgstr "Kapasitas hanya dapat bertambah. Nonaktifkan unit, bukan menghapusnya."
+
+msgid "Check in"
+msgstr "Check-in"
+
+msgid "Check-in time"
+msgstr "Jam check-in"
+
+msgid "Check-out time"
+msgstr "Jam check-out"
+
+msgid "Checked in"
+msgstr "Sudah check-in"
+
+msgid "Cleanup after (minutes)"
+msgstr "Pembersihan sesudah (menit)"
+
+msgid "Closes at"
+msgstr "Tutup pukul"
+
+msgid "Closures and special hours"
+msgstr "Penutupan dan jam khusus"
+
+msgid "Complete"
+msgstr "Selesaikan"
+
+msgid "Confirmation"
+msgstr "Konfirmasi"
+
+msgid "Confirmed"
+msgstr "Terkonfirmasi"
+
+msgid "Create a pool"
+msgstr "Buat pool"
+
+msgid "Create a resource"
+msgstr "Buat resource"
+
+msgid "Create an offering"
+msgstr "Buat offering"
+
+msgid "Create offering"
+msgstr "Buat offering"
+
+msgid "Create pool"
+msgstr "Buat pool"
+
+msgid "Create resource"
+msgstr "Buat resource"
+
+msgid "Create your first offering using the form above."
+msgstr "Buat offering pertama Anda dengan formulir di atas."
+
+msgid "Create your first resource using the form above."
+msgstr "Buat resource pertama Anda dengan formulir di atas."
+
+msgid "Dates"
+msgstr "Tanggal"
+
+msgid "Deactivate this schedule? Existing bookings are not changed."
+msgstr "Nonaktifkan jadwal ini? Pemesanan yang ada tidak berubah."
+
+msgid "Default: {value}"
+msgstr "Bawaan: {value}"
+
+msgid "Default: {value} days"
+msgstr "Bawaan: {value} hari"
+
+msgid "Default: {value} minutes"
+msgstr "Bawaan: {value} menit"
+
+msgid "Defaults offered for new stay resources"
+msgstr "Bawaan yang ditawarkan untuk resource menginap baru"
+
+msgid "Delete the pool {code}? It can be restored later."
+msgstr "Hapus pool {code}? Pool dapat dipulihkan nanti."
+
+msgid "Delete {code}? It can be restored later."
+msgstr "Hapus {code}? Dapat dipulihkan nanti."
+
+msgid "Deleted offerings"
+msgstr "Offering terhapus"
+
+msgid "Deleted pools"
+msgstr "Pool terhapus"
+
+msgid "Deleted resources"
+msgstr "Resource terhapus"
+
+msgid "Duration (minutes)"
+msgstr "Durasi (menit)"
+
+msgid "Edit offering {code}"
+msgstr "Ubah offering {code}"
+
+msgid "Edit resource {code}"
+msgstr "Ubah resource {code}"
+
+msgid "Edit {code}"
+msgstr "Sunting {code}"
+
+msgid "Effective until (optional, exclusive)"
+msgstr "Berlaku sampai (opsional, tidak termasuk)"
+
+msgid "End on"
+msgstr "Akhiri pada"
+
+msgid "Every booking and hold, newest first. A hold is a reservation waiting for confirmation until its expiry."
+msgstr "Semua pemesanan dan hold, terbaru lebih dulu. Hold adalah reservasi yang menunggu konfirmasi hingga kedaluwarsa."
+
+msgid "Every resource without its own hours"
+msgstr "Setiap resource tanpa jam sendiri"
+
+msgid "Every unit"
+msgstr "Semua unit"
+
+msgid "First blocked night"
+msgstr "Malam pertama yang diblokir"
+
+msgid "First day"
+msgstr "Hari pertama"
+
+msgid "Free cancellation until (minutes before start)"
+msgstr "Pembatalan gratis hingga (menit sebelum mulai)"
+
+msgid "Fri"
+msgstr "Jum"
+
+msgid "Guests"
+msgstr "Tamu"
+
+msgid "Hold expired"
+msgstr "Hold kedaluwarsa"
+
+msgid "Hold expires"
+msgstr "Hold kedaluwarsa pada"
+
+msgid "Hold lasts (minutes)"
+msgstr "Hold berlaku (menit)"
+
+msgid "Hold placed"
+msgstr "Hold dibuat"
+
+msgid "Hold, then confirm"
+msgstr "Hold, lalu konfirmasi"
+
+msgid "Holds"
+msgstr "Hold"
+
+msgid "Holiday"
+msgstr "Hari libur"
+
+msgid "Hours"
+msgstr "Jam"
+
+msgid "Immediately"
+msgstr "Langsung"
+
+msgid "Kind (for example room, chair, court)"
+msgstr "Jenis (misalnya room, chair, court)"
+
+msgid "Label of unit {number}"
+msgstr "Label unit {number}"
+
+msgid "Leave notice, cancellation and horizon blank to use the booking policy."
+msgstr "Kosongkan pemberitahuan, pembatalan, dan horizon untuk memakai kebijakan pemesanan."
+
+msgid "Length"
+msgstr "Lama"
+
+msgid "Live holds in total"
+msgstr "Total hold aktif"
+
+msgid "Live holds per customer"
+msgstr "Hold aktif per pelanggan"
+
+msgid "Longest hold (minutes)"
+msgstr "Hold terlama (menit)"
+
+msgid "Mark as no-show"
+msgstr "Tandai tidak hadir"
+
+msgid "Mark reservation {number} as a no-show?"
+msgstr "Tandai reservasi {number} sebagai tidak hadir?"
+
+msgid "Marked as no-show"
+msgstr "Ditandai tidak hadir"
+
+msgid "Maximum guests"
+msgstr "Tamu maksimum"
+
+msgid "Maximum nights"
+msgstr "Malam maksimum"
+
+msgid "Minimum guests"
+msgstr "Tamu minimum"
+
+msgid "Minimum nights"
+msgstr "Malam minimum"
+
+msgid "Minimum notice (minutes)"
+msgstr "Pemberitahuan minimum (menit)"
+
+msgid "Mon"
+msgstr "Sen"
+
+msgid "Name of pool {code}"
+msgstr "Nama pool {code}"
+
+msgid "New end date, exclusive"
+msgstr "Tanggal akhir baru, tidak termasuk"
+
+msgid "Nights"
+msgstr "Malam"
+
+msgid "Nights you block will appear here."
+msgstr "Malam yang Anda blokir akan muncul di sini."
+
+msgid "No blocked nights"
+msgstr "Tidak ada malam terblokir"
+
+msgid "No closures"
+msgstr "Tidak ada penutupan"
+
+msgid "No offerings yet"
+msgstr "Belum ada offering"
+
+msgid "No pool"
+msgstr "Tanpa pool"
+
+msgid "No pools yet"
+msgstr "Belum ada pool"
+
+msgid "No reason"
+msgstr "Tanpa alasan"
+
+msgid "No reservations"
+msgstr "Tidak ada reservasi"
+
+msgid "No resources yet"
+msgstr "Belum ada resource"
+
+msgid "No schedules yet"
+msgstr "Belum ada jadwal"
+
+msgid "No-show"
+msgstr "Tidak hadir"
+
+msgid "No-show grace (minutes)"
+msgstr "Toleransi tidak hadir (menit)"
+
+msgid "Offering"
+msgstr "Offering"
+
+msgid "Offerings"
+msgstr "Offering"
+
+msgid "Offerings could not be loaded right now. Please try again later."
+msgstr "Offering tidak dapat dimuat saat ini. Coba lagi nanti."
+
+msgid "Offerings created for this tenant will appear here."
+msgstr "Offering yang dibuat untuk tenant ini akan muncul di sini."
+
+msgid "Open on"
+msgstr "Buka pada"
+
+msgid "Opens at"
+msgstr "Buka pukul"
+
+msgid "Overdue"
+msgstr "Terlambat dilepas"
+
+msgid "Owner use"
+msgstr "Dipakai pemilik"
+
+msgid "Please wait…"
+msgstr "Mohon tunggu…"
+
+msgid "Pool"
+msgstr "Pool"
+
+msgid "Private event"
+msgstr "Acara pribadi"
+
+msgid "Release this block and put its nights back on sale?"
+msgstr "Lepaskan blok ini dan kembalikan malamnya ke penjualan?"
+
+msgid "Remove this closure or special-hours entry?"
+msgstr "Hapus penutupan atau jam khusus ini?"
+
+msgid "Replaced by"
+msgstr "Digantikan oleh"
+
+msgid "Rescheduled"
+msgstr "Dijadwalkan ulang"
+
+msgid "Rescheduled from"
+msgstr "Dijadwalkan ulang dari"
+
+msgid "Reservation"
+msgstr "Reservasi"
+
+msgid "Reservation status"
+msgstr "Status reservasi"
+
+msgid "Reservation {number}"
+msgstr "Reservasi {number}"
+
+msgid "Reservations"
+msgstr "Reservasi"
+
+msgid "Reservations and holds appear here as they are made."
+msgstr "Reservasi dan hold muncul di sini saat dibuat."
+
+msgid "Reservations could not be loaded right now. Please try again later."
+msgstr "Reservasi tidak dapat dimuat saat ini. Coba lagi nanti."
+
+msgid "Resource pools"
+msgstr "Pool resource"
+
+msgid "Resources"
+msgstr "Resource"
+
+msgid "Resources could not be loaded right now. Please try again later."
+msgstr "Resource tidak dapat dimuat saat ini. Coba lagi nanti."
+
+msgid "Resources created for this tenant will appear here."
+msgstr "Resource yang dibuat untuk tenant ini akan muncul di sini."
+
+msgid "Sat"
+msgstr "Sab"
+
+msgid "Save offering"
+msgstr "Simpan offering"
+
+msgid "Save policy"
+msgstr "Simpan kebijakan"
+
+msgid "Save resource"
+msgstr "Simpan resource"
+
+msgid "Schedules and closures"
+msgstr "Jadwal dan penutupan"
+
+msgid "Schedules could not be loaded right now. Please try again later."
+msgstr "Jadwal tidak dapat dimuat saat ini. Coba lagi nanti."
+
+msgid "Setup before (minutes)"
+msgstr "Persiapan sebelum (menit)"
+
+msgid "Some fields are not valid. Check them and try again."
+msgstr "Beberapa isian tidak valid. Periksa lalu coba lagi."
+
+msgid "Some of those nights are already booked or blocked. Nothing was changed."
+msgstr "Sebagian malam itu sudah dipesan atau diblokir. Tidak ada yang diubah."
+
+msgid "Special hours"
+msgstr "Jam khusus"
+
+msgid "Start times every (minutes)"
+msgstr "Waktu mulai setiap (menit)"
+
+msgid "Status of unit {number}"
+msgstr "Status unit {number}"
+
+msgid "Sun"
+msgstr "Min"
+
+msgid "Take nights of a stay resource out of sale for maintenance or owner use. A block never cancels a booking: nights that are already booked cannot be blocked."
+msgstr "Tarik malam sebuah resource menginap dari penjualan untuk perawatan atau pemakaian pemilik. Blok tidak pernah membatalkan pemesanan: malam yang sudah dipesan tidak dapat diblokir."
+
+msgid "That block no longer exists."
+msgstr "Blok itu sudah tidak ada."
+
+msgid "That code is already in use, including by a deleted record."
+msgstr "Kode itu sudah dipakai, termasuk oleh data yang terhapus."
+
+msgid "That offering no longer exists."
+msgstr "Offering itu sudah tidak ada."
+
+msgid "That pool no longer exists."
+msgstr "Pool itu sudah tidak ada."
+
+msgid "That reservation no longer exists."
+msgstr "Reservasi itu sudah tidak ada."
+
+msgid "That reservation was not found."
+msgstr "Reservasi itu tidak ditemukan."
+
+msgid "That resource no longer exists."
+msgstr "Resource itu sudah tidak ada."
+
+msgid "That time zone is not known."
+msgstr "Zona waktu itu tidak dikenal."
+
+msgid "That unit does not belong to this resource."
+msgstr "Unit itu bukan milik resource ini."
+
+msgid "The booking is no longer in a state that allows that. Reload the page."
+msgstr "Pemesanan tidak lagi dalam keadaan yang mengizinkan itu. Muat ulang halaman."
+
+msgid "The booking mode cannot change while the resource has live bookings or blocks."
+msgstr "Mode pemesanan tidak dapat berubah selama resource punya pemesanan atau blok aktif."
+
+msgid "The booking policy could not be loaded right now. Please try again later."
+msgstr "Kebijakan pemesanan tidak dapat dimuat saat ini. Coba lagi nanti."
+
+msgid "The booking, what it holds and every step it has been through."
+msgstr "Pemesanan, apa yang ditahannya, dan setiap langkah yang telah dilaluinya."
+
+msgid "The change could not be saved. Please try again."
+msgstr "Perubahan tidak dapat disimpan. Silakan coba lagi."
+
+msgid "The database refused this change."
+msgstr "Database menolak perubahan ini."
+
+msgid "The dates are not valid: check-out must be after check-in."
+msgstr "Tanggal tidak valid: check-out harus setelah check-in."
+
+msgid "The hold has expired."
+msgstr "Hold sudah kedaluwarsa."
+
+msgid "The new reservation"
+msgstr "Reservasi yang baru"
+
+msgid "The pool is deleted. Restore the pool first."
+msgstr "Pool terhapus. Pulihkan pool dulu."
+
+msgid "The pool still has resources. Move them out first."
+msgstr "Pool masih punya resource. Pindahkan dulu."
+
+msgid "The previous reservation"
+msgstr "Reservasi sebelumnya"
+
+msgid "The reservation could not be loaded right now. Please try again later."
+msgstr "Reservasi tidak dapat dimuat saat ini. Coba lagi nanti."
+
+msgid "The resource has an active schedule in its current time zone. Deactivate the schedule first."
+msgstr "Resource punya jadwal aktif pada zona waktunya saat ini. Nonaktifkan jadwal dulu."
+
+msgid "The resource has live bookings or blocks. Cancel or release them, or set it to inactive."
+msgstr "Resource punya pemesanan atau blok aktif. Batalkan atau lepaskan, atau ubah menjadi nonaktif."
+
+msgid "The rooms, chairs, courts or vehicles that can be booked, the units each one has, and the pools that group interchangeable resources."
+msgstr "Ruangan, kursi, lapangan, atau kendaraan yang dapat dipesan, unit yang dimiliki masing-masing, dan pool yang mengelompokkan resource yang dapat saling menggantikan."
+
+msgid "The rules every booking follows. A blank field uses the built-in default shown beside it, which is not the same as unlimited."
+msgstr "Aturan yang diikuti setiap pemesanan. Isian kosong memakai bawaan yang ditampilkan di sebelahnya, yang tidak sama dengan tanpa batas."
+
+msgid "The server could not be reached. Please try again."
+msgstr "Server tidak dapat dihubungi. Silakan coba lagi."
+
+msgid "The services and stays that can be booked: how long they last, how many guests they take and how a booking is confirmed. An offering holds no price."
+msgstr "Layanan dan penginapan yang dapat dipesan: berapa lama, berapa tamu, dan bagaimana pemesanan dikonfirmasi. Offering tidak memuat harga."
+
+msgid "The time zone cannot change while the resource has live bookings or blocks."
+msgstr "Zona waktu tidak dapat berubah selama resource punya pemesanan atau blok aktif."
+
+msgid "The values break a rule of the booking setup."
+msgstr "Nilainya melanggar aturan pengaturan pemesanan."
+
+msgid "These are suggestions for the resource form; the server does not apply them by itself."
+msgstr "Ini hanya saran untuk formulir resource; server tidak menerapkannya sendiri."
+
+msgid "This offering is deleted. Restore it first."
+msgstr "Offering ini terhapus. Pulihkan dulu."
+
+msgid "This request was already used for a different change. Reload the page and try again."
+msgstr "Permintaan ini sudah dipakai untuk perubahan lain. Muat ulang halaman lalu coba lagi."
+
+msgid "This resource is deleted. Restore it first."
+msgstr "Resource ini terhapus. Pulihkan dulu."
+
+msgid "This schedule can no longer be changed."
+msgstr "Jadwal ini tidak dapat diubah lagi."
+
+msgid "Through a schedule"
+msgstr "Lewat jadwal"
+
+msgid "Thu"
+msgstr "Kam"
+
+msgid "Times are shown in UTC."
+msgstr "Waktu ditampilkan dalam UTC."
+
+msgid "Tue"
+msgstr "Sel"
+
+msgid "Unit labels (optional, one per line)"
+msgstr "Label unit (opsional, satu per baris)"
+
+msgid "Units"
+msgstr "Unit"
+
+msgid "Units (can only grow)"
+msgstr "Unit (hanya dapat bertambah)"
+
+msgid "Wed"
+msgstr "Rab"
+
+msgid "What is booked"
+msgstr "Apa yang dipesan"
+
+msgid "When bookings can be made"
+msgstr "Kapan pemesanan dapat dibuat"
+
+msgid "When each resource can be booked, and the days it is closed or opens at different hours. Changes affect future availability only; no existing booking is touched."
+msgstr "Kapan setiap resource dapat dipesan, dan hari ketika tutup atau buka pada jam berbeda. Perubahan hanya memengaruhi ketersediaan mendatang; tidak ada pemesanan yang disentuh."
+
+msgid "You can read the policy but not change it."
+msgstr "Anda dapat membaca kebijakan tetapi tidak mengubahnya."
+
+msgid "You do not have permission to view blocked nights."
+msgstr "Anda tidak punya izin melihat malam terblokir."
+
+msgid "You do not have permission to view booking offerings."
+msgstr "Anda tidak punya izin melihat offering pemesanan."
+
+msgid "You do not have permission to view booking resources."
+msgstr "Anda tidak punya izin melihat resource pemesanan."
+
+msgid "You do not have permission to view reservations."
+msgstr "Anda tidak punya izin melihat reservasi."
+
+msgid "You do not have permission to view schedules."
+msgstr "Anda tidak punya izin melihat jadwal."
+
+msgid "You do not have permission to view the booking policy."
+msgstr "Anda tidak punya izin melihat kebijakan pemesanan."
+
+msgid "{active} of {total} active"
+msgstr "{active} dari {total} aktif"
+
+
+msgid "{minutes} min"
+msgstr "{minutes} mnt"
+
+
+msgid "{count} block"
+msgid_plural "{count} blocks"
+msgstr[0] "{count} blok"
+
+msgid "{count} deleted offering"
+msgid_plural "{count} deleted offerings"
+msgstr[0] "{count} offering terhapus"
+
+msgid "{count} deleted resource"
+msgid_plural "{count} deleted resources"
+msgstr[0] "{count} resource terhapus"
+
+msgid "{count} entry"
+msgid_plural "{count} entries"
+msgstr[0] "{count} entri"
+
+msgid "{count} item"
+msgid_plural "{count} items"
+msgstr[0] "{count} item"
+
+msgid "{count} offering"
+msgid_plural "{count} offerings"
+msgstr[0] "{count} offering"
+
+msgid "{count} pool"
+msgid_plural "{count} pools"
+msgstr[0] "{count} pool"
+
+msgid "{count} reservation"
+msgid_plural "{count} reservations"
+msgstr[0] "{count} reservasi"
+
+msgid "{count} resource"
+msgid_plural "{count} resources"
+msgstr[0] "{count} resource"
+
+msgid "{count} schedule"
+msgid_plural "{count} schedules"
+msgstr[0] "{count} jadwal"
+
+msgid "Booking resources"
+msgstr "Resource pemesanan"
+
+msgid "Booking offerings"
+msgstr "Offering pemesanan"
+
+msgid "Booking schedules"
+msgstr "Jadwal pemesanan"
+
+msgid "Back to reservations"
+msgstr "Kembali ke reservasi"
+
+msgid "Stored as {seconds} seconds."
+msgstr "Tersimpan sebagai {seconds} detik."
+
+msgid "There is nothing to change."
+msgstr "Tidak ada yang diubah."
+
+msgid "{checkIn} to {checkOut} ({nights} night)"
+msgid_plural "{checkIn} to {checkOut} ({nights} nights)"
+msgstr[0] "{checkIn} sampai {checkOut} ({nights} malam)"
+
+msgid "{min}–{max} night"
+msgid_plural "{min}–{max} nights"
+msgstr[0] "{min}–{max} malam"
+
+msgid "Continue"
+msgstr "Lanjutkan"
+
+msgid "My work"
+msgstr "Pekerjaan saya"
+
+msgid "Your upcoming shifts, your attendance record and your correction requests."
+msgstr "Shift Anda yang akan datang, catatan kehadiran Anda, dan permintaan koreksi Anda."
+
+msgid "You do not have permission to view this page."
+msgstr "Anda tidak memiliki izin untuk melihat halaman ini."
+
+msgid "Your schedule could not be loaded right now. Please try again later."
+msgstr "Jadwal Anda tidak dapat dimuat saat ini. Silakan coba lagi nanti."
+
+msgid "No employment is linked to your login"
+msgstr "Belum ada data kepegawaian yang ditautkan ke akun Anda"
+
+msgid "Ask your administrator to link your login to your employment record."
+msgstr "Minta administrator untuk menautkan akun Anda ke data kepegawaian Anda."
+
+msgid "Upcoming shifts"
+msgstr "Shift yang akan datang"
+
+msgid "Starts"
+msgstr "Mulai"
+
+msgid "No upcoming shifts"
+msgstr "Tidak ada shift yang akan datang"
+
+msgid "Published shifts for the next 14 days appear here."
+msgstr "Shift yang sudah dipublikasikan untuk 14 hari ke depan muncul di sini."
+
+msgid "My attendance"
+msgstr "Kehadiran saya"
+
+msgid "Time (UTC)"
+msgstr "Waktu (UTC)"
+
+msgid "No attendance recorded"
+msgstr "Belum ada kehadiran tercatat"
+
+msgid "Your clock-ins, clock-outs and breaks of the last 14 days appear here."
+msgstr "Absen masuk, absen pulang, dan istirahat Anda dalam 14 hari terakhir muncul di sini."
+
+msgid "My correction requests"
+msgstr "Permintaan koreksi saya"
+
+msgid "Request a correction"
+msgstr "Ajukan koreksi"
+
+msgid "A correction never edits the original record. If it is approved, a new event replaces it. Your reason is seen only by you and the people who decide."
+msgstr "Koreksi tidak pernah mengubah catatan asli. Jika disetujui, sebuah kejadian baru menggantikannya. Alasan Anda hanya terlihat oleh Anda dan pihak yang memutuskan."
+
+msgid "What do you want to do?"
+msgstr "Apa yang ingin Anda lakukan?"
+
+msgid "Event to replace"
+msgstr "Kejadian yang diganti"
+
+msgid "Not applicable"
+msgstr "Tidak berlaku"
+
+msgid "Correct event"
+msgstr "Kejadian yang benar"
+
+msgid "Correct time"
+msgstr "Waktu yang benar"
+
+msgid "No correction requests"
+msgstr "Tidak ada permintaan koreksi"
+
+msgid "Requests you make appear here with their status."
+msgstr "Permintaan yang Anda buat muncul di sini beserta statusnya."
+
+msgid "My workforce metrics"
+msgstr "Metrik tenaga kerja saya"
+
+msgid "The attendance, hours and shift facts recorded about you, and how each one is counted."
+msgstr "Fakta kehadiran, jam kerja, dan shift yang tercatat tentang Anda, serta cara masing-masing dihitung."
+
+msgid "Your metrics could not be loaded right now. Please try again later."
+msgstr "Metrik Anda tidak dapat dimuat saat ini. Silakan coba lagi nanti."
+
+msgid "These are business facts about recorded attendance and published shifts, not an assessment of you. Nothing here is used for a decision about you without a governance review."
+msgstr "Ini adalah fakta bisnis tentang kehadiran yang tercatat dan shift yang dipublikasikan, bukan penilaian terhadap Anda. Tidak ada yang di sini dipakai untuk keputusan tentang Anda tanpa tinjauan tata kelola."
+
+msgid "Period"
+msgstr "Periode"
+
+msgid "Employee no. {employeeNo}"
+msgstr "No. pegawai {employeeNo}"
+
+msgid "If a figure looks wrong, ask for the underlying record to be corrected."
+msgstr "Jika sebuah angka tampak salah, minta agar catatan dasarnya dikoreksi."
+
+msgid "My commission"
+msgstr "Komisi saya"
+
+msgid "The commission you have earned and where each one stands. This page is read-only."
+msgstr "Komisi yang telah Anda peroleh dan posisi masing-masing. Halaman ini hanya untuk dibaca."
+
+msgid "Your commission could not be loaded right now. Please try again later."
+msgstr "Komisi Anda tidak dapat dimuat saat ini. Silakan coba lagi nanti."
+
+msgid "Commission status"
+msgstr "Status komisi"
+
+msgid "No commission yet"
+msgstr "Belum ada komisi"
+
+msgid "Commission you earn will appear here."
+msgstr "Komisi yang Anda peroleh akan muncul di sini."
+
+msgid "My team"
+msgstr "Tim saya"
+
+msgid "The attendance and shift facts of the people who report to you, and the corrections they have asked for."
+msgstr "Fakta kehadiran dan shift dari orang-orang yang melapor kepada Anda, serta koreksi yang mereka minta."
+
+msgid "Your team could not be loaded right now. Please try again later."
+msgstr "Tim Anda tidak dapat dimuat saat ini. Silakan coba lagi nanti."
+
+msgid "These are business facts about recorded attendance and published shifts, not an assessment of a person. Do not use them for a decision about pay, discipline, promotion or termination without the governance review."
+msgstr "Ini adalah fakta bisnis tentang kehadiran yang tercatat dan shift yang dipublikasikan, bukan penilaian terhadap seseorang. Jangan dipakai untuk keputusan tentang gaji, disiplin, promosi, atau pemutusan hubungan kerja tanpa tinjauan tata kelola."
+
+msgid "Direct reports"
+msgstr "Bawahan langsung"
+
+msgid "Employee no."
+msgstr "No. pegawai"
+
+msgid "Scheduled shifts"
+msgstr "Shift terjadwal"
+
+msgid "Attended shifts"
+msgstr "Shift dihadiri"
+
+msgid "Missed shifts"
+msgstr "Shift terlewat"
+
+msgid "Late arrivals"
+msgstr "Keterlambatan"
+
+msgid "Worked time"
+msgstr "Waktu kerja"
+
+msgid "Worked against scheduled"
+msgstr "Waktu kerja terhadap jadwal"
+
+msgid "No direct reports"
+msgstr "Tidak ada bawahan langsung"
+
+msgid "People who report to you appear here."
+msgstr "Orang-orang yang melapor kepada Anda muncul di sini."
+
+msgid "Recent attendance"
+msgstr "Kehadiran terbaru"
+
+msgid "Events of your direct reports in this period appear here."
+msgstr "Kejadian kehadiran bawahan langsung Anda pada periode ini muncul di sini."
+
+msgid "Corrections waiting for a decision"
+msgstr "Koreksi yang menunggu keputusan"
+
+msgid "Requests from your direct reports that are waiting appear here."
+msgstr "Permintaan dari bawahan langsung Anda yang sedang menunggu muncul di sini."
+
+msgid "Terminated"
+msgstr "Berakhir"
+
+msgid "Workforce"
+msgstr "Tenaga kerja"
+
+msgid "Employments, attendance and the correction requests waiting for a decision."
+msgstr "Data kepegawaian, kehadiran, dan permintaan koreksi yang menunggu keputusan."
+
+msgid "The workforce could not be loaded right now. Please try again later."
+msgstr "Data tenaga kerja tidak dapat dimuat saat ini. Silakan coba lagi nanti."
+
+msgid "Employment state"
+msgstr "Status kepegawaian"
+
+msgid "Employments"
+msgstr "Data kepegawaian"
+
+msgid "Job title"
+msgstr "Jabatan"
+
+msgid "Hired on"
+msgstr "Tanggal masuk"
+
+msgid "Login linked"
+msgstr "Akun tertaut"
+
+msgid "No employments"
+msgstr "Tidak ada data kepegawaian"
+
+msgid "Employments created through the API appear here."
+msgstr "Data kepegawaian yang dibuat melalui API muncul di sini."
+
+msgid "Requests that are waiting for a decision appear here."
+msgstr "Permintaan yang sedang menunggu keputusan muncul di sini."
+
+msgid "Events of the last 7 days appear here."
+msgstr "Kejadian 7 hari terakhir muncul di sini."
+
+msgid "Published work shifts that started in this period."
+msgstr "Shift kerja yang dipublikasikan dan dimulai pada periode ini."
+
+msgid "Of those, the ones with a clock-in."
+msgstr "Dari jumlah itu, yang memiliki absen masuk."
+
+msgid "Shifts that ended with no clock-in."
+msgstr "Shift yang berakhir tanpa absen masuk."
+
+msgid "Clock-ins after the grace period."
+msgstr "Absen masuk setelah masa toleransi."
+
+msgid "From clock-in to clock-out, less breaks taken."
+msgstr "Dari absen masuk sampai absen pulang, dikurangi istirahat yang diambil."
+
+msgid "Scheduled time"
+msgstr "Waktu terjadwal"
+
+msgid "Planned length of shifts that ended, less planned breaks."
+msgstr "Panjang shift yang direncanakan dan sudah berakhir, dikurangi istirahat terencana."
+
+msgid "Break time"
+msgstr "Waktu istirahat"
+
+msgid "Breaks taken inside completed sessions."
+msgstr "Istirahat yang diambil dalam sesi yang selesai."
+
+msgid "Incomplete sessions"
+msgstr "Sesi tidak lengkap"
+
+msgid "Clock-ins that never got a clock-out."
+msgstr "Absen masuk yang tidak pernah mendapat absen pulang."
+
+msgid "Shift coverage"
+msgstr "Cakupan shift"
+
+msgid "Attended shifts out of attended plus missed."
+msgstr "Shift dihadiri dibagi shift dihadiri ditambah shift terlewat."
+
+msgid "Worked time out of scheduled time; can exceed 100%."
+msgstr "Waktu kerja dibagi waktu terjadwal; bisa melebihi 100%."
+
+msgid "Last 7 days"
+msgstr "7 hari terakhir"
+
+msgid "Last 14 days"
+msgstr "14 hari terakhir"
+
+msgid "Last 30 days"
+msgstr "30 hari terakhir"
+
+msgid "Clock in"
+msgstr "Absen masuk"
+
+msgid "Clock out"
+msgstr "Absen pulang"
+
+msgid "Break start"
+msgstr "Mulai istirahat"
+
+msgid "Break end"
+msgstr "Selesai istirahat"
+
+msgid "Add a missing event"
+msgstr "Tambah kejadian yang hilang"
+
+msgid "Replace an event"
+msgstr "Ganti sebuah kejadian"
+
+msgid "Withdrawn"
+msgstr "Ditarik"
+
+msgid "Work"
+msgstr "Kerja"
+
+msgid "Time off"
+msgstr "Cuti"
+
+msgid "Leave"
+msgstr "Izin"
+
+msgid "Permanent"
+msgstr "Tetap"
+
+msgid "Fixed term"
+msgstr "Kontrak"
+
+msgid "Part time"
+msgstr "Paruh waktu"
+
+msgid "Casual"
+msgstr "Lepas"
+
+msgid "On leave"
+msgstr "Sedang cuti"
+
+msgid "Payable"
+msgstr "Dapat dibayar"
+
+msgid "Voided"
+msgstr "Dibatalkan"
+
+msgid "{hours} h {minutes} min"
+msgstr "{hours} j {minutes} mnt"
+
+msgid "The request could not be sent. Please try again."
+msgstr "Permintaan tidak dapat dikirim. Silakan coba lagi."
+
+msgid "Corrections need an approval workflow and none is set up yet. Ask your administrator."
+msgstr "Koreksi membutuhkan alur persetujuan dan belum ada yang diatur. Tanyakan kepada administrator Anda."
+
+msgid "A correction for that event is already waiting for a decision."
+msgstr "Koreksi untuk kejadian itu sudah menunggu keputusan."
+
+msgid "That event could not be found."
+msgstr "Kejadian itu tidak ditemukan."
+
+msgid "That event was already replaced by an approved correction."
+msgstr "Kejadian itu sudah diganti oleh koreksi yang disetujui."
+
+msgid "The proposed time cannot be in the future."
+msgstr "Waktu yang diusulkan tidak boleh di masa depan."
+
+msgid "Your employment could not be found."
+msgstr "Data kepegawaian Anda tidak ditemukan."
+
+msgid "{count} shift in the next 14 days"
+msgid_plural "{count} shifts in the next 14 days"
+msgstr[0] "{count} shift dalam 14 hari ke depan"
+
+msgid "{count} event in the last 14 days (UTC)"
+msgid_plural "{count} events in the last 14 days (UTC)"
+msgstr[0] "{count} kejadian dalam 14 hari terakhir (UTC)"
+
+msgid "{count} request"
+msgid_plural "{count} requests"
+msgstr[0] "{count} permintaan"
+
+msgid "{count} direct report"
+msgid_plural "{count} direct reports"
+msgstr[0] "{count} bawahan langsung"
+
+msgid "{count} event in this period (UTC)"
+msgid_plural "{count} events in this period (UTC)"
+msgstr[0] "{count} kejadian pada periode ini (UTC)"
+
+msgid "{count} employment"
+msgid_plural "{count} employments"
+msgstr[0] "{count} data kepegawaian"
+
+msgid "{count} event in the last 7 days (UTC)"
+msgid_plural "{count} events in the last 7 days (UTC)"
+msgstr[0] "{count} kejadian dalam 7 hari terakhir (UTC)"
+
+msgid "Some sections are not available to you."
+msgstr "Beberapa bagian tidak tersedia untuk Anda."
+
+# awcms-one (25 October 2026 sync): commerce admin screens adopt the upstream a11y/i18n conventions.
+
+msgid "WhatsApp queue"
+msgstr "Antrean WhatsApp"
+
+msgid "Cart lines"
+msgstr "Baris keranjang"
+
+msgid "POS orders"
+msgstr "Pesanan POS"
+
+msgid "Promo popups"
+msgstr "Popup promo"
+
+msgid "Rate"
+msgstr "Tarif"
+
+msgid "Affiliate commissions"
+msgstr "Komisi afiliasi"
+
+msgid "Affiliate"
+msgstr "Afiliasi"
+
+msgid "Conversations"
+msgstr "Percakapan"

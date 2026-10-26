@@ -71,6 +71,10 @@ export const PATCH = defineTenantRoute({
 
       return ok(variant);
     } catch (error) {
+      // tx-swallow-ok: healthy transaction: `DuplicateVariantSkuError` is
+      // raised by the directory's own pre-checks or after its fallible
+      // statement ran inside a savepoint, so the transaction is still valid
+      // when this catch returns.
       if (error instanceof DuplicateVariantSkuError) {
         return fail(409, "VARIANT_SKU_ALREADY_EXISTS", error.message);
       }

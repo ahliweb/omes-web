@@ -147,7 +147,12 @@ const selected = screen.state === "allowed" ? screen.data.selected : null;
 
   {canRead && !loadError && (
     <div class="fade-in-up">
-      <div class="data-table-scroll">
+      <div
+        class="data-table-scroll"
+        role="region"
+        tabindex="0"
+        aria-label={t("Campaigns")}
+      >
         <table
           class="data-table data-table--stack"
           id="commerce-campaigns-table"
@@ -187,16 +192,18 @@ const selected = screen.state === "allowed" ? screen.data.selected : null;
             ) : (
               campaigns.map((campaign) => (
                 <tr data-campaign-row={campaign.id}>
-                  <td data-label="Channel">{campaign.channel}</td>
-                  <td data-label="Status">
-                    <span class="status-badge">{campaign.status}</span>
+                  <td data-label={t("Channel")}>{campaign.channel}</td>
+                  <td data-label={t("Status")}>
+                    <span class="admin-status-pill" data-tone="neutral">
+                      {campaign.status}
+                    </span>
                   </td>
-                  <td data-label="Recipients">
+                  <td data-label={t("Recipients")}>
                     {campaign.recipientCount ?? "—"}
                   </td>
-                  <td data-label="Sent">{campaign.sentCount ?? "—"}</td>
-                  <td data-label="Created">{campaign.createdAt}</td>
-                  <td data-label="Open">
+                  <td data-label={t("Sent")}>{campaign.sentCount ?? "—"}</td>
+                  <td data-label={t("Created")}>{campaign.createdAt}</td>
+                  <td data-label={t("Open")}>
                     <a href={`/admin/commerce-campaigns?id=${campaign.id}`}>
                       {t("View")}
                     </a>
@@ -217,7 +224,9 @@ const selected = screen.state === "allowed" ? screen.data.selected : null;
         >
           <h2 id="campaign-detail-heading">
             {selected.channel} ·{" "}
-            <span class="status-badge">{selected.status}</span>
+            <span class="admin-status-pill" data-tone="neutral">
+              {selected.status}
+            </span>
           </h2>
 
           {canUpdate && selected.status === "draft" ? (
@@ -313,6 +322,7 @@ const selected = screen.state === "allowed" ? screen.data.selected : null;
 </AdminLayout>
 
 <script>
+  import { confirmAction } from "../../lib/ui/confirm-dialog-client";
   import {
     field,
     messageBox,
@@ -389,13 +399,13 @@ const selected = screen.state === "allowed" ? screen.data.selected : null;
     }
   });
 
-  onAction("#campaign-send-btn", (button) => {
+  onAction("#campaign-send-btn", async (button) => {
     const id = button.dataset.campaignId;
     if (!id) return;
     if (
-      !window.confirm(
+      !(await confirmAction(
         "Send this campaign now? This cannot be undone once dispatched."
-      )
+      ))
     ) {
       return;
     }
@@ -412,13 +422,13 @@ const selected = screen.state === "allowed" ? screen.data.selected : null;
     );
   });
 
-  onAction(".campaign-cancel-btn", (button) => {
+  onAction(".campaign-cancel-btn", async (button) => {
     const id = button.dataset.campaignId;
     if (!id) return;
     if (
-      !window.confirm(
+      !(await confirmAction(
         "Cancel this campaign? Already-dispatched recipients will not be un-sent."
-      )
+      ))
     ) {
       return;
     }

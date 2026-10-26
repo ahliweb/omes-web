@@ -335,6 +335,9 @@ async function checkLiveRoleAndRls(
       `) as { migration_name: string }[];
       appliedNames = new Set(appliedRows.map((r) => r.migration_name));
     } catch {
+      // tx-swallow-ok: pooled client: `sql` here is an autocommit pooled
+      // connection, so no transaction is open when this catch runs and no
+      // failed statement can abort one.
       ledgerCheck.status = "FAIL";
       ledgerCheck.reason =
         "awcms_schema_migrations does not exist — has bun run db:migrate ever been run against this database?";
@@ -357,6 +360,9 @@ async function checkLiveRoleAndRls(
       }
     }
   } catch (error) {
+    // tx-swallow-ok: pooled client: `sql` here is an autocommit pooled
+    // connection, so no transaction is open when this catch runs and no
+    // failed statement can abort one.
     const reason = `Could not connect/query: ${error instanceof Error ? error.message : String(error)}`;
     for (const c of [roleCheck, ownershipCheck, rlsCheck, ledgerCheck]) {
       if (c.status === "SKIP") {

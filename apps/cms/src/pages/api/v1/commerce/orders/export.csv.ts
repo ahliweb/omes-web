@@ -4,6 +4,7 @@ import {
   type KeysetCursor
 } from "../../../../../modules/_shared/keyset-pagination";
 import { listOrdersForAdmin } from "../../../../../modules/commerce/application/order-directory";
+import { csvCellForWrite } from "../../../../../lib/security/csv-formula";
 import { COMMERCE_ORDERS_ACTIVITY_CODE } from "../../../../../modules/commerce/domain/commerce-permissions";
 
 /**
@@ -22,11 +23,6 @@ const READ_GUARD = {
 } as const;
 
 const MAX_PAGES = 20;
-
-function csvEscape(value: string): string {
-  if (/[",\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
-  return value;
-}
 
 export const GET = defineTenantRoute({
   workClass: "reporting",
@@ -52,11 +48,16 @@ export const GET = defineTenantRoute({
             order.orderCode,
             order.status,
             order.paymentStatus,
-            csvEscape(order.customerName),
+            order.customerName,
             order.customerPhoneMasked,
             order.total,
             order.createdAt
-          ].join(",")
+          ]
+            // Every cell goes through the shared writer: customerName is
+            // shopper-typed text, so a leading `=`/`+`/`-`/`@` must be
+            // neutralised, not only quoted (formula injection, #978).
+            .map((cell) => csvCellForWrite(cell))
+            .join(",")
         );
       }
       if (!result.nextCursor) break;

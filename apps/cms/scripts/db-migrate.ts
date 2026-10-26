@@ -3,6 +3,10 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
 import { redactSecretsInText } from "../src/modules/_shared/redaction";
+import {
+  assertValidMigrationNames,
+  compareMigrationNames
+} from "./lib/migrations";
 
 export type MigrationFile = {
   name: string;
@@ -21,7 +25,6 @@ type MigrationResult = {
   skipped: string[];
 };
 
-const MIGRATION_FILE_PATTERN = /^\d{3}_awcms_[a-z0-9_]+\.sql$/;
 const MIGRATION_LOCK_KEY = 8_402_017_551;
 
 /**
@@ -79,17 +82,9 @@ export async function discoverMigrationFiles(
     .filter((entry) => entry.isFile())
     .map((entry) => entry.name)
     .filter((name) => name.endsWith(".sql"))
-    .sort((left, right) => left.localeCompare(right));
+    .sort(compareMigrationNames);
 
-  const invalidFile = fileNames.find(
-    (fileName) => !MIGRATION_FILE_PATTERN.test(fileName)
-  );
-
-  if (invalidFile) {
-    throw new Error(
-      `Invalid migration file name: ${invalidFile}. Use NNN_awcms_<area>_<description>.sql.`
-    );
-  }
+  assertValidMigrationNames(fileNames);
 
   return Promise.all(
     fileNames.map(async (name) => {
@@ -237,6 +232,9 @@ async function main() {
       `db:migrate complete — ${result.applied.length} applied, ${result.skipped.length} skipped`
     );
   } catch (error) {
+    // tx-swallow-ok: The handle here is a pooled client, not a transaction
+    // (each statement autocommits), so a caught failure leaves nothing
+    // aborted.
     console.error(
       `db:migrate failed — ${safeErrorMessage(error, databaseUrl)}`
     );

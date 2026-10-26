@@ -85,6 +85,10 @@ export const PATCH = defineTenantRoute({
         return fail(404, "RESOURCE_NOT_FOUND", "Voucher not found.");
       return ok(voucher);
     } catch (error) {
+      // tx-swallow-ok: healthy transaction: `DuplicateVoucherCodeError` is
+      // raised by the directory's own pre-checks or after its fallible
+      // statement ran inside a savepoint, so the transaction is still valid
+      // when this catch returns.
       if (error instanceof DuplicateVoucherCodeError) {
         return fail(409, "VOUCHER_CODE_ALREADY_EXISTS", error.message);
       }

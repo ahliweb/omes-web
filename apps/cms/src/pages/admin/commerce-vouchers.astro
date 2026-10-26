@@ -183,7 +183,12 @@ const showActions = canUpdate || canDelete;
   )}
 
   {canRead && !loadError && (
-    <div class="data-table-scroll fade-in-up">
+    <div
+      class="data-table-scroll fade-in-up"
+      role="region"
+      tabindex="0"
+      aria-label={t("Vouchers")}
+    >
       <table class="data-table data-table--stack" id="commerce-vouchers-table">
         <caption>
           {tn("{count} voucher", "{count} vouchers", vouchers.length, {
@@ -219,11 +224,14 @@ const showActions = canUpdate || canDelete;
           ) : (
             vouchers.map((voucher) => (
               <tr data-voucher-row={voucher.id}>
-                <td data-label="Code">
+                <td data-label={t("Code")}>
                   <span class="cell-code">{voucher.code}</span>
                 </td>
-                <td data-label="Type">{voucher.type}</td>
-                <td data-label="Value" class={canUpdate ? "stacked-block" : ""}>
+                <td data-label={t("Type")}>{voucher.type}</td>
+                <td
+                  data-label={t("Value")}
+                  class={canUpdate ? "stacked-block" : ""}
+                >
                   {canUpdate ? (
                     <input
                       class="voucher-value-input"
@@ -236,16 +244,16 @@ const showActions = canUpdate || canDelete;
                     voucher.value
                   )}
                 </td>
-                <td data-label="Quota / Used">
+                <td data-label={t("Quota / Used")}>
                   {voucher.quota === 0
                     ? t("Unlimited")
                     : `${voucher.usedCount} / ${voucher.quota}`}
                 </td>
-                <td data-label="Public">
+                <td data-label={t("Public")}>
                   {voucher.isPublic ? t("Yes") : t("No")}
                 </td>
                 <td
-                  data-label="Status"
+                  data-label={t("Status")}
                   class={canUpdate ? "stacked-block" : ""}
                 >
                   {canUpdate ? (
@@ -271,7 +279,7 @@ const showActions = canUpdate || canDelete;
                   )}
                 </td>
                 {showActions && (
-                  <td data-label="Actions" class="stacked-block">
+                  <td data-label={t("Actions")} class="stacked-block">
                     <div class="row-actions">
                       {canUpdate && (
                         <button
@@ -305,6 +313,7 @@ const showActions = canUpdate || canDelete;
 </AdminLayout>
 
 <script>
+  import { confirmAction } from "../../lib/ui/confirm-dialog-client";
   import {
     checkboxChecked,
     field,
@@ -368,7 +377,7 @@ const showActions = canUpdate || canDelete;
     const id = button.dataset.voucherId;
     if (!id) return;
     const code = button.dataset.voucherCode ?? "this voucher";
-    if (!window.confirm(`Delete ${code}?`)) return;
+    if (!(await confirmAction(`Delete ${code}?`))) return;
 
     await mutateAndReload(
       button,

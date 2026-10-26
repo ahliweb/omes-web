@@ -180,7 +180,7 @@ const totals = daily.reduce(
   { ordersPaid: 0, gross: 0, discount: 0, shipping: 0, net: 0 }
 );
 
-/** Freshness status -> `status-badge` variant — same mapping `/admin/reporting` uses. */
+/** Freshness status -> `admin-status-pill` tone — same mapping `/admin/reporting` uses. */
 const FRESHNESS_VARIANT: Record<string, string> = {
   current: "success",
   delayed: "warning",
@@ -307,19 +307,19 @@ function formatTimestamp(value: Date | string | null): string {
           <h2 class="admin-section-title" id="sales-freshness-title">
             {t("Projection freshness")}
           </h2>
-          <div class="stat-grid">
+          <div class="admin-stat-card-grid">
             {projections.map((projection) => (
               <article class="admin-panel" data-projection-key={projection.key}>
                 <h3>
                   {PROJECTION_LABELS[projection.key] ?? projection.key}
                   <span
-                    class="status-badge"
-                    data-variant={
+                    class="admin-status-pill"
+                    data-tone={
                       FRESHNESS_VARIANT[projection.freshness.status] ??
                       "neutral"
                     }
                   >
-                    <span class="status-dot" aria-hidden="true" />
+                    <span class="admin-status-pill-dot" aria-hidden="true" />
                     {projection.freshness.status}
                   </span>
                 </h3>
@@ -355,7 +355,12 @@ function formatTimestamp(value: Date | string | null): string {
             </button>
           )}
         </h2>
-        <div class="data-table-scroll">
+        <div
+          class="data-table-scroll"
+          role="region"
+          tabindex="0"
+          aria-labelledby="sales-daily-title"
+        >
           <table class="data-table data-table--stack" id="sales-daily-table">
             <caption>
               {t("Paid orders per day, {from} to {to}.", {
@@ -395,14 +400,16 @@ function formatTimestamp(value: Date | string | null): string {
               ) : (
                 daily.map((row) => (
                   <tr data-sales-day={row.day}>
-                    <td data-label="Day">
+                    <td data-label={t("Day")}>
                       <span class="cell-code">{row.day}</span>
                     </td>
-                    <td data-label="Paid orders">{count(row.ordersPaid)}</td>
-                    <td data-label="Gross">{money(row.gross)}</td>
-                    <td data-label="Discount">{money(row.discount)}</td>
-                    <td data-label="Shipping">{money(row.shipping)}</td>
-                    <td data-label="Net">{money(row.net)}</td>
+                    <td data-label={t("Paid orders")}>
+                      {count(row.ordersPaid)}
+                    </td>
+                    <td data-label={t("Gross")}>{money(row.gross)}</td>
+                    <td data-label={t("Discount")}>{money(row.discount)}</td>
+                    <td data-label={t("Shipping")}>{money(row.shipping)}</td>
+                    <td data-label={t("Net")}>{money(row.net)}</td>
                   </tr>
                 ))
               )}
@@ -411,15 +418,17 @@ function formatTimestamp(value: Date | string | null): string {
               <tfoot>
                 <tr>
                   <th scope="row">{t("Total")}</th>
-                  <td data-label="Paid orders">{count(totals.ordersPaid)}</td>
-                  <td data-label="Gross">{money(String(totals.gross))}</td>
-                  <td data-label="Discount">
+                  <td data-label={t("Paid orders")}>
+                    {count(totals.ordersPaid)}
+                  </td>
+                  <td data-label={t("Gross")}>{money(String(totals.gross))}</td>
+                  <td data-label={t("Discount")}>
                     {money(String(totals.discount))}
                   </td>
-                  <td data-label="Shipping">
+                  <td data-label={t("Shipping")}>
                     {money(String(totals.shipping))}
                   </td>
-                  <td data-label="Net">{money(String(totals.net))}</td>
+                  <td data-label={t("Net")}>{money(String(totals.net))}</td>
                 </tr>
               </tfoot>
             )}
@@ -475,7 +484,12 @@ function formatTimestamp(value: Date | string | null): string {
             </button>
           )}
         </h2>
-        <div class="data-table-scroll">
+        <div
+          class="data-table-scroll"
+          role="region"
+          tabindex="0"
+          aria-labelledby="sales-by-product-title"
+        >
           <table
             class="data-table data-table--stack"
             id="sales-by-product-table"
@@ -511,9 +525,9 @@ function formatTimestamp(value: Date | string | null): string {
               ) : (
                 byProduct.map((row) => (
                   <tr data-sales-product={row.productId}>
-                    <td data-label="Product">{row.productName}</td>
-                    <td data-label="Quantity">{count(row.qty)}</td>
-                    <td data-label="Gross">{money(row.gross)}</td>
+                    <td data-label={t("Product")}>{row.productName}</td>
+                    <td data-label={t("Quantity")}>{count(row.qty)}</td>
+                    <td data-label={t("Gross")}>{money(row.gross)}</td>
                   </tr>
                 ))
               )}
@@ -540,7 +554,12 @@ function formatTimestamp(value: Date | string | null): string {
             </button>
           )}
         </h2>
-        <div class="data-table-scroll">
+        <div
+          class="data-table-scroll"
+          role="region"
+          tabindex="0"
+          aria-labelledby="sales-by-category-title"
+        >
           <table
             class="data-table data-table--stack"
             id="sales-by-category-table"
@@ -575,13 +594,13 @@ function formatTimestamp(value: Date | string | null): string {
               ) : (
                 byCategory.map((row) => (
                   <tr data-sales-category={row.categoryId ?? "uncategorised"}>
-                    <td data-label="Category">
+                    <td data-label={t("Category")}>
                       {row.categoryId === null
                         ? t("Uncategorised")
                         : row.categoryName}
                     </td>
-                    <td data-label="Quantity">{count(row.qty)}</td>
-                    <td data-label="Gross">{money(row.gross)}</td>
+                    <td data-label={t("Quantity")}>{count(row.qty)}</td>
+                    <td data-label={t("Gross")}>{money(row.gross)}</td>
                   </tr>
                 ))
               )}
@@ -608,7 +627,12 @@ function formatTimestamp(value: Date | string | null): string {
               {t("Schedule recurring exports")}
             </a>
           </p>
-          <div class="data-table-scroll">
+          <div
+            class="data-table-scroll"
+            role="region"
+            tabindex="0"
+            aria-labelledby="sales-export-runs-title"
+          >
             <table
               class="data-table data-table--stack"
               id="sales-export-runs-table"
@@ -646,31 +670,34 @@ function formatTimestamp(value: Date | string | null): string {
                 ) : (
                   exportRuns.map((run) => (
                     <tr data-export-run={run.id}>
-                      <td data-label="Report">
+                      <td data-label={t("Report")}>
                         {PROJECTION_LABELS[run.projectionKey] ??
                           run.projectionKey}
                       </td>
-                      <td data-label="Format">
+                      <td data-label={t("Format")}>
                         <span class="cell-code">{run.format}</span>
                       </td>
-                      <td data-label="Status">
+                      <td data-label={t("Status")}>
                         <span
-                          class="status-badge"
-                          data-variant={
+                          class="admin-status-pill"
+                          data-tone={
                             run.status === "completed" ? "success" : "danger"
                           }
                         >
-                          <span class="status-dot" aria-hidden="true" />
+                          <span
+                            class="admin-status-pill-dot"
+                            aria-hidden="true"
+                          />
                           {run.status}
                         </span>
                       </td>
-                      <td data-label="Rows">{count(run.rowCount)}</td>
-                      <td data-label="Generated">
+                      <td data-label={t("Rows")}>{count(run.rowCount)}</td>
+                      <td data-label={t("Generated")}>
                         <span class="cell-muted">
                           {formatTimestamp(run.createdAt)}
                         </span>
                       </td>
-                      <td data-label="Artifact">
+                      <td data-label={t("Artifact")}>
                         {run.status === "completed" && !isExpired(run) ? (
                           <a
                             class="quick-link"

@@ -86,6 +86,10 @@ export const POST = defineTenantRoute({
         return fail(404, "RESOURCE_NOT_FOUND", "Flash sale not found.");
       return created(product);
     } catch (error) {
+      // tx-swallow-ok: healthy transaction: `DuplicateFlashSaleProductError`,
+      // `FlashSaleProductReferenceInvalidError` is raised by the directory's
+      // own pre-checks or after its fallible statement ran inside a
+      // savepoint, so the transaction is still valid when this catch returns.
       if (error instanceof FlashSaleProductReferenceInvalidError) {
         return fail(
           400,

@@ -44,6 +44,18 @@ flowchart TB
   E[Security & Performance] --> D[API contract - OpenAPI/AsyncAPI] --> C[Integration - migration/posting/transfer] --> B[Unit - pure logic]
 ```
 
+None of the layers here is a real browser, and none can be: a `bun test`
+process has no DOM, no CSS cascade, no `<dialog>` top layer, and no
+`prefers-reduced-motion`/anti-aliased pixel rendering — exactly the surface
+axe needs to catch a `color-contrast`/`label`/`link-name` violation. That
+top-of-pyramid layer (real browser E2E, including the automated
+`@axe-core/playwright` accessibility smoke, Issue #877) is owned entirely by
+the `awcms-browser-test` skill and run via `bun run test:e2e`, never via
+`bun test` — see that skill before writing or changing anything under
+`tests/e2e/`. That includes the responsive overflow sweep
+(`responsive-360.e2e.ts`, Issue #884), which covers 360px, 640×360 (200%
+zoom of a 1280×720 desktop), 768px (tablet portrait) and 1024px.
+
 ## Unit test targets
 
 ABAC evaluator · profile resolver · soft delete/restore guard · product price selection · stock movement calc · checkout total · idempotency service · posting guard · VAT calc · warehouse transfer state machine · cycle count variance · HMAC signature · AI tool policy.
@@ -101,7 +113,21 @@ role` (42501) — **not** a skip, so it is easy to misread as a regression.
    CI: the harness (`tests/integration/`) and then the legacy ad-hoc ones
    (9 `*-postgres.test.ts` files and friends).
 
+**Or let the runner do all of it: `bun run ci:local --job integration`** (and
+`--job e2e` for the browser suite). It takes a superuser connection string from
+`CI_LOCAL_DATABASE_URL` (falling back to `DATABASE_URL`), creates a throwaway
+database, runs the exact workflow steps in order — migrate, the harness suite,
+then the legacy file list — pins `DATABASE_URL`/`SETUP_DATABASE_URL`/
+`WORKER_DATABASE_URL` so a `.env` value cannot split the brain, and drops the
+database afterwards. Without a database URL it reports the job as `SKIPPED
+(reason)` with a non-zero exit code — never as passed. Use a dedicated Postgres
+server: the harness toggles the cluster-scoped `awcms_app`/`awcms_worker` roles,
+so two runs on one server interfere. Reference:
+[`docs/awcms/ci-local.md`](../../../docs/awcms/ci-local.md).
+
 ## Rules
 
+- Before a PR: the full `bun run check`, then `bun run ci:local` for the CI jobs `check` does not cover (hygiene, changeset policy, DB-gated integration, Bun 1.3.0 floor, E2E). A `SKIPPED` job is unverified, not green. GitHub's required checks (ruleset `11653326`) still gate the merge.
 - Every new feature has at minimum a logic unit test + one integration/contract test.
 - Tenant-scoped tests use a tenant context; do not depend on global data.
+- **A duplicate-key / FK path is tested through the REAL commit** (Issue #1099). Run it through `withTenantOrThrow(getRuntimeSql(), …)` (or `sql.begin`) and read the database back: asserting only "got a `DuplicateXError`" passes on Bun 1.4.2 and 1.4.3 alike and proves nothing, because the difference is whether the surrounding `COMMIT` throws `ERR_POSTGRES_COMMIT_ROLLED_BACK`. Also assert the contract of the savepoint: a sibling write made in the same transaction before the failed statement is committed, and the transaction is still usable afterwards. Pattern: `tests/integration/transaction-savepoints.integration.test.ts`. A fake `tx` for a unit test needs a `savepoint(fn)` that calls `fn(tx)`. The static side is `tests/transaction-swallow-check.test.ts` (`bun run db:transaction-swallow:check`); a new reviewed exception is a `// tx-swallow-ok: <reason>` comment, not a test change.

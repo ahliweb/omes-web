@@ -180,6 +180,18 @@ Two constraints that are often only discovered late: **CSP single-owner** (a
 script must be imported and then bundled, not inlined) and every admin screen
 must go through `loadAdminScreen` (`access:chokepoint:check` counts it).
 
+**A new product surface is a step-8/9 decision, not an implementation detail**
+([ADR-0146](../adr/0146-persona-apps-prefer-lynx-in-consumer-repos-astro-keeps-admin-and-public-web.md)): before building a screen or an app, classify it
+with the surface table. Anything that manages the system or a person's own part
+of a site is an Astro admin (`/admin/*` here, or `awcms-astro` for USER admin); a
+public, crawlable page is Astro; only a **persona workflow** (customer, courier,
+driver, partner, warehouse or field staff) is a candidate for a separate
+**LynxJS** consumer repo, and only after the Lynx proof-of-concept gate. "App"
+means persona function, not a `/app` URL, a phone-sized layout or an
+Add-to-Home-Screen manifest. The questions are in
+[`templates/definition-of-ready.md`](templates/definition-of-ready.md) §New
+product surface.
+
 ## 9. Cross-Spec Review / Definition of Ready
 
 **Answers:** whether steps 1–8 agree with each other, before anyone writes code.
@@ -239,6 +251,18 @@ branch protection in [`branch-protection.md`](branch-protection.md).
 
 The gates: the full `bun run check` chain, the DB-gated suite, Playwright E2E,
 CodeQL, GitGuardian, and a mandatory changeset for behaviour changes.
+
+**Before you push: `bun run ci:local`** ([`ci-local.md`](ci-local.md), Issue
+#1001). `bun run check` is only the `quality` job; `ci:local` also runs repo
+hygiene, the changeset policy, the DB-gated integration suites against a
+throwaway database, the Bun 1.3.0 floor and the Playwright smoke, with the
+workflows' own commands in their order, and prints one table. A job it cannot run
+here is reported `SKIPPED (reason)` and the exit code is non-zero — never a
+silent pass. `tests/ci-local-parity.test.ts` keeps its job list in step with
+`ci.yml` and `changesets.yml`, so a new workflow job cannot be silently missing.
+**It does not replace the gates above:** GitHub's required checks (ruleset
+`11653326`, [`branch-protection.md`](branch-protection.md)) still decide whether a
+PR may merge; the local run is the verification before the push, not instead of it.
 
 **A trap that has already bitten:** a stacked PR (base is not `main`) runs **ZERO**
 gates, while `gh pr checks` still looks green because GitGuardian passes on its

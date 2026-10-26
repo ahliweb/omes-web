@@ -203,6 +203,12 @@ export const POST = defineTenantRoute<CreatePosOrderInput>({
       // `createOrderFromCart`'s own idempotent-replay contract.
       return created(outcome.order);
     } catch (error) {
+      // tx-swallow-ok: healthy transaction:
+      // `IdempotencyPayloadMismatchError`, `IdempotencyRaceLostError`,
+      // `InsufficientTenderError`, `PosCartChangedError` is raised by the
+      // directory's own pre-checks or after its fallible statement ran inside
+      // a savepoint, so the transaction is still valid when this catch
+      // returns.
       if (error instanceof IdempotencyRaceLostError) {
         if (error.replay) {
           return jsonResponse(error.replay.responseBody, {

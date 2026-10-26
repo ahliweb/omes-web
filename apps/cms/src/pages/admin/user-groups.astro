@@ -149,9 +149,14 @@ const colCount = canMutate ? 6 : 5;
   )}
 
   {canRead && !loadError && (
-    <div class="data-table-scroll fade-in-up">
+    <div
+      class="data-table-scroll fade-in-up"
+      role="region"
+      tabindex="0"
+      aria-labelledby="user-groups-table-caption"
+    >
       <table class="data-table data-table--stack" id="user-groups-table">
-        <caption>
+        <caption id="user-groups-table-caption">
           {tn("{count} group", "{count} groups", groups.length, {
             count: groups.length
           })}
@@ -186,17 +191,17 @@ const colCount = canMutate ? 6 : 5;
           ) : (
             groups.map((group) => (
               <tr data-group-id={group.id}>
-                <td data-label="Code">
+                <td data-label={t("Code")}>
                   <code>{group.groupCode}</code>
                 </td>
-                <td data-label="Name">{group.groupName}</td>
-                <td data-label="Source">
+                <td data-label={t("Name")}>{group.groupName}</td>
+                <td data-label={t("Source")}>
                   {group.source === "scim" ? "Directory" : "Local"}
                 </td>
-                <td data-label="Members">{group.memberCount}</td>
-                <td data-label="Roles held">{group.roleCount}</td>
+                <td data-label={t("Members")}>{group.memberCount}</td>
+                <td data-label={t("Roles held")}>{group.roleCount}</td>
                 {canMutate && (
-                  <td data-label="Actions">
+                  <td data-label={t("Actions")}>
                     {group.source !== "local" ? (
                       <span class="state-notice">
                         {t("Managed externally")}

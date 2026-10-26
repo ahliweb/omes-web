@@ -28,6 +28,7 @@
     "audit:dokumen": "bun packages/gerbang/audit-dokumen.mjs",
     "audit:rilis": "bun packages/gerbang/audit-rilis.mjs",
     "audit:translation": "bun packages/gerbang/check-docs-translation.mjs",
+    "compat:preflight": "bun tools/compat-preflight.mjs",
     "verify:omes-release": "bun tools/omes-release-verify.mjs",
     "audit:graf": "bun packages/gerbang/audit-graf.mjs",
     "knowledge:check": "bun run audit:graf",

@@ -342,7 +342,11 @@ suite(
       }> {
         const rows = (await getAdminSql()`
           SELECT
-            has_table_privilege('awcms_worker', ${table}, 'SELECT') AS select,
+            -- Column-aware since sql/304 (Issue #1078): the worker no longer holds a
+            -- TABLE-level SELECT on awcms_omes_enrollments (it keeps SELECT on
+            -- id/tenant_id/created_at only, never enrollment_challenge_hash), so
+            -- "can read the table" means "can read at least one column".
+            has_any_column_privilege('awcms_worker', ${table}, 'SELECT') AS select,
             has_table_privilege('awcms_worker', ${table}, 'INSERT') AS insert,
             has_table_privilege('awcms_worker', ${table}, 'UPDATE') AS update,
             has_table_privilege('awcms_worker', ${table}, 'DELETE') AS del
@@ -388,6 +392,16 @@ suite(
         for (const table of OMES_CONTROL_TABLES) {
           await assertWorkerHoldsExactlySelectAndDelete(table);
         }
+      });
+
+      test("awcms_worker cannot read the enrollment challenge hash column (sql/304, Issue #1078)", async () => {
+        const rows = (await getAdminSql()`
+          SELECT has_column_privilege(
+            'awcms_worker', 'awcms_omes_enrollments', 'enrollment_challenge_hash', 'SELECT'
+          ) AS can_read
+        `) as { can_read: boolean }[];
+
+        expect(rows[0]!.can_read).toBe(false);
       });
 
       test("NEGATIVE: reintroducing sql/156's revoked INSERT/UPDATE on awcms_worker is caught by the assertion above, with the exact over-grant message — then the posture is restored and the assertion passes again", async () => {

@@ -77,6 +77,10 @@ export const POST = defineTenantRoute({
       );
       return created(popup);
     } catch (error) {
+      // tx-swallow-ok: healthy transaction: `PopupAlreadyActiveError` is
+      // raised by the directory's own pre-checks or after its fallible
+      // statement ran inside a savepoint, so the transaction is still valid
+      // when this catch returns.
       if (error instanceof PopupAlreadyActiveError) {
         return fail(409, "POPUP_ALREADY_ACTIVE", error.message);
       }

@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](README.md)
 
-<!-- i18n-source-hash: sha256:d77b8d340c1d299e62ec79dace20ed564a3be3cd868691deb2d4280d08e4dbb4 -->
+<!-- i18n-source-hash: sha256:0ad26a9b18214db6d275091a5ebc1d765ba4c4f2fad2326f097574cf3a698a0b -->
 
 # Email
 
@@ -73,7 +73,12 @@ per pesan.
 (`auth.password_reset`, `system.announcement`, `system.security_notice`,
 `system.maintenance`, `workflow.task_assigned`, `workflow.decision_required`)
 ditambah `derived.transactional` masing-masing membawa daftar variabel yang
-diizinkan. Aplikasi turunan mendaftarkan kategori `derived.<name>`-nya sendiri
+diizinkan, dan (#1044) tiga kategori
+`hr.attendance_correction_{applied,rejected,cancelled}` (`userName`,
+`employeeName`, `correctionDate`; tak pernah alasan) yang dikirim `hr_workforce`
+lewat capability `workflow_notification` yang kini disediakan modul ini
+(`application/workflow-notification-port-adapter.ts`, subjek dirender dalam
+locale default tenant). Aplikasi turunan mendaftarkan kategori `derived.<name>`-nya sendiri
 lewat `registerDerivedEmailTemplateCategory` sebelum dipakai; kategori tak
 dikenal ditolak saat pembuatan (fail-closed).
 
@@ -201,3 +206,7 @@ jalannya berikutnya begitu modulnya diaktifkan.
 `awcms-integration` (outbox/coba ulang/circuit breaker), `awcms-sensitive-data`
 (normalisasi/hash/masking), `awcms-idempotency`, `awcms-abac-guard`,
 `awcms-audit-log`.
+
+## Runtime Bun email / status UI terencana
+
+`bun run email:dispatch` sudah berupa worker antrean Bun melalui API provider di luar transaksi DB. Kampanye/Mailketing multi-akun dan status real-time mendatang wajib memakai Bun; WebSocket/SSE hanya untuk tampilan progres, bukan mengirim email. [Standar runtime](../../../docs/awcms/bun-delivery-realtime-runtime.id.md).

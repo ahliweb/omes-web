@@ -82,12 +82,13 @@ echoed back in every response's `meta` object
 
 ### Standard parameters
 
-| Name            | Header/query                 | Required | Type   | Description                                                                          |
-| --------------- | ---------------------------- | -------- | ------ | ------------------------------------------------------------------------------------ |
-| `CorrelationId` | `X-Correlation-ID` (header)  | no       | string |                                                                                      |
-| `SyncNodeId`    | `X-AWCMS-Node-ID` (header)   | yes      | string | Node code identifying the calling sync node (auto-registers on first contact).       |
-| `SyncTimestamp` | `X-AWCMS-Timestamp` (header) | yes      | string | ISO-8601 timestamp of the request, validated against the allowed skew (anti-replay). |
-| `SyncSignature` | `X-AWCMS-Signature` (header) | yes      | string | HMAC-SHA256 signature over "<timestamp>.<body>".                                     |
+| Name             | Header/query                 | Required | Type   | Description                                                                                                                                                                                                     |
+| ---------------- | ---------------------------- | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CorrelationId`  | `X-Correlation-ID` (header)  | no       | string |                                                                                                                                                                                                                 |
+| `IdempotencyKey` | `Idempotency-Key` (header)   | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `SyncNodeId`     | `X-AWCMS-Node-ID` (header)   | yes      | string | Node code identifying the calling sync node (auto-registers on first contact).                                                                                                                                  |
+| `SyncTimestamp`  | `X-AWCMS-Timestamp` (header) | yes      | string | ISO-8601 timestamp of the request, validated against the allowed skew (anti-replay).                                                                                                                            |
+| `SyncSignature`  | `X-AWCMS-Signature` (header) | yes      | string | HMAC-SHA256 signature over "<timestamp>.<body>".                                                                                                                                                                |
 
 ### Standard success envelope
 
@@ -395,10 +396,10 @@ Gated by tenant_admin.tenant_provisioning.create, which is scope: platform. Crea
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Request body** (required): object
 
@@ -602,11 +603,11 @@ Gated by tenant_domain.domains.set_primary. Requires Idempotency-Key. Atomically
 
 **Parameters**
 
-| Name               | In     | Required | Type          | Description |
-| ------------------ | ------ | -------- | ------------- | ----------- |
-| `id`               | path   | yes      | string (uuid) |             |
-| `Idempotency-Key`  | header | yes      | string        |             |
-| `X-Correlation-ID` | header | no       | string        |             |
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
 
 **Responses**
 
@@ -628,11 +629,11 @@ Gated by tenant_domain.domains.verify. Requires Idempotency-Key. Resolves the TX
 
 **Parameters**
 
-| Name               | In     | Required | Type          | Description |
-| ------------------ | ------ | -------- | ------------- | ----------- |
-| `id`               | path   | yes      | string (uuid) |             |
-| `Idempotency-Key`  | header | yes      | string        |             |
-| `X-Correlation-ID` | header | no       | string        |             |
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
 
 **Responses**
 
@@ -1303,15 +1304,20 @@ Authorized by EITHER a live session OR an enrollment grant (X-AWCMS-MFA-Enrollme
 | ------------------------------ | ------ | -------- | ------ | ------------------------------------------------------------------------------------------------------ |
 | `X-AWCMS-MFA-Enrollment-Token` | header | no       | string | Enrollment grant token from a login that returned MFA_ENROLLMENT_REQUIRED; used in place of a session. |
 
+**Request body** (optional): object
+
 **Responses**
 
-| Status | Description                                            | Schema                                 |
-| ------ | ------------------------------------------------------ | -------------------------------------- |
-| 200    | Pending factor created; secret shown once.             | object                                 |
-| 401    | Missing or invalid session.                            | [`ApiError`](#standard-error-envelope) |
-| 403    | Access denied by RBAC/ABAC.                            | [`ApiError`](#standard-error-envelope) |
-| 409    | MFA already active for this account.                   | [`ApiError`](#standard-error-envelope) |
-| 500    | MFA encryption key is missing/invalid (misconfigured). | [`ApiError`](#standard-error-envelope) |
+| Status | Description                                                                                                                                                                                       | Schema                                 |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | Pending factor created; secret shown once.                                                                                                                                                        | object                                 |
+| 400    | PASSWORD_REQUIRED (a session, or a grant minted by a tenant switch or with no recorded origin, started without currentPassword), INVALID_CREDENTIALS (wrong currentPassword) or VALIDATION_ERROR. | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                                                                                                                                       | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                                                                                                                                       | [`ApiError`](#standard-error-envelope) |
+| 409    | MFA already active for this account.                                                                                                                                                              | [`ApiError`](#standard-error-envelope) |
+| 413    | Request body too large.                                                                                                                                                                           | [`ApiError`](#standard-error-envelope) |
+| 429    | Too many enrolment attempts for this session/grant or source, or the person is locked out after failed password attempts (they count toward the same lockout as a failed login).                  | [`ApiError`](#standard-error-envelope) |
+| 500    | MFA encryption key is missing/invalid (misconfigured).                                                                                                                                            | [`ApiError`](#standard-error-envelope) |
 
 ### `POST /api/v1/auth/mfa/totp/enroll/verify` — Confirm a pending TOTP enrollment; activates the factor and returns recovery codes.
 
@@ -1330,14 +1336,15 @@ Authorized by EITHER a live session OR an enrollment grant. When authorized via 
 
 **Responses**
 
-| Status | Description                                                                                                                         | Schema                                 |
-| ------ | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| 200    | Factor activated; recovery codes shown once. token/expiresAt/assuranceLevel are present only when enrolled via an enrollment grant. | object                                 |
-| 400    | Validation error.                                                                                                                   | [`ApiError`](#standard-error-envelope) |
-| 401    | Missing or invalid session.                                                                                                         | [`ApiError`](#standard-error-envelope) |
-| 403    | Access denied by RBAC/ABAC.                                                                                                         | [`ApiError`](#standard-error-envelope) |
-| 404    | Resource not found.                                                                                                                 | [`ApiError`](#standard-error-envelope) |
-| 500    | MFA misconfigured.                                                                                                                  | [`ApiError`](#standard-error-envelope) |
+| Status | Description                                                                                                                                                                                                                                                                 | Schema                                 |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | Factor activated; recovery codes shown once. token/expiresAt/assuranceLevel are present only when enrolled via an enrollment grant.                                                                                                                                         | object                                 |
+| 400    | Validation error.                                                                                                                                                                                                                                                           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                                                                                                                                                                                                                 | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                                                                                                                                                                                                                 | [`ApiError`](#standard-error-envelope) |
+| 404    | Resource not found.                                                                                                                                                                                                                                                         | [`ApiError`](#standard-error-envelope) |
+| 429    | Rate limited per source and per session/grant, or MFA_ENROLLMENT_EXHAUSTED - five wrong codes destroyed the pending secret (a pending enrolment is also bound to the session or grant that started it, expires after 10 minutes, and is then reported as 404; start again). | [`ApiError`](#standard-error-envelope) |
+| 500    | MFA misconfigured.                                                                                                                                                                                                                                                          | [`ApiError`](#standard-error-envelope) |
 
 ### `POST /api/v1/auth/mfa/totp/verify` — Complete a login paused with MFA_REQUIRED by submitting a TOTP or recovery code.
 
@@ -1373,6 +1380,7 @@ The counterpart to /api/v1/auth/password/reset: that endpoint serves someone who
 A fresh second factor is required ONLY from callers who have one enrolled. Requiring aal2 unconditionally would permanently prevent every user without MFA from changing their password, and the users most likely to need to are the ones who just learned it leaked. The current password is the re-authentication for everyone; the second factor is additional for those who can supply it.
 On success the password is replaced, the lockout counters are cleared (whoever supplied the current password proved control of the credential), and every OTHER session of that identity is revoked — the calling one survives, because a password change that signs you out of the tab you changed it in reads as a failure and the security property is unaffected.
 Rate limited on the SOURCE despite being authenticated: `currentPassword` is a guessable secret, so this is a credential-guessing surface whenever a session is used by someone who does not know the password behind it. An identifier-keyed bucket would instead let anyone reaching the endpoint hold one person's own password change hostage.
+currentPassword is verified exactly as login verifies it (#1035): against the person's own credential once one exists, never against another tenant's stale per-tenant copy. A change replaces that credential for every tenant; the calling session keeps working and the person's sessions elsewhere end - except sessions of an identity in another tenant that was never linked to the person's record, which a change from here cannot reach (they end when that identity is next linked, for example by a reset or an enrolment, or when they expire).
 Audited on both the success and the failure, with the device shape and IP pseudonym, and with no password-shaped attribute — not even a length.
 
 **Parameters**
@@ -1385,14 +1393,14 @@ Audited on both the success and the failure, with the device shape and IP pseudo
 
 **Responses**
 
-| Status | Description                                                                                                     | Schema                                 |
-| ------ | --------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| 200    | Password changed; the other sessions were revoked.                                                              | object                                 |
-| 400    | Validation failed, or currentPassword did not match (INVALID_CREDENTIALS).                                      | [`ApiError`](#standard-error-envelope) |
-| 401    | Missing or invalid session.                                                                                     | [`ApiError`](#standard-error-envelope) |
-| 403    | MFA is enrolled and this session is not currently stepped up (STEP_UP_REQUIRED).                                | [`ApiError`](#standard-error-envelope) |
-| 409    | The tenant policy signs this identity in through SSO; there is no password to change (PASSWORD_LOGIN_DISABLED). | [`ApiError`](#standard-error-envelope) |
-| 429    | Too many password change attempts from this source.                                                             | [`ApiError`](#standard-error-envelope) |
+| Status | Description                                                                                                                                                                                       | Schema                                 |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | Password changed; the other sessions were revoked.                                                                                                                                                | object                                 |
+| 400    | Validation failed, or currentPassword did not match (INVALID_CREDENTIALS).                                                                                                                        | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                                                                                                                                       | [`ApiError`](#standard-error-envelope) |
+| 403    | MFA is enrolled and this session is not currently stepped up (STEP_UP_REQUIRED).                                                                                                                  | [`ApiError`](#standard-error-envelope) |
+| 409    | The tenant policy signs this identity in through SSO; there is no password to change (PASSWORD_LOGIN_DISABLED).                                                                                   | [`ApiError`](#standard-error-envelope) |
+| 429    | Too many password change attempts from this source, or the person is locked out by failed password attempts (a wrong currentPassword counts toward the same principal lockout as a failed login). | [`ApiError`](#standard-error-envelope) |
 
 ### `POST /api/v1/auth/password/forgot` — Request a password reset link (account-enumeration-safe).
 
@@ -2045,9 +2053,9 @@ Grants a subject a role/permission context restricted to one business scope. The
 
 **Parameters**
 
-| Name              | In     | Required | Type   | Description |
-| ----------------- | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key` | header | yes      | string |             |
+| Name              | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ----------------- | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key` | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
 
 **Request body** (required): object
 
@@ -2071,10 +2079,10 @@ Revokes an active business-scope assignment (transitions it to `revoked`; append
 
 **Parameters**
 
-| Name              | In     | Required | Type          | Description |
-| ----------------- | ------ | -------- | ------------- | ----------- |
-| `id`              | path   | yes      | string (uuid) |             |
-| `Idempotency-Key` | header | yes      | string        |             |
+| Name              | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ----------------- | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`              | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key` | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
 
 **Request body** (required): object
 
@@ -2146,9 +2154,9 @@ Requests a bounded-lifetime, scope-bound exception to a registered SoD rule (`st
 
 **Parameters**
 
-| Name              | In     | Required | Type   | Description |
-| ----------------- | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key` | header | yes      | string |             |
+| Name              | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ----------------- | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key` | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
 
 **Request body** (required): object
 
@@ -2175,10 +2183,10 @@ Requires `Idempotency-Key`; audited at `critical` severity.
 
 **Parameters**
 
-| Name              | In     | Required | Type          | Description |
-| ----------------- | ------ | -------- | ------------- | ----------- |
-| `id`              | path   | yes      | string (uuid) |             |
-| `Idempotency-Key` | header | yes      | string        |             |
+| Name              | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ----------------- | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`              | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key` | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
 
 **Request body** (optional): object
 
@@ -2202,10 +2210,10 @@ Rejects a pending exception — the safe outcome (the conflict stays denied). Ga
 
 **Parameters**
 
-| Name              | In     | Required | Type          | Description |
-| ----------------- | ------ | -------- | ------------- | ----------- |
-| `id`              | path   | yes      | string (uuid) |             |
-| `Idempotency-Key` | header | yes      | string        |             |
+| Name              | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ----------------- | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`              | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key` | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
 
 **Request body** (optional): object
 
@@ -2229,10 +2237,10 @@ Revokes a previously approved exception, ending the override early (immediately 
 
 **Parameters**
 
-| Name              | In     | Required | Type          | Description |
-| ----------------- | ------ | -------- | ------------- | ----------- |
-| `id`              | path   | yes      | string (uuid) |             |
-| `Idempotency-Key` | header | yes      | string        |             |
+| Name              | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ----------------- | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`              | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key` | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
 
 **Request body** (required): object
 
@@ -2283,10 +2291,10 @@ Inviting and GRANTING A ROLE are two authorities: a body naming `roleIds` additi
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `X-Correlation-ID` | header | no       | string |             |
-| `Idempotency-Key`  | header | yes      | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
 
 **Request body** (required): [`CreateInvitationInput`](#schema-createinvitationinput)
 
@@ -3051,10 +3059,10 @@ Counterpart of `DELETE /api/v1/profiles/{id}` (ADR-0058 §A). Clears `deleted_at
 
 **Parameters**
 
-| Name              | In     | Required | Type          | Description |
-| ----------------- | ------ | -------- | ------------- | ----------- |
-| `id`              | path   | yes      | string (uuid) |             |
-| `Idempotency-Key` | header | yes      | string        |             |
+| Name              | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ----------------- | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`              | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key` | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
 
 **Responses**
 
@@ -3855,11 +3863,11 @@ High-risk — requires Idempotency-Key. 409 for any non-draft (published/retired
 
 **Parameters**
 
-| Name               | In     | Required | Type          | Description |
-| ------------------ | ------ | -------- | ------------- | ----------- |
-| `id`               | path   | yes      | string (uuid) |             |
-| `Idempotency-Key`  | header | yes      | string        |             |
-| `X-Correlation-ID` | header | no       | string        |             |
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
 
 **Request body** (optional): object
 
@@ -3903,11 +3911,11 @@ Transitions draft to active, retiring any previously-active version of the same 
 
 **Parameters**
 
-| Name               | In     | Required | Type          | Description |
-| ------------------ | ------ | -------- | ------------- | ----------- |
-| `id`               | path   | yes      | string (uuid) |             |
-| `Idempotency-Key`  | header | yes      | string        |             |
-| `X-Correlation-ID` | header | no       | string        |             |
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
 
 **Responses**
 
@@ -3927,11 +3935,11 @@ Transitions draft to active, retiring any previously-active version of the same 
 
 **Parameters**
 
-| Name               | In     | Required | Type          | Description |
-| ------------------ | ------ | -------- | ------------- | ----------- |
-| `id`               | path   | yes      | string (uuid) |             |
-| `Idempotency-Key`  | header | yes      | string        |             |
-| `X-Correlation-ID` | header | no       | string        |             |
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
 
 **Responses**
 
@@ -3997,10 +4005,10 @@ A tenant user can only delegate their OWN standing. High-risk — requires Idemp
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Request body** (required): object
 
@@ -4021,11 +4029,11 @@ A tenant user can only delegate their OWN standing. High-risk — requires Idemp
 
 **Parameters**
 
-| Name               | In     | Required | Type          | Description |
-| ------------------ | ------ | -------- | ------------- | ----------- |
-| `id`               | path   | yes      | string (uuid) |             |
-| `Idempotency-Key`  | header | yes      | string        |             |
-| `X-Correlation-ID` | header | no       | string        |             |
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
 
 **Request body** (optional): object
 
@@ -4067,11 +4075,11 @@ A tenant user can only delegate their OWN standing. High-risk — requires Idemp
 
 **Parameters**
 
-| Name               | In     | Required | Type          | Description |
-| ------------------ | ------ | -------- | ------------- | ----------- |
-| `id`               | path   | yes      | string (uuid) |             |
-| `Idempotency-Key`  | header | yes      | string        |             |
-| `X-Correlation-ID` | header | no       | string        |             |
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
 
 **Request body** (required): object
 
@@ -4120,11 +4128,11 @@ The task completes only once its quorum rule is satisfied; the instance advances
 
 **Parameters**
 
-| Name               | In     | Required | Type          | Description |
-| ------------------ | ------ | -------- | ------------- | ----------- |
-| `id`               | path   | yes      | string (uuid) |             |
-| `Idempotency-Key`  | header | yes      | string        |             |
-| `X-Correlation-ID` | header | no       | string        |             |
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
 
 **Request body** (required): object
 
@@ -4146,11 +4154,11 @@ The task completes only once its quorum rule is satisfied; the instance advances
 
 **Parameters**
 
-| Name               | In     | Required | Type          | Description |
-| ------------------ | ------ | -------- | ------------- | ----------- |
-| `id`               | path   | yes      | string (uuid) |             |
-| `Idempotency-Key`  | header | yes      | string        |             |
-| `X-Correlation-ID` | header | no       | string        |             |
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
 
 **Request body** (required): object
 
@@ -4172,11 +4180,11 @@ The task completes only once its quorum rule is satisfied; the instance advances
 
 **Parameters**
 
-| Name               | In     | Required | Type          | Description |
-| ------------------ | ------ | -------- | ------------- | ----------- |
-| `id`               | path   | yes      | string (uuid) |             |
-| `Idempotency-Key`  | header | yes      | string        |             |
-| `X-Correlation-ID` | header | no       | string        |             |
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
 
 **Request body** (required): object
 
@@ -4204,10 +4212,10 @@ Requires Idempotency-Key. email.notification.create for every request; email.ann
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Request body** (required): object
 
@@ -4647,10 +4655,10 @@ Module-contributed read-model projection extension to Management Reporting — l
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Request body** (required): object
 
@@ -4672,11 +4680,11 @@ Module-contributed read-model projection extension to Management Reporting — l
 
 **Parameters**
 
-| Name               | In     | Required | Type          | Description |
-| ------------------ | ------ | -------- | ------------- | ----------- |
-| `id`               | path   | yes      | string (uuid) |             |
-| `Idempotency-Key`  | header | yes      | string        |             |
-| `X-Correlation-ID` | header | no       | string        |             |
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
 
 **Request body** (required): object
 
@@ -4742,10 +4750,10 @@ Module-contributed read-model projection extension to Management Reporting — l
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Request body** (required): object
 
@@ -4809,11 +4817,11 @@ Module-contributed read-model projection extension to Management Reporting — l
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `key`              | path   | yes      | string |             |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `key`              | path   | yes      | string |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Request body** (required): object
 
@@ -4835,11 +4843,11 @@ Module-contributed read-model projection extension to Management Reporting — l
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `key`              | path   | yes      | string |             |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `key`              | path   | yes      | string |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Responses**
 
@@ -4985,10 +4993,10 @@ Transactional, versioned domain-event outbox and dispatcher admin API — read-o
 
 **Parameters**
 
-| Name              | In     | Required | Type          | Description |
-| ----------------- | ------ | -------- | ------------- | ----------- |
-| `id`              | path   | yes      | string (uuid) |             |
-| `Idempotency-Key` | header | yes      | string        |             |
+| Name              | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ----------------- | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`              | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key` | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
 
 **Request body** (required): object
 
@@ -5082,10 +5090,10 @@ Save the single draft config for a chosen theme (bounded, validated design token
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Request body** (required): [`ThemeConfigRequest`](#schema-themeconfigrequest)
 
@@ -5132,10 +5140,10 @@ Publish the current draft as a new IMMUTABLE version and make it the live look (
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Responses**
 
@@ -5156,10 +5164,10 @@ Clear the active theme pointer so the site falls back to the default theme; publ
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Responses**
 
@@ -5180,10 +5188,10 @@ Move the active pointer to an earlier published version of this tenant (never mu
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Request body** (required): object
 
@@ -5257,10 +5265,10 @@ Gated by media_library.enforcement.enable. High-risk, requires Idempotency-Key. 
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Responses**
 
@@ -5331,11 +5339,11 @@ Gated by media_library.media.verify. High-risk, requires Idempotency-Key. Verifi
 
 **Parameters**
 
-| Name               | In     | Required | Type          | Description |
-| ------------------ | ------ | -------- | ------------- | ----------- |
-| `id`               | path   | yes      | string (uuid) |             |
-| `Idempotency-Key`  | header | yes      | string        |             |
-| `X-Correlation-ID` | header | no       | string        |             |
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
 
 **Request body** (optional): [`FinalizeNewsMediaUploadSessionRequest`](#schema-finalizenewsmediauploadsessionrequest)
 
@@ -5400,11 +5408,11 @@ A soft-deleted object and an unknown id both answer 404.
 
 **Parameters**
 
-| Name               | In     | Required | Type          | Description |
-| ------------------ | ------ | -------- | ------------- | ----------- |
-| `id`               | path   | yes      | string (uuid) |             |
-| `Idempotency-Key`  | header | yes      | string        |             |
-| `X-Correlation-ID` | header | no       | string        |             |
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
 
 **Request body** (required): [`MediaRightsUpdateRequest`](#schema-mediarightsupdaterequest)
 
@@ -5434,11 +5442,11 @@ An already-deleted object and an unknown id both answer 404 — a distinct "alre
 
 **Parameters**
 
-| Name               | In     | Required | Type          | Description |
-| ------------------ | ------ | -------- | ------------- | ----------- |
-| `id`               | path   | yes      | string (uuid) |             |
-| `Idempotency-Key`  | header | yes      | string        |             |
-| `X-Correlation-ID` | header | no       | string        |             |
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
 
 **Request body** (required): [`SoftDeleteMediaObjectRequest`](#schema-softdeletemediaobjectrequest)
 
@@ -5466,11 +5474,11 @@ The object must ALREADY be soft-deleted — purging a live object answers 404 ra
 
 **Parameters**
 
-| Name               | In     | Required | Type          | Description |
-| ------------------ | ------ | -------- | ------------- | ----------- |
-| `id`               | path   | yes      | string (uuid) |             |
-| `Idempotency-Key`  | header | yes      | string        |             |
-| `X-Correlation-ID` | header | no       | string        |             |
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
 
 **Responses**
 
@@ -5496,11 +5504,11 @@ Restoring an object that is NOT soft-deleted answers 404 rather than succeeding 
 
 **Parameters**
 
-| Name               | In     | Required | Type          | Description |
-| ------------------ | ------ | -------- | ------------- | ----------- |
-| `id`               | path   | yes      | string (uuid) |             |
-| `Idempotency-Key`  | header | yes      | string        |             |
-| `X-Correlation-ID` | header | no       | string        |             |
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
 
 **Responses**
 
@@ -6108,10 +6116,10 @@ Gated by blog_content.pages.archive (ADR-0057). High-risk, requires Idempotency-
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Responses**
 
@@ -6133,10 +6141,10 @@ Gated by blog_content.pages.publish (ADR-0057). High-risk, requires Idempotency-
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Responses**
 
@@ -6159,10 +6167,10 @@ Gated by blog_content.pages.purge (ADR-0057). High-risk, irreversible, requires 
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Responses**
 
@@ -6207,10 +6215,10 @@ Gated by blog_content.pages.restore (ADR-0057). High-risk, requires Idempotency-
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Responses**
 
@@ -6412,10 +6420,10 @@ Gated by blog_content.posts.archive. High-risk, requires Idempotency-Key.
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Responses**
 
@@ -6460,10 +6468,10 @@ Gated by blog_content.posts.publish (no ownership carve-out). High-risk, require
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Responses**
 
@@ -6486,10 +6494,10 @@ Gated by blog_content.posts.purge. High-risk, irreversible, requires Idempotency
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Responses**
 
@@ -6534,10 +6542,10 @@ Gated by blog_content.posts.restore. High-risk, requires Idempotency-Key.
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Responses**
 
@@ -6605,10 +6613,10 @@ Gated by blog_content.revisions.restore. High-risk, requires Idempotency-Key. Re
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Responses**
 
@@ -6631,10 +6639,10 @@ Gated by blog_content.posts.schedule. High-risk, requires Idempotency-Key. Same 
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Request body** (required): object
 
@@ -7492,10 +7500,10 @@ Gated by visitor_analytics.retention.purge. Destructive, high-risk: requires Ide
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Responses**
 
@@ -7660,11 +7668,11 @@ Gated by idn_admin_regions.dataset.configure. High-risk, `Idempotency-Key` requi
 
 **Parameters**
 
-| Name               | In     | Required | Type          | Description   |
-| ------------------ | ------ | -------- | ------------- | ------------- |
-| `id`               | path   | yes      | string (uuid) | Dataset UUID. |
-| `Idempotency-Key`  | header | yes      | string        |               |
-| `X-Correlation-ID` | header | no       | string        |               |
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) | Dataset UUID.                                                                                                                                                                                                   |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
 
 **Responses**
 
@@ -7686,10 +7694,10 @@ Gated by idn_admin_regions.dataset.restore. High-risk, `Idempotency-Key` require
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Responses**
 
@@ -7816,10 +7824,10 @@ Gated by data_lifecycle.legal_hold.create. High-risk mutation: requires Idempote
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Request body** (required): [`DataLifecycleCreateLegalHoldRequest`](#schema-datalifecyclecreatelegalholdrequest)
 
@@ -7842,11 +7850,11 @@ Gated by data_lifecycle.legal_hold.release — a DISTINCT permission from create
 
 **Parameters**
 
-| Name               | In     | Required | Type          | Description |
-| ------------------ | ------ | -------- | ------------- | ----------- |
-| `id`               | path   | yes      | string (uuid) |             |
-| `Idempotency-Key`  | header | yes      | string        |             |
-| `X-Correlation-ID` | header | no       | string        |             |
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
 
 **Request body** (required): [`DataLifecycleReleaseLegalHoldRequest`](#schema-datalifecyclereleaselegalholdrequest)
 
@@ -7940,11 +7948,11 @@ ADR-0094 Decision 3. Gated by data_lifecycle.subject_erasure.approve — a DIFFE
 
 **Parameters**
 
-| Name               | In     | Required | Type          | Description |
-| ------------------ | ------ | -------- | ------------- | ----------- |
-| `id`               | path   | yes      | string (uuid) |             |
-| `Idempotency-Key`  | header | yes      | string        |             |
-| `X-Correlation-ID` | header | no       | string        |             |
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
 
 **Request body** (required): [`DataLifecycleSubjectDecisionInput`](#schema-datalifecyclesubjectdecisioninput)
 
@@ -7968,10 +7976,10 @@ ADR-0094 Decision 3. Gated by data_lifecycle.subject_erasure.create and it ERASE
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Request body** (required): [`DataLifecycleSubjectRequestInput`](#schema-datalifecyclesubjectrequestinput)
 
@@ -7991,27 +7999,27 @@ ADR-0094 Decision 3. Gated by data_lifecycle.subject_erasure.create and it ERASE
 - **operationId**: `dataLifecycleSubjectExport`
 - **Security**: bearerAuth + tenantHeader
 
-ADR-0094. Gated by data_lifecycle.subject_request.export — its OWN permission, because export and erasure are not one authority. Audited as a DISCLOSURE (action subject_data.disclosed, severity critical) rather than as a read, and a durable row lands in awcms_subject_requests in the same transaction. Requires Idempotency-Key and a stated reason. The response carries `unanswered`: the tables this report deliberately does not reach (global, or matchable by no column) with the reason each owning module wrote — a subject-access report that is incomplete and does not say so is worse than none, because it is signed. Answered PER TENANT (ADR-0094 Decision 1): there is no cross-tenant export.
+ADR-0094. Gated by data_lifecycle.subject_request.export — its OWN permission, because export and erasure are not one authority. A table inside the payroll data boundary (today the commission accruals, a person's earnings) additionally needs its own read permission (hr_commission.accruals.read); without it the table is WITHHELD and named under `withheld`, and a read that does happen is recorded as a sensitive read. The stored Idempotency-Key record keeps no payroll rows, only their ids: a replay re-checks the permission, re-reads those rows and records the read again, so a replay may differ from the first answer by having payroll tables withheld. Audited as a DISCLOSURE (action subject_data.disclosed, severity critical) rather than as a read, and a durable row lands in awcms_subject_requests in the same transaction. Requires Idempotency-Key and a stated reason. The response carries `unanswered`: the tables this report deliberately does not reach (global, or matchable by no column) with the reason each owning module wrote — a subject-access report that is incomplete and does not say so is worse than none, because it is signed. Answered PER TENANT (ADR-0094 Decision 1): there is no cross-tenant export.
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Request body** (required): [`DataLifecycleSubjectRequestInput`](#schema-datalifecyclesubjectrequestinput)
 
 **Responses**
 
-| Status | Description                                                                     | Schema                                 |
-| ------ | ------------------------------------------------------------------------------- | -------------------------------------- |
-| 200    | The subject's data, or replay of a prior identical request.                     | object                                 |
-| 400    | Validation error.                                                               | [`ApiError`](#standard-error-envelope) |
-| 401    | Missing or invalid session.                                                     | [`ApiError`](#standard-error-envelope) |
-| 403    | Access denied by RBAC/ABAC.                                                     | [`ApiError`](#standard-error-envelope) |
-| 404    | Resource not found.                                                             | [`ApiError`](#standard-error-envelope) |
-| 409    | The Idempotency-Key was reused with a different request (IDEMPOTENCY_CONFLICT). | [`ApiError`](#standard-error-envelope) |
+| Status | Description                                                                                                                                                                                | Schema                                 |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------- |
+| 200    | The subject's data, or replay of a prior identical request. On a replay the payroll-boundary tables are re-read under a fresh permission check and may come back under `withheld` instead. | object                                 |
+| 400    | Validation error.                                                                                                                                                                          | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                                                                                                                                | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                                                                                                                                | [`ApiError`](#standard-error-envelope) |
+| 404    | Resource not found.                                                                                                                                                                        | [`ApiError`](#standard-error-envelope) |
+| 409    | The Idempotency-Key was reused with a different request (IDEMPOTENCY_CONFLICT).                                                                                                            | [`ApiError`](#standard-error-envelope) |
 
 ## SEO & Distribution
 
@@ -8048,10 +8056,10 @@ Gated by seo_distribution.config.update. High-risk mutation — rewrites the pub
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Request body** (required): [`SeoConfigUpdateRequest`](#schema-seoconfigupdaterequest)
 
@@ -8173,10 +8181,10 @@ High-risk: requires an Idempotency-Key, audited. The target is validated through
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Request body** (required): [`SeoRedirectCreateRequest`](#schema-seoredirectcreaterequest)
 
@@ -8274,11 +8282,11 @@ activate | deactivate | archive | restore | purge. Idempotency-keyed, audited. p
 
 **Parameters**
 
-| Name               | In     | Required | Type          | Description |
-| ------------------ | ------ | -------- | ------------- | ----------- |
-| `id`               | path   | yes      | string (uuid) |             |
-| `Idempotency-Key`  | header | yes      | string        |             |
-| `X-Correlation-ID` | header | no       | string        |             |
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
 
 **Request body** (required): object
 
@@ -8302,10 +8310,10 @@ Turn an old→new public path change into an audited redirect PROPOSAL (inactive
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Request body** (required): object
 
@@ -8328,10 +8336,10 @@ Validate + safety-check up to 200 rules. dryRun: true returns a per-item report 
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Request body** (required): object
 
@@ -8376,10 +8384,10 @@ High-risk (the legacy-blog toggle changes public routing intent): requires an Id
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Request body** (required): [`SeoRedirectSettings`](#schema-seoredirectsettings)
 
@@ -8541,10 +8549,10 @@ High-risk: hands the payload to a domain action, so an Idempotency-Key is requir
 
 **Parameters**
 
-| Name              | In     | Required | Type          | Description |
-| ----------------- | ------ | -------- | ------------- | ----------- |
-| `id`              | path   | yes      | string (uuid) |             |
-| `Idempotency-Key` | header | yes      | string        |             |
+| Name              | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ----------------- | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`              | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key` | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
 
 **Responses**
 
@@ -8592,10 +8600,10 @@ Gated by `site_search.index.rebuild` — a HIGH-RISK action: it deletes every on
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Responses**
 
@@ -8616,10 +8624,10 @@ Gated by `site_search.index.reconcile`. Upserts the tenant's currently public do
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Responses**
 
@@ -8711,10 +8719,10 @@ Gated by `site_search.settings.update`. Changes what the PUBLIC search surface r
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Request body** (required): [`SiteSearchSettingsUpdateRequest`](#schema-sitesearchsettingsupdaterequest)
 
@@ -8845,6 +8853,270 @@ The row is KEPT. "This person asked to stop, on this date" is what answers a lat
 | 400    | Validation error.                                    | [`ApiError`](#standard-error-envelope)                       |
 | 429    | Too many requests from this source (`RATE_LIMITED`). | [`ApiError`](#standard-error-envelope)                       |
 
+## Tax
+
+Generic, jurisdiction-neutral tax calculation (tax module, Issue #889, ADR-0127). Versioned rule profiles with half-open effective windows (published windows never overlap per profile — enforced in the database), categories, a jurisdiction/scope reference, inclusive and exclusive pricing, multiple stacked or compound components, an explicit rounding mode/scale/level, and exempt vs zero-rated kept distinct. ONE pure calculator on exact bigint-rational arithmetic (no floating point; every amount, quantity and rate is a decimal STRING) behind a stateless quote and an idempotent finalise. SERVER-AUTHORITATIVE: no request accepts a tax amount, and a payload that names one is refused with 400 TAX_AMOUNT_NOT_ACCEPTED rather than ignored. A finalised document's tax is an APPEND-ONLY snapshot carrying a copy of the rule version it was computed under, so updating a rule never changes a historical document, and a refund or return is computed from the original snapshot alone, never from today's rule. Publishing a rule version and reversing a snapshot are high-risk, idempotency-keyed and audited; both, and finalising, emit domain events through the outbox. Ships no country profile: that needs a verified regulatory mapping first.
+
+### `POST /api/v1/tax/quote` — Compute tax for a set of lines (stateless)
+
+- **operationId**: `taxQuote`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `tax.calculations.analyze` (read-only, not high-risk). The ONE calculator every quote, POS and storefront caller uses. SERVER- AUTHORITATIVE: the body carries quantities, unit prices, discounts and a category per line — never a tax amount; a field that names one is refused with `400 TAX_AMOUNT_NOT_ACCEPTED`. The rule version is the published one in force on `taxDate` (a calendar date supplied by the caller, never the server's clock). Records nothing — no snapshot, event or audit row — so no `Idempotency-Key`. `422 TAX_RULE_VERSION_NOT_FOUND` when no published version covers the date, `422 TAX_RULE_NOT_FOUND` when a line's category has no rule and there is no fallback, `422 TAX_INPUT_INVALID` for a bad amount or one too large to store (a line or document figure of 10^18 or more — the same refusal `/snapshots` gives). The pricing mode is the RULE VERSION's: a `pricingMode` in the body is refused as an unrecognised field. Exact arithmetic throughout; see docs/awcms/tax-calculation.md.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description |
+| ------------------ | ------ | -------- | ------ | ----------- |
+| `X-Correlation-ID` | header | no       | string |             |
+
+**Request body** (required): [`TaxQuoteRequest`](#schema-taxquoterequest)
+
+**Responses**
+
+| Status | Description                                                                | Schema                                 |
+| ------ | -------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | The computed tax.                                                          | object                                 |
+| 400    | Validation error.                                                          | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                | [`ApiError`](#standard-error-envelope) |
+| 422    | `TAX_RULE_VERSION_NOT_FOUND`, `TAX_RULE_NOT_FOUND` or `TAX_INPUT_INVALID`. | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/tax/reports/reconciliation` — Tax reconciliation for a period
+
+- **operationId**: `taxReconciliationReport`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `tax.reports.read`. What was finalised and reversed between two TAX DATES (inclusive calendar dates, at most 366 days), by rule version, component and treatment, netted per currency, plus an `integrity` block that checks every snapshot in the period against its own lines (line sums vs document totals, component sums vs tax total). Aggregated in SQL, so the response grows with the number of profiles and components, never with the number of documents. The counting projection `tax.snapshot_activity` on the reporting engine is the freshness-tracked companion; this is its drill-down.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `from`             | query  | yes      | string (date) |             |
+| `to`               | query  | yes      | string (date) |             |
+| `profileCode`      | query  | no       | string        |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The reconciliation report.  | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/tax/rule-versions` — List this tenant's tax rule versions
+
+- **operationId**: `taxRuleVersionList`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `tax.rules.read`. Newest first, keyset-paginated (`data.nextCursor`). Optional filters: `profileCode`, `status` (`draft` | `published`). Tenant-scoped (withTenant + RLS FORCE).
+
+**Parameters**
+
+| Name               | In     | Required | Type                       | Description |
+| ------------------ | ------ | -------- | -------------------------- | ----------- |
+| `profileCode`      | query  | no       | string                     |             |
+| `status`           | query  | no       | enum(`draft`, `published`) |             |
+| `cursor`           | query  | no       | string                     |             |
+| `X-Correlation-ID` | header | no       | string                     |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | A page of rule versions.    | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/tax/rule-versions` — Author a draft tax rule version
+
+- **operationId**: `taxRuleVersionCreate`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `tax.rules.configure` (high-risk). Creates a DRAFT — it is not resolved by any quote or snapshot until published. The version number is assigned by the server (next for the profile). Requires an `Idempotency-Key` (a retry must not mint a second draft) and is audited. The definition is validated strictly: a taxable rule needs at least one component, exempt and zero-rated rules must have none, every category a rule names must be declared, a category has one rule, and there is at most one fallback rule (`categoryCode: null`).
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`TaxRuleVersionInput`](#schema-taxruleversioninput)
+
+**Responses**
+
+| Status | Description                                                | Schema                                                     |
+| ------ | ---------------------------------------------------------- | ---------------------------------------------------------- |
+| 200    | Idempotent replay of an earlier create.                    | [`TaxRuleVersionEnvelope`](#schema-taxruleversionenvelope) |
+| 201    | Draft created.                                             | [`TaxRuleVersionEnvelope`](#schema-taxruleversionenvelope) |
+| 400    | Validation error.                                          | [`ApiError`](#standard-error-envelope)                     |
+| 401    | Missing or invalid session.                                | [`ApiError`](#standard-error-envelope)                     |
+| 403    | Access denied by RBAC/ABAC.                                | [`ApiError`](#standard-error-envelope)                     |
+| 409    | Idempotency-Key was already used with a different request. | [`ApiError`](#standard-error-envelope)                     |
+
+### `GET /api/v1/tax/rule-versions/{id}` — Read one tax rule version with its full definition
+
+- **operationId**: `taxRuleVersionRead`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `tax.rules.read`. The definition plus the version's pricing, rounding mode, scale and level are everything the pure calculator needs, so this is also the document an offline client caches. A malformed `id` answers 404.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `id`               | path   | yes      | string (uuid) |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                                     |
+| ------ | --------------------------- | ---------------------------------------------------------- |
+| 200    | The rule version.           | [`TaxRuleVersionEnvelope`](#schema-taxruleversionenvelope) |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope)                     |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope)                     |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope)                     |
+| 404    | Resource not found.         | [`ApiError`](#standard-error-envelope)                     |
+
+### `POST /api/v1/tax/rule-versions/{id}/publish` — Publish a draft tax rule version
+
+- **operationId**: `taxRuleVersionPublish`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `tax.rules.publish` (high-risk), separately grantable from authoring: this is the act that changes what every sale on or after `effectiveFrom` is taxed at. Requires an `Idempotency-Key`; audited at `critical`; emits `awcms.tax.rule_version.published` through the outbox. A version must take effect STRICTLY AFTER the latest published version of its profile, which it ends (409 `TAX_VERSION_OUT_OF_ORDER` otherwise) — there is no publishing into the past: besides that ordering rule, a version may not take effect before the SERVER's date (`now()` from the database, UTC) nor on or before a tax date already finalised under its profile (`409 TAX_VERSION_BACKDATED`). A published version is immutable: it never changes a document already finalised, and a rule edit is a new version. Concurrent publishes for one profile serialise on a database lock; published windows can never overlap (enforced by a trigger).
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Responses**
+
+| Status | Description                                                                                                     | Schema                                                     |
+| ------ | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| 200    | Published (or an idempotent replay).                                                                            | [`TaxRuleVersionEnvelope`](#schema-taxruleversionenvelope) |
+| 400    | Validation error.                                                                                               | [`ApiError`](#standard-error-envelope)                     |
+| 401    | Missing or invalid session.                                                                                     | [`ApiError`](#standard-error-envelope)                     |
+| 403    | Access denied by RBAC/ABAC.                                                                                     | [`ApiError`](#standard-error-envelope)                     |
+| 404    | Resource not found.                                                                                             | [`ApiError`](#standard-error-envelope)                     |
+| 409    | `IDEMPOTENCY_CONFLICT`, `TAX_VERSION_ALREADY_PUBLISHED`, `TAX_VERSION_OUT_OF_ORDER` or `TAX_VERSION_BACKDATED`. | [`ApiError`](#standard-error-envelope)                     |
+
+### `GET /api/v1/tax/snapshots` — List tax snapshots
+
+- **operationId**: `taxSnapshotList`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `tax.snapshots.read`. Newest first, keyset-paginated (`data.nextCursor`). Filters: `documentType`, `documentId`, `kind`.
+
+**Parameters**
+
+| Name               | In     | Required | Type                     | Description |
+| ------------------ | ------ | -------- | ------------------------ | ----------- |
+| `documentType`     | query  | no       | string                   |             |
+| `documentId`       | query  | no       | string                   |             |
+| `kind`             | query  | no       | enum(`sale`, `reversal`) |             |
+| `cursor`           | query  | no       | string                   |             |
+| `X-Correlation-ID` | header | no       | string                   |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | A page of snapshots.        | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/tax/snapshots` — Finalise a document's tax into an immutable snapshot
+
+- **operationId**: `taxSnapshotFinalise`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `tax.snapshots.create`. The server computes the tax exactly as `/quote` does and writes it, with a copy of the rule version it used, into an APPEND-ONLY row (enforced by a database trigger): nothing about the rules can change that document afterwards, and a refund is computed from this row alone. Idempotent two ways — the required `Idempotency-Key` replays the stored response, and the natural key `(documentType, documentId)` returns the existing snapshot (200) when the SAME request is repeated even under a new key, and `409 TAX_DOCUMENT_ALREADY_FINALISED` when a DIFFERENT request names an already-finalised document. Audited; emits `awcms.tax.snapshot.finalised` through the outbox. Like `/quote`, a body that names a tax amount is refused with `400 TAX_AMOUNT_NOT_ACCEPTED`, a `pricingMode` is refused as an unrecognised field, and an oversized figure is `422 TAX_INPUT_INVALID`. A `taxDate` outside the server-date window (default 7 days back, 1 forward) additionally needs `tax.snapshots.backdate` (high-risk) and is otherwise `403 TAX_BACKDATE_PERMISSION_REQUIRED` — never accepted silently.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`TaxSnapshotRequest`](#schema-taxsnapshotrequest)
+
+**Responses**
+
+| Status | Description                                                                | Schema                                               |
+| ------ | -------------------------------------------------------------------------- | ---------------------------------------------------- |
+| 200    | Replay of an earlier finalise (same key, or same document and request).    | [`TaxSnapshotEnvelope`](#schema-taxsnapshotenvelope) |
+| 201    | Snapshot created.                                                          | [`TaxSnapshotEnvelope`](#schema-taxsnapshotenvelope) |
+| 400    | Validation error.                                                          | [`ApiError`](#standard-error-envelope)               |
+| 401    | Missing or invalid session.                                                | [`ApiError`](#standard-error-envelope)               |
+| 403    | Access denied by RBAC/ABAC.                                                | [`ApiError`](#standard-error-envelope)               |
+| 409    | `IDEMPOTENCY_CONFLICT` or `TAX_DOCUMENT_ALREADY_FINALISED`.                | [`ApiError`](#standard-error-envelope)               |
+| 422    | `TAX_RULE_VERSION_NOT_FOUND`, `TAX_RULE_NOT_FOUND` or `TAX_INPUT_INVALID`. | [`ApiError`](#standard-error-envelope)               |
+
+### `GET /api/v1/tax/snapshots/{id}` — Read one tax snapshot with its lines
+
+- **operationId**: `taxSnapshotRead`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `tax.snapshots.read`. Returns the document's lines and totals and names the rule version it was computed under (`ruleVersionId`, `versionNo`) but does NOT embed the rule definition: reading rules is `tax.rules.read`, a different power from reading a document. The definition is `GET /api/v1/tax/rule-versions/{id}` away for a caller entitled to it, and is the same content because a published version is immutable. A malformed `id` answers 404.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `id`               | path   | yes      | string (uuid) |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                               |
+| ------ | --------------------------- | ---------------------------------------------------- |
+| 200    | The snapshot.               | [`TaxSnapshotEnvelope`](#schema-taxsnapshotenvelope) |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope)               |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope)               |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope)               |
+| 404    | Resource not found.         | [`ApiError`](#standard-error-envelope)               |
+
+### `POST /api/v1/tax/snapshots/{id}/reverse` — Reverse (refund / return) all or part of a finalised document's tax
+
+- **operationId**: `taxSnapshotReverse`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `tax.snapshots.reverse` (HIGH-RISK). Computed from the ORIGINAL snapshot — its recorded quantities and amounts and nothing else; no rule table is consulted, so a refund of last year's sale reverses the tax that was CHARGED whatever the rate is now. The body names lines and quantities returned (omit `lines` to reverse everything not yet returned) — never an amount. Partial reversals cap at what has not yet been reversed; the one that completes a line takes the exact remainder; concurrent reversals of one sale serialise on a row lock with a database trigger as backstop, so the total refunded can never exceed the total charged. Amounts in the result are NEGATIVE. Requires an `Idempotency-Key`; `documentId` is the reversal's own document (a refund id) and is unique per tenant, so a retry under a fresh key replays. `taxDate` is the period the reversal is reported in: the SERVER's date when omitted (never the original's), and a stated date outside the server-date window needs `tax.snapshots.backdate` (`403 TAX_BACKDATE_PERMISSION_REQUIRED` otherwise). A malformed `id` answers 404. Audited at `critical`; emits `awcms.tax.snapshot.reversed` through the outbox.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`TaxReversalRequest`](#schema-taxreversalrequest)
+
+**Responses**
+
+| Status | Description                                                                                                              | Schema                                               |
+| ------ | ------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------- |
+| 200    | Replay of an earlier reversal.                                                                                           | [`TaxSnapshotEnvelope`](#schema-taxsnapshotenvelope) |
+| 201    | Reversal recorded.                                                                                                       | [`TaxSnapshotEnvelope`](#schema-taxsnapshotenvelope) |
+| 400    | Validation error.                                                                                                        | [`ApiError`](#standard-error-envelope)               |
+| 401    | Missing or invalid session.                                                                                              | [`ApiError`](#standard-error-envelope)               |
+| 403    | Access denied by RBAC/ABAC.                                                                                              | [`ApiError`](#standard-error-envelope)               |
+| 404    | Resource not found.                                                                                                      | [`ApiError`](#standard-error-envelope)               |
+| 409    | `IDEMPOTENCY_CONFLICT` or `TAX_DOCUMENT_ALREADY_FINALISED` (the reversal document id was used with a different request). | [`ApiError`](#standard-error-envelope)               |
+| 422    | `TAX_REVERSAL_INVALID` — an unknown line, more than was sold and not yet returned, or nothing left to reverse.           | [`ApiError`](#standard-error-envelope)               |
+
 ## Site Profile
 
 Per-tenant SITE CHROME (site_profile module, Issue #596, ADR-0102) — the masthead tagline, footer copyright line, logo and favicon, editorial address, contact email/phone/WhatsApp, and social profile links that every public page renders. Before it, a footer, masthead, contact page and Organization JSON-LD node all had to hard-code the publisher's identity in frontend source, which made a second tenant impossible without a fork. The boundary against seo_distribution is deliberate: awcms_seo_tenant_settings keeps what CRAWLERS see (og:site_name, the JSON-LD Organization node, the default og:image) because each is an SEO output consumed by a meta-tag renderer, while this module owns what PEOPLE read. Nothing is duplicated across the two, so no value can drift, and consumers are never asked to know the split — GET /api/v1/site-profile/composed merges both halves for build clients. Social link URLs are REFUSED rather than sanitized unless absolute http(s), because they are rendered as <a href> on every public page. read and update are separately grantable: changing what every page's contact block says is a different power from reading it. Nothing here is anonymous — 'public read' means the public site's BUILDER can read it, not that anyone can.
@@ -8880,10 +9152,10 @@ Gated by `site_profile.profile.update`, separately grantable from `.read` becaus
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Request body** (required): [`SiteProfileWriteInput`](#schema-siteprofilewriteinput)
 
@@ -8957,9 +9229,9 @@ RESPONSES ARE DELIBERATELY UNIFORM. An unresolved resource, a disabled module, a
 
 **Parameters**
 
-| Name              | In     | Required | Type   | Description |
-| ----------------- | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key` | header | yes      | string |             |
+| Name              | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ----------------- | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key` | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
 
 **Request body** (required): [`SubmitCommentRequest`](#schema-submitcommentrequest)
 
@@ -9072,10 +9344,10 @@ Requires `comments.moderation.archive`. Only an APPROVED comment can be archived
 
 **Parameters**
 
-| Name              | In     | Required | Type          | Description |
-| ----------------- | ------ | -------- | ------------- | ----------- |
-| `id`              | path   | yes      | string (uuid) |             |
-| `Idempotency-Key` | header | yes      | string        |             |
+| Name              | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ----------------- | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`              | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key` | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
 
 **Responses**
 
@@ -9098,10 +9370,10 @@ This is the only moderator transition with no way back through the API: `deleted
 
 **Parameters**
 
-| Name              | In     | Required | Type          | Description |
-| ----------------- | ------ | -------- | ------------- | ----------- |
-| `id`              | path   | yes      | string (uuid) |             |
-| `Idempotency-Key` | header | yes      | string        |             |
+| Name              | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ----------------- | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`              | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key` | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
 
 **Responses**
 
@@ -9122,10 +9394,10 @@ This is the only moderator transition with no way back through the API: `deleted
 
 **Parameters**
 
-| Name              | In     | Required | Type          | Description |
-| ----------------- | ------ | -------- | ------------- | ----------- |
-| `id`              | path   | yes      | string (uuid) |             |
-| `Idempotency-Key` | header | yes      | string        |             |
+| Name              | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ----------------- | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`              | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key` | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
 
 **Request body** (required): object
 
@@ -9149,10 +9421,10 @@ Requires `comments.moderation.restore`. Moves the comment back to `pending` for 
 
 **Parameters**
 
-| Name              | In     | Required | Type          | Description |
-| ----------------- | ------ | -------- | ------------- | ----------- |
-| `id`              | path   | yes      | string (uuid) |             |
-| `Idempotency-Key` | header | yes      | string        |             |
+| Name              | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ----------------- | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`              | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key` | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
 
 **Responses**
 
@@ -9173,9 +9445,9 @@ Guarded by the same permission the single-comment action requires. Each comment 
 
 **Parameters**
 
-| Name              | In     | Required | Type   | Description |
-| ----------------- | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key` | header | yes      | string |             |
+| Name              | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ----------------- | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key` | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
 
 **Request body** (required): object
 
@@ -9238,9 +9510,9 @@ Requires `comments.settings.update`. A partial body is merged over the current s
 
 **Parameters**
 
-| Name              | In     | Required | Type   | Description |
-| ----------------- | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key` | header | yes      | string |             |
+| Name              | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ----------------- | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key` | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
 
 **Request body** (required): [`CommentSettings`](#schema-commentsettings)
 
@@ -9349,13 +9621,14 @@ Takes the browser's own PushSubscription.toJSON() shape plus a transport discrim
 
 **Responses**
 
-| Status | Description                                                                                                                                                         | Schema                                 |
-| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| 201    | The registered device.                                                                                                                                              | object                                 |
-| 400    | Validation error.                                                                                                                                                   | [`ApiError`](#standard-error-envelope) |
-| 401    | Missing or invalid session.                                                                                                                                         | [`ApiError`](#standard-error-envelope) |
-| 403    | Access denied by RBAC/ABAC.                                                                                                                                         | [`ApiError`](#standard-error-envelope) |
-| 422    | Malformed registration — unknown transport, a non-https endpoint, an endpoint pointing at a literal private address, or key material that is not the RFC 8291 size. | [`ApiError`](#standard-error-envelope) |
+| Status | Description                                                                                                                                                                                                                                                                                                         | Schema                                 |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 201    | The registered device.                                                                                                                                                                                                                                                                                              | object                                 |
+| 400    | Validation error.                                                                                                                                                                                                                                                                                                   | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                                                                                                                                                                                                                                                         | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                                                                                                                                                                                                                                                         | [`ApiError`](#standard-error-envelope) |
+| 422    | Malformed registration — unknown transport, a non-https endpoint, an endpoint pointing at a literal private address, or key material that is not the RFC 8291 size.                                                                                                                                                 | [`ApiError`](#standard-error-envelope) |
+| 503    | Code PUSH_MISCONFIGURED. A web_push registration needs the PUSH_AUTH_SECRET_ENCRYPTION_KEYS key ring (the RFC 8291 auth secret is stored encrypted, never in the clear) and the deployment has none usable. Fail closed: nothing is stored. The GET capability reports webPush.enabled=false in the same situation. | [`ApiError`](#standard-error-envelope) |
 
 ### `DELETE /api/v1/push/subscriptions/{id}` — Retire one of the caller's own push devices.
 
@@ -9740,10 +10013,10 @@ Sets deleted_at; the slug is freed for reuse. Restore it with POST /api/v1/comme
 
 **Parameters**
 
-| Name              | In     | Required | Type          | Description |
-| ----------------- | ------ | -------- | ------------- | ----------- |
-| `id`              | path   | yes      | string (uuid) |             |
-| `Idempotency-Key` | header | yes      | string        |             |
+| Name              | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ----------------- | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`              | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key` | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
 
 **Request body** (required): object
 
@@ -10295,13 +10568,13 @@ Calls `provider.fetchStatus` for this order's most recent payment-gateway sessio
 - **operationId**: `createCommercePosOrder`
 - **Security**: bearerAuth + tenantHeader
 
-Requires `Idempotency-Key`. `orders.channel` is set `pos`; `order_events` records the acting STAFF member (`admin`), never `system` and never `customer` — `pos_cashier_tenant_user_id` on the order row carries WHICH staff member. Payment is `cash` or `manual_qris` and the order is created already `paid` — there is no `pending_payment` step visible to the caller for a counter sale. `customer` is optional in full: an omitted/blank `phone` attaches the sale to this tenant's single WALK-IN customer row (a documented sentinel phone, `docs/kamus-data.md`); a given `phone` finds or creates a customer by that (normalised) phone, same as a storefront guest checkout (and prices the sale at that customer's level, #118). `payment.amountTendered` is REQUIRED for `cash` and ignored for `manual_qris`; it is a `numeric(14,2)` string, and the response's `change` is computed server-side, also as a string (ADR-0003 — never a float). The idempotency key is the HEADER only — a body field of the same name is ignored. Same key + same body replays the stored 201; same key + different body (or a different cashier) is `409 IDEMPOTENCY_CONFLICT`.
+Requires `Idempotency-Key`. `orders.channel` is set `pos`; `order_events` records the acting STAFF member (`admin`), never `system` and never `customer` — `pos_cashier_tenant_user_id` on the order row carries WHICH staff member. Payment is `cash` or `manual_qris` and the order is created already `paid` — there is no `pending_payment` step visible to the caller for a counter sale. `customer` is optional in full: an omitted/blank `phone` attaches the sale to this tenant's single WALK-IN customer row (a documented sentinel phone, `docs/kamus-data.md`); a given `phone` finds or creates a customer by that (normalised) phone, same as a storefront guest checkout (and prices the sale at that customer's level, #118). `payment.amountTendered` is REQUIRED for `cash` and ignored for `manual_qris`; it is a `numeric(14,2)` string, and the response's `change` is computed server-side, also as a string (ADR-0003 — never a float). The idempotency key is the HEADER only — a body field of the same name is ignored. Same key + same body replays the stored 201; same key + different body from the same cashier is `409 IDEMPOTENCY_CONFLICT`. Keys are scoped per cashier (ADR-0129 amendment 1): a different cashier presenting the same key value is a separate, independent request — it never replays, and never reads, the first cashier's stored sale.
 
 **Parameters**
 
-| Name              | In     | Required | Type   | Description |
-| ----------------- | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key` | header | yes      | string |             |
+| Name              | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ----------------- | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key` | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
 
 **Request body** (required): object
 
@@ -11978,10 +12251,10 @@ Gated by omes_control.ai_privacy.approve. A RESTRICTED classification resolving 
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Request body** (required): object
 
@@ -12091,11 +12364,11 @@ Gated by omes_control.backups.restore. Always-destructive: routes through the ca
 
 **Parameters**
 
-| Name               | In     | Required | Type          | Description |
-| ------------------ | ------ | -------- | ------------- | ----------- |
-| `id`               | path   | yes      | string (uuid) |             |
-| `Idempotency-Key`  | header | yes      | string        |             |
-| `X-Correlation-ID` | header | no       | string        |             |
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
 
 **Responses**
 
@@ -12269,11 +12542,11 @@ Gated by omes_control.jobs.approve. Only a failed job may be requeued — refuse
 
 **Parameters**
 
-| Name               | In     | Required | Type          | Description |
-| ------------------ | ------ | -------- | ------------- | ----------- |
-| `id`               | path   | yes      | string (uuid) |             |
-| `Idempotency-Key`  | header | yes      | string        |             |
-| `X-Correlation-ID` | header | no       | string        |             |
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
 
 **Responses**
 
@@ -12295,11 +12568,11 @@ Gated by omes_control.jobs.cancel. Only a queued job may be cancelled — a leas
 
 **Parameters**
 
-| Name               | In     | Required | Type          | Description |
-| ------------------ | ------ | -------- | ------------- | ----------- |
-| `id`               | path   | yes      | string (uuid) |             |
-| `Idempotency-Key`  | header | yes      | string        |             |
-| `X-Correlation-ID` | header | no       | string        |             |
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
 
 **Responses**
 
@@ -12311,6 +12584,75 @@ Gated by omes_control.jobs.cancel. Only a queued job may be cancelled — a leas
 | 403    | Access denied by RBAC/ABAC.                                                                                                 | [`ApiError`](#standard-error-envelope) |
 | 404    | Resource not found.                                                                                                         | [`ApiError`](#standard-error-envelope) |
 | 409    | Job is not queued (JOB_NOT_CANCELLABLE), or the Idempotency-Key was reused with a different request (IDEMPOTENCY_CONFLICT). | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/omes/mission-control/actions` — Read the advisory action availability of one Mission Control object (ahliweb/omes#267)
+
+- **operationId**: `omesReadMissionControlActions`
+- **Security**: bearerAuth + tenantHeader
+
+ADVISORY ONLY - this endpoint authorizes nothing. Every action it lists is a shortcut to an EXISTING endpoint (POST /api/v1/omes/operations, POST /api/v1/omes/jobs/{id}/cancel, POST /api/v1/omes/jobs/{id}/approve, POST /api/v1/omes/backups/{id}/restore, or a link to the canonical /admin/approvals inbox), and each of those re-authorizes, rate-limits, applies the destructive-workflow gate, audits and enforces idempotency on its own; a forged direct POST without the permission is still a 403. The answer only tells the UI which buttons to enable and why a disabled one is disabled. Gated by omes_control.servers.read (the workspace gate); the target is read only if the viewer also holds its source's own read permission. An unknown id, another tenant's id and an object in a source the viewer may not read are indistinguishable (every action reason "not_found"). Per action: "available" mirrors exactly what the existing endpoint enforces (job cancel only while queued, requeue only while failed, plus the viewer's permission); "advisories" (target_stale, target_decommissioned, backup_not_verified) are non-blocking warnings the endpoints do not enforce, shown in the preflight summary. "requires_approval" is true for stop, rollback and backup restore (workflow omes_control.destructive_operation). "body" is present for operation.* actions and is exactly what the Operations screen sends. Strict query validation: kind must be a Mission Control kind, id must match ^[A-Za-z0-9_.:-]{1,128}$, and any other parameter (command, shell, target, url, ...) is a 400 VALIDATION_ERROR. No new permission, operation name, table or executor.
+
+**Parameters**
+
+| Name   | In    | Required | Type                                                                                                                                                                                 | Description                 |
+| ------ | ----- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------- |
+| `kind` | query | yes      | enum(`server`, `deployment`, `job`, `health_report`, `backup`, `hermes_subagent`, `architecture_plane`, `capability`, `repository_milestone`, `ai_privacy_posture`, `approval_item`) |                             |
+| `id`   | query | yes      | string                                                                                                                                                                               | The scene node's source_id. |
+
+**Responses**
+
+| Status | Description                                                     | Schema                                 |
+| ------ | --------------------------------------------------------------- | -------------------------------------- |
+| 200    | Advisory availability for exactly the kind's candidate actions. | object                                 |
+| 400    | Validation error.                                               | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                     | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                     | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/omes/mission-control/replay` — Read one page of Mission Control replay evidence (ahliweb/omes#266)
+
+- **operationId**: `omesReadMissionControlReplay`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by omes_control.servers.read, which only admits the viewer to the workspace; each source is then read only if the viewer also holds that source's own read permission (the same guards as the live scene). A source the viewer may not read contributes no events and is reported as a source_unavailable evidence gap. Returns one bounded, keyset-paginated page (at most 500 events) of the vendored mission-control-replay-window v1 shape (ADR-0031): a read projection over evidence existing tables already retain (Hermes orchestration events, health and backup snapshots, job and worker-result records, workflow decisions) - never a new event store or audit authority. Events are de-duplicated by (evidence_kind, evidence_id), ordered deterministically by (at, evidence_kind, evidence_id), and evidence recorded out of order is labelled late_arrival. Gaps are explicit (not_retained, retention_expired, source_unavailable, before_first_observation) and never interpolated. No raw payload, log, prompt or provider response is carried. The window may span at most 24 hours; from and to are required UTC instants with from earlier than to and to not in the future; cursor is the opaque next_cursor of the previous page; any other query parameter is a 400 VALIDATION_ERROR. An invalid page fails closed with 500 MISSION_CONTROL_REPLAY_INVALID.
+
+**Parameters**
+
+| Name     | In    | Required | Type   | Description                                                                                |
+| -------- | ----- | -------- | ------ | ------------------------------------------------------------------------------------------ |
+| `from`   | query | yes      | string | Window start, a UTC instant (2026-10-02T07:00:00Z).                                        |
+| `to`     | query | yes      | string | Window end (inclusive), a UTC instant; at most 24 hours after from, and not in the future. |
+| `cursor` | query | no       | string | The opaque next_cursor of the previous page of the same window.                            |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | One replay page.            | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/omes/mission-control/scene` — Read the 3D Mission Control scene (ahliweb/omes#265)
+
+- **operationId**: `omesReadMissionControlScene`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by omes_control.servers.read, which only admits the viewer to the workspace; each source is then included only if the viewer also holds that source's own read permission (omes_control.deployments.read, jobs.read, backups.read, hermes_orchestration.read, architecture.read, ai_privacy.read, workflow.approval.read). A source the viewer may not read is reported with status "unavailable" and contributes no nodes. Returns the vendored mission-control-scene-view v1 shape (ADR-0031): a read-only, tenant-scoped, bounded (at most 500 nodes and 1000 relations; omitted counts are reported in "truncated") composition of references to records that existing screens own. It is a derived projection with no new permission, table, or action. An invalid composition fails closed with 500 MISSION_CONTROL_SCENE_INVALID.
+
+**Parameters**
+
+| Name    | In    | Required | Type   | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ------- | ----- | -------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `as_of` | query | no       | string | ahliweb/omes#266. A UTC instant (2026-10-02T08:00:00Z). Absent = the live scene. Present = the HISTORICAL scene that instant's retained evidence proves (mode "historical", with evidence_gaps): each event-backed object is in the state of its latest evidence at or before as_of (evidence is read from the 24 hours before as_of for Hermes and health, and newest-first for backups, jobs and approvals), an object with no such evidence is absent, and current-only objects (servers, deployments, architecture, repository progress, AI privacy) are shown with freshness "unknown" and are never back-dated. Must not be in the future nor older than the retention horizon (the longest data-lifecycle retention of the replay sources, 90 days). It is the ONLY query parameter accepted; any other is a 400 VALIDATION_ERROR. |
+
+**Responses**
+
+| Status | Description                                                   | Schema                                 |
+| ------ | ------------------------------------------------------------- | -------------------------------------- |
+| 200    | The tenant's scene (live, or historical when as_of is given). | object                                 |
+| 400    | Validation error.                                             | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                   | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                   | [`ApiError`](#standard-error-envelope) |
 
 ### `GET /api/v1/omes/operations` — List submitted operation requests
 
@@ -12345,10 +12687,10 @@ Guarded per-operation: status/preflight require deployments.read; start/stop/res
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Request body** (required): object
 
@@ -12439,9 +12781,9 @@ Gated by omes_control.repository_progress.configure (a NEW permission — see sq
 
 **Parameters**
 
-| Name              | In     | Required | Type   | Description |
-| ----------------- | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key` | header | yes      | string |             |
+| Name              | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ----------------- | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key` | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
 
 **Request body** (required): object
 
@@ -12464,9 +12806,9 @@ Gated by omes_control.repository_progress.configure. Also clears any existing pr
 
 **Parameters**
 
-| Name              | In     | Required | Type   | Description |
-| ----------------- | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key` | header | yes      | string |             |
+| Name              | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ----------------- | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key` | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
 
 **Responses**
 
@@ -12509,10 +12851,10 @@ Gated by omes_control.servers.register. Records registration INTENT only (status
 
 **Parameters**
 
-| Name               | In     | Required | Type   | Description |
-| ------------------ | ------ | -------- | ------ | ----------- |
-| `Idempotency-Key`  | header | yes      | string |             |
-| `X-Correlation-ID` | header | no       | string |             |
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
 
 **Request body** (required): object
 
@@ -12558,11 +12900,11 @@ Gated by omes_control.servers.delete. Soft delete — flips status to decommissi
 
 **Parameters**
 
-| Name               | In     | Required | Type          | Description |
-| ------------------ | ------ | -------- | ------------- | ----------- |
-| `id`               | path   | yes      | string (uuid) |             |
-| `Idempotency-Key`  | header | yes      | string        |             |
-| `X-Correlation-ID` | header | no       | string        |             |
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
 
 **Responses**
 
@@ -12584,11 +12926,11 @@ Gated by omes_control.enrollments.manage. The raw challenge is returned exactly 
 
 **Parameters**
 
-| Name               | In     | Required | Type          | Description |
-| ------------------ | ------ | -------- | ------------- | ----------- |
-| `id`               | path   | yes      | string (uuid) |             |
-| `Idempotency-Key`  | header | yes      | string        |             |
-| `X-Correlation-ID` | header | no       | string        |             |
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
 
 **Responses**
 
@@ -12611,12 +12953,12 @@ Gated by omes_control.enrollments.manage. Requires Idempotency-Key, audited.
 
 **Parameters**
 
-| Name               | In     | Required | Type          | Description |
-| ------------------ | ------ | -------- | ------------- | ----------- |
-| `id`               | path   | yes      | string (uuid) |             |
-| `workerId`         | path   | yes      | string        |             |
-| `Idempotency-Key`  | header | yes      | string        |             |
-| `X-Correlation-ID` | header | no       | string        |             |
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `workerId`         | path   | yes      | string        |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
 
 **Responses**
 
@@ -12746,6 +13088,4207 @@ Gated by omes_control.enrollments.manage. Requires Idempotency-Key, audited.
 | ------ | ----------------------------------------- | -------------------------------------- |
 | 200    | recorded, duplicate_ignored, or rejected. | unknown                                |
 | 429    | Rate-limited per (tenant, worker).        | [`ApiError`](#standard-error-envelope) |
+
+## Inventory
+
+A generic, auditable multi-location STOCK LEDGER (inventory module, Issue #887, ADR-0126) that any domain module — commerce, POS, storefront — adopts as its inventory authority instead of keeping its own stock counter. Stock locations; IMMUTABLE finalised movements (opening, receive, sale, sale_return, supplier_return, transfer_out/transfer_in, adjustment) that are append-only by trigger and by privileges and corrected only by compensating movements; a per-(location,item) balance that is a read model always equal to the sum of its movements, with a reconciliation that proves it and a rebuild that repairs a drifted row FROM the ledger; a negative-stock policy per tenant and location; low-stock thresholds with a projection on the reporting engine. Item references are an OPAQUE (itemType, itemRef) supplied by the consumer — never a foreign key to any catalogue. Every posting carries an idempotent source identity (type, id, line) and an Idempotency-Key; replaying either returns the ORIGINAL movement. A transfer is always a balanced out/in pair posted in one transaction. A client can NEVER assert a balance: no operation accepts one, and a body that names onHand/balanceAfter is a 400. adjust, transfer and rebuild are high-risk, separately grantable, and audited.
+
+### `POST /api/v1/inventory/adjustments` — Post a stock adjustment
+
+- **operationId**: `inventoryAdjustmentPost`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `inventory.movements.adjust` (HIGH-RISK). The one movement type that carries its own sign (`quantityDelta`) and the only way to change stock without a business document behind it, so `reasonCode` is REQUIRED — the reason is the audit trail. Requires an Idempotency-Key; audited at warning severity. Undo it with the reversal endpoint, never by editing a row (the ledger is append-only).
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`InventoryAdjustmentInput`](#schema-inventoryadjustmentinput)
+
+**Responses**
+
+| Status | Description                                                                                    | Schema                                                   |
+| ------ | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| 200    | Replay of an adjustment already posted under this source identity.                             | [`InventoryPostResponse`](#schema-inventorypostresponse) |
+| 201    | The adjustment was posted.                                                                     | [`InventoryPostResponse`](#schema-inventorypostresponse) |
+| 400    | Validation error.                                                                              | [`ApiError`](#standard-error-envelope)                   |
+| 401    | Missing or invalid session.                                                                    | [`ApiError`](#standard-error-envelope)                   |
+| 403    | Access denied by RBAC/ABAC.                                                                    | [`ApiError`](#standard-error-envelope)                   |
+| 404    | Stock location not found (LOCATION_NOT_FOUND).                                                 | [`ApiError`](#standard-error-envelope)                   |
+| 409    | IDEMPOTENCY_CONFLICT, SOURCE_CONFLICT, INSUFFICIENT_STOCK, UNIT_MISMATCH or LOCATION_INACTIVE. | [`ApiError`](#standard-error-envelope)                   |
+
+### `POST /api/v1/inventory/adjustments/{id}/reversal` — Reverse a stock adjustment with a compensating one
+
+- **operationId**: `inventoryAdjustmentReverse`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `inventory.movements.adjust` (HIGH-RISK). Posts an equal and opposite adjustment linked by `reversesMovementId`; the original row is never touched. Only an ADJUSTMENT is reversible (`409 NOT_REVERSIBLE` otherwise, and a reversal cannot itself be reversed) — every other type already has its natural counterpart. The source identity is derived from the target, so a retry is a `200 replayed: true`, and one adjustment can be reversed at most once. The reversal can itself be refused with `INSUFFICIENT_STOCK` when the stock the adjustment added has since been sold. Requires an Idempotency-Key; audited at warning severity.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Request body** (required): object
+
+**Responses**
+
+| Status | Description                                                                    | Schema                                                   |
+| ------ | ------------------------------------------------------------------------------ | -------------------------------------------------------- |
+| 200    | Replay of the reversal already posted for this adjustment.                     | [`InventoryPostResponse`](#schema-inventorypostresponse) |
+| 201    | The reversal was posted.                                                       | [`InventoryPostResponse`](#schema-inventorypostresponse) |
+| 400    | Validation error.                                                              | [`ApiError`](#standard-error-envelope)                   |
+| 401    | Missing or invalid session.                                                    | [`ApiError`](#standard-error-envelope)                   |
+| 403    | Access denied by RBAC/ABAC.                                                    | [`ApiError`](#standard-error-envelope)                   |
+| 404    | Resource not found.                                                            | [`ApiError`](#standard-error-envelope)                   |
+| 409    | IDEMPOTENCY_CONFLICT, NOT_REVERSIBLE, INSUFFICIENT_STOCK or LOCATION_INACTIVE. | [`ApiError`](#standard-error-envelope)                   |
+
+### `GET /api/v1/inventory/balances` — List stock balances (and the live low-stock list)
+
+- **operationId**: `inventoryBalancesList`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `inventory.balances.read`. Keyset paginated by `(location, item)`. `lowStockOnly=true` is the live, authoritative low-stock list — the detail behind the `inventory.low_stock` reporting projection. Read-only by construction: there is no write verb on this resource, because a balance is derived from movements.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `locationId`       | query  | no       | string (uuid) |             |
+| `itemType`         | query  | no       | string        |             |
+| `itemRef`          | query  | no       | string        |             |
+| `lowStockOnly`     | query  | no       | boolean       |             |
+| `cursor`           | query  | no       | string        |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | A page of balances.         | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/inventory/balances/rebuild` — Repair drifted balances from the ledger
+
+- **operationId**: `inventoryBalancesRebuild`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `inventory.balances.rebuild` (HIGH-RISK). Recomputes each drifted balance FROM the movement ledger — the request carries no quantity, so this cannot be used to assert a balance, and a body naming anything but `locationId` is a 400. Idempotent: a second call finds nothing to repair. Bounded per call (`truncated: true` means call again). Requires an Idempotency-Key; audited at CRITICAL severity with the before/after of every repaired key.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
+
+**Request body** (optional): object
+
+**Responses**
+
+| Status | Description                                                | Schema                                 |
+| ------ | ---------------------------------------------------------- | -------------------------------------- |
+| 200    | The rebuild report.                                        | object                                 |
+| 400    | Validation error.                                          | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                | [`ApiError`](#standard-error-envelope) |
+| 409    | Idempotency-Key was already used with a different request. | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/inventory/balances/reconciliation` — Prove every balance equals the sum of its movements
+
+- **operationId**: `inventoryBalancesReconcile`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `inventory.balances.reconcile`. Read-only. `consistent: true` is the invariant the whole module rests on; `drift` lists every (location, item) where the balance disagrees with the ledger, including a key that has movements but no balance row. `negativeUnderForbid` counts balances that are negative although their location's policy forbids it — ledger and balance can agree perfectly and still describe a state the policy rules out. Bounded per call (`truncated`).
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `locationId`       | query  | no       | string (uuid) |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The reconciliation report.  | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `PUT /api/v1/inventory/balances/threshold` — Set or clear a low-stock threshold
+
+- **operationId**: `inventoryThresholdSet`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `inventory.policy.configure`. Touches `lowStockThreshold` and NOTHING else — the on-hand quantity is not a field of this request and a body that names one is a 400. A threshold change can move a balance across the low-stock line; that transition is recorded in the same transaction and a downward crossing is published as `awcms.inventory.stock.low`. Requires an Idempotency-Key; audited.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`InventoryThresholdInput`](#schema-inventorythresholdinput)
+
+**Responses**
+
+| Status | Description                                    | Schema                                 |
+| ------ | ---------------------------------------------- | -------------------------------------- |
+| 200    | The balance with its new threshold.            | object                                 |
+| 400    | Validation error.                              | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                    | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                    | [`ApiError`](#standard-error-envelope) |
+| 404    | Stock location not found (LOCATION_NOT_FOUND). | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT or UNIT_MISMATCH.         | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/inventory/locations` — List stock locations
+
+- **operationId**: `inventoryLocationsList`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `inventory.locations.read`. By code, keyset paginated (`after` = the last code of the previous page). Tenant-scoped (withTenant + RLS FORCE).
+
+**Parameters**
+
+| Name               | In     | Required | Type                       | Description |
+| ------------------ | ------ | -------- | -------------------------- | ----------- |
+| `status`           | query  | no       | enum(`active`, `inactive`) |             |
+| `after`            | query  | no       | string                     |             |
+| `limit`            | query  | no       | integer                    |             |
+| `X-Correlation-ID` | header | no       | string                     |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | A page of stock locations.  | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/inventory/locations` — Register a stock location
+
+- **operationId**: `inventoryLocationCreate`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `inventory.locations.create`. No Idempotency-Key, deliberately: the `(tenant, code)` unique key already turns a retried create into `409 LOCATION_CODE_CONFLICT`. `officeId` must name an office of this tenant (`422 OFFICE_NOT_FOUND` otherwise). Audited. A location is never deleted — its movements are ledger rows that must keep a place to point at; it is deactivated instead.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description |
+| ------------------ | ------ | -------- | ------ | ----------- |
+| `X-Correlation-ID` | header | no       | string |             |
+
+**Request body** (required): [`InventoryLocationCreateInput`](#schema-inventorylocationcreateinput)
+
+**Responses**
+
+| Status | Description                                                         | Schema                                 |
+| ------ | ------------------------------------------------------------------- | -------------------------------------- |
+| 201    | The created location.                                               | object                                 |
+| 400    | Validation error.                                                   | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                         | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                         | [`ApiError`](#standard-error-envelope) |
+| 409    | A location with this code already exists (LOCATION_CODE_CONFLICT).  | [`ApiError`](#standard-error-envelope) |
+| 422    | officeId does not name an office in this tenant (OFFICE_NOT_FOUND). | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/inventory/locations/{id}` — Read one stock location
+
+- **operationId**: `inventoryLocationRead`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `inventory.locations.read`.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `id`               | path   | yes      | string (uuid) |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The location.               | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+| 404    | Resource not found.         | [`ApiError`](#standard-error-envelope) |
+
+### `PATCH /api/v1/inventory/locations/{id}` — Rename, re-attach or (de)activate a stock location
+
+- **operationId**: `inventoryLocationUpdate`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `inventory.locations.update`. An INACTIVE location refuses new postings (`409 LOCATION_INACTIVE`) and keeps its history readable. `negativeStockPolicy` is NOT accepted here — it is a different power with its own endpoint and permission, and naming it is a 400. Audited; a status change is audited at warning severity.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `id`               | path   | yes      | string (uuid) |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Request body** (required): [`InventoryLocationUpdateInput`](#schema-inventorylocationupdateinput)
+
+**Responses**
+
+| Status | Description                                                         | Schema                                 |
+| ------ | ------------------------------------------------------------------- | -------------------------------------- |
+| 200    | The updated location.                                               | object                                 |
+| 400    | Validation error.                                                   | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                         | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                         | [`ApiError`](#standard-error-envelope) |
+| 404    | Resource not found.                                                 | [`ApiError`](#standard-error-envelope) |
+| 422    | officeId does not name an office in this tenant (OFFICE_NOT_FOUND). | [`ApiError`](#standard-error-envelope) |
+
+### `PUT /api/v1/inventory/locations/{id}/negative-stock-policy` — Set a location's negative-stock policy override
+
+- **operationId**: `inventoryLocationPolicySet`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `inventory.policy.configure` — it decides whether `movements.create` may take a balance below zero, so granting "rename a location" must not grant it. `null` removes the override (inherit the tenant default). Requires an Idempotency-Key; audited at warning severity with the before/after value.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Request body** (required): object
+
+**Responses**
+
+| Status | Description                                                | Schema                                 |
+| ------ | ---------------------------------------------------------- | -------------------------------------- |
+| 200    | The location with its new override.                        | object                                 |
+| 400    | Validation error.                                          | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                | [`ApiError`](#standard-error-envelope) |
+| 404    | Resource not found.                                        | [`ApiError`](#standard-error-envelope) |
+| 409    | Idempotency-Key was already used with a different request. | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/inventory/movements` — List the stock movement ledger
+
+- **operationId**: `inventoryMovementsList`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `inventory.movements.read`. Newest first, keyset paginated on `(createdAt, id)` with an opaque `cursor`.
+
+**Parameters**
+
+| Name               | In     | Required | Type                                                     | Description |
+| ------------------ | ------ | -------- | -------------------------------------------------------- | ----------- |
+| `locationId`       | query  | no       | string (uuid)                                            |             |
+| `itemType`         | query  | no       | string                                                   |             |
+| `itemRef`          | query  | no       | string                                                   |             |
+| `movementType`     | query  | no       | [`InventoryMovementType`](#schema-inventorymovementtype) |             |
+| `sourceType`       | query  | no       | string                                                   |             |
+| `sourceId`         | query  | no       | string                                                   |             |
+| `transferId`       | query  | no       | string (uuid)                                            |             |
+| `cursor`           | query  | no       | string                                                   |             |
+| `X-Correlation-ID` | header | no       | string                                                   |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | A page of movements.        | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/inventory/movements` — Post one caller-attested stock movement
+
+- **operationId**: `inventoryMovementPost`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `inventory.movements.create`. Types accepted here: `receive`, `sale`, `sale_return`, `supplier_return` — the request carries a POSITIVE quantity and the type decides direction. Openings, adjustments and transfers have their own endpoints and permissions (an opening states a starting quantity with no document behind it, so it needs `movements.adjust`).
+
+The ledger TRUSTS the `source` identity the caller supplies: it can prove a document was not posted twice, never that the document exists. Verifying the source is the consumer's duty. `source.type` `reversal` is reserved for the server.
+
+`occurredAt` may not be in the future (beyond a few minutes of clock skew) nor older than the backdating window (`INVENTORY_BACKDATE_WINDOW_DAYS`, default 7) unless the caller also holds `movements.adjust` (`403 BACKDATE_REQUIRES_ADJUST`).
+
+Two independent guards, both required: the `Idempotency-Key` header deduplicates a retried HTTP request, and the `source` identity `(type, id, line)` deduplicates the BUSINESS document — posting the same identity again under a different key returns the ORIGINAL movement with `replayed: true` (200), while the same identity with a different payload is `409 SOURCE_CONFLICT`.
+
+Refusals write nothing: `409 INSUFFICIENT_STOCK` (the negative-stock policy forbids going below zero), `409 UNIT_MISMATCH` (the ledger never converts units), `409 LOCATION_INACTIVE`, `404 LOCATION_NOT_FOUND`, `422 QUANTITY_OUT_OF_RANGE` (the balance would exceed numeric(20,6)). `INSUFFICIENT_STOCK` carries the requested quantity but NOT the on-hand balance, and no response carries a running balance: that is `balances.read`. Two concurrent attempts on the last unit cannot both succeed. There is no field by which a client can state a balance.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`InventoryMovementPostInput`](#schema-inventorymovementpostinput)
+
+**Responses**
+
+| Status | Description                                                                                                                                 | Schema                                                   |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| 200    | The source identity was already posted with this payload; these are the ORIGINAL movements (`replayed: true`).                              | [`InventoryPostResponse`](#schema-inventorypostresponse) |
+| 201    | The movement was posted.                                                                                                                    | [`InventoryPostResponse`](#schema-inventorypostresponse) |
+| 400    | Validation error.                                                                                                                           | [`ApiError`](#standard-error-envelope)                   |
+| 401    | Missing or invalid session.                                                                                                                 | [`ApiError`](#standard-error-envelope)                   |
+| 403    | Access denied by RBAC/ABAC.                                                                                                                 | [`ApiError`](#standard-error-envelope)                   |
+| 404    | Stock location not found (LOCATION_NOT_FOUND).                                                                                              | [`ApiError`](#standard-error-envelope)                   |
+| 409    | IDEMPOTENCY_CONFLICT, SOURCE_CONFLICT, INSUFFICIENT_STOCK, UNIT_MISMATCH, OPENING_NOT_FIRST or LOCATION_INACTIVE — `error.code` says which. | [`ApiError`](#standard-error-envelope)                   |
+
+### `GET /api/v1/inventory/movements/{id}` — Read one ledger row
+
+- **operationId**: `inventoryMovementRead`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `inventory.movements.read`.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `id`               | path   | yes      | string (uuid) |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The movement.               | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+| 404    | Resource not found.         | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/inventory/openings` — Post an opening balance
+
+- **operationId**: `inventoryOpeningPost`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `inventory.movements.adjust` (HIGH-RISK) — NOT `create`. An opening states the STARTING quantity of an item at a location out of a stated number, with no business document to cross-check, which is the same kind of power as an adjustment. Once per (location, item) and only as its first movement (`409 OPENING_NOT_FIRST`). The body is a movement WITHOUT `movementType`; naming one is a 400. Requires an Idempotency-Key and a `source` identity; audited at warning severity.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`InventoryOpeningInput`](#schema-inventoryopeninginput)
+
+**Responses**
+
+| Status | Description                                                                                   | Schema                                                   |
+| ------ | --------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| 200    | Replay of an opening already posted under this source identity.                               | [`InventoryPostResponse`](#schema-inventorypostresponse) |
+| 201    | The opening was posted.                                                                       | [`InventoryPostResponse`](#schema-inventorypostresponse) |
+| 400    | Validation error.                                                                             | [`ApiError`](#standard-error-envelope)                   |
+| 401    | Missing or invalid session.                                                                   | [`ApiError`](#standard-error-envelope)                   |
+| 403    | Access denied by RBAC/ABAC.                                                                   | [`ApiError`](#standard-error-envelope)                   |
+| 404    | Stock location not found (LOCATION_NOT_FOUND).                                                | [`ApiError`](#standard-error-envelope)                   |
+| 409    | IDEMPOTENCY_CONFLICT, SOURCE_CONFLICT, OPENING_NOT_FIRST, UNIT_MISMATCH or LOCATION_INACTIVE. | [`ApiError`](#standard-error-envelope)                   |
+| 422    | QUANTITY_OUT_OF_RANGE.                                                                        | [`ApiError`](#standard-error-envelope)                   |
+
+### `GET /api/v1/inventory/policy` — Read the tenant default negative-stock policy
+
+- **operationId**: `inventoryPolicyRead`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `inventory.policy.read`. `isImplicitDefault` is true when the tenant never stored a value and the safe default (`forbid`) applies. The effective policy of a location is its own override, else this default.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description |
+| ------------------ | ------ | -------- | ------ | ----------- |
+| `X-Correlation-ID` | header | no       | string |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The tenant default.         | object                                 |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `PUT /api/v1/inventory/policy` — Set the tenant default negative-stock policy
+
+- **operationId**: `inventoryPolicySet`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `inventory.policy.configure`. Requires an Idempotency-Key; audited at warning severity with the before/after value.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
+
+**Request body** (required): object
+
+**Responses**
+
+| Status | Description                                                | Schema                                 |
+| ------ | ---------------------------------------------------------- | -------------------------------------- |
+| 200    | The stored default.                                        | object                                 |
+| 400    | Validation error.                                          | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                | [`ApiError`](#standard-error-envelope) |
+| 409    | Idempotency-Key was already used with a different request. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/inventory/transfers` — Transfer stock between two locations
+
+- **operationId**: `inventoryTransferPost`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `inventory.movements.transfer` (HIGH-RISK). Posts a BALANCED out/in pair in ONE transaction (out leg first in the response), both legs validated against locked state before either is written, so a refused transfer leaves nothing behind. A deferred constraint trigger in the database independently refuses to commit anything that is not exactly one out leg and one in leg netting to zero. Replaying the same source identity returns the ORIGINAL pair. Requires an Idempotency-Key; audited at warning severity.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`InventoryTransferInput`](#schema-inventorytransferinput)
+
+**Responses**
+
+| Status | Description                                                                                    | Schema                                                   |
+| ------ | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| 200    | Replay of a transfer already posted under this source identity.                                | [`InventoryPostResponse`](#schema-inventorypostresponse) |
+| 201    | The transfer pair was posted.                                                                  | [`InventoryPostResponse`](#schema-inventorypostresponse) |
+| 400    | Validation error.                                                                              | [`ApiError`](#standard-error-envelope)                   |
+| 401    | Missing or invalid session.                                                                    | [`ApiError`](#standard-error-envelope)                   |
+| 403    | Access denied by RBAC/ABAC.                                                                    | [`ApiError`](#standard-error-envelope)                   |
+| 404    | A stock location was not found (LOCATION_NOT_FOUND).                                           | [`ApiError`](#standard-error-envelope)                   |
+| 409    | IDEMPOTENCY_CONFLICT, SOURCE_CONFLICT, INSUFFICIENT_STOCK, UNIT_MISMATCH or LOCATION_INACTIVE. | [`ApiError`](#standard-error-envelope)                   |
+
+## Procurement
+
+Suppliers, receiving, supplier returns, stock requisitions and location transfers (procurement module, Issue #888, ADR-0128) on top of the inventory ledger. A supplier is a business role that may reference the canonical profile_identity party, with vendor code, status, categories/tags and SENSITIVE tax/business identifiers and payment/contact references that are masked in every response and revealed only by one audited, separately permissioned operation. A document (receive, supplier_return, requisition, transfer) has line snapshots of SKU, name, unit and exact-decimal cost and a lifecycle draft -> submitted -> finalised | cancelled, finalised -> reversed enforced by a database trigger; finalised documents are immutable and nothing is deleted. Finalise posts inventory movements THROUGH THE LEDGER'S PORT (never a balance), all lines or none and idempotently; reversal posts compensating movements; a requisition or transfer is a paired ledger transfer. Optional threshold approval through workflow_approval (fail closed). finalise, reverse, cancel and reveal are high-risk, separately grantable, and audited.
+
+### `GET /api/v1/procurement/documents` — List procurement documents
+
+- **operationId**: `procurementDocumentsList`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `procurement.documents.read`. Newest first, keyset paginated. Lines are in the single-document read.
+
+**Parameters**
+
+| Name               | In     | Required | Type                                                             | Description                                                    |
+| ------------------ | ------ | -------- | ---------------------------------------------------------------- | -------------------------------------------------------------- |
+| `mode`             | query  | no       | enum(`receive`, `supplier_return`, `requisition`, `transfer`)    |                                                                |
+| `status`           | query  | no       | enum(`draft`, `submitted`, `finalised`, `cancelled`, `reversed`) |                                                                |
+| `supplierId`       | query  | no       | string (uuid)                                                    |                                                                |
+| `locationId`       | query  | no       | string (uuid)                                                    | Matches either the document's location or its source location. |
+| `cursor`           | query  | no       | string                                                           |                                                                |
+| `X-Correlation-ID` | header | no       | string                                                           |                                                                |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | A page of documents.        | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/procurement/documents` — Create a draft document
+
+- **operationId**: `procurementDocumentCreate`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `procurement.documents.create`. Nothing a draft says touches stock. Lifecycle state, stamps, supplier snapshots and totals are server-derived: a body naming one is a 400. `receive` and `supplier_return` need `supplierId` and a `unitCost` on every line (the approval threshold is cost-based); `requisition`/`transfer` need `sourceLocationId` and forbid `supplierId`. Requires an Idempotency-Key. A supplier's `externalReference` can be live on one document per mode (`409 DUPLICATE_EXTERNAL_REFERENCE`).
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`ProcurementDocumentInput`](#schema-procurementdocumentinput)
+
+**Responses**
+
+| Status | Description                                                                 | Schema                                 |
+| ------ | --------------------------------------------------------------------------- | -------------------------------------- |
+| 201    | The draft.                                                                  | object                                 |
+| 400    | Validation error.                                                           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                 | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                 | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT, SUPPLIER_UNAVAILABLE or DUPLICATE_EXTERNAL_REFERENCE. | [`ApiError`](#standard-error-envelope) |
+| 422    | LOCATION_NOT_FOUND or SUPPLIER_NOT_FOUND.                                   | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/procurement/documents/{id}` — Read a document with its lines and ledger movements
+
+- **operationId**: `procurementDocumentGet`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `procurement.documents.read`.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `id`               | path   | yes      | string (uuid) |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The document.               | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+| 404    | Resource not found.         | [`ApiError`](#standard-error-envelope) |
+
+### `PUT /api/v1/procurement/documents/{id}` — Replace a draft's header and lines
+
+- **operationId**: `procurementDocumentReplace`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `procurement.documents.update`. Same body as create; `mode` must match the stored mode and cannot change (`409 MODE_IMMUTABLE`). `409 INVALID_STATE` once the document has left draft — the database also refuses it.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `id`               | path   | yes      | string (uuid) |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Request body** (required): [`ProcurementDocumentInput`](#schema-procurementdocumentinput)
+
+**Responses**
+
+| Status | Description                                                                          | Schema                                 |
+| ------ | ------------------------------------------------------------------------------------ | -------------------------------------- |
+| 200    | The draft.                                                                           | object                                 |
+| 400    | Validation error.                                                                    | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                          | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                          | [`ApiError`](#standard-error-envelope) |
+| 404    | Resource not found.                                                                  | [`ApiError`](#standard-error-envelope) |
+| 409    | INVALID_STATE, MODE_IMMUTABLE, SUPPLIER_UNAVAILABLE or DUPLICATE_EXTERNAL_REFERENCE. | [`ApiError`](#standard-error-envelope) |
+| 422    | LOCATION_NOT_FOUND or SUPPLIER_NOT_FOUND.                                            | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/procurement/documents/{id}/cancel` — Cancel a draft or submitted document
+
+- **operationId**: `procurementDocumentCancel`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `procurement.documents.cancel` (HIGH-RISK). No stock was ever moved, so nothing is compensated; a `finalised` document is reversed instead (`409 INVALID_STATE`). A pending approval is cancelled with it. Requires an Idempotency-Key and a reason. Audited at warning severity.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`ProcurementReasonRequired`](#schema-procurementreasonrequired)
+
+**Responses**
+
+| Status | Description                            | Schema                                 |
+| ------ | -------------------------------------- | -------------------------------------- |
+| 200    | The cancelled document.                | object                                 |
+| 400    | Validation error.                      | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.            | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.            | [`ApiError`](#standard-error-envelope) |
+| 404    | Resource not found.                    | [`ApiError`](#standard-error-envelope) |
+| 409    | INVALID_STATE or IDEMPOTENCY_CONFLICT. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/procurement/documents/{id}/finalise` — Finalise a document — post its inventory movements
+
+- **operationId**: `procurementDocumentFinalise`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `procurement.documents.finalise` (HIGH-RISK). Posts the document's movements THROUGH THE LEDGER'S PORT (never writing a balance), all lines or none, each under the identity (source type, document id, line, operation), then marks it `finalised`. Idempotent twice over: the Idempotency-Key is bound to the request hash, and finalising an already `finalised` document answers `200 replayed: true` posting NOTHING (even under a new key). A refusal on any line (`INSUFFICIENT_STOCK`, `LOCATION_INACTIVE`, `UNIT_MISMATCH`…) rolls every line back and leaves the document `submitted`. A document needing approval cannot be finalised until approved (`409 APPROVAL_PENDING` / `APPROVAL_REJECTED`). Audited at warning severity; ledger rows carry the request's correlation id; publishes `awcms.procurement.document.finalised`.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Responses**
+
+| Status | Description                                                                                                                                                              | Schema                                 |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------- |
+| 200    | Replay: already finalised, nothing posted.                                                                                                                               | object                                 |
+| 201    | Finalised.                                                                                                                                                               | object                                 |
+| 400    | Validation error.                                                                                                                                                        | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                                                                                                              | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                                                                                                              | [`ApiError`](#standard-error-envelope) |
+| 404    | Resource not found.                                                                                                                                                      | [`ApiError`](#standard-error-envelope) |
+| 409    | INVALID_STATE, APPROVAL_PENDING, APPROVAL_REJECTED, SUPPLIER_UNAVAILABLE, INSUFFICIENT_STOCK, LOCATION_INACTIVE, UNIT_MISMATCH, SOURCE_CONFLICT or IDEMPOTENCY_CONFLICT. | [`ApiError`](#standard-error-envelope) |
+| 422    | LOCATION_NOT_FOUND or QUANTITY_OUT_OF_RANGE.                                                                                                                             | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/procurement/documents/{id}/reversal` — Reverse a finalised document with compensating movements
+
+- **operationId**: `procurementDocumentReverse`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `procurement.documents.reverse` (HIGH-RISK, separately grantable from `finalise`). Posts the opposite movements through the ledger (a receipt becomes a supplier return, a supplier return a receipt, a transfer a transfer back) under distinct `*_reversal` source identities and marks the document `reversed`. The original movements are never touched. May be refused by the ledger (`INSUFFICIENT_STOCK` when the received stock was since sold and the policy forbids negative stock): nothing is posted and the document stays `finalised`. Reversing a `reversed` document is `200 replayed: true`. Requires an Idempotency-Key and a reason; audited at critical severity; publishes `awcms.procurement.document.reversed`.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`ProcurementReasonRequired`](#schema-procurementreasonrequired)
+
+**Responses**
+
+| Status | Description                                                                                                   | Schema                                 |
+| ------ | ------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | Replay: already reversed.                                                                                     | object                                 |
+| 201    | Reversed.                                                                                                     | object                                 |
+| 400    | Validation error.                                                                                             | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                                                   | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                                                   | [`ApiError`](#standard-error-envelope) |
+| 404    | Resource not found.                                                                                           | [`ApiError`](#standard-error-envelope) |
+| 409    | INVALID_STATE, INSUFFICIENT_STOCK, LOCATION_INACTIVE, UNIT_MISMATCH, SOURCE_CONFLICT or IDEMPOTENCY_CONFLICT. | [`ApiError`](#standard-error-envelope) |
+| 422    | LOCATION_NOT_FOUND or QUANTITY_OUT_OF_RANGE.                                                                  | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/procurement/documents/{id}/submit` — Submit a draft
+
+- **operationId**: `procurementDocumentSubmit`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `procurement.documents.submit`. Freezes the lines (database trigger), computes the total cost in SQL and, when the tenant's approval threshold is set and reached, starts a `workflow_approval` instance under the workflow key `procurement.document_approval`. With no published definition (or `workflow` disabled) the submit is REFUSED with `409 APPROVAL_WORKFLOW_NOT_CONFIGURED` — fail closed, nothing submitted. Requires an Idempotency-Key.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Responses**
+
+| Status | Description                                                                                               | Schema                                 |
+| ------ | --------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | The submitted document.                                                                                   | object                                 |
+| 400    | Validation error.                                                                                         | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                                               | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                                               | [`ApiError`](#standard-error-envelope) |
+| 404    | Resource not found.                                                                                       | [`ApiError`](#standard-error-envelope) |
+| 409    | INVALID_STATE, APPROVAL_WORKFLOW_NOT_CONFIGURED, APPROVAL_WORKFLOW_MISCONFIGURED or SUPPLIER_UNAVAILABLE. | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/procurement/documents/reconciliation` — Reconcile finalised documents against the inventory ledger
+
+- **operationId**: `procurementDocumentsReconcile`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `procurement.documents.reconcile`. Read-only. Proves per (document, line, operation) that the ledger recorded exactly the documented movements — number, type, location, quantity and source identity — and that no ledger row carries a procurement source identity without a document line behind it. `?documentId=` scopes it to one document. The scan is the proof and is not bounded; the discrepancy list is (200).
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `documentId`       | query  | no       | string (uuid) |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The reconciliation report.  | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/procurement/policy` — Read the approval threshold
+
+- **operationId**: `procurementPolicyGet`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `procurement.policy.read`. `approvalThreshold` null means approval is off.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description |
+| ------------------ | ------ | -------- | ------ | ----------- |
+| `X-Correlation-ID` | header | no       | string |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The policy.                 | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `PUT /api/v1/procurement/policy` — Set the approval threshold
+
+- **operationId**: `procurementPolicySet`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `procurement.policy.configure` (HIGH-RISK). A decimal, or null to turn approval off. Affects only documents submitted AFTER the change. Requires an Idempotency-Key; audited at warning severity.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
+
+**Request body** (required): object
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The policy.                 | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT.       | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/procurement/reports/receiving` — Documents and cost per mode and status
+
+- **operationId**: `procurementReportReceiving`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `procurement.reports.read`. At most 20 rows. The live view behind the `procurement.receiving` reporting projection.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description               |
+| ------------------ | ------ | -------- | ------------- | ------------------------- |
+| `from`             | query  | no       | string (date) | Document date, inclusive. |
+| `to`               | query  | no       | string (date) | Document date, inclusive. |
+| `X-Correlation-ID` | header | no       | string        |                           |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | Summary rows.               | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/procurement/reports/suppliers` — Per-supplier receiving volume and cost
+
+- **operationId**: `procurementReportSuppliers`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `procurement.reports.read`. Finalised receipts, supplier returns, reversals and open documents per supplier, with exact-decimal cost, within optional document dates. Keyset paginated. The live view behind the `procurement.suppliers` reporting projection.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description               |
+| ------------------ | ------ | -------- | ------------- | ------------------------- |
+| `from`             | query  | no       | string (date) | Document date, inclusive. |
+| `to`               | query  | no       | string (date) | Document date, inclusive. |
+| `cursor`           | query  | no       | string        |                           |
+| `X-Correlation-ID` | header | no       | string        |                           |
+
+**Responses**
+
+| Status | Description                  | Schema                                 |
+| ------ | ---------------------------- | -------------------------------------- |
+| 200    | A page of supplier activity. | object                                 |
+| 400    | Validation error.            | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.  | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.  | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/procurement/suppliers` — List suppliers
+
+- **operationId**: `procurementSuppliersList`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `procurement.suppliers.read`. Newest first, keyset paginated (`cursor`). Identifiers and payment/contact references are NEVER in this response. Soft-deleted suppliers are hidden unless `includeDeleted=true`, which additionally needs `procurement.suppliers.restore` (403 otherwise). Tenant-scoped (withTenant + RLS FORCE).
+
+**Parameters**
+
+| Name               | In     | Required | Type                                  | Description |
+| ------------------ | ------ | -------- | ------------------------------------- | ----------- |
+| `status`           | query  | no       | enum(`active`, `inactive`, `blocked`) |             |
+| `category`         | query  | no       | string                                |             |
+| `tag`              | query  | no       | string                                |             |
+| `includeDeleted`   | query  | no       | boolean                               |             |
+| `cursor`           | query  | no       | string                                |             |
+| `X-Correlation-ID` | header | no       | string                                |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | A page of suppliers.        | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/procurement/suppliers` — Register a supplier
+
+- **operationId**: `procurementSupplierCreate`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `procurement.suppliers.create`. `profileId` optionally references the canonical `profile_identity` party (identity is owned there, not copied). No Idempotency-Key: the case-insensitive (tenant, vendor code) unique key turns a retried create into `409 VENDOR_CODE_CONFLICT`. Audited.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description |
+| ------------------ | ------ | -------- | ------ | ----------- |
+| `X-Correlation-ID` | header | no       | string |             |
+
+**Request body** (required): [`ProcurementSupplierCreate`](#schema-procurementsuppliercreate)
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 201    | The supplier.               | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+| 409    | VENDOR_CODE_CONFLICT.       | [`ApiError`](#standard-error-envelope) |
+| 422    | PROFILE_NOT_FOUND.          | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/procurement/suppliers/{id}` — Read a supplier
+
+- **operationId**: `procurementSupplierGet`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `procurement.suppliers.read`. A soft-deleted supplier is a 404.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `id`               | path   | yes      | string (uuid) |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The supplier.               | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+| 404    | Resource not found.         | [`ApiError`](#standard-error-envelope) |
+
+### `PATCH /api/v1/procurement/suppliers/{id}` — Edit a supplier
+
+- **operationId**: `procurementSupplierUpdate`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `procurement.suppliers.update`. Rename, change status, attach/detach the canonical party (`profileId`: null detaches), replace categories/tags. Documents already written keep the supplier name they snapshotted. Audited with the changed field NAMES, never values.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `id`               | path   | yes      | string (uuid) |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Request body** (required): [`ProcurementSupplierUpdate`](#schema-procurementsupplierupdate)
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The supplier.               | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+| 404    | Resource not found.         | [`ApiError`](#standard-error-envelope) |
+| 409    | SUPPLIER_DELETED.           | [`ApiError`](#standard-error-envelope) |
+| 422    | PROFILE_NOT_FOUND.          | [`ApiError`](#standard-error-envelope) |
+
+### `DELETE /api/v1/procurement/suppliers/{id}` — Soft-delete a supplier
+
+- **operationId**: `procurementSupplierDelete`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `procurement.suppliers.delete` (HIGH-RISK). Soft delete with an optional `{reason}` body; refused with `409 SUPPLIER_HAS_OPEN_DOCUMENTS` while a draft or submitted document references it. Documents keep referencing the row. Audited at warning severity.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `id`               | path   | yes      | string (uuid) |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Request body** (optional): [`ProcurementReason`](#schema-procurementreason)
+
+**Responses**
+
+| Status | Description                                      | Schema                                 |
+| ------ | ------------------------------------------------ | -------------------------------------- |
+| 200    | The deleted supplier.                            | object                                 |
+| 400    | Validation error.                                | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                      | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                      | [`ApiError`](#standard-error-envelope) |
+| 404    | Resource not found.                              | [`ApiError`](#standard-error-envelope) |
+| 409    | SUPPLIER_DELETED or SUPPLIER_HAS_OPEN_DOCUMENTS. | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/procurement/suppliers/{id}/identifiers` — List a supplier's identifiers (MASKED)
+
+- **operationId**: `procurementSupplierIdentifiersList`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `procurement.suppliers.read`. Tax/business identifiers and payment/contact references, with `maskedValue` ONLY — the response type has no field that can carry a value. The value is returned solely by the audited `reveal` operation.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `id`               | path   | yes      | string (uuid) |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The identifiers, masked.    | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+| 404    | Resource not found.         | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/procurement/suppliers/{id}/identifiers` — Add a supplier identifier or reference
+
+- **operationId**: `procurementSupplierIdentifierAdd`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `procurement.suppliers.update`. Stored normalized with a lookup hash and a masked display value; the response carries the MASKED value only. `classification` is derived (`sensitive` for tax/business identifiers, `confidential` otherwise). The add is IDEMPOTENT, so re-adding a value the supplier already holds returns the same `201` uniform acknowledgement (type, label, maskedValue, classification; no id, no timestamp) as a fresh add (and audits nothing), so a caller without `suppliers.reveal` cannot use this operation as a value-equality oracle. Audited with the identifier type and classification, never the value.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `id`               | path   | yes      | string (uuid) |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Request body** (required): [`ProcurementIdentifierCreate`](#schema-procurementidentifiercreate)
+
+**Responses**
+
+| Status | Description                                                               | Schema                                 |
+| ------ | ------------------------------------------------------------------------- | -------------------------------------- |
+| 201    | Uniform acknowledgement, identical for a fresh and an already-held value. | object                                 |
+| 400    | Validation error.                                                         | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                               | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                               | [`ApiError`](#standard-error-envelope) |
+| 404    | Resource not found.                                                       | [`ApiError`](#standard-error-envelope) |
+| 409    | SUPPLIER_DELETED.                                                         | [`ApiError`](#standard-error-envelope) |
+
+### `DELETE /api/v1/procurement/suppliers/{id}/identifiers/{identifierId}` — Remove a supplier identifier or reference
+
+- **operationId**: `procurementSupplierIdentifierRemove`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `procurement.suppliers.update`. Audited at warning severity (identifier id, type and classification, never the value).
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `id`               | path   | yes      | string (uuid) |             |
+| `identifierId`     | path   | yes      | string (uuid) |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | Removed.                    | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+| 404    | Resource not found.         | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/procurement/suppliers/{id}/identifiers/{identifierId}/reveal` — Reveal ONE supplier identifier in clear text
+
+- **operationId**: `procurementSupplierIdentifierReveal`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `procurement.suppliers.reveal` (HIGH-RISK) — NOT implied by `suppliers.read` or `.update`. The ONLY operation that returns an identifier value. Writes a warning-severity audit row naming the identifier (never the value) in the same transaction, and the response is `Cache-Control: no-store`. POST so no cache or proxy treats it as a replayable read.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `id`               | path   | yes      | string (uuid) |             |
+| `identifierId`     | path   | yes      | string (uuid) |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Responses**
+
+| Status | Description                         | Schema                                 |
+| ------ | ----------------------------------- | -------------------------------------- |
+| 200    | The identifier including its value. | object                                 |
+| 400    | Validation error.                   | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.         | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.         | [`ApiError`](#standard-error-envelope) |
+| 404    | Resource not found.                 | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/procurement/suppliers/{id}/restore` — Restore a soft-deleted supplier
+
+- **operationId**: `procurementSupplierRestore`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `procurement.suppliers.restore` (HIGH-RISK). Audited at warning severity.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `id`               | path   | yes      | string (uuid) |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The restored supplier.      | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+| 404    | Resource not found.         | [`ApiError`](#standard-error-envelope) |
+| 409    | NOT_DELETED.                | [`ApiError`](#standard-error-envelope) |
+
+## HR Workforce
+
+The employment context (hr_workforce module, Issues #945 and #946, ADR-0132, phase 1 of the hr_* family). An employment REFERENCES a profile_identity party and never copies its name, contact or national id; no photo, biometric or device field exists (owner decision O6). Terms (office, manager, job title, type, status) are effective-dated and append-only, the manager chain is acyclic and bounded, terminated is terminal, and the database enforces one active employment per profile and per login. An employee reads their own employment through an ownership grant on the persisted login link; the link itself (assign), delete, restore and settings configure are high-risk, idempotency-keyed and audited. Shift templates are patterns (local start, elapsed duration, optional break, IANA zone); a shift assignment is one UTC half-open interval per employment, drafted, published (high-risk) and cancelled, with no overlap among non-cancelled rows per employment enforced by the database and no free-text or reason field (time off carries a coarse category only). An employee reads their own published schedule through an ownership grant. Attendance, commission and payroll are later phases.
+
+### `GET /api/v1/hr-workforce/attendance-corrections` — List attendance corrections
+
+- **operationId**: `hrWorkforceAttendanceCorrectionsList`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.corrections.read`, EXCEPT `mine=true` (the corrections of every live employment of yours, a terminated one included) and `reports=true` (your reports', through the manager chain), which need no permission (ownership grants, ADR-0063). Newest first, keyset paginated. The list NEVER carries the sensitive `reason`; read one correction for it. Tenant-scoped (withTenant + RLS FORCE).
+
+**Parameters**
+
+| Name               | In     | Required | Type                                                 | Description |
+| ------------------ | ------ | -------- | ---------------------------------------------------- | ----------- |
+| `employmentId`     | query  | no       | string (uuid)                                        |             |
+| `status`           | query  | no       | enum(`pending`, `approved`, `rejected`, `withdrawn`) |             |
+| `mine`             | query  | no       | boolean                                              |             |
+| `reports`          | query  | no       | boolean                                              |             |
+| `cursor`           | query  | no       | string                                               |             |
+| `X-Correlation-ID` | header | no       | string                                               |             |
+
+**Responses**
+
+| Status | Description                        | Schema                                 |
+| ------ | ---------------------------------- | -------------------------------------- |
+| 200    | A page of corrections (no reason). | object                                 |
+| 400    | Validation error.                  | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.        | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.        | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/hr-workforce/attendance-corrections` — Request an attendance correction
+
+- **operationId**: `hrWorkforceAttendanceCorrectionCreate`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.corrections.create`; the employment must be YOURS unless you also hold `hr_workforce.attendance.create`. Proposes adding a missing event (`kind: add`) or replacing one (`kind: replace` + `targetEventId`) with a mandatory `reason`. It NEVER edits the original: on approval a NEW event is appended that supersedes the old one. Approval is REQUIRED and fail-closed: with no published workflow under the tenant's correction workflow key (or `workflow` disabled for the tenant) -> 409 `APPROVAL_WORKFLOW_NOT_CONFIGURED` and nothing is created. A `proposedOccurredAt` further in the future than the tenant clock-skew bound is refused with 422 `ATTENDANCE_TIME_IN_FUTURE` and nothing is created (the event guard would refuse it at approval and the correction would stay pending for good). The workflow instance is started with NO facts. The reason is sensitive: it is never written to an audit row, an event or the workflow store. Requires an Idempotency-Key. Audited without the reason.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`HrAttendanceCorrectionInput`](#schema-hrattendancecorrectioninput)
+
+**Responses**
+
+| Status | Description                                                                                                                                     | Schema                                 |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 201    | The pending correction, with its reason (the requester may read it).                                                                            | object                                 |
+| 400    | Validation error.                                                                                                                               | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                                                                                     | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                                                                                     | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT, CORRECTION_ALREADY_PENDING, TARGET_EVENT_SUPERSEDED, APPROVAL_WORKFLOW_NOT_CONFIGURED or APPROVAL_WORKFLOW_MISCONFIGURED. | [`ApiError`](#standard-error-envelope) |
+| 422    | EMPLOYMENT_NOT_FOUND, TARGET_EVENT_NOT_FOUND or ATTENDANCE_TIME_IN_FUTURE.                                                                      | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/hr-workforce/attendance-corrections/{id}` — Get an attendance correction
+
+- **operationId**: `hrWorkforceAttendanceCorrectionGet`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.corrections.read`, EXCEPT for the REQUESTER, a workflow ASSIGNEE of its approval instance, the employee it is about and a supervisor above that employee (an ownership grant, ADR-0063). The sensitive `reason` is included only for the requester, an assignee, or a holder of `corrections.read`; a supervisor reading through the manager chain alone sees everything but the reason. A missing id and someone else's correction are both 403 to a caller without the permission.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `id`               | path   | yes      | string (uuid) |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Responses**
+
+| Status | Description                                   | Schema                                 |
+| ------ | --------------------------------------------- | -------------------------------------- |
+| 200    | The correction (reason only where permitted). | object                                 |
+| 400    | Validation error.                             | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                   | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                   | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.                           | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/hr-workforce/attendance-corrections/{id}/settle` — Apply the approval workflow verdict to a correction
+
+- **operationId**: `hrWorkforceAttendanceCorrectionSettle`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.corrections.approve` (high-risk). The decision is made in `workflow_approval`; this materialises it: instance pending -> 409 `CORRECTION_STILL_PENDING`; approved -> the correction becomes `approved` and a NEW event superseding the old one is appended in the same transaction (the original is never edited); rejected / cancelled -> `rejected` / `withdrawn`. Normally this happens by itself: a domain-event consumer applies the verdict as soon as the workflow instance finishes, and this route is the manual fallback for a verdict it declined to apply. SEGREGATION OF DUTIES: the requester cannot settle their own APPROVED (or still pending) correction (the chokepoint's self-approval guard, 403); a `rejected` or `cancelled` verdict applies nothing, so the requester may close their own refused request; an approved instance with no human approving decision is 409 `CORRECTION_NO_APPROVER`; one the requester, or the employee the correction is about (the login linked when it was requested, and the one linked now), approved directly or as the delegator whose standing a delegate used, or that employee settling it, is 409 `CORRECTION_SELF_APPROVED`; the database refuses each of these too. Requires an Idempotency-Key. Audited (warning when approved) without the reason.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Responses**
+
+| Status | Description                                                                                                                                                                     | Schema                                 |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | The settled correction.                                                                                                                                                         | object                                 |
+| 400    | Validation error.                                                                                                                                                               | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                                                                                                                     | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                                                                                                                     | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.                                                                                                                                                             | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT, CORRECTION_NOT_PENDING, CORRECTION_STILL_PENDING, CORRECTION_NO_APPROVER, CORRECTION_SELF_APPROVED, TARGET_EVENT_SUPERSEDED or CORRECTION_NOT_APPLICABLE. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/hr-workforce/attendance-corrections/{id}/withdraw` — Withdraw a pending attendance correction
+
+- **operationId**: `hrWorkforceAttendanceCorrectionWithdraw`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.corrections.cancel` (high-risk). The REQUESTER only withdraws a still-pending correction (its approval instance is cancelled first); someone else's and a missing id answer alike (404). Requires an Idempotency-Key. Audited without the reason.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Responses**
+
+| Status | Description                                                                 | Schema                                 |
+| ------ | --------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | The withdrawn correction.                                                   | object                                 |
+| 400    | Validation error.                                                           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                 | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                 | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.                                                         | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT, CORRECTION_NOT_PENDING or CORRECTION_ALREADY_DECIDED. | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/hr-workforce/attendance-events` — List attendance events
+
+- **operationId**: `hrWorkforceAttendanceEventsList`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.attendance.read` (every employee), EXCEPT `mine=true` (your OWN events, across EVERY live employment of yours, a terminated one included: a rehired person reads the old and the new) and `reports=true` (the events of the people who report to you through the current manager chain, at most ten levels; a soft-deleted employment is neither listed nor walked through), which need no permission (an ownership grant on the persisted login link / manager chain, ADR-0063; ABAC, scope and SoD still apply, and a machine credential never carries it). `mine` and `reports` cannot be combined, and an `employmentId` outside the chosen basis is 403. Newest claimed instant first, keyset paginated (`cursor`); `from` (inclusive) and `to` (exclusive) bound the claimed instant; `effective=true` hides an event a later approved correction replaced. Confidential behavioural data: no location, photo, device or network value exists. Tenant-scoped (withTenant + RLS FORCE). In the ALL-employee mode AND in the manager-chain `reports` mode the read is recorded as a sensitive read (`sensitive_read.attendance_events`: employment ids and a count, coalesced, attribute `mode`, Issue #1083); only `mine` is not.
+
+**Parameters**
+
+| Name               | In     | Required | Type               | Description |
+| ------------------ | ------ | -------- | ------------------ | ----------- |
+| `employmentId`     | query  | no       | string (uuid)      |             |
+| `from`             | query  | no       | string (date-time) |             |
+| `to`               | query  | no       | string (date-time) |             |
+| `effective`        | query  | no       | boolean            |             |
+| `mine`             | query  | no       | boolean            |             |
+| `reports`          | query  | no       | boolean            |             |
+| `cursor`           | query  | no       | string             |             |
+| `X-Correlation-ID` | header | no       | string             |             |
+
+**Responses**
+
+| Status | Description                  | Schema                                 |
+| ------ | ---------------------------- | -------------------------------------- |
+| 200    | A page of attendance events. | object                                 |
+| 400    | Validation error.            | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.  | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.  | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/hr-workforce/attendance-events` — Record an attendance event
+
+- **operationId**: `hrWorkforceAttendanceEventCreate`
+- **Security**: bearerAuth + tenantHeader
+
+`source: self` records YOUR OWN event and needs `hr_workforce.clock.create` plus an employment linked to your login (anything else is 403 whether the employment exists or not); `supervisor`, `kiosk` and `import` record for another employment and need `hr_workforce.attendance.create`. The SERVER clock decides `recordedAt`; `occurredAt` is bounded by the tenant clock-skew setting: in the future -> 422 `ATTENDANCE_TIME_IN_FUTURE`; for `self`/`supervisor`, older than the skew -> 422 `ATTENDANCE_BACKDATED` (request a correction); a `kiosk`/`import` replay is accepted up to seven days old (older -> 422 `ATTENDANCE_TOO_OLD`) and flagged `late` past fifteen minutes. A replay of the same `clientEventKey` for the same employment returns the ORIGINAL with 200 (a different event under a used key is 409 `CLIENT_EVENT_KEY_CONFLICT`). The body has NO photo, device or network field and an unknown field is refused. The ONE optional position field is `positionSample` (Issue #970, ADR-0138): only a `self` clock_in / clock_out may carry it (any other source or kind -> 400), the server evaluates it IN THE REQUEST against the geofences of the event's office and DISCARDS it (no coordinate, raw accuracy, address or device value is ever stored, logged or audited), and the response carries `locationVerdict` (`inside`, `outside` or `not_provided`; `null` while the tenant's switch is off, the default, when the sample is ignored). A declined / absent / too-coarse / unacknowledged sample is `not_provided` and never blocks clocking. Requires an Idempotency-Key. Audited when recorded for somebody else: every `supervisor` event, and a `kiosk`/`import` event flagged `late` (ids, kind, source and claimed instant only; the actor is the recorder); a `self` event and a punctual kiosk/import tap are not (high volume: the event is the record). The seven-day replay window is NOT an approval path: it exists for offline queues, which is why the stale ones leave a trace.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`HrAttendanceEventInput`](#schema-hrattendanceeventinput)
+
+**Responses**
+
+| Status | Description                                                                                                    | Schema                                 |
+| ------ | -------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | A replay of an already-recorded clientEventKey: the original event.                                            | object                                 |
+| 201    | The recorded event.                                                                                            | object                                 |
+| 400    | Validation error.                                                                                              | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                                                    | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                                                    | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT, CLIENT_EVENT_KEY_CONFLICT or EMPLOYMENT_TERMINATED.                                      | [`ApiError`](#standard-error-envelope) |
+| 422    | EMPLOYMENT_NOT_FOUND, OFFICE_NOT_FOUND, ATTENDANCE_TIME_IN_FUTURE, ATTENDANCE_BACKDATED or ATTENDANCE_TOO_OLD. | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/hr-workforce/employments` — List employments
+
+- **operationId**: `hrWorkforceEmploymentsList`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.employments.read`, EXCEPT `mine=true`, which answers only the caller's own employment and needs no permission (an ownership grant on the persisted login link, ADR-0063; ABAC, scope and SoD still apply, and a machine credential never carries it). Newest first, keyset paginated (`cursor`). Each row REFERENCES its person (`profileId`); no name, contact or national id is ever returned. Soft-deleted rows are hidden unless `includeDeleted=true`, which additionally needs `hr_workforce.employments.restore`. Tenant-scoped (withTenant + RLS FORCE).
+
+**Parameters**
+
+| Name               | In     | Required | Type                         | Description |
+| ------------------ | ------ | -------- | ---------------------------- | ----------- |
+| `state`            | query  | no       | enum(`active`, `terminated`) |             |
+| `officeId`         | query  | no       | string (uuid)                |             |
+| `mine`             | query  | no       | boolean                      |             |
+| `includeDeleted`   | query  | no       | boolean                      |             |
+| `cursor`           | query  | no       | string                       |             |
+| `X-Correlation-ID` | header | no       | string                       |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | A page of employments.      | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/hr-workforce/employments` — Create an employment
+
+- **operationId**: `hrWorkforceEmploymentCreate`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.employments.create`. Creates the employment for an existing, active `profile_identity` party together with its first terms effective on `hiredOn`. A body naming a personal field (name, contact, national id) or `terminatedOn` is a 400. One ACTIVE employment per profile and tenant (`409 ALREADY_EMPLOYED`); employee numbers are unique among live rows (`409 EMPLOYEE_NO_CONFLICT`). Requires an Idempotency-Key. Audited.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`HrEmploymentInput`](#schema-hremploymentinput)
+
+**Responses**
+
+| Status | Description                                                                                            | Schema                                 |
+| ------ | ------------------------------------------------------------------------------------------------------ | -------------------------------------- |
+| 201    | The employment.                                                                                        | object                                 |
+| 400    | Validation error.                                                                                      | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                                            | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                                            | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT, ALREADY_EMPLOYED, EMPLOYEE_NO_CONFLICT, MANAGER_CYCLE or MANAGER_CHAIN_TOO_DEEP. | [`ApiError`](#standard-error-envelope) |
+| 422    | PROFILE_NOT_FOUND, OFFICE_NOT_FOUND or MANAGER_NOT_FOUND.                                              | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/hr-workforce/employments/{id}` — Get an employment
+
+- **operationId**: `hrWorkforceEmploymentGet`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.employments.read`; the employee the employment is linked to may read their own without it (an ownership grant). A missing id and someone else's employment are indistinguishable to a caller without the permission (both 403).
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `id`               | path   | yes      | string (uuid) |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Responses**
+
+| Status | Description                            | Schema                                 |
+| ------ | -------------------------------------- | -------------------------------------- |
+| 200    | The employment with its current terms. | object                                 |
+| 400    | Validation error.                      | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.            | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.            | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.                    | [`ApiError`](#standard-error-envelope) |
+
+### `DELETE /api/v1/hr-workforce/employments/{id}` — Soft-delete an employment
+
+- **operationId**: `hrWorkforceEmploymentDelete`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.employments.delete` (high-risk). For an employment entered by mistake; a real end of employment is a terminated term. Optional `reason` (at most 500 characters, never echoed into the audit row). Requires an Idempotency-Key. Audited at warning severity.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`HrReasonInput`](#schema-hrreasoninput)
+
+**Responses**
+
+| Status | Description                                 | Schema                                 |
+| ------ | ------------------------------------------- | -------------------------------------- |
+| 200    | The deleted employment.                     | object                                 |
+| 400    | Validation error.                           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                 | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                 | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.                         | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT or EMPLOYMENT_DELETED. | [`ApiError`](#standard-error-envelope) |
+
+### `PUT /api/v1/hr-workforce/employments/{id}/account` — Link or unlink the employee's login
+
+- **operationId**: `hrWorkforceEmploymentAccountAssign`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.employments.assign` (high-risk). `{"tenantUserId": "<uuid>"}` links the login that IS this employee; `null` unlinks. This is the basis of self-service ownership (and of payslip ownership in phase 3), so (finding PS-14, #979): the caller cannot link their OWN login to another person's employment (`403 SELF_LINK_FORBIDDEN`); the linked login must belong to the employment's person, i.e. its identity carries the employment's `profileId` (`422 PROFILE_MISMATCH`); and a RE-LINK (changing or removing an existing link, or linking again after an unlink) is audited at `critical` (a first link at `warning`) with the before and after login UUIDs and no free text, and, when the employment already has attendance history, requires the conditional step-up of ADR-0141 section 4 (`403 STEP_UP_REQUIRED` for an enrolled caller with a stale session; a caller with no enrolled factor is not locked out and the audit row records `not_enrolled`). Each refusal writes an `account_link_refused` audit row (reason code and UUIDs only); repeating the current link re-validates it. One active employment per login. Requires an Idempotency-Key.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`HrAccountInput`](#schema-hraccountinput)
+
+**Responses**
+
+| Status | Description                                                                        | Schema                                 |
+| ------ | ---------------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | The employment, with `replayed` true when the link was already as asked.           | object                                 |
+| 400    | Validation error.                                                                  | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                        | [`ApiError`](#standard-error-envelope) |
+| 403    | ACCESS_DENIED, SELF_LINK_FORBIDDEN or STEP_UP_REQUIRED.                            | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.                                                                | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT, EMPLOYMENT_DELETED, EMPLOYMENT_TERMINATED or ACCOUNT_IN_USE. | [`ApiError`](#standard-error-envelope) |
+| 422    | USER_NOT_FOUND or PROFILE_MISMATCH.                                                | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/hr-workforce/employments/{id}/restore` — Restore an employment
+
+- **operationId**: `hrWorkforceEmploymentRestore`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.employments.restore` (high-risk). Refused with 409 while the employee number, the person's active employment or the linked login has been taken meanwhile. Requires an Idempotency-Key. Audited at warning severity.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Responses**
+
+| Status | Description                                                                                             | Schema                                 |
+| ------ | ------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | The restored employment.                                                                                | object                                 |
+| 400    | Validation error.                                                                                       | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                                             | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                                             | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.                                                                                     | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT, EMPLOYMENT_NOT_DELETED, EMPLOYEE_NO_CONFLICT, ALREADY_EMPLOYED or ACCOUNT_IN_USE. | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/hr-workforce/employments/{id}/terms` — List an employment's terms
+
+- **operationId**: `hrWorkforceEmploymentTermsList`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.employments.read`; the linked employee may read their own history without it (an ownership grant). Effective-dated and append-only, oldest first (at most 500).
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `id`               | path   | yes      | string (uuid) |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The terms history.          | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.         | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/hr-workforce/employments/{id}/terms` — Append the next terms
+
+- **operationId**: `hrWorkforceEmploymentTermsChange`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.employments.update`. Appends the next terms from `effectiveFrom` (strictly after the current terms' start, never before the hire date); the open row is closed, never edited. `status: terminated` ends the employment and is terminal (rehire is a new employment). The manager chain must stay acyclic and at most 10 deep. Re-sending identical terms is a no-op answering 200 `replayed: true`. Requires an Idempotency-Key. Audited.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`HrTermsChangeInput`](#schema-hrtermschangeinput)
+
+**Responses**
+
+| Status | Description                                                                                                                   | Schema                                 |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | The identical terms were already current (replayed).                                                                          | object                                 |
+| 201    | The terms were appended.                                                                                                      | object                                 |
+| 400    | Validation error.                                                                                                             | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                                                                   | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                                                                   | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.                                                                                                           | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT, EMPLOYMENT_DELETED, EMPLOYMENT_TERMINATED, TERMS_OUT_OF_ORDER, MANAGER_CYCLE or MANAGER_CHAIN_TOO_DEEP. | [`ApiError`](#standard-error-envelope) |
+| 422    | EFFECTIVE_BEFORE_HIRE, OFFICE_NOT_FOUND or MANAGER_NOT_FOUND.                                                                 | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/hr-workforce/geolocation/evidence` — List location-evidence verdicts
+
+- **operationId**: `hrWorkforceLocationEvidenceList`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.attendance_evidence.read` (tenant-wide and HR-only: there is no supervisor scope or manager-chain read yet, and never a scheduler, cashier, marketer or payroll operator), EXCEPT `mine=true` (your OWN verdicts), which needs no permission beyond an employment linked to your login (an ownership grant, ADR-0063). An `employmentId` outside your own under `mine` is 403. Each read of OTHER people's verdicts is audited (the reader, the employment filter and a count, never a verdict). A verdict is a SUPPORTING INDICATOR for human review, never proof, and changes no pay, status or approval by itself. There is no coordinate to return: none is ever stored. Newest first, keyset paginated; `from`/`to` bound the evaluation instant. Responses are `no-store`.
+
+**Parameters**
+
+| Name               | In     | Required | Type               | Description |
+| ------------------ | ------ | -------- | ------------------ | ----------- |
+| `mine`             | query  | no       | boolean            |             |
+| `employmentId`     | query  | no       | string (uuid)      |             |
+| `eventId`          | query  | no       | string (uuid)      |             |
+| `from`             | query  | no       | string (date-time) |             |
+| `to`               | query  | no       | string (date-time) |             |
+| `cursor`           | query  | no       | string             |             |
+| `X-Correlation-ID` | header | no       | string             |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | A page of verdicts.         | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/hr-workforce/geolocation/geofences` — List geofences
+
+- **operationId**: `hrWorkforceGeofencesList`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.geolocation_evidence.configure`. `officeId` narrows to one office; `includeDeleted=true` includes soft-deleted ones. A geofence is a place of business, not a person.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `officeId`         | query  | no       | string (uuid) |             |
+| `includeDeleted`   | query  | no       | boolean       |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The geofences.              | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/hr-workforce/geolocation/geofences` — Define a geofence
+
+- **operationId**: `hrWorkforceGeofenceCreate`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.geolocation_evidence.configure` (high-risk). A circle (`latitude`, `longitude`, `radiusMeters` 50-5000) or a simple polygon (3-32 `[latitude, longitude]` vertices, no repeated vertex or crossing edge, at least 2,500 square metres, spanning at most 10 km) attached to a live office; at most 10 live geofences per office (409 `GEOFENCE_OFFICE_LIMIT`). Requires an Idempotency-Key. Audited at warning severity with ids, the revision and a geometry fingerprint, never coordinates.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`HrGeofenceInput`](#schema-hrgeofenceinput)
+
+**Responses**
+
+| Status | Description                                    | Schema                                 |
+| ------ | ---------------------------------------------- | -------------------------------------- |
+| 201    | The geofence.                                  | object                                 |
+| 400    | Validation error.                              | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                    | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                    | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT or GEOFENCE_OFFICE_LIMIT. | [`ApiError`](#standard-error-envelope) |
+| 422    | OFFICE_NOT_FOUND.                              | [`ApiError`](#standard-error-envelope) |
+
+### `PUT /api/v1/hr-workforce/geolocation/geofences/{id}` — Replace a geofence
+
+- **operationId**: `hrWorkforceGeofenceReplace`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.geolocation_evidence.configure` (high-risk). Replaces label, office and geometry of a LIVE geofence. Evidence already recorded keeps naming it; it cannot be re-evaluated because no coordinate was kept. Requires an Idempotency-Key. Audited at warning severity with ids, the revision and a geometry fingerprint, never coordinates.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`HrGeofenceInput`](#schema-hrgeofenceinput)
+
+**Responses**
+
+| Status | Description                                    | Schema                                 |
+| ------ | ---------------------------------------------- | -------------------------------------- |
+| 200    | The geofence.                                  | object                                 |
+| 400    | Validation error.                              | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                    | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                    | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.                            | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT or GEOFENCE_OFFICE_LIMIT. | [`ApiError`](#standard-error-envelope) |
+| 422    | OFFICE_NOT_FOUND.                              | [`ApiError`](#standard-error-envelope) |
+
+### `DELETE /api/v1/hr-workforce/geolocation/geofences/{id}` — Soft-delete a geofence
+
+- **operationId**: `hrWorkforceGeofenceDelete`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.geolocation_evidence.configure` (high-risk). SOFT delete: a verdict that names the geofence keeps its reference. Refused 409 `GEOFENCE_LAST_WHILE_ENABLED` while geolocation evidence is enabled and this is the last live geofence. Requires an Idempotency-Key. Audited at warning severity.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Responses**
+
+| Status | Description                                                                    | Schema                                 |
+| ------ | ------------------------------------------------------------------------------ | -------------------------------------- |
+| 200    | The deleted geofence.                                                          | object                                 |
+| 400    | Validation error.                                                              | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                    | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                    | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.                                                            | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT, GEOFENCE_ALREADY_DELETED or GEOFENCE_LAST_WHILE_ENABLED. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/hr-workforce/geolocation/geofences/{id}/restore` — Restore a geofence
+
+- **operationId**: `hrWorkforceGeofenceRestore`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.geolocation_evidence.configure` (high-risk). Undoes a soft delete; refused 422 while its office is deleted. Requires an Idempotency-Key. Audited at warning severity.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Responses**
+
+| Status | Description                                                          | Schema                                 |
+| ------ | -------------------------------------------------------------------- | -------------------------------------- |
+| 200    | The restored geofence.                                               | object                                 |
+| 400    | Validation error.                                                    | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                          | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                          | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.                                                  | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT, GEOFENCE_NOT_DELETED or GEOFENCE_OFFICE_LIMIT. | [`ApiError`](#standard-error-envelope) |
+| 422    | OFFICE_NOT_FOUND.                                                    | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/hr-workforce/geolocation/notice` — Read the notice status for the caller's employment
+
+- **operationId**: `hrWorkforceGeolocationNoticeStatus`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.clock.create` and an employment linked to the caller's login (anything else is 403). What the clock client needs BEFORE it offers a position: whether the tenant has the feature on, the accuracy ceiling, the current notice and whether this employee acknowledged it. While the feature is off, `enabled` is false and no notice is returned: the client must not ask for a position. `no-store`.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `employmentId`     | query  | yes      | string (uuid) |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The status.                 | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/hr-workforce/geolocation/notice-acknowledgements` — Acknowledge the current notice
+
+- **operationId**: `hrWorkforceGeolocationNoticeAcknowledge`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.clock.create` and an employment linked to the caller's login (anything else is 403). Records that the employee has seen the CURRENT notice version: evidence of notice, not a claim that consent is the lawful basis. A repeat is 200. Declining is simply not acknowledging: the employee still clocks in, with a `not_provided` verdict. Requires an Idempotency-Key.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`HrGeolocationAcknowledgeInput`](#schema-hrgeolocationacknowledgeinput)
+
+**Responses**
+
+| Status | Description                                 | Schema                                 |
+| ------ | ------------------------------------------- | -------------------------------------- |
+| 200    | Already acknowledged.                       | object                                 |
+| 201    | Acknowledged.                               | object                                 |
+| 400    | Validation error.                           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                 | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                 | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT or NOTICE_NOT_CURRENT. | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/hr-workforce/geolocation/notices` — List the notice versions
+
+- **operationId**: `hrWorkforceGeolocationNoticesList`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.geolocation_evidence.configure`. Newest version first.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description |
+| ------------------ | ------ | -------- | ------ | ----------- |
+| `X-Correlation-ID` | header | no       | string |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The notice versions.        | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/hr-workforce/geolocation/notices` — Publish the next notice version
+
+- **operationId**: `hrWorkforceGeolocationNoticePublish`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.geolocation_evidence.configure` (high-risk). Append-only, numbered per tenant; the text (locale -> text) is the tenant's: what is captured (a position at clock-in and clock-out only), why, who can see it, how long it is kept, and that declining does not stop clocking in. Publishing does NOT make it current: `PUT .../settings` with `noticeId` does. Requires an Idempotency-Key. Audited at warning severity (the version, never the text).
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`HrGeolocationNoticeInput`](#schema-hrgeolocationnoticeinput)
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 201    | The notice version.         | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT.       | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/hr-workforce/geolocation/settings` — Read the geolocation evidence settings
+
+- **operationId**: `hrWorkforceGeolocationSettingsGet`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.geolocation_evidence.configure` (not granted to the tenant owner by default, ADR-0138 section 3). The switch is FALSE for every tenant until an authorised person enables it. Responses are `no-store`.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description |
+| ------------------ | ------ | -------- | ------ | ----------- |
+| `X-Correlation-ID` | header | no       | string |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The settings.               | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `PUT /api/v1/hr-workforce/geolocation/settings` — Switch geolocation attendance evidence on or off
+
+- **operationId**: `hrWorkforceGeolocationSettingsSet`
+- **Security**: bearerAuth + tenantHeader
+
+ENABLING needs `hr_workforce.geolocation_evidence.configure` (403 otherwise) and, in the resulting state, a DPIA reference + date (409 `GEOLOCATION_DPIA_REQUIRED`), a published notice (409 `GEOLOCATION_NOTICE_REQUIRED`) and at least one live geofence (409 `GEOLOCATION_GEOFENCE_REQUIRED`). DISABLING has no precondition, and a holder of `hr_workforce.settings.configure` may send a bare `{ "enabled": false }`; anything else needs the dedicated permission. An omitted field keeps its value; `null` clears `dpiaReference`, `dpiaRecordedOn` or `noticeId`. Requires an Idempotency-Key. Audited at CRITICAL severity when the switch flips (warning otherwise) with the before/after STATE and the actor, never a location. Pointing `noticeId` at a newer version re-requests every employee's acknowledgement.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`HrGeolocationSettingsInput`](#schema-hrgeolocationsettingsinput)
+
+**Responses**
+
+| Status | Description                                                                                                    | Schema                                 |
+| ------ | -------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | The settings.                                                                                                  | object                                 |
+| 400    | Validation error.                                                                                              | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                                                    | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                                                    | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT, GEOLOCATION_DPIA_REQUIRED, GEOLOCATION_NOTICE_REQUIRED or GEOLOCATION_GEOFENCE_REQUIRED. | [`ApiError`](#standard-error-envelope) |
+| 422    | NOTICE_NOT_FOUND.                                                                                              | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/hr-workforce/me` — The caller's own employment summary
+
+- **operationId**: `hrWorkforceMeGet`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.self_service.read` (default-deny). Returns ONLY the employments linked to the caller's login (the persisted link, computed in the query; no parameter names another person) and whether anyone reports to them directly, so the employee and supervisor screens (Issue #952) know which employment a correction request is for and whether to offer the team view. No profile id, name or contact is returned. The permission is a screen gate: the data of the self-service reads stays bound to the login link and the manager chain through the ownership grants of the attendance, shift and metrics routes. Never cached. Tenant-scoped (withTenant + RLS FORCE).
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description |
+| ------------------ | ------ | -------- | ------ | ----------- |
+| `X-Correlation-ID` | header | no       | string |             |
+
+**Responses**
+
+| Status | Description                                           | Schema                                 |
+| ------ | ----------------------------------------------------- | -------------------------------------- |
+| 200    | The caller's own employments and the supervisor flag. | object                                 |
+| 401    | Missing or invalid session.                           | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                           | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/hr-workforce/settings` — Read the workforce settings
+
+- **operationId**: `hrWorkforceSettingsGet`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.settings.read`. Defaults apply until a row exists. There is no evidence, location or photo setting, by construction (owner decision O6).
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description |
+| ------------------ | ------ | -------- | ------ | ----------- |
+| `X-Correlation-ID` | header | no       | string |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The settings.               | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `PUT /api/v1/hr-workforce/settings` — Change the workforce settings
+
+- **operationId**: `hrWorkforceSettingsSet`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.settings.configure` (high-risk). An omitted field keeps its value; at least one is required. Requires an Idempotency-Key. Audited at warning severity (the row records which setting changed, not its value).
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`HrWorkforceSettingsInput`](#schema-hrworkforcesettingsinput)
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The settings.               | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT.       | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/hr-workforce/shift-assignments` — List shift assignments
+
+- **operationId**: `hrWorkforceShiftAssignmentsList`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.shifts.read` (drafts visible), EXCEPT `mine=true`, which answers only the caller's OWN PUBLISHED schedule and needs no permission (an ownership grant on the persisted login link, ADR-0063; ABAC, scope and SoD still apply, and a machine credential never carries it). Oldest start first, keyset paginated (`cursor`); `from` (inclusive) and `to` (exclusive) are whole-minute UTC instants and an assignment is listed when it overlaps that window. Tenant-scoped (withTenant + RLS FORCE).
+
+**Parameters**
+
+| Name               | In     | Required | Type                                    | Description |
+| ------------------ | ------ | -------- | --------------------------------------- | ----------- |
+| `employmentId`     | query  | no       | string (uuid)                           |             |
+| `from`             | query  | no       | string (date-time)                      |             |
+| `to`               | query  | no       | string (date-time)                      |             |
+| `status`           | query  | no       | enum(`draft`, `published`, `cancelled`) |             |
+| `mine`             | query  | no       | boolean                                 |             |
+| `cursor`           | query  | no       | string                                  |             |
+| `X-Correlation-ID` | header | no       | string                                  |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | A page of assignments.      | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/hr-workforce/shift-assignments` — Draft a shift or time-off assignment
+
+- **operationId**: `hrWorkforceShiftAssignmentCreate`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.shifts.create`. Send EITHER `templateId` + `localDate` (the wall clock is resolved to UTC once, here, in the template's zone) OR the explicit `startsAt`/`endsAt` UTC interval with its `timeZone`. Created as a DRAFT: invisible to scheduling consumers until published, but it already counts for the overlap rule. An employment cannot have two non-cancelled assignments that overlap (half-open, across kinds): `409 SHIFT_CONFLICT`, with the other assignment's id in `error.details.conflictingAssignmentId` ONLY when the caller also holds `hr_workforce.shifts.read` (otherwise the id is omitted, so a create-only caller cannot enumerate other people's schedule ids). Time off carries a coarse `timeOffKind` and NEVER a reason; no free-text field exists. Requires an Idempotency-Key. Audited.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`HrShiftAssignmentInput`](#schema-hrshiftassignmentinput)
+
+**Responses**
+
+| Status | Description                                                                      | Schema                                 |
+| ------ | -------------------------------------------------------------------------------- | -------------------------------------- |
+| 201    | The draft assignment.                                                            | object                                 |
+| 400    | Validation error.                                                                | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                      | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                      | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT or SHIFT_CONFLICT.                                          | [`ApiError`](#standard-error-envelope) |
+| 422    | EMPLOYMENT_NOT_FOUND, TEMPLATE_NOT_FOUND, OFFICE_NOT_FOUND or INVALID_TIME_ZONE. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/hr-workforce/shift-assignments/{id}/cancel` — Cancel a shift assignment
+
+- **operationId**: `hrWorkforceShiftAssignmentCancel`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.shifts.cancel` (high-risk). draft or published -> cancelled (terminal). The row stays; it stops counting for the overlap rule and for availability. Requires an Idempotency-Key. Audited at warning severity.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Responses**
+
+| Status | Description                                      | Schema                                 |
+| ------ | ------------------------------------------------ | -------------------------------------- |
+| 200    | The cancelled assignment.                        | object                                 |
+| 400    | Validation error.                                | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                      | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                      | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.                              | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT or SHIFT_ALREADY_CANCELLED. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/hr-workforce/shift-assignments/{id}/publish` — Publish a shift assignment
+
+- **operationId**: `hrWorkforceShiftAssignmentPublish`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.shifts.publish` (high-risk). draft -> published. Only a published assignment is visible to scheduling consumers (the `StaffAvailabilityPort`). A published assignment is immutable: it is cancelled, never edited or deleted. Requires an Idempotency-Key. Audited.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Responses**
+
+| Status | Description                                                  | Schema                                 |
+| ------ | ------------------------------------------------------------ | -------------------------------------- |
+| 200    | The published assignment.                                    | object                                 |
+| 400    | Validation error.                                            | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                  | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                  | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.                                          | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT, SHIFT_NOT_DRAFT or EMPLOYMENT_DELETED. | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/hr-workforce/shift-templates` — List shift templates
+
+- **operationId**: `hrWorkforceShiftTemplatesList`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.templates.read`. Live templates, newest first, keyset paginated (`cursor`). A template is a pattern and names no person. Tenant-scoped (withTenant + RLS FORCE).
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description |
+| ------------------ | ------ | -------- | ------ | ----------- |
+| `cursor`           | query  | no       | string |             |
+| `X-Correlation-ID` | header | no       | string |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | A page of shift templates.  | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/hr-workforce/shift-templates` — Create a shift template
+
+- **operationId**: `hrWorkforceShiftTemplateCreate`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.templates.create`. A pattern: a local start time, an ELAPSED duration in minutes, an optional single break and an IANA zone. Codes are unique among live templates (`409 TEMPLATE_CODE_CONFLICT`). Requires an Idempotency-Key. Audited.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`HrShiftTemplateInput`](#schema-hrshifttemplateinput)
+
+**Responses**
+
+| Status | Description                                     | Schema                                 |
+| ------ | ----------------------------------------------- | -------------------------------------- |
+| 201    | The template.                                   | object                                 |
+| 400    | Validation error.                               | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                     | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                     | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT or TEMPLATE_CODE_CONFLICT. | [`ApiError`](#standard-error-envelope) |
+| 422    | OFFICE_NOT_FOUND or INVALID_TIME_ZONE.          | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/hr-workforce/shift-templates/{id}` — Get a shift template
+
+- **operationId**: `hrWorkforceShiftTemplateGet`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.templates.read`. A soft-deleted template is a 404.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `id`               | path   | yes      | string (uuid) |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The template.               | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.         | [`ApiError`](#standard-error-envelope) |
+
+### `PATCH /api/v1/hr-workforce/shift-templates/{id}` — Edit a shift template
+
+- **operationId**: `hrWorkforceShiftTemplateUpdate`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.templates.update`. Only the keys sent change (the code is fixed); `officeId: null`, or both break keys `null`, clear them. Assignments already made are NOT moved: they hold their own resolved instants. The call sets values, so repeating it is harmless and it needs no Idempotency-Key. Audited.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `id`               | path   | yes      | string (uuid) |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Request body** (required): [`HrShiftTemplatePatch`](#schema-hrshifttemplatepatch)
+
+**Responses**
+
+| Status | Description                                                                                    | Schema                                 |
+| ------ | ---------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | The template.                                                                                  | object                                 |
+| 400    | Validation error.                                                                              | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                                    | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                                    | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.                                                                            | [`ApiError`](#standard-error-envelope) |
+| 422    | OFFICE_NOT_FOUND, INVALID_TIME_ZONE or VALIDATION_ERROR (the break must end within the shift). | [`ApiError`](#standard-error-envelope) |
+
+### `DELETE /api/v1/hr-workforce/shift-templates/{id}` — Soft-delete a shift template
+
+- **operationId**: `hrWorkforceShiftTemplateDelete`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_workforce.templates.delete` (high-risk). Soft delete; frees the code. Assignments made from it are unaffected. Requires an Idempotency-Key. Audited at warning severity.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Responses**
+
+| Status | Description                               | Schema                                 |
+| ------ | ----------------------------------------- | -------------------------------------- |
+| 200    | The deleted template.                     | object                                 |
+| 400    | Validation error.                         | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.               | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.               | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.                       | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT or TEMPLATE_DELETED. | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/hr-workforce/workforce-metrics/employees` — Workforce facts per employee
+
+- **operationId**: `hrWorkforceMetricsEmployeesList`
+- **Security**: bearerAuth + tenantHeader
+
+Transparent attendance, hours, shift-coverage and productivity FACTS per employee over a UTC window (`from` inclusive, `to` exclusive, both required, at most 31 days). Gated by `hr_workforce.workforce_metrics.read` (HR: every employee), EXCEPT `mine=true` (your OWN employments) and `reports=true` (your DIRECT reports only, one level, and only from when the reporting line began; a soft-deleted, terminated or re-assigned report, or a terminated manager, drops out), which need no permission (an ownership grant on the persisted login link / current manager link, ADR-0063; ABAC, scope and SoD still apply, and a machine credential never carries it). `mine` and `reports` cannot be combined, and an `employmentId` outside the chosen basis is 403, the same as an id that does not exist. Malformed input from a caller entitled to nothing is 403, not 400. Keyset paginated by employment id (`cursor`, 50 per page). There is NO composite score, ranking or flag; every figure is a count, minutes, or a ratio defined in `docs/awcms/workforce-metrics.md`. Reads attendance events (effective record only) and published work shifts only; no photo, biometric, device, location or payroll data exists in or is read by this surface. Never cached. Tenant-scoped (withTenant + RLS FORCE). The all-employee mode and the `reports` mode (the manager chain can make a director with no HR permission a reader of everyone) are recorded as a sensitive read (`sensitive_read.workforce_metrics`: the employment ids, a count and the `mode`, never a figure; coalesced per actor in a five-minute window, Issue #1083). Only the employee's own (`mine`) read is not recorded.
+
+**Parameters**
+
+| Name               | In     | Required | Type               | Description |
+| ------------------ | ------ | -------- | ------------------ | ----------- |
+| `from`             | query  | yes      | string (date-time) |             |
+| `to`               | query  | yes      | string (date-time) |             |
+| `employmentId`     | query  | no       | string (uuid)      |             |
+| `mine`             | query  | no       | boolean            |             |
+| `reports`          | query  | no       | boolean            |             |
+| `cursor`           | query  | no       | string (uuid)      |             |
+| `X-Correlation-ID` | header | no       | string             |             |
+
+**Responses**
+
+| Status | Description                             | Schema                                 |
+| ------ | --------------------------------------- | -------------------------------------- |
+| 200    | A page of per-employee workforce facts. | object                                 |
+| 400    | Validation error.                       | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.             | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.             | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/hr-workforce/workforce-metrics/groups` — Workforce aggregates per office, small groups withheld
+
+- **operationId**: `hrWorkforceMetricsGroupsList`
+- **Security**: bearerAuth + tenantHeader
+
+Per-OFFICE workforce aggregates (the office of each employee's current terms; `officeId: null` is no office assigned) over exactly ONE CLOSED UTC ISO week (`from` a Monday 00:00Z, `to` the next Monday); weeks are disjoint and never nest, so no two accepted windows can be subtracted to leave a slice. A calendar month, any other window, and a bucket that has not ended, is 400: free windows let two requests that differ by a tail slice isolate one person. Gated by `hr_workforce.workforce_metrics.analyze` (or `.read`); there is no ownership grant, an aggregate is not a person's own record. Returns NO individual row. A group with fewer than five CONTRIBUTING employees (at least four hours scheduled or worked in the bucket) is returned `suppressed: true` with no number at all; an employee under the four-hour floor is neither counted nor summed. A shown group reports only a contributor BAND (`5-9`, `10-19`, `20+`), never an exact count. There is deliberately no tenant-wide total, so a withheld group cannot be recovered by subtraction. Ratios are recomputed from the group sums, never averaged. 422 `WORKFORCE_METRICS_SCOPE_TOO_LARGE` when the tenant has more than 10000 employments (decided from a COUNT before any page is read). No composite score. Never cached. Tenant-scoped (withTenant + RLS FORCE). A suppressed group carries no `officeId` (Issue #1083, L2). The read is recorded as a sensitive read under the permission that actually granted it (`sensitive_read.workforce_metrics` for `.read`, `sensitive_read.workforce_metrics_aggregate` for `.analyze`; the group count and no ids). Residual: the offices that DO appear are the shown ones, so a caller who knows the tenant's offices by other means can infer by set difference which are withheld. Residual risk (documented, not enforced by an SoD rule): a caller who knows some members of a small group (as their supervisor through `?reports=true`, or because they can create or publish its shifts) can subtract them from a shown figure; do not combine `.analyze` with those over the same people (docs/awcms/workforce-metrics.md section 6).
+
+**Parameters**
+
+| Name               | In     | Required | Type               | Description |
+| ------------------ | ------ | -------- | ------------------ | ----------- |
+| `from`             | query  | yes      | string (date-time) |             |
+| `to`               | query  | yes      | string (date-time) |             |
+| `X-Correlation-ID` | header | no       | string             |             |
+
+**Responses**
+
+| Status | Description                                                    | Schema                                 |
+| ------ | -------------------------------------------------------------- | -------------------------------------- |
+| 200    | Per-office aggregates; small groups withheld.                  | object                                 |
+| 400    | Validation error.                                              | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                    | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                    | [`ApiError`](#standard-error-envelope) |
+| 422    | The tenant has too many employments for one aggregate request. | [`ApiError`](#standard-error-envelope) |
+
+## Booking
+
+Availability and schedules of the generic booking module (booking module, Issues #937 and #938, ADR-0131, ADR-0135): schedules written in local wall-clock time in an IANA zone, closures and override-hours exceptions, and a read-only availability search for slot resources (UTC half-open intervals, RFC 5545 gap and fold rules, setup and cleanup buffers, lead time and horizon) and stay resources (local date intervals, nights by date arithmetic, same-day turnover allowed, blocked nights as a hard exclusion, closures as a soft one). Availability persists and claims nothing and may be stale when read; the allocator's database exclusion constraints, not this surface, prevent a double booking. Rate limited per principal. No price, payment or customer name exists in the module.
+
+### `GET /api/v1/booking/availability` — Search availability
+
+- **operationId**: `bookingAvailabilityGet`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.availability.read`. READ-ONLY: persists and claims nothing, and the answer may be stale when read (the allocator's exclusion constraints prevent a double booking). A SLOT resource is asked with `from` and `to` (RFC 3339 with an explicit offset or Z, half-open, at most 31 days) and answers the bookable slots, ascending, each with the number of free units; slots are bounded by `limit` (500 at most) and `truncated` says whether more exist. A STAY resource is asked with `checkInDate` and `checkOutDate` (local dates in the resource's zone, half-open; an instant is never accepted) and answers `available`, the night count (date arithmetic, never hours), the derived arrival and departure instants, and the reasons it is not available, each flagged `overridable` (lead time, horizon and a soft closure can be lifted by `booking.reservations.override`; a block or an allocation conflict never can). Lead time and horizon come from the offering, then the tenant policy, then the module default. Rate limited per principal (`429 RATE_LIMITED`, `Retry-After`). Tenant-scoped (withTenant + RLS FORCE).
+
+**Parameters**
+
+| Name               | In     | Required | Type               | Description                                                                               |
+| ------------------ | ------ | -------- | ------------------ | ----------------------------------------------------------------------------------------- |
+| `resourceId`       | query  | yes      | string (uuid)      |                                                                                           |
+| `offeringId`       | query  | yes      | string (uuid)      |                                                                                           |
+| `quantity`         | query  | no       | integer            | Units one booking claims at once; default 1.                                              |
+| `from`             | query  | no       | string (date-time) | Slot resources. Start of the search window, RFC 3339 with an offset or Z.                 |
+| `to`               | query  | no       | string (date-time) | Slot resources. Exclusive end of the search window; after `from`, at most 31 days later.  |
+| `limit`            | query  | no       | integer            | Slot resources. Slots returned at most; default 100, at most 500.                         |
+| `checkInDate`      | query  | no       | string (date)      | Stay resources. Local check-in date YYYY-MM-DD in the resource's zone.                    |
+| `checkOutDate`     | query  | no       | string (date)      | Stay resources. Local check-out date, exclusive; after `checkInDate`, at most 366 nights. |
+| `X-Correlation-ID` | header | no       | string             |                                                                                           |
+
+**Responses**
+
+| Status | Description                                                                                                       | Schema                                 |
+| ------ | ----------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | The slots of a slot resource, or the evaluation of a stay.                                                        | object                                 |
+| 400    | Validation error.                                                                                                 | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                                                       | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                                                       | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND (the resource or the offering is not in this tenant, is inactive or is deleted).               | [`ApiError`](#standard-error-envelope) |
+| 409    | BOOKING_MODE_MISMATCH (from/to sent for a stay resource or offering, or checkInDate/checkOutDate for a slot one). | [`ApiError`](#standard-error-envelope) |
+| 422    | QUANTITY_EXCEEDS_UNITS.                                                                                           | [`ApiError`](#standard-error-envelope) |
+| 429    | RATE_LIMITED.                                                                                                     | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/booking/blocks` — List blocked nights
+
+- **operationId**: `bookingBlocksList`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.blocks.read`. Newest first, keyset paginated (`cursor`). Filters: `resourceId`, `unitId`, `status`. A block carries ids, local dates and a closed reason code -- no free text and no customer reference. Tenant-scoped (withTenant + RLS FORCE).
+
+**Parameters**
+
+| Name               | In     | Required | Type                       | Description |
+| ------------------ | ------ | -------- | -------------------------- | ----------- |
+| `resourceId`       | query  | no       | string (uuid)              |             |
+| `unitId`           | query  | no       | string (uuid)              |             |
+| `status`           | query  | no       | enum(`active`, `released`) |             |
+| `cursor`           | query  | no       | string                     |             |
+| `X-Correlation-ID` | header | no       | string                     |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | A page of blocks.           | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/booking/blocks` — Block nights of a stay resource
+
+- **operationId**: `bookingBlockCreate`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.blocks.create` (high-impact: it removes sellable inventory). Takes the half-open local date range `[fromDate, toDate)` (at most 366 nights, dates in the resource's zone) of ONE unit (`unitId`) or EVERY unit (absent or null) out of sale, for a closed `reasonCode`. A block is a HARD exclusion under the same constraint as a guest's nights: all-or-none, it never cancels a reservation, and a night already held by a live stay or another block is `409 BLOCK_CONFLICT` and writes nothing. `error.details.conflicts` names the conflicting reservations (number, status, dates; never a customer reference) and blocks only to a caller who ALSO holds `booking.reservations.read`. A resource-wide block also covers units added to the resource later. Elapsed, unswept holds on the covered units are expired first (lazy reclaim). Requires an Idempotency-Key; replaying it returns the stored response and never `BLOCK_CONFLICT` about its own block. Audited at warning severity (`booking.block.created`). Publishes no domain event in v1.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`BookingBlockInput`](#schema-bookingblockinput)
+
+**Responses**
+
+| Status | Description                                                                                                                                                                                            | Schema                                 |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------- |
+| 201    | The block, with the units holding its nights.                                                                                                                                                          | object                                 |
+| 400    | VALIDATION_ERROR, or STAY_DATES_INVALID (a malformed or out-of-order date, more than 366 nights, or a date the resource's zone does not have).                                                         | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                                                                                                                                            | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                                                                                                                                            | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND or UNIT_NOT_FOUND.                                                                                                                                                                  | [`ApiError`](#standard-error-envelope) |
+| 409    | BLOCK_CONFLICT (a live stay or another block holds a night; nothing was cancelled), BOOKING_MODE_MISMATCH (a slot resource has schedule exceptions instead), CONTENTION_RETRY or IDEMPOTENCY_CONFLICT. | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/booking/blocks/{id}` — Read one block
+
+- **operationId**: `bookingBlockGet`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.blocks.read`. An unknown id and another tenant's id are the same `404 BLOCK_NOT_FOUND`.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `id`               | path   | yes      | string (uuid) |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Responses**
+
+| Status | Description                                                                  | Schema                                 |
+| ------ | ---------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | The block.                                                                   | object                                 |
+| 400    | Validation error.                                                            | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                  | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                  | [`ApiError`](#standard-error-envelope) |
+| 404    | BLOCK_NOT_FOUND (an unknown id and another tenant's id are the same answer). | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/booking/blocks/{id}/release` — Release a block and return its nights to sale
+
+- **operationId**: `bookingBlockRelease`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.blocks.release`. The block is locked and the database releases its allocation rows in the same statement, stamping the block's own release instant on them. Releasing an already released block returns it with `replayed: true` and writes nothing. The body is empty. Requires an Idempotency-Key; replaying it returns the stored response. Audited at info severity (`booking.block.released`). Publishes no domain event in v1.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Request body** (optional): object
+
+**Responses**
+
+| Status | Description                                                                          | Schema                                 |
+| ------ | ------------------------------------------------------------------------------------ | -------------------------------------- |
+| 200    | The released block, or unchanged with `replayed: true` when it was already released. | object                                 |
+| 400    | Validation error.                                                                    | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                          | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                          | [`ApiError`](#standard-error-envelope) |
+| 404    | BLOCK_NOT_FOUND (an unknown id and another tenant's id are the same answer).         | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT.                                                                | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/booking/offerings` — List service offerings
+
+- **operationId**: `bookingOfferingsList`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.offerings.read`. Newest first, keyset paginated (`cursor`). Filters: `granularity`, `status`, and `includeDeleted` / `onlyDeleted` (soft-deleted rows are hidden by default and need `booking.offerings.restore` as well). An offering holds no price and no product id. Tenant-scoped (withTenant + RLS FORCE).
+
+**Parameters**
+
+| Name               | In     | Required | Type                       | Description                                                                                       |
+| ------------------ | ------ | -------- | -------------------------- | ------------------------------------------------------------------------------------------------- |
+| `granularity`      | query  | no       | enum(`time`, `stay`)       |                                                                                                   |
+| `status`           | query  | no       | enum(`active`, `inactive`) |                                                                                                   |
+| `includeDeleted`   | query  | no       | boolean                    | true lists live and soft-deleted rows; needs `booking.offerings.restore` as well (403 otherwise). |
+| `onlyDeleted`      | query  | no       | boolean                    | true lists only soft-deleted rows; needs `booking.offerings.restore` as well (403 otherwise).     |
+| `cursor`           | query  | no       | string                     | Opaque keyset cursor from the previous page.                                                      |
+| `X-Correlation-ID` | header | no       | string                     |                                                                                                   |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | A page of offerings.        | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/booking/offerings` — Create a service offering
+
+- **operationId**: `bookingOfferingCreate`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.offerings.create`. A `time` offering needs `durationSeconds` and `slotStepSeconds` (at least 300) and may set buffers; a `stay` offering needs `minNights` and `maxNights` (at most 366) and sends no time field. `maxParty` is at least `minParty`. A duplicate `code` (case-insensitive) is `409 CODE_TAKEN`. Requires an Idempotency-Key. Audited at info severity (`booking.offering.created`).
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`BookingOfferingInput`](#schema-bookingofferinginput)
+
+**Responses**
+
+| Status | Description                               | Schema                                 |
+| ------ | ----------------------------------------- | -------------------------------------- |
+| 201    | The offering.                             | object                                 |
+| 400    | VALIDATION_ERROR or IDEMPOTENCY_REQUIRED. | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.               | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.               | [`ApiError`](#standard-error-envelope) |
+| 409    | CODE_TAKEN or IDEMPOTENCY_CONFLICT.       | [`ApiError`](#standard-error-envelope) |
+| 422    | CONSTRAINT_VIOLATED.                      | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/booking/offerings/{id}` — Read one service offering
+
+- **operationId**: `bookingOfferingGet`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.offerings.read`. A soft-deleted offering is returned (with `deletedAt`) only to a holder of `booking.offerings.restore`, anyone else gets the neutral 404. An unknown id and another tenant's id are the same `404 OFFERING_NOT_FOUND`.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `id`               | path   | yes      | string (uuid) |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The offering.               | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+| 404    | OFFERING_NOT_FOUND.         | [`ApiError`](#standard-error-envelope) |
+
+### `PATCH /api/v1/booking/offerings/{id}` — Edit a service offering
+
+- **operationId**: `bookingOfferingPatch`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.offerings.update`. `code` and `granularity` are fixed; the merged offering must still satisfy the shape of its granularity (`400 VALIDATION_ERROR` otherwise). Changes FUTURE bookings only: a reservation item keeps the snapshot it was made with. `409 OFFERING_DELETED` for a deleted offering. Requires an Idempotency-Key. Audited at info severity (`booking.offering.updated`).
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`BookingOfferingPatch`](#schema-bookingofferingpatch)
+
+**Responses**
+
+| Status | Description                               | Schema                                 |
+| ------ | ----------------------------------------- | -------------------------------------- |
+| 200    | The offering.                             | object                                 |
+| 400    | VALIDATION_ERROR or IDEMPOTENCY_REQUIRED. | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.               | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.               | [`ApiError`](#standard-error-envelope) |
+| 404    | OFFERING_NOT_FOUND.                       | [`ApiError`](#standard-error-envelope) |
+| 409    | OFFERING_DELETED or IDEMPOTENCY_CONFLICT. | [`ApiError`](#standard-error-envelope) |
+| 422    | CONSTRAINT_VIOLATED.                      | [`ApiError`](#standard-error-envelope) |
+
+### `DELETE /api/v1/booking/offerings/{id}` — Soft-delete a service offering
+
+- **operationId**: `bookingOfferingDelete`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.offerings.delete`. SOFT delete; reservations keep their snapshot. Deleting a deleted offering returns it with `replayed: true`. Requires an Idempotency-Key. Audited at warning severity (`booking.offering.deleted`).
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The deleted offering.       | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+| 404    | OFFERING_NOT_FOUND.         | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT.       | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/booking/offerings/{id}/restore` — Restore a soft-deleted service offering
+
+- **operationId**: `bookingOfferingRestore`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.offerings.restore`. Restoring a live offering returns it with `replayed: true`. The body is empty. Requires an Idempotency-Key. Audited at info severity (`booking.offering.restored`).
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Request body** (optional): object
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The restored offering.      | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+| 404    | OFFERING_NOT_FOUND.         | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT.       | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/booking/policy` — Read the booking policy
+
+- **operationId**: `bookingPolicyGet`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.policy.read`. `policy` is what the tenant set (`null` where it did not, meaning the MODULE DEFAULT, not unlimited) and `effective` is what is in force. A tenant that never wrote a policy reads every field `null` and `updatedAt: null`.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description |
+| ------------------ | ------ | -------- | ------ | ----------- |
+| `X-Correlation-ID` | header | no       | string |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The policy.                 | object                                 |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `PUT /api/v1/booking/policy` — Replace the booking policy
+
+- **operationId**: `bookingPolicyPut`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.policy.configure` (HIGH-RISK: it bounds how much inventory one actor can hold and how far ahead anyone can book). REPLACES the whole policy: every field must be present and `null` selects the module default (hold caps default to 5 per customer and 500 per tenant). Ranges: hold seconds 60 to 86400 with `defaultHoldSeconds` at most `maxHoldSeconds`; hold caps at least 1; `minLeadSeconds` at least 0; `maxHorizonDays` 1 to 3650; `noShowGraceSeconds` 0 to 2592000; `defaultTimezone` an IANA name. Changes FUTURE holds and searches only. Requires an Idempotency-Key; replaying it returns the stored response. Audited at critical severity (`booking.policy.configured`) with the before and after values. No MFA step-up: ADR-0141 flags payroll permissions only.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`BookingPolicyInput`](#schema-bookingpolicyinput)
+
+**Responses**
+
+| Status | Description                                                                 | Schema                                 |
+| ------ | --------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | The policy now in force.                                                    | object                                 |
+| 400    | VALIDATION_ERROR (a missing or out-of-range field) or IDEMPOTENCY_REQUIRED. | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                 | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                 | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT.                                                       | [`ApiError`](#standard-error-envelope) |
+| 422    | CONSTRAINT_VIOLATED.                                                        | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/booking/reports/occupancy` — Occupancy of stay resources
+
+- **operationId**: `bookingReportsOccupancy`
+- **Security**: bearerAuth + tenantHeader
+
+Occupied unit-nights of STAY resources per local night: one unit-night per unit and night (two nights on one unit are two, the same stay on three units is six). Occupied means a confirmed, checked-in or completed reservation claims the night; a no-show keeps its allocation but is not occupied. `heldUnitNights` is the hold PIPELINE for the same nights (live holds only), reported beside occupancy and never inside it; `blockedUnitNights` are the nights under an active block. The rate's denominator is all units active now (whether maintenance closures leave the denominator is still open under O8, hence `blockedUnitNights`). Gated by `booking.reports.read`. READ-ONLY and tenant-scoped (withTenant + RLS FORCE); never cached. Day windows are Asia/Jakarta, half-open. Holds are never part of occupancy (owner decision O8). No customer reference, note or amount is read or returned; there is no revenue figure (booking holds no price). A ratio or mean over fewer than five reservations is withheld (`suppressed: true`, `value: null`); counts are the tenant's own operational figures and are not anonymised (the reader already holds `booking.reports.read` on that tenant's data). The `booking.*` projections on the reporting engine are the all-time dashboard counters; this is the live, windowed detail they point at.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                      |
+| ------------------ | ------ | -------- | ------------- | ---------------------------------------------------------------- |
+| `from`             | query  | yes      | string (date) | First local date (Asia/Jakarta), inclusive.                      |
+| `to`               | query  | yes      | string (date) | Last local date, exclusive; after `from`, at most 92 days later. |
+| `resourceId`       | query  | no       | string (uuid) | Narrow the report to one resource.                               |
+| `X-Correlation-ID` | header | no       | string        |                                                                  |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The report.                 | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/booking/reports/reservations` — Hold pipeline, lead time, cancellation and no-show
+
+- **operationId**: `bookingReportsReservations`
+- **Security**: bearerAuth + tenantHeader
+
+For a window of Asia/Jakarta days: the HOLD PIPELINE (holds placed, converted, expired, cancelled while held, plus the holds and units open right now), the LEAD TIME of the reservations confirmed in the window (starts_at minus the confirmation instant, in buckets and a mean) and the CANCELLATION and NO-SHOW outcomes of that same confirmation cohort. A reservation later rescheduled is left out of the cohort (its replacement has its own). The no-show rate is no_show over resolved arrivals (no_show + checked_in + completed). Gated by `booking.reports.read`. READ-ONLY and tenant-scoped (withTenant + RLS FORCE); never cached. Day windows are Asia/Jakarta, half-open. Holds are never part of occupancy (owner decision O8). No customer reference, note or amount is read or returned; there is no revenue figure (booking holds no price). A ratio over fewer than five reservations is withheld (`suppressed: true`, `value: null`). The `booking.*` projections on the reporting engine are the all-time dashboard counters; this is the live, windowed detail they point at.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                      |
+| ------------------ | ------ | -------- | ------------- | ---------------------------------------------------------------- |
+| `from`             | query  | yes      | string (date) | First local date (Asia/Jakarta), inclusive.                      |
+| `to`               | query  | yes      | string (date) | Last local date, exclusive; after `from`, at most 92 days later. |
+| `resourceId`       | query  | no       | string (uuid) | Narrow the report to one resource.                               |
+| `X-Correlation-ID` | header | no       | string        |                                                                  |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The report.                 | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/booking/reports/utilization` — Utilization of slot resources
+
+- **operationId**: `bookingReportsUtilization`
+- **Security**: bearerAuth + tenantHeader
+
+Net-booked service seconds of SLOT resources over the seconds the schedule leaves open (times the active units), per Asia/Jakarta day. Buffers (setup/cleanup) and holds are excluded from booked; the denominator is the schedule expansion availability uses. A separate metric from occupancy, never averaged with it. Whether the denominator should exclude maintenance closures, and whether booked should be actual rather than booked time, are still open under O8. Gated by `booking.reports.read`. READ-ONLY and tenant-scoped (withTenant + RLS FORCE); never cached. Day windows are Asia/Jakarta, half-open. Holds are never part of occupancy (owner decision O8). No customer reference, note or amount is read or returned; there is no revenue figure (booking holds no price). A ratio over fewer than five reservations is withheld (`suppressed: true`, `value: null`). The `booking.*` projections on the reporting engine are the all-time dashboard counters; this is the live, windowed detail they point at.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                      |
+| ------------------ | ------ | -------- | ------------- | ---------------------------------------------------------------- |
+| `from`             | query  | yes      | string (date) | First local date (Asia/Jakarta), inclusive.                      |
+| `to`               | query  | yes      | string (date) | Last local date, exclusive; after `from`, at most 92 days later. |
+| `resourceId`       | query  | no       | string (uuid) | Narrow the report to one resource.                               |
+| `X-Correlation-ID` | header | no       | string        |                                                                  |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The report.                 | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/booking/reservations` — List reservations
+
+- **operationId**: `bookingReservationsList`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.reservations.read`. Newest first, keyset paginated (`cursor`). Filters: `status`, `lineageId` (every reservation of one booking across reschedules) and the adapter's natural key (`externalRefType` with `externalRef`, both or neither). The customer note is never returned (it is behind `booking.reservation_notes.read`). Tenant-scoped (withTenant + RLS FORCE).
+
+**Parameters**
+
+| Name               | In     | Required | Type                                                                                                   | Description |
+| ------------------ | ------ | -------- | ------------------------------------------------------------------------------------------------------ | ----------- |
+| `status`           | query  | no       | enum(`held`, `confirmed`, `checked_in`, `completed`, `cancelled`, `rescheduled`, `no_show`, `expired`) |             |
+| `lineageId`        | query  | no       | string (uuid)                                                                                          |             |
+| `externalRefType`  | query  | no       | string                                                                                                 |             |
+| `externalRef`      | query  | no       | string                                                                                                 |             |
+| `cursor`           | query  | no       | string                                                                                                 |             |
+| `X-Correlation-ID` | header | no       | string                                                                                                 |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | A page of reservations.     | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/booking/reservations` — Place a hold or create a reservation
+
+- **operationId**: `bookingReservationCreate`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.reservations.create`. Places a HOLD (`held`, expiring on the database clock; `holdSeconds` is clamped to `[60, max_hold_seconds]`) or, when the offering confirms immediately, a `confirmed` reservation. The claim is won all-or-none under the database's exclusion constraints: a taken slot or night is `409 SLOT_UNAVAILABLE` and leaves nothing behind. The server owns the status, the interval (derived from the offering and `startsAt`, or from the `stay` dates in the resource's zone), the buffers and the expiry; a client never sends them. A body that names a payment field (`paid`, `deposit`, `amount`, `balance`, ...) is `400 PAYMENT_FIELD_NOT_ACCEPTED` naming the field, and any other unknown key is a `400 VALIDATION_ERROR`. Holds are capped per customer and per tenant (defaults 5 and 500, tenant-configurable; `429 HOLD_LIMIT_EXCEEDED`). Opening hours (`409 OUTSIDE_SCHEDULE`), lead time (`409 LEAD_TIME_VIOLATION`) and horizon (`409 HORIZON_EXCEEDED`) are refused unless `overridePolicy` is true AND the caller also holds the HIGH-RISK `booking.reservations.override`, checked first through the access chokepoint (action-time separation of duties applies), audited `critical`; an override never lifts a conflict. Requires an Idempotency-Key: replaying it returns the stored response and writes nothing; a fresh key against a live `externalRef` is `409 EXTERNAL_REF_IN_USE`. Audited; publishes `awcms.booking.reservation.created` and `.held` or `.confirmed` in the same transaction. Rejected requests write nothing.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`BookingCreateReservationInput`](#schema-bookingcreatereservationinput)
+
+**Responses**
+
+| Status | Description                                                                                                                                                                                                                                              | Schema                                 |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 201    | The reservation.                                                                                                                                                                                                                                         | object                                 |
+| 400    | VALIDATION_ERROR, PAYMENT_FIELD_NOT_ACCEPTED, STAY_DATES_INVALID or IDEMPOTENCY_REQUIRED.                                                                                                                                                                | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                                                                                                                                                                                              | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                                                                                                                                                                                              | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND or OFFERING_NOT_FOUND (neutral: another tenant's id is the same answer as an unknown one).                                                                                                                                            | [`ApiError`](#standard-error-envelope) |
+| 409    | SLOT_UNAVAILABLE, OUTSIDE_SCHEDULE, LEAD_TIME_VIOLATION, HORIZON_EXCEEDED, PARTY_SIZE_OUT_OF_RANGE, BOOKING_MODE_MISMATCH, MIN_STAY_VIOLATION, MAX_STAY_EXCEEDED, STAY_POOL_INCONSISTENT, EXTERNAL_REF_IN_USE, CONTENTION_RETRY or IDEMPOTENCY_CONFLICT. | [`ApiError`](#standard-error-envelope) |
+| 422    | QUANTITY_EXCEEDS_UNITS.                                                                                                                                                                                                                                  | [`ApiError`](#standard-error-envelope) |
+| 429    | HOLD_LIMIT_EXCEEDED.                                                                                                                                                                                                                                     | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/booking/reservations/{id}` — Read a reservation
+
+- **operationId**: `bookingReservationGet`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.reservations.read`. The reservation with its items and its append-only transition history. The customer note is never returned (it is behind `booking.reservation_notes.read`). There is no ownership grant on this read: the customer is an opaque reference at the commerce authority, not a tenant user. An unknown id and another tenant's id are the same `404 RESERVATION_NOT_FOUND`. Tenant-scoped (withTenant + RLS FORCE).
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description |
+| ------------------ | ------ | -------- | ------ | ----------- |
+| `X-Correlation-ID` | header | no       | string |             |
+
+**Responses**
+
+| Status | Description                      | Schema                                 |
+| ------ | -------------------------------- | -------------------------------------- |
+| 200    | The reservation and its history. | object                                 |
+| 400    | Validation error.                | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.      | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.      | [`ApiError`](#standard-error-envelope) |
+| 404    | RESERVATION_NOT_FOUND.           | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/booking/reservations/{id}/cancel` — Cancel a held or confirmed reservation
+
+- **operationId**: `bookingReservationCancel`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.reservations.cancel`. `held` or `confirmed` -> `cancelled`, releasing every live allocation in the same transaction. `reasonCode` is an optional short code, never free text. A cancellation inside the offering's `cancellation_cutoff_seconds` of the start (the arrival instant for a stay) is recorded as `lateCancellation: true` on the reservation and the event; the module records the fact, any fee is the commerce layer's. Cancelling an already cancelled reservation returns it with `replayed: true` and writes nothing. Requires an Idempotency-Key; replaying it returns the stored response. Audited at warning severity; publishes `awcms.booking.reservation.cancelled`.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Request body** (optional): [`BookingCancelInput`](#schema-bookingcancelinput)
+
+**Responses**
+
+| Status | Description                                                                                                       | Schema                                 |
+| ------ | ----------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | The reservation after the transition, or unchanged with `replayed: true` when it was already in the target state. | object                                 |
+| 400    | Validation error.                                                                                                 | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                                                       | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                                                       | [`ApiError`](#standard-error-envelope) |
+| 404    | RESERVATION_NOT_FOUND (an unknown id and another tenant's id are the same answer).                                | [`ApiError`](#standard-error-envelope) |
+| 409    | INVALID_STATE or IDEMPOTENCY_CONFLICT.                                                                            | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/booking/reservations/{id}/check-in` — Check a confirmed reservation in
+
+- **operationId**: `bookingReservationCheckIn`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.reservations.check_in`. `confirmed` -> `checked_in`; the allocations are kept. A stay is refused (`409 CHECK_IN_TOO_EARLY`) before its check-in DATE in the resource's time zone; there is deliberately no time-of-day check, an early arrival being a front-desk decision. Checking in a checked-in reservation returns it with `replayed: true` and writes nothing. Requires an Idempotency-Key; replaying it returns the stored response. Audited; publishes `awcms.booking.reservation.checked_in`.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Request body** (optional): object
+
+**Responses**
+
+| Status | Description                                                                                                       | Schema                                 |
+| ------ | ----------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | The reservation after the transition, or unchanged with `replayed: true` when it was already in the target state. | object                                 |
+| 400    | Validation error.                                                                                                 | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                                                       | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                                                       | [`ApiError`](#standard-error-envelope) |
+| 404    | RESERVATION_NOT_FOUND (an unknown id and another tenant's id are the same answer).                                | [`ApiError`](#standard-error-envelope) |
+| 409    | INVALID_STATE, CHECK_IN_TOO_EARLY or IDEMPOTENCY_CONFLICT.                                                        | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/booking/reservations/{id}/check-out` — Check a reservation out (complete it)
+
+- **operationId**: `bookingReservationCheckOut`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.reservations.complete`. `checked_in` -> `completed` (the `complete` verb, "check-out" in the UI). The booked interval is NOT shrunk by an early departure: the allocations are kept, as for a slot. Completing a completed reservation returns it with `replayed: true` and writes nothing. Requires an Idempotency-Key; replaying it returns the stored response. Audited; publishes `awcms.booking.reservation.completed`.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Request body** (optional): object
+
+**Responses**
+
+| Status | Description                                                                                                       | Schema                                 |
+| ------ | ----------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | The reservation after the transition, or unchanged with `replayed: true` when it was already in the target state. | object                                 |
+| 400    | Validation error.                                                                                                 | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                                                       | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                                                       | [`ApiError`](#standard-error-envelope) |
+| 404    | RESERVATION_NOT_FOUND (an unknown id and another tenant's id are the same answer).                                | [`ApiError`](#standard-error-envelope) |
+| 409    | INVALID_STATE or IDEMPOTENCY_CONFLICT.                                                                            | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/booking/reservations/{id}/confirm` — Confirm a held reservation
+
+- **operationId**: `bookingReservationConfirm`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.reservations.confirm`. `held` -> `confirmed`; the hold expiry is cleared. Re-checks the hold has not expired under the reservation's row lock, on the DATABASE clock: an elapsed hold is `409 HOLD_EXPIRED` even when the sweep has not run, and so is one the sweep already expired. A confirm racing the sweep serialises on that lock and exactly one wins. Confirming a reservation that is already confirmed returns it with `replayed: true` and writes nothing, with any Idempotency-Key. Body: none (payment is the commerce layer's, which decides WHEN to ask for a confirm). Requires an Idempotency-Key; replaying it returns the stored response. Audited; publishes `awcms.booking.reservation.confirmed`.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Request body** (optional): object
+
+**Responses**
+
+| Status | Description                                                                                                       | Schema                                 |
+| ------ | ----------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | The reservation after the transition, or unchanged with `replayed: true` when it was already in the target state. | object                                 |
+| 400    | Validation error.                                                                                                 | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                                                       | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                                                       | [`ApiError`](#standard-error-envelope) |
+| 404    | RESERVATION_NOT_FOUND (an unknown id and another tenant's id are the same answer).                                | [`ApiError`](#standard-error-envelope) |
+| 409    | HOLD_EXPIRED, INVALID_STATE or IDEMPOTENCY_CONFLICT.                                                              | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/booking/reservations/{id}/no-show` — Mark a confirmed reservation as a no-show
+
+- **operationId**: `bookingReservationNoShow`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.reservations.no_show` (staff only: a customer-facing adapter credential is simply not granted it). `confirmed` -> `no_show`, marked BY A PERSON after the start plus `no_show_grace_seconds` (default 15 minutes; for a stay the start is the arrival instant); earlier is `409 NO_SHOW_TOO_EARLY`. There is no automatic no-show in v1: nothing else ever writes this state. The allocations are KEPT, so the slot is accounted as consumed. Marking a no-show twice returns the reservation with `replayed: true` and writes nothing. Requires an Idempotency-Key; replaying it returns the stored response. Audited at warning severity; publishes `awcms.booking.reservation.no_show`.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Request body** (optional): object
+
+**Responses**
+
+| Status | Description                                                                                                       | Schema                                 |
+| ------ | ----------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | The reservation after the transition, or unchanged with `replayed: true` when it was already in the target state. | object                                 |
+| 400    | Validation error.                                                                                                 | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                                                       | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                                                       | [`ApiError`](#standard-error-envelope) |
+| 404    | RESERVATION_NOT_FOUND (an unknown id and another tenant's id are the same answer).                                | [`ApiError`](#standard-error-envelope) |
+| 409    | INVALID_STATE, NO_SHOW_TOO_EARLY or IDEMPOTENCY_CONFLICT.                                                         | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/booking/reservations/{id}/reschedule` — Reschedule a confirmed reservation
+
+- **operationId**: `bookingReservationReschedule`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.reservations.reschedule`. Moves a `confirmed` reservation to a new time (`startsAt`) or new dates (`stay`) in ONE transaction: the old allocations are released, the old reservation becomes `rescheduled` (naming its replacement in `supersededById`) and the replacement is inserted `confirmed` under the same `lineageId` with `rescheduledFromId` set, carrying the old customer reference, party, source, note and external reference. Moving or extending over one's own slot or nights does not conflict with itself. Intervals are never edited in place. ANY refusal (the new interval is taken, outside policy, contended) rolls everything back to the untouched original, which stays `confirmed` with its allocations live. `resourceId` or `poolId` moves it elsewhere; a reservation spanning several resources must say where it goes (`400 RESOURCE_REQUIRED`). `overridePolicy` lifts hours, lead time and horizon and additionally needs the HIGH-RISK `booking.reservations.override` (checked first; audited `critical`); it never lifts a conflict. Rescheduling an already rescheduled reservation to the same time returns the replacement with `replayed: true`. Requires an Idempotency-Key; replaying it returns the stored response. Audited at warning severity; publishes `awcms.booking.reservation.rescheduled` for the old reservation and `created` + `confirmed` for the replacement.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`BookingRescheduleInput`](#schema-bookingrescheduleinput)
+
+**Responses**
+
+| Status | Description                                                                                                                                                                                                                                                             | Schema                                 |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | The reservation after the transition, or unchanged with `replayed: true` when it was already in the target state.                                                                                                                                                       | object                                 |
+| 400    | VALIDATION_ERROR, PAYMENT_FIELD_NOT_ACCEPTED, STAY_DATES_INVALID, RESOURCE_REQUIRED (a reservation spanning several resources must say where it moves) or IDEMPOTENCY_REQUIRED.                                                                                         | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                                                                                                                                                                                                             | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                                                                                                                                                                                                             | [`ApiError`](#standard-error-envelope) |
+| 404    | RESERVATION_NOT_FOUND (an unknown id and another tenant's id are the same answer), or RESOURCE_NOT_FOUND / OFFERING_NOT_FOUND for a target resource, pool or offering that is not in this tenant.                                                                       | [`ApiError`](#standard-error-envelope) |
+| 409    | SLOT_UNAVAILABLE, OUTSIDE_SCHEDULE, LEAD_TIME_VIOLATION, HORIZON_EXCEEDED, INVALID_STATE, BOOKING_MODE_MISMATCH, MIN_STAY_VIOLATION, MAX_STAY_EXCEEDED, STAY_POOL_INCONSISTENT, EXTERNAL_REF_IN_USE, PARTY_SIZE_OUT_OF_RANGE, CONTENTION_RETRY or IDEMPOTENCY_CONFLICT. | [`ApiError`](#standard-error-envelope) |
+| 422    | QUANTITY_EXCEEDS_UNITS.                                                                                                                                                                                                                                                 | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/booking/resource-pools` — List resource pools
+
+- **operationId**: `bookingResourcePoolsList`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.resources.read` (pools are governed by the `resources` permissions). Newest first, keyset paginated (`cursor`); soft-deleted pools are hidden by default (`includeDeleted` / `onlyDeleted` need `booking.resources.restore` as well). Each carries its live `memberCount`. Tenant-scoped (withTenant + RLS FORCE).
+
+**Parameters**
+
+| Name               | In     | Required | Type    | Description                                                                                       |
+| ------------------ | ------ | -------- | ------- | ------------------------------------------------------------------------------------------------- |
+| `includeDeleted`   | query  | no       | boolean | true lists live and soft-deleted rows; needs `booking.resources.restore` as well (403 otherwise). |
+| `onlyDeleted`      | query  | no       | boolean | true lists only soft-deleted rows; needs `booking.resources.restore` as well (403 otherwise).     |
+| `cursor`           | query  | no       | string  | Opaque keyset cursor from the previous page.                                                      |
+| `X-Correlation-ID` | header | no       | string  |                                                                                                   |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | A page of pools.            | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/booking/resource-pools` — Create a resource pool
+
+- **operationId**: `bookingResourcePoolCreate`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.resources.create`. A set of interchangeable resources; a resource joins a pool through its own `poolId`. A duplicate `code` (case-insensitive) is `409 CODE_TAKEN`. Requires an Idempotency-Key. Audited at info severity (`booking.pool.created`).
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`BookingResourcePoolInput`](#schema-bookingresourcepoolinput)
+
+**Responses**
+
+| Status | Description                               | Schema                                 |
+| ------ | ----------------------------------------- | -------------------------------------- |
+| 201    | The pool.                                 | object                                 |
+| 400    | VALIDATION_ERROR or IDEMPOTENCY_REQUIRED. | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.               | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.               | [`ApiError`](#standard-error-envelope) |
+| 409    | CODE_TAKEN or IDEMPOTENCY_CONFLICT.       | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/booking/resource-pools/{id}` — Read one pool with its members
+
+- **operationId**: `bookingResourcePoolGet`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.resources.read`. Returns the pool with its live members (at most 500); a soft-deleted pool is returned (with `deletedAt`) only to a holder of `booking.resources.restore`, anyone else gets the neutral 404. An unknown id and another tenant's id are the same `404 POOL_NOT_FOUND`.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `id`               | path   | yes      | string (uuid) |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The pool and its members.   | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+| 404    | POOL_NOT_FOUND.             | [`ApiError`](#standard-error-envelope) |
+
+### `PATCH /api/v1/booking/resource-pools/{id}` — Rename a resource pool
+
+- **operationId**: `bookingResourcePoolPatch`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.resources.update`. `code` is fixed. `409 POOL_DELETED` for a deleted pool. Requires an Idempotency-Key. Audited at info severity (`booking.pool.updated`).
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`BookingResourcePoolPatch`](#schema-bookingresourcepoolpatch)
+
+**Responses**
+
+| Status | Description                               | Schema                                 |
+| ------ | ----------------------------------------- | -------------------------------------- |
+| 200    | The pool.                                 | object                                 |
+| 400    | VALIDATION_ERROR or IDEMPOTENCY_REQUIRED. | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.               | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.               | [`ApiError`](#standard-error-envelope) |
+| 404    | POOL_NOT_FOUND.                           | [`ApiError`](#standard-error-envelope) |
+| 409    | POOL_DELETED or IDEMPOTENCY_CONFLICT.     | [`ApiError`](#standard-error-envelope) |
+
+### `DELETE /api/v1/booking/resource-pools/{id}` — Soft-delete a resource pool
+
+- **operationId**: `bookingResourcePoolDelete`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.resources.delete`. SOFT delete. Refused with `409 POOL_NOT_EMPTY` while a live resource is a member. Deleting a deleted pool returns it with `replayed: true`. Requires an Idempotency-Key. Audited at warning severity (`booking.pool.deleted`).
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Responses**
+
+| Status | Description                             | Schema                                 |
+| ------ | --------------------------------------- | -------------------------------------- |
+| 200    | The deleted pool.                       | object                                 |
+| 400    | Validation error.                       | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.             | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.             | [`ApiError`](#standard-error-envelope) |
+| 404    | POOL_NOT_FOUND.                         | [`ApiError`](#standard-error-envelope) |
+| 409    | POOL_NOT_EMPTY or IDEMPOTENCY_CONFLICT. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/booking/resource-pools/{id}/restore` — Restore a soft-deleted resource pool
+
+- **operationId**: `bookingResourcePoolRestore`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.resources.restore`. Restoring a live pool returns it with `replayed: true`. The body is empty. Requires an Idempotency-Key. Audited at info severity (`booking.pool.restored`).
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Request body** (optional): object
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The restored pool.          | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+| 404    | POOL_NOT_FOUND.             | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT.       | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/booking/resources` — List resources
+
+- **operationId**: `bookingResourcesList`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.resources.read`. This tenant's resources, newest first, keyset paginated (`cursor`). Filters: `status`, `bookingMode`, `poolId`, and `includeDeleted` / `onlyDeleted` (soft-deleted rows are hidden by default and need `booking.resources.restore` as well). Each row carries `capacity` and `activeUnits`; the units themselves are on the read of one resource. Tenant-scoped (withTenant + RLS FORCE).
+
+**Parameters**
+
+| Name               | In     | Required | Type                       | Description                                                                                       |
+| ------------------ | ------ | -------- | -------------------------- | ------------------------------------------------------------------------------------------------- |
+| `status`           | query  | no       | enum(`active`, `inactive`) |                                                                                                   |
+| `bookingMode`      | query  | no       | enum(`slot`, `stay`)       |                                                                                                   |
+| `poolId`           | query  | no       | string (uuid)              |                                                                                                   |
+| `includeDeleted`   | query  | no       | boolean                    | true lists live and soft-deleted rows; needs `booking.resources.restore` as well (403 otherwise). |
+| `onlyDeleted`      | query  | no       | boolean                    | true lists only soft-deleted rows; needs `booking.resources.restore` as well (403 otherwise).     |
+| `cursor`           | query  | no       | string                     | Opaque keyset cursor from the previous page.                                                      |
+| `X-Correlation-ID` | header | no       | string                     |                                                                                                   |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | A page of resources.        | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/booking/resources` — Create a resource and its units
+
+- **operationId**: `bookingResourceCreate`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.resources.create`. Creates the resource and its `capacity` units (ordinals 1 to capacity, labelled from `unitLabels`) in ONE transaction. A stay resource needs `stayCheckInTime` and `stayCheckOutTime` (local times); a slot resource sends neither. `timezone` is an IANA name, never an offset. A duplicate `code` (case-insensitive) is `409 CODE_TAKEN`; an unknown or deleted `poolId` is `404 POOL_NOT_FOUND`. Requires an Idempotency-Key; a retry returns the SAME 201 and body and never `CODE_TAKEN` about its own row. Audited at info severity (`booking.resource.created`).
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`BookingResourceInput`](#schema-bookingresourceinput)
+
+**Responses**
+
+| Status | Description                                                        | Schema                                 |
+| ------ | ------------------------------------------------------------------ | -------------------------------------- |
+| 201    | The resource with its units.                                       | object                                 |
+| 400    | VALIDATION_ERROR, TIMEZONE_INVALID or IDEMPOTENCY_REQUIRED.        | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                        | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                        | [`ApiError`](#standard-error-envelope) |
+| 404    | POOL_NOT_FOUND.                                                    | [`ApiError`](#standard-error-envelope) |
+| 409    | CODE_TAKEN or IDEMPOTENCY_CONFLICT.                                | [`ApiError`](#standard-error-envelope) |
+| 422    | CONSTRAINT_VIOLATED (a database rule the validator did not state). | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/booking/resources/{id}` — Read one resource with its units
+
+- **operationId**: `bookingResourceGet`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.resources.read`. A soft-deleted resource is returned (with `deletedAt`) only to a holder of `booking.resources.restore`, so a screen can offer the restore; anyone else gets the neutral 404. An unknown id and another tenant's id are the same `404 RESOURCE_NOT_FOUND`.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `id`               | path   | yes      | string (uuid) |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Responses**
+
+| Status | Description                                                                     | Schema                                 |
+| ------ | ------------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | The resource and its units.                                                     | object                                 |
+| 400    | Validation error.                                                               | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                     | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                     | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND (an unknown id and another tenant's id are the same answer). | [`ApiError`](#standard-error-envelope) |
+
+### `PATCH /api/v1/booking/resources/{id}` — Edit a resource, its pool membership and its units
+
+- **operationId**: `bookingResourcePatch`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.resources.update`. `code` is fixed. Editable: `name`, `kind`, `status`, `poolId` (a pool id, or null to leave the pool: this is the pool membership), `timezone`, `bookingMode`, the stay times, `sortOrder`, `capacity` (GROW only: new units are appended and a resource-wide block covers them) and `units` (relabel, activate or deactivate by unit id). Changing `bookingMode` to `slot` clears the stay times unless sent. The database refuses a `bookingMode` change while the resource has live allocations or active blocks (`409 BOOKING_MODE_IN_USE`), a `timezone` change while it has them (`409 TIMEZONE_IN_USE`) or an active schedule in the current zone (`409 SCHEDULE_TIMEZONE_MISMATCH`). Capacity never shrinks (`409 CAPACITY_REDUCTION_NOT_ALLOWED`: deactivate a unit instead). A refusal writes nothing. Requires an Idempotency-Key. Audited at info severity (`booking.resource.updated`).
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`BookingResourcePatch`](#schema-bookingresourcepatch)
+
+**Responses**
+
+| Status | Description                                                                                                                                                | Schema                                 |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | The resource with its units.                                                                                                                               | object                                 |
+| 400    | VALIDATION_ERROR, TIMEZONE_INVALID or IDEMPOTENCY_REQUIRED.                                                                                                | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                                                                                                | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                                                                                                | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND, POOL_NOT_FOUND or UNIT_NOT_FOUND.                                                                                                      | [`ApiError`](#standard-error-envelope) |
+| 409    | BOOKING_MODE_IN_USE, TIMEZONE_IN_USE, SCHEDULE_TIMEZONE_MISMATCH, CAPACITY_REDUCTION_NOT_ALLOWED, RESOURCE_DELETED, GUARD_REFUSED or IDEMPOTENCY_CONFLICT. | [`ApiError`](#standard-error-envelope) |
+| 422    | CONSTRAINT_VIOLATED.                                                                                                                                       | [`ApiError`](#standard-error-envelope) |
+
+### `DELETE /api/v1/booking/resources/{id}` — Soft-delete a resource
+
+- **operationId**: `bookingResourceDelete`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.resources.delete`. SOFT delete: reservations keep referencing the resource and nothing is removed. Refused with `409 RESOURCE_IN_USE` while a held, confirmed or checked-in reservation or an active block needs it (set `status` to `inactive` to stop selling instead). Deleting a deleted resource returns it with `replayed: true` and writes nothing. Requires an Idempotency-Key. Audited at warning severity (`booking.resource.deleted`).
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Responses**
+
+| Status | Description                              | Schema                                 |
+| ------ | ---------------------------------------- | -------------------------------------- |
+| 200    | The deleted resource.                    | object                                 |
+| 400    | Validation error.                        | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.              | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.              | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.                      | [`ApiError`](#standard-error-envelope) |
+| 409    | RESOURCE_IN_USE or IDEMPOTENCY_CONFLICT. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/booking/resources/{id}/restore` — Restore a soft-deleted resource
+
+- **operationId**: `bookingResourceRestore`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.resources.restore`. Restoring a live resource returns it with `replayed: true` and writes nothing. The body is empty. Requires an Idempotency-Key. Audited at info severity (`booking.resource.restored`).
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Request body** (optional): object
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The restored resource.      | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.         | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT.       | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/booking/schedule-exceptions` — List schedule exceptions
+
+- **operationId**: `bookingScheduleExceptionsList`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.schedules.read`. Closures and override hours, newest first, keyset paginated (`cursor`). `scheduleId` and `resourceId` narrow the list. Tenant-scoped (withTenant + RLS FORCE).
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `scheduleId`       | query  | no       | string (uuid) |             |
+| `resourceId`       | query  | no       | string (uuid) |             |
+| `cursor`           | query  | no       | string        |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | A page of exceptions.       | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/booking/schedule-exceptions` — Create a schedule exception
+
+- **operationId**: `bookingScheduleExceptionCreate`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.schedules.create`. A `closed` day range or replacement `override_hours` over a half-open range of LOCAL dates in the schedule's zone (at most 366 days), owned by exactly one of a schedule or a resource. The reason is a short code, never free text. A closure beats an override on the same date; an override only modifies a date a schedule covers. For a stay resource only `closed` applies, as a SOFT closure. Changes FUTURE availability only and never touches an existing reservation. An identical exception is `409 EXCEPTION_DUPLICATE`. Audited.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description |
+| ------------------ | ------ | -------- | ------ | ----------- |
+| `X-Correlation-ID` | header | no       | string |             |
+
+**Request body** (required): [`BookingScheduleExceptionInput`](#schema-bookingscheduleexceptioninput)
+
+**Responses**
+
+| Status | Description                                                                            | Schema                                 |
+| ------ | -------------------------------------------------------------------------------------- | -------------------------------------- |
+| 201    | The exception.                                                                         | object                                 |
+| 400    | Validation error.                                                                      | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                            | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                            | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND (the schedule or the resource).                                     | [`ApiError`](#standard-error-envelope) |
+| 409    | EXCEPTION_DUPLICATE (an identical exception of the same owner, kind and range exists). | [`ApiError`](#standard-error-envelope) |
+
+### `DELETE /api/v1/booking/schedule-exceptions/{id}` — Delete a schedule exception
+
+- **operationId**: `bookingScheduleExceptionDelete`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.schedules.delete`. Deletes one exception (configuration with no history value). Audited.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description |
+| ------------------ | ------ | -------- | ------ | ----------- |
+| `X-Correlation-ID` | header | no       | string |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | Deleted.                    | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.         | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/booking/schedules` — List schedules
+
+- **operationId**: `bookingSchedulesList`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.schedules.read`. Newest first, keyset paginated (`cursor`). `resourceId` narrows to one resource's schedules; `activeOnly=true` hides deactivated windows. Tenant-scoped (withTenant + RLS FORCE).
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `resourceId`       | query  | no       | string (uuid) |             |
+| `activeOnly`       | query  | no       | boolean       |             |
+| `cursor`           | query  | no       | string        |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | A page of schedules.        | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/booking/schedules` — Create a schedule window
+
+- **operationId**: `bookingScheduleCreate`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.schedules.create`. Weekly LOCAL windows in an IANA zone (an offset or an abbreviation is a 400). A new window SUPERSEDES rather than edits: it is `409 SCHEDULE_OVERLAP` against an active window of the same scope (one resource, or the tenant default) that overlaps its half-open `[effectiveFrom, effectiveTo)`. A schedule bound to a resource is written in that resource's zone (`409 SCHEDULE_TIMEZONE_MISMATCH`); a tenant-default schedule applies only to resources in its own zone. Changes FUTURE availability only; no reservation is touched. Audited.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description |
+| ------------------ | ------ | -------- | ------ | ----------- |
+| `X-Correlation-ID` | header | no       | string |             |
+
+**Request body** (required): [`BookingScheduleInput`](#schema-bookingscheduleinput)
+
+**Responses**
+
+| Status | Description                                     | Schema                                 |
+| ------ | ----------------------------------------------- | -------------------------------------- |
+| 201    | The schedule.                                   | object                                 |
+| 400    | Validation error.                               | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                     | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                     | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.                             | [`ApiError`](#standard-error-envelope) |
+| 409    | SCHEDULE_OVERLAP or SCHEDULE_TIMEZONE_MISMATCH. | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/booking/schedules/{id}` — Read a schedule
+
+- **operationId**: `bookingScheduleGet`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.schedules.read`. Tenant-scoped (withTenant + RLS FORCE).
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description |
+| ------------------ | ------ | -------- | ------ | ----------- |
+| `X-Correlation-ID` | header | no       | string |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The schedule.               | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.         | [`ApiError`](#standard-error-envelope) |
+
+### `PATCH /api/v1/booking/schedules/{id}` — Shorten a schedule window
+
+- **operationId**: `bookingSchedulePatch`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.schedules.update`. A window is superseded, not edited: the only change is a SHORTER `effectiveTo` (it can never be lengthened or reopened; create a new window instead) and `status: inactive`. `409 SCHEDULE_NOT_EDITABLE` otherwise. The database trigger holds the same rule for every writer. Audited.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description |
+| ------------------ | ------ | -------- | ------ | ----------- |
+| `X-Correlation-ID` | header | no       | string |             |
+
+**Request body** (required): [`BookingSchedulePatch`](#schema-bookingschedulepatch)
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The schedule.               | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.         | [`ApiError`](#standard-error-envelope) |
+| 409    | SCHEDULE_NOT_EDITABLE.      | [`ApiError`](#standard-error-envelope) |
+
+### `DELETE /api/v1/booking/schedules/{id}` — Deactivate a schedule
+
+- **operationId**: `bookingScheduleDeactivate`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `booking.schedules.delete`. DEACTIVATES the window (it is never removed; a confirmed reservation does not depend on it). `409 SCHEDULE_NOT_EDITABLE` when it is already inactive. Audited.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description |
+| ------------------ | ------ | -------- | ------ | ----------- |
+| `X-Correlation-ID` | header | no       | string |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The deactivated schedule.   | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.         | [`ApiError`](#standard-error-envelope) |
+| 409    | SCHEDULE_NOT_EDITABLE.      | [`ApiError`](#standard-error-envelope) |
+
+## WhatsApp Delivery
+
+Operator surface of the generic WhatsApp delivery capability (whatsapp_delivery module, ADR-0133, Issue #963): the tenant's queue diagnostics, cancelling a waiting message, the registered templates, the suppression list and the per-recipient marketing consent store. There is NO enqueue or send endpoint: queueing is a capability-port call (WhatsappDeliveryPort) made in the consuming module's own transaction, and the provider is called only by the dispatcher job, outside any transaction (ADR-0006). A channel queue table, the repo's third after email and push — what ADR-0133 refuses is a second WhatsApp queue, one per consuming domain. Recipients are masked in every response and message bodies and variables are never returned. Consent is independent of segment membership: a marketing message needs an explicit recorded opt-in, checked at enqueue and again at dispatch. Credentials are per deployment from the environment, never per tenant. Ships inert behind WHATSAPP_ENABLED.
+
+### `GET /api/v1/whatsapp/consents` — List recorded marketing consents.
+
+- **operationId**: `listWhatsappConsents`
+- **Security**: bearerAuth + tenantHeader
+
+Per-recipient consent records (masked). Consent is never inferred from segment, list or campaign-audience membership; only this record decides who may receive a marketing message. Bounded: `hasMore` says whether the list was cut. Requires `whatsapp_delivery.consents.read`.
+
+**Parameters**
+
+| Name     | In    | Required | Type                                                     | Description                                                              |
+| -------- | ----- | -------- | -------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `status` | query | no       | [`WhatsappConsentStatus`](#schema-whatsappconsentstatus) | Narrow to granted or withdrawn consents.                                 |
+| `limit`  | query | no       | integer                                                  | 1-200, default 50. Out-of-range values are REJECTED rather than clamped. |
+
+**Responses**
+
+| Status | Description                     | Schema                                 |
+| ------ | ------------------------------- | -------------------------------------- |
+| 200    | Consent entries.                | object                                 |
+| 400    | Validation error.               | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.     | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.     | [`ApiError`](#standard-error-envelope) |
+| 422    | `status` or `limit` is invalid. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/whatsapp/consents` — Record an explicit marketing opt-in.
+
+- **operationId**: `grantWhatsappConsent`
+- **Security**: bearerAuth + tenantHeader
+
+Explicit, per recipient, per channel, recorded with its source and time (ADR-0133 section 4). Naturally idempotent: the unique key is (tenant, recipient, purpose), so a retry re-stamps the same row instead of adding one, which is why no Idempotency-Key is taken. A re-grant after a withdrawal is a new, deliberate act; history lives in the audit log and the `whatsapp.consent.*` events. The body is validated after authorization. Re-granting over a WITHDRAWN consent reverses an opt-out, so it is never implicit: it is refused with 409 unless the body sets `reinstateWithdrawn` with an `evidenceRef`, it is refused for `source` `import` (422), it needs `whatsapp_delivery.consents.restore` (high-risk) instead, and the withdrawal is kept in the row's history. Requires `whatsapp_delivery.consents.create` (or `consents.restore` when reinstating). 503 when the deployment has no recipient-hash key ring.
+
+**Request body** (required): [`WhatsappConsentGrantRequest`](#schema-whatsappconsentgrantrequest)
+
+**Responses**
+
+| Status | Description                                                                                                      | Schema                                 |
+| ------ | ---------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | The consent was recorded.                                                                                        | object                                 |
+| 400    | Validation error.                                                                                                | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                                                      | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                                                      | [`ApiError`](#standard-error-envelope) |
+| 409    | The recipient opted out and the request did not ask to reinstate (`CONSENT_WITHDRAWN`).                          | [`ApiError`](#standard-error-envelope) |
+| 413    | Request body too large.                                                                                          | [`ApiError`](#standard-error-envelope) |
+| 422    | Reinstatement refused (`REINSTATEMENT_REFUSED`) - an import cannot reverse an opt-out, and evidence is required. | [`ApiError`](#standard-error-envelope) |
+| 503    | The deployment has no usable recipient-hash key ring (`WHATSAPP_HASH_KEYS_UNAVAILABLE`).                         | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/whatsapp/consents/{id}/withdraw` — Record a marketing opt-out.
+
+- **operationId**: `withdrawWhatsappConsent`
+- **Security**: bearerAuth + tenantHeader
+
+Immediate, and wins over everything queued: the recipient's waiting marketing messages are cancelled in the same transaction, and the dispatcher re-checks consent again right before every send. Naturally idempotent (withdrawing a withdrawn consent keeps the original stamp). Withdrawing is protective, so it is a separate, lower-friction permission than granting. Requires `whatsapp_delivery.consents.withdraw`.
+
+**Parameters**
+
+| Name | In   | Required | Type          | Description     |
+| ---- | ---- | -------- | ------------- | --------------- |
+| `id` | path | yes      | string (uuid) | The consent id. |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The consent was withdrawn.  | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+| 404    | Resource not found.         | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/whatsapp/diagnostics` — The tenant's WhatsApp queue - counts, recent messages, attempts.
+
+- **operationId**: `getWhatsappDiagnostics`
+- **Security**: bearerAuth + tenantHeader
+
+One endpoint rather than three because the parts are only readable together: they come from ONE transaction, so a queue count and a message list can never describe two different instants. Bounded rather than paginated; the historical tail is removed by retention (`bun run whatsapp:queue:purge`), not browsed, and `hasMoreMessages` says when the list was cut. Recipients are MASKED and message bodies and variables are never projected (a security- class body can hold an OTP until it is terminal). `configured` reports the DEPLOYMENT's flag and adapter name, which is what distinguishes a stuck queue from a deployment where WhatsApp is simply off. Requires `whatsapp_delivery.messages.read`.
+
+**Parameters**
+
+| Name     | In    | Required | Type                                                     | Description                                                              |
+| -------- | ----- | -------- | -------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `status` | query | no       | [`WhatsappMessageStatus`](#schema-whatsappmessagestatus) | Narrow the message list to one queue status.                             |
+| `limit`  | query | no       | integer                                                  | 1-200, default 50. Out-of-range values are REJECTED rather than clamped. |
+
+**Responses**
+
+| Status | Description                     | Schema                                 |
+| ------ | ------------------------------- | -------------------------------------- |
+| 200    | WhatsApp queue diagnostics.     | object                                 |
+| 400    | Validation error.               | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.     | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.     | [`ApiError`](#standard-error-envelope) |
+| 422    | `status` or `limit` is invalid. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/whatsapp/messages/{id}/cancel` — Cancel a WhatsApp message that has not been sent yet.
+
+- **operationId**: `cancelWhatsappMessage`
+- **Security**: bearerAuth + tenantHeader
+
+Only `queued` and `retry_wait` are cancellable. A row in `sending` has been claimed by a dispatcher pass that may already be inside the HTTP call, so recording it as cancelled would be a claim this system cannot substantiate. A secret-bearing body is cleared with the cancel. Deliberately NOT idempotency-keyed: a second call performs no new work. Requires `whatsapp_delivery.messages.cancel`.
+
+**Parameters**
+
+| Name | In   | Required | Type          | Description     |
+| ---- | ---- | -------- | ------------- | --------------- |
+| `id` | path | yes      | string (uuid) | The message id. |
+
+**Responses**
+
+| Status | Description                                                                                                                                                                                                             | Schema                                 |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | The message was cancelled before delivery.                                                                                                                                                                              | object                                 |
+| 400    | Validation error.                                                                                                                                                                                                       | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                                                                                                                                                             | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                                                                                                                                                             | [`ApiError`](#standard-error-envelope) |
+| 409    | Not cancellable. One answer for "no such message", "already sent", "already failed", "already cancelled" and "being sent right now" - distinguishing them would hand a narrow grant an existence oracle over the queue. | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/whatsapp/suppressions` — List the suppression list.
+
+- **operationId**: `listWhatsappSuppressions`
+- **Security**: bearerAuth + tenantHeader
+
+Numbers that no WhatsApp message is sent to, with the reason; recipients masked. Bounded: `hasMore` says whether the list was cut. Requires `whatsapp_delivery.suppressions.read`.
+
+**Parameters**
+
+| Name    | In    | Required | Type    | Description                                                              |
+| ------- | ----- | -------- | ------- | ------------------------------------------------------------------------ |
+| `limit` | query | no       | integer | 1-200, default 50. Out-of-range values are REJECTED rather than clamped. |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | Suppression entries.        | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+| 422    | `limit` is invalid.         | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/whatsapp/suppressions` — Suppress a number.
+
+- **operationId**: `createWhatsappSuppression`
+- **Security**: bearerAuth + tenantHeader
+
+Records a `manual` or `stop_reply` suppression; waiting transactional and marketing messages to the number are cancelled in the same transaction (a security-class message honours hard failures only). `hard_failure` is written only by the dispatcher on a provider verdict, so an operator cannot forge one. Naturally idempotent: suppressing an already suppressed number answers 200 with `alreadySuppressed`, which is why no Idempotency-Key is taken. The body is validated after authorization. Requires `whatsapp_delivery.suppressions.create`.
+
+**Request body** (required): [`WhatsappSuppressionCreateRequest`](#schema-whatsappsuppressioncreaterequest)
+
+**Responses**
+
+| Status | Description                                                                              | Schema                                 |
+| ------ | ---------------------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | The number was already suppressed.                                                       | object                                 |
+| 201    | The number was suppressed.                                                               | object                                 |
+| 400    | Validation error.                                                                        | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                              | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                              | [`ApiError`](#standard-error-envelope) |
+| 413    | Request body too large.                                                                  | [`ApiError`](#standard-error-envelope) |
+| 503    | The deployment has no usable recipient-hash key ring (`WHATSAPP_HASH_KEYS_UNAVAILABLE`). | [`ApiError`](#standard-error-envelope) |
+
+### `DELETE /api/v1/whatsapp/suppressions/{id}` — Remove a suppression entry.
+
+- **operationId**: `deleteWhatsappSuppression`
+- **Security**: bearerAuth + tenantHeader
+
+A hard delete: a suppression is a live operational flag, not master data with a restore workflow. High-risk because it RESUMES sending to a number that was stopped, so it is audited at warning severity with the original reason. Not idempotency-keyed: a second call finds nothing and answers 404. Requires `whatsapp_delivery.suppressions.delete`.
+
+**Parameters**
+
+| Name | In   | Required | Type          | Description         |
+| ---- | ---- | -------- | ------------- | ------------------- |
+| `id` | path | yes      | string (uuid) | The suppression id. |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The entry was removed.      | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+| 404    | Resource not found.         | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/whatsapp/templates` — The registered WhatsApp templates.
+
+- **operationId**: `listWhatsappTemplates`
+- **Security**: bearerAuth + tenantHeader
+
+Key, version, the ONE purpose each template is registered with, its variable allow-list and which variables are secret. The wording is not returned: it is the owning module's copy. Requires `whatsapp_delivery.templates.read`.
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | Registered templates.       | object                                 |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+## HR Commission
+
+Versioned commission rules (hr_commission module, Issue #950, ADR-0132, phase 2 of the hr_* family). A rule is jurisdiction-neutral, tenant-authored configuration: a percent of a base amount or a fixed amount per unit, in one currency, rounded under one explicit mode and scale, with an optional floor and ceiling; it references no person or employment. A rule changes only by a new version; a draft is editable, a published version is immutable (also by database trigger) and may only become retired, and no two published windows of one rule overlap. Rates and amounts are decimal strings. publish and retire are high-risk, separately grantable, idempotency-keyed and audited; a back-dated publish needs a reason. Issue #951 adds the accrual LEDGER: one commission per (source, employment), exactly once (a redelivery returns the original), its amount computed from the published rule in force on the event's own date and never asserted by a client, an advancing status (pending, approved, payable, paid, or voided) with an append-only transition log, a beneficiary who cannot approve their own accrual, and high-risk idempotency-keyed approve, release, void and pay audited without any amount. Employee commission only. Reversal and payroll are later phases.
+
+### `GET /api/v1/hr-commission/accruals` — List commission accruals
+
+- **operationId**: `hrCommissionAccrualsList`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_commission.accruals.read`. Newest first, keyset paginated (`cursor`), optionally filtered by `employmentId`, `status` and `sourceType`. Amounts are decimal strings and a person's earnings, which is why the permission is its own. Tenant-scoped (withTenant + RLS FORCE).
+
+**Parameters**
+
+| Name               | In     | Required | Type                                                             | Description |
+| ------------------ | ------ | -------- | ---------------------------------------------------------------- | ----------- |
+| `employmentId`     | query  | no       | string (uuid)                                                    |             |
+| `status`           | query  | no       | [`HrCommissionAccrualStatus`](#schema-hrcommissionaccrualstatus) |             |
+| `sourceType`       | query  | no       | string                                                           |             |
+| `cursor`           | query  | no       | string                                                           |             |
+| `X-Correlation-ID` | header | no       | string                                                           |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | A page of accruals.         | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/hr-commission/accruals` — Report a sale fact and accrue its commission
+
+- **operationId**: `hrCommissionAccrualCreate`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_commission.accruals.accrue` (high-risk, its own action so the action-time SoD check can be authored over who may post). Accrues the commission a source event earns an EMPLOYMENT, exactly once per `(source type, source ref, source line, employment)` (a database unique key, race-safe). The AMOUNT is computed from the PUBLISHED version of `ruleKey` whose window contains `occurredOn` (never now()), by exact decimal arithmetic; the body can never assert an amount, a rule version, a status or a stamp, and money is a decimal string (a JSON number is 400). `source.type` must equal the rule's source type and `currencyCode` its currency. A redelivery of the same canonical request returns the ORIGINAL with `replayed: true` (200) whatever Idempotency-Key it arrives under, also after the accrual was voided; the same source with a different amount, date, rule or currency is 409 `SOURCE_CONFLICT`. The employment must be live and employed on `occurredOn`, and the event at most 730 days old; the database recomputes the stored amount from the rule version and refuses a mismatch. Requires an Idempotency-Key. A NEW accrual is audited at info severity (employment, rule key and version, source type; never an amount, a base, a rate or a source reference); a replay audits nothing. The in-process adapter contract is `_shared/ports/commission-accrual-port.ts`. Employee commission only: affiliate and referral commission is not here.
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`HrCommissionAccrualCreateInput`](#schema-hrcommissionaccrualcreateinput)
+
+**Responses**
+
+| Status | Description                                                                                                                                   | Schema                                                             |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| 200    | The same source was already accrued for this employment with the same request; the original is returned (`replayed: true`).                   | [`HrCommissionAccrualCreated`](#schema-hrcommissionaccrualcreated) |
+| 201    | A new accrual, status `pending`.                                                                                                              | [`HrCommissionAccrualCreated`](#schema-hrcommissionaccrualcreated) |
+| 400    | Validation error.                                                                                                                             | [`ApiError`](#standard-error-envelope)                             |
+| 401    | Missing or invalid session.                                                                                                                   | [`ApiError`](#standard-error-envelope)                             |
+| 403    | Access denied by RBAC/ABAC.                                                                                                                   | [`ApiError`](#standard-error-envelope)                             |
+| 404    | EMPLOYMENT_NOT_FOUND.                                                                                                                         | [`ApiError`](#standard-error-envelope)                             |
+| 409    | IDEMPOTENCY_CONFLICT, SOURCE_CONFLICT, NO_EFFECTIVE_RULE, RULE_AMBIGUOUS, SOURCE_TYPE_MISMATCH, CURRENCY_MISMATCH or EMPLOYMENT_NOT_ELIGIBLE. | [`ApiError`](#standard-error-envelope)                             |
+
+### `GET /api/v1/hr-commission/accruals/{id}` — Get a commission accrual with its transition history
+
+- **operationId**: `hrCommissionAccrualGet`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_commission.accruals.read`.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `id`               | path   | yes      | string (uuid) |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Responses**
+
+| Status | Description                                     | Schema                                 |
+| ------ | ----------------------------------------------- | -------------------------------------- |
+| 200    | The accrual and its append-only transition log. | object                                 |
+| 400    | Validation error.                               | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                     | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                     | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.                             | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/hr-commission/accruals/{id}/approve` — Approve a pending commission accrual
+
+- **operationId**: `hrCommissionAccrualApprove`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_commission.accruals.approve` (high-risk). `pending` -> `approved`. Segregation of duties, also enforced by a database trigger: the beneficiary (the employment's own login) cannot approve their own accrual (`403 APPROVE_OWN_ACCRUAL_FORBIDDEN`) and whoever created the accrual cannot approve it (`403 SEGREGATION_OF_DUTIES`). Body: none. Requires an Idempotency-Key; replaying it returns the stored response. A transition the status does not allow is 409 `ACCRUAL_INVALID_STATE`. Audited at warning severity (employment, rule key and version, from and to status; never an amount). The beneficiary is identified by the employment's login now AND the login snapshotted when the accrual was created, so unlinking the login changes nothing; when the employment has neither, the transition is refused as 409 `BENEFICIARY_LOGIN_UNRESOLVED` until a login is linked (fail closed).
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Request body** (optional): object
+
+**Responses**
+
+| Status | Description                                                                  | Schema                                 |
+| ------ | ---------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | The accrual after the transition.                                            | object                                 |
+| 400    | Validation error.                                                            | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                  | [`ApiError`](#standard-error-envelope) |
+| 403    | Forbidden, APPROVE_OWN_ACCRUAL_FORBIDDEN or SEGREGATION_OF_DUTIES.           | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.                                                          | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT, ACCRUAL_INVALID_STATE or BENEFICIARY_LOGIN_UNRESOLVED. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/hr-commission/accruals/{id}/pay` — Record that a payable accrual has been paid
+
+- **operationId**: `hrCommissionAccrualPay`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_commission.accruals.pay` (high-risk). `payable` -> `paid`, terminal: an accrual is paid once. Whoever approved the accrual, and the beneficiary, cannot pay it (`403 SEGREGATION_OF_DUTIES`). Optional `paymentReference` is an opaque reference (a payout batch), never an account number. Requires an Idempotency-Key; replaying it returns the stored response. A transition the status does not allow is 409 `ACCRUAL_INVALID_STATE`. Audited at warning severity (employment, rule key and version, from and to status; never an amount). The beneficiary is identified by the employment's login now AND the login snapshotted when the accrual was created, so unlinking the login changes nothing; when the employment has neither, the transition is refused as 409 `BENEFICIARY_LOGIN_UNRESOLVED` until a login is linked (fail closed).
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Request body** (optional): [`HrCommissionAccrualPayInput`](#schema-hrcommissionaccrualpayinput)
+
+**Responses**
+
+| Status | Description                                                                  | Schema                                 |
+| ------ | ---------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | The accrual after the transition.                                            | object                                 |
+| 400    | Validation error.                                                            | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                  | [`ApiError`](#standard-error-envelope) |
+| 403    | Forbidden, or SEGREGATION_OF_DUTIES.                                         | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.                                                          | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT, ACCRUAL_INVALID_STATE or BENEFICIARY_LOGIN_UNRESOLVED. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/hr-commission/accruals/{id}/release` — Release an approved accrual as payable
+
+- **operationId**: `hrCommissionAccrualRelease`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_commission.accruals.release` (high-risk). `approved` -> `payable`: from here payroll may pay it. The beneficiary cannot release their own accrual (`403 SEGREGATION_OF_DUTIES`). Body: none. Requires an Idempotency-Key; replaying it returns the stored response. A transition the status does not allow is 409 `ACCRUAL_INVALID_STATE`. Audited at warning severity (employment, rule key and version, from and to status; never an amount). The beneficiary is identified by the employment's login now AND the login snapshotted when the accrual was created, so unlinking the login changes nothing; when the employment has neither, the transition is refused as 409 `BENEFICIARY_LOGIN_UNRESOLVED` until a login is linked (fail closed).
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Request body** (optional): object
+
+**Responses**
+
+| Status | Description                                                                  | Schema                                 |
+| ------ | ---------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | The accrual after the transition.                                            | object                                 |
+| 400    | Validation error.                                                            | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                  | [`ApiError`](#standard-error-envelope) |
+| 403    | Forbidden, or SEGREGATION_OF_DUTIES.                                         | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.                                                          | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT, ACCRUAL_INVALID_STATE or BENEFICIARY_LOGIN_UNRESOLVED. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/hr-commission/accruals/{id}/void` — Void a pending or approved accrual
+
+- **operationId**: `hrCommissionAccrualVoid`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_commission.accruals.cancel` (high-risk). `pending` or `approved` -> `voided`. No money has moved, so no compensating row exists. A voided accrual can never be approved, released or paid, and its source identity stays taken PERMANENTLY: a redelivery returns the voided original and the commission cannot be re-earned for that source until reversal and a re-accrual path exist (a known gap, #962 and the reversal phase). Optional `reasonCode` is a short code, never free text. Requires an Idempotency-Key; replaying it returns the stored response. A transition the status does not allow is 409 `ACCRUAL_INVALID_STATE`. Audited at warning severity (employment, rule key and version, from and to status; never an amount).
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Request body** (optional): [`HrCommissionAccrualVoidInput`](#schema-hrcommissionaccrualvoidinput)
+
+**Responses**
+
+| Status | Description                                    | Schema                                 |
+| ------ | ---------------------------------------------- | -------------------------------------- |
+| 200    | The accrual after the transition.              | object                                 |
+| 400    | Validation error.                              | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                    | [`ApiError`](#standard-error-envelope) |
+| 403    | Forbidden, or SEGREGATION_OF_DUTIES.           | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.                            | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT or ACCRUAL_INVALID_STATE. | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/hr-commission/my-accruals` — List your own commission accruals
+
+- **operationId**: `hrCommissionMyAccrualsList`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_commission.my_accruals.read` (default-deny; separate from `accruals.read`). The caller's OWN accruals only, newest first, keyset paginated (`cursor`), optionally filtered by `status`. There is no `employmentId` or person parameter: the query joins the live employment linked to the caller's login, so another person's rows cannot be requested. Read-only. The view omits the approver, the payer, the payment reference, the rule row id and the employment id. Amounts are decimal strings. An employee reading their own earnings is not an audited sensitive read; anyone else's go through `GET /accruals`, which is. Never cached. Tenant-scoped (withTenant + RLS FORCE).
+
+**Parameters**
+
+| Name               | In     | Required | Type                                                             | Description |
+| ------------------ | ------ | -------- | ---------------------------------------------------------------- | ----------- |
+| `status`           | query  | no       | [`HrCommissionAccrualStatus`](#schema-hrcommissionaccrualstatus) |             |
+| `cursor`           | query  | no       | string                                                           |             |
+| `X-Correlation-ID` | header | no       | string                                                           |             |
+
+**Responses**
+
+| Status | Description                          | Schema                                 |
+| ------ | ------------------------------------ | -------------------------------------- |
+| 200    | A page of the caller's own accruals. | object                                 |
+| 400    | Validation error.                    | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.          | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.          | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/hr-commission/my-accruals/{id}` — Get one of your own commission accruals with its history
+
+- **operationId**: `hrCommissionMyAccrualGet`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_commission.my_accruals.read`. An id that does not exist and an id that belongs to somebody else are the SAME 404 (`RESOURCE_NOT_FOUND`), so the route is not an existence oracle for another person's earnings. The transition history omits who moved the accrual. Never cached.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `id`               | path   | yes      | string (uuid) |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Responses**
+
+| Status | Description                                      | Schema                                 |
+| ------ | ------------------------------------------------ | -------------------------------------- |
+| 200    | The caller's own accrual and its transition log. | object                                 |
+| 400    | Validation error.                                | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                      | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                      | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND (missing, or not yours).      | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/hr-commission/rules` — List commission rule versions
+
+- **operationId**: `hrCommissionRulesList`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_commission.rules.read`. Newest first, keyset paginated (`cursor`), optionally filtered by `ruleKey` and `status`. Tenant-scoped (withTenant + RLS FORCE).
+
+**Parameters**
+
+| Name               | In     | Required | Type                                  | Description |
+| ------------------ | ------ | -------- | ------------------------------------- | ----------- |
+| `ruleKey`          | query  | no       | string                                |             |
+| `status`           | query  | no       | enum(`draft`, `published`, `retired`) |             |
+| `cursor`           | query  | no       | string                                |             |
+| `X-Correlation-ID` | header | no       | string                                |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | A page of rule versions.    | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/hr-commission/rules` — Create a draft commission rule version
+
+- **operationId**: `hrCommissionRuleCreate`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_commission.rules.create`. Creates a DRAFT; the version number is assigned (the next one for `ruleKey`, or 1) and the status is always `draft`. A draft never applies to anything. A body naming `status`, `versionNo`, a stamp, an employment or a JSON-number amount is a 400. Requires an Idempotency-Key. Audited (rule key and version only).
+
+**Parameters**
+
+| Name               | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key`  | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`HrCommissionRuleCreateInput`](#schema-hrcommissionrulecreateinput)
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 201    | The draft rule version.     | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT.       | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/hr-commission/rules/{id}` — Get a commission rule version
+
+- **operationId**: `hrCommissionRuleGet`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_commission.rules.read`.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `id`               | path   | yes      | string (uuid) |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The rule version.           | object                                 |
+| 400    | Validation error.           | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.         | [`ApiError`](#standard-error-envelope) |
+
+### `PUT /api/v1/hr-commission/rules/{id}` — Replace a draft commission rule version
+
+- **operationId**: `hrCommissionRuleUpdate`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_commission.rules.update`. Replaces every editable field of a DRAFT; `ruleKey` and the version never change. The body names the `expectedContentDigest` of the version you were shown; if the terms changed since (another editor) it is `409 RULE_CHANGED` and nothing is written. A published or retired version is immutable (`409 RULE_NOT_DRAFT`, also enforced by a database trigger): create a new version instead. Replacing a draft with the same body is a no-op, so no Idempotency-Key is required. Audited (rule key and version only).
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description |
+| ------------------ | ------ | -------- | ------------- | ----------- |
+| `id`               | path   | yes      | string (uuid) |             |
+| `X-Correlation-ID` | header | no       | string        |             |
+
+**Request body** (required): [`HrCommissionRuleInput`](#schema-hrcommissionruleinput)
+
+**Responses**
+
+| Status | Description                     | Schema                                 |
+| ------ | ------------------------------- | -------------------------------------- |
+| 200    | The updated draft.              | object                                 |
+| 400    | Validation error.               | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.     | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.     | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.             | [`ApiError`](#standard-error-envelope) |
+| 409    | RULE_NOT_DRAFT or RULE_CHANGED. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/hr-commission/rules/{id}/publish` — Publish a commission rule version
+
+- **operationId**: `hrCommissionRulePublish`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_commission.rules.publish` (high-risk). Makes a draft IMMUTABLE and eligible to apply. The body names the `expectedContentDigest` of the terms the publisher reviewed: if they changed since it is `409 RULE_CHANGED`. Maker / checker: whoever created or last edited the draft cannot publish it (`403 PUBLISH_BY_AUTHOR_FORBIDDEN`). Refused with 409 `RULE_WINDOW_OVERLAP`, naming the conflicting version, when its window overlaps another published version of the same rule (race-safe: concurrent publishes serialise). Requires an Idempotency-Key; replaying it returns the stored response. Audited at warning severity (rule key, version, window and the content digest of what was published — never a rate or an amount). A window that starts BEFORE TODAY (the UTC date of the publishing transaction) is back-dated: it changes which rule applies to events that already happened but are not accrued yet, so it needs a `backdatedReason` (409 `RULE_BACKDATED_REASON_REQUIRED` without one). The database stamps `publishBackdated` and keeps the reason on the rule; the audit row carries `backdated: true` and never the reason. Accruals that already exist are untouched. A reason sent for a window starting today or later is dropped.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Request body** (required): [`HrCommissionPublishInput`](#schema-hrcommissionpublishinput)
+
+**Responses**
+
+| Status | Description                                                                                                | Schema                                 |
+| ------ | ---------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | The published rule version.                                                                                | object                                 |
+| 400    | Validation error.                                                                                          | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                                                                | [`ApiError`](#standard-error-envelope) |
+| 403    | Forbidden, or PUBLISH_BY_AUTHOR_FORBIDDEN (the creator or last editor of the draft may not publish it).    | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.                                                                                        | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT, RULE_NOT_DRAFT, RULE_CHANGED, RULE_BACKDATED_REASON_REQUIRED or RULE_WINDOW_OVERLAP. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/hr-commission/rules/{id}/retire` — Retire a commission rule version
+
+- **operationId**: `hrCommissionRuleRetire`
+- **Security**: bearerAuth + tenantHeader
+
+Gated by `hr_commission.rules.retire` (high-risk). Withdraws a draft (abandoning it) or a published version (it no longer applies to new events). Terminal: a retired version never changes again. Requires an Idempotency-Key. Audited at warning severity.
+
+**Parameters**
+
+| Name               | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ------------------ | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | path   | yes      | string (uuid) |                                                                                                                                                                                                                 |
+| `Idempotency-Key`  | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `X-Correlation-ID` | header | no       | string        |                                                                                                                                                                                                                 |
+
+**Responses**
+
+| Status | Description                                   | Schema                                 |
+| ------ | --------------------------------------------- | -------------------------------------- |
+| 200    | The retired rule version.                     | object                                 |
+| 400    | Validation error.                             | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                   | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                   | [`ApiError`](#standard-error-envelope) |
+| 404    | RESOURCE_NOT_FOUND.                           | [`ApiError`](#standard-error-envelope) |
+| 409    | IDEMPOTENCY_CONFLICT or RULE_ALREADY_RETIRED. | [`ApiError`](#standard-error-envelope) |
+
+## Telegram Delivery
+
+Operator and self-service surface of the optional Telegram delivery adapter (telegram_delivery module, ADR-0140, Issue #965), which carries OPERATIONAL AND STAFF ALERTS ONLY to staff who bound their own private chat. There is NO enqueue or send endpoint: queueing is a capability-port call (TelegramDeliveryPort) made in the consuming module's own transaction, and the provider is called only by the dispatcher job, outside any transaction (ADR-0006). A chat is bound by an audited, revocable handshake: a staff member requests a one-time code for themselves, opens it in a PRIVATE Telegram chat (the unauthenticated bot webhook, secret-verified before any work), and must then confirm the displayed Telegram name from their own authenticated session. The Telegram chat id is stored only as ciphertext plus a keyed hash and is never returned by any endpoint: chats are masked in every response and message bodies and variables are never returned. One queue per deployment, never a fallback for another channel (ADR-0139). Credentials are per deployment from the environment, never per tenant. Ships inert behind TELEGRAM_ENABLED and a per-tenant switch.
+
+### `GET /api/v1/telegram/bindings` — List the tenant's chat bindings.
+
+- **operationId**: `listTelegramBindings`
+- **Security**: bearerAuth + tenantHeader
+
+Newest first: the staff member (login masked), the state, when it was linked or ended and why, and a MASKED chat reference. Never a ciphertext, a hash or a full chat id. Bounded: `hasMore` says whether the list was cut. Requires `telegram_delivery.bindings.read`.
+
+**Parameters**
+
+| Name     | In    | Required | Type                                                     | Description                                                              |
+| -------- | ----- | -------- | -------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `status` | query | no       | [`TelegramBindingStatus`](#schema-telegrambindingstatus) |                                                                          |
+| `limit`  | query | no       | integer                                                  | 1-200, default 50. Out-of-range values are REJECTED rather than clamped. |
+
+**Responses**
+
+| Status | Description                     | Schema                                 |
+| ------ | ------------------------------- | -------------------------------------- |
+| 200    | Bindings.                       | object                                 |
+| 401    | Missing or invalid session.     | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.     | [`ApiError`](#standard-error-envelope) |
+| 422    | `status` or `limit` is invalid. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/telegram/bindings/{id}/revoke` — Revoke another staff member's Telegram binding.
+
+- **operationId**: `revokeTelegramBinding`
+- **Security**: bearerAuth + tenantHeader
+
+High-risk and audited at `warning`: it removes a person's alert channel. The stored chat id is erased and the binding's queue cancelled at once. `Idempotency-Key` required (Issue #1008): a retry with the same key replays the stored 200 instead of answering 404 for a binding the first call already ended; the same key with a different binding is a 409; a refusal is not stored. Without a key, revoking an ended binding finds nothing live and answers 404, one answer for "no such binding" and "already ended". A machine credential is refused with 403 (`INTERACTIVE_SESSION_REQUIRED`): the key is filed per acting person, and deactivating the principal ends its binding on the next sweep. Requires `telegram_delivery.bindings.revoke`.
+
+**Parameters**
+
+| Name              | In     | Required | Type          | Description                                                                                                                                                                                                     |
+| ----------------- | ------ | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key` | header | yes      | string        | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+| `id`              | path   | yes      | string (uuid) | The binding id.                                                                                                                                                                                                 |
+
+**Responses**
+
+| Status | Description                                                    | Schema                                 |
+| ------ | -------------------------------------------------------------- | -------------------------------------- |
+| 200    | The binding was revoked.                                       | object                                 |
+| 400    | Validation error.                                              | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                    | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                    | [`ApiError`](#standard-error-envelope) |
+| 404    | Resource not found.                                            | [`ApiError`](#standard-error-envelope) |
+| 409    | The Idempotency-Key was already used with a different request. | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/telegram/bindings/me` — Your own Telegram binding.
+
+- **operationId**: `getOwnTelegramBinding`
+- **Security**: bearerAuth + tenantHeader
+
+The caller's live binding or `null`. While it is `pending_confirmation` it carries the Telegram display name and masked username the handshake captured, which is what lets the staff member answer "is this you?" from their own session; both are cleared on confirm, reject and expiry. `available` says whether linking is possible right now (deployment flag and tenant gate). `Cache-Control: no-store`. Requires `telegram_delivery.links.create`.
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | The caller's binding.       | object                                 |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/telegram/bindings/me/confirm` — Confirm that the Telegram chat that used your code is yours.
+
+- **operationId**: `confirmOwnTelegramBinding`
+- **Security**: bearerAuth + tenantHeader
+
+The ONLY transition to `active`, reachable only from the staff member's own authenticated session. A link code that was forwarded, phished or shoulder-surfed binds an attacker's chat at most to `pending_confirmation`. Confirming replaces any binding the person already had (audited as a re-bind, and one notice is queued to the new chat naming the tenant). The body names the chat the person was shown and carries the 6-digit PIN the bot sent to THAT chat when it received `/start` (proof of possession: the person has to read the PIN in the chat they are binding, Issue #1008). A different pending chat is a 409 (`TELEGRAM_BINDING_MISMATCH`). A wrong PIN is a 422 (`TELEGRAM_PIN_INVALID`, `details.attemptsLeft`) and is counted in the database; the fifth wrong PIN ends the pending binding and erases its chat id (423 `TELEGRAM_PIN_LOCKED`) and the person requests a new link. A pending binding created before PINs existed has none and cannot be confirmed. With nothing pending the answer is 404, so a double click cannot confirm twice. A machine credential is refused with 403 (`INTERACTIVE_SESSION_REQUIRED`). Requires `telegram_delivery.links.create`.
+
+**Request body** (required): object
+
+**Responses**
+
+| Status | Description                                                                                                   | Schema                                 |
+| ------ | ------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | The binding is active.                                                                                        | object                                 |
+| 401    | Missing or invalid session.                                                                                   | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                                                   | [`ApiError`](#standard-error-envelope) |
+| 404    | Resource not found.                                                                                           | [`ApiError`](#standard-error-envelope) |
+| 409    | The chat waiting for confirmation is not the one named (`TELEGRAM_BINDING_MISMATCH`).                         | [`ApiError`](#standard-error-envelope) |
+| 422    | The PIN is not right (`TELEGRAM_PIN_INVALID`); `error.details.attemptsLeft` is how many wrong answers remain. | [`ApiError`](#standard-error-envelope) |
+| 423    | Too many wrong PINs: the pending binding was ended (`TELEGRAM_PIN_LOCKED`).                                   | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/telegram/bindings/me/reject` — Reject the Telegram chat that used your code ("not me").
+
+- **operationId**: `rejectOwnTelegramBinding`
+- **Security**: bearerAuth + tenantHeader
+
+Ends the pending binding at once, erases its ciphertext and the captured display name, and audits it at `warning`: it means a link code reached somebody else's chat. The body names the chat the person was shown; a different pending chat is a 409 (`TELEGRAM_BINDING_MISMATCH`). A machine credential is refused with 403 (`INTERACTIVE_SESSION_REQUIRED`). Requires `telegram_delivery.links.create`.
+
+**Request body** (required): object
+
+**Responses**
+
+| Status | Description                                                                           | Schema                                 |
+| ------ | ------------------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | The pending binding was rejected.                                                     | object                                 |
+| 401    | Missing or invalid session.                                                           | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                           | [`ApiError`](#standard-error-envelope) |
+| 404    | Resource not found.                                                                   | [`ApiError`](#standard-error-envelope) |
+| 409    | The chat waiting for confirmation is not the one named (`TELEGRAM_BINDING_MISMATCH`). | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/telegram/bindings/me/revoke` — Unlink your own Telegram chat.
+
+- **operationId**: `revokeOwnTelegramBinding`
+- **Security**: bearerAuth + tenantHeader
+
+Delivery stops at once: queued messages are cancelled and the stored chat id is erased in the same transaction. (`/stop` in the chat is the other way to leave.) No body. With nothing live the answer is 404. Requires `telegram_delivery.links.create`.
+
+**Responses**
+
+| Status | Description                         | Schema                                 |
+| ------ | ----------------------------------- | -------------------------------------- |
+| 200    | The caller's binding(s) were ended. | object                                 |
+| 401    | Missing or invalid session.         | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.         | [`ApiError`](#standard-error-envelope) |
+| 404    | Resource not found.                 | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/telegram/diagnostics` — The tenant's Telegram queue - counts, recent messages, attempts.
+
+- **operationId**: `getTelegramDiagnostics`
+- **Security**: bearerAuth + tenantHeader
+
+One endpoint rather than three because the parts are only readable together: they come from ONE transaction. Bounded rather than paginated; the historical tail is removed by retention (`bun run telegram:queue:purge`), not browsed. No chat id, ciphertext, hash, body or variable is ever selected. `configured` reports the DEPLOYMENT's settings as booleans only (present and well-formed), never a value. Requires `telegram_delivery.messages.read`.
+
+**Parameters**
+
+| Name     | In    | Required | Type                                                     | Description                                                              |
+| -------- | ----- | -------- | -------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `status` | query | no       | [`TelegramMessageStatus`](#schema-telegrammessagestatus) | Narrow the message list to one queue status.                             |
+| `limit`  | query | no       | integer                                                  | 1-200, default 50. Out-of-range values are REJECTED rather than clamped. |
+
+**Responses**
+
+| Status | Description                     | Schema                                 |
+| ------ | ------------------------------- | -------------------------------------- |
+| 200    | Telegram queue diagnostics.     | object                                 |
+| 401    | Missing or invalid session.     | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.     | [`ApiError`](#standard-error-envelope) |
+| 422    | `status` or `limit` is invalid. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/telegram/links` — Request a one-time link code for yourself.
+
+- **operationId**: `createTelegramLink`
+- **Security**: bearerAuth + tenantHeader
+
+A staff member requests a code for THEMSELVES (there is no way to name another person). The code is 32 random bytes, base64url, returned ONCE inside a `https://t.me/<bot>?start=<code>` link; only its SHA-256 is stored. It expires in 10 minutes, works once, and a newer request invalidates the previous one. The response is `Cache-Control: no-store`. A per-person hourly limit applies. Opening the link in a PRIVATE Telegram chat creates a `pending_confirmation` binding that must then be confirmed from the staff member's own authenticated session (`POST /api/v1/telegram/bindings/me/confirm`). Deliberately NOT idempotency-keyed: a retry mints a replacement and invalidates the earlier code. Requires `telegram_delivery.links.create`.
+
+**Responses**
+
+| Status | Description                                                                                                          | Schema                                 |
+| ------ | -------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | The link, shown once.                                                                                                | object                                 |
+| 401    | Missing or invalid session.                                                                                          | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                                                                          | [`ApiError`](#standard-error-envelope) |
+| 409    | Telegram is off at the deployment or tenant level (`TELEGRAM_DISABLED`).                                             | [`ApiError`](#standard-error-envelope) |
+| 429    | Too many link codes were requested (`RATE_LIMITED`).                                                                 | [`ApiError`](#standard-error-envelope) |
+| 503    | The deployment cannot create a binding safely (no bot username or key ring; fail closed) (`TELEGRAM_MISCONFIGURED`). | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/telegram/settings` — The tenant's Telegram switch and the gates around it.
+
+- **operationId**: `getTelegramSettings`
+- **Security**: bearerAuth + tenantHeader
+
+The tenant setting plus the two other reasons nothing might be sent: Module Management (`moduleEnabled`) and the deployment flag (`deploymentEnabled`). Requires `telegram_delivery.messages.read`.
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | Settings.                   | object                                 |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `PUT /api/v1/telegram/settings` — Turn Telegram on or off for this tenant.
+
+- **operationId**: `setTelegramSettings`
+- **Security**: bearerAuth + tenantHeader
+
+High-risk (`configure`) and audited at `warning`. Turning it OFF ends every binding in the same transaction (the stored chat ids are erased and the queue cancelled), so a tenant that switches the channel off is not left holding encrypted chat ids. `Idempotency-Key` required (Issue #1008): the state is idempotent (it sets a value and writes no second audit row), but a retry's ANSWER (`changed`, `revokedBindings`) would differ from the first; with a key the retry replays the stored response, and the same key with a different `enabled` is a 409. A machine credential is refused with 403 (`INTERACTIVE_SESSION_REQUIRED`). The body is validated strictly: an unknown key is a 400. Requires `telegram_delivery.settings.configure`.
+
+**Parameters**
+
+| Name              | In     | Required | Type   | Description                                                                                                                                                                                                     |
+| ----------------- | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Idempotency-Key` | header | yes      | string | Deduplicates a retried HTTP request. 1 to 255 visible ASCII characters (0x21-0x7E); any other value is refused at the edge with `400 IDEMPOTENCY_KEY_INVALID` before the route runs, on every route (ADR-0129). |
+
+**Request body** (required): object
+
+**Responses**
+
+| Status | Description                                                    | Schema                                 |
+| ------ | -------------------------------------------------------------- | -------------------------------------- |
+| 200    | The new state.                                                 | object                                 |
+| 400    | Validation error.                                              | [`ApiError`](#standard-error-envelope) |
+| 401    | Missing or invalid session.                                    | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC.                                    | [`ApiError`](#standard-error-envelope) |
+| 409    | The Idempotency-Key was already used with a different request. | [`ApiError`](#standard-error-envelope) |
+
+### `GET /api/v1/telegram/templates` — The registered Telegram templates.
+
+- **operationId**: `listTelegramTemplates`
+- **Security**: bearerAuth + tenantHeader
+
+Key, version, the ONE purpose (`staff_ops`) and the typed variable allow-list. The wording is not returned: it is the owning module's copy. Requires `telegram_delivery.templates.read`.
+
+**Responses**
+
+| Status | Description                 | Schema                                 |
+| ------ | --------------------------- | -------------------------------------- |
+| 200    | Registered templates.       | object                                 |
+| 401    | Missing or invalid session. | [`ApiError`](#standard-error-envelope) |
+| 403    | Access denied by RBAC/ABAC. | [`ApiError`](#standard-error-envelope) |
+
+### `POST /api/v1/telegram/webhook` — Telegram's `message` updates (the bot webhook).
+
+- **operationId**: `receiveTelegramWebhook`
+- **Security**: none (public endpoint)
+
+The ONLY route of this module that is not authenticated by a session or machine credential, and it is not meant to be called by a browser or by a person. Telegram calls it after an operator registered it with `bun run telegram:webhook:register` (`allowed_updates=["message"]`). There is no tenant in the path (one bot per deployment); the tenant is resolved from the one-time code or from the binding found by the chat's keyed hash, never from the payload.
+
+Order of work: (1) `404` when `TELEGRAM_ENABLED` is not `true`; (2) the `X-Telegram-Bot-Api-Secret-Token` header is compared in constant time with `TELEGRAM_WEBHOOK_SECRET`, and a missing or wrong header (or an unset server secret) is a `401` with NO body, before any body is read or any database work is done; (3) the request-body limit, then a per-CHAT rate limit (an over-limit chat gets `200` with no reply, never `429`, and spends nothing else, so one noisy user cannot cause `429`s for everyone behind Telegram's few addresses), then a per-address rate limit; (4) two commands from a PRIVATE chat only, `/start <code>` and `/stop`. Everything else (any other text or command, media, edits, callback queries, groups, supergroups, channels) is `200` with no reply. The shared limiter fails OPEN when Redis is configured but unreachable, so the per-chat bucket is a fairness control, not a security boundary.
+
+A reply to `/start` and `/stop` is the HTTP response to this request (the Bot API's webhook-reply form: a JSON `sendMessage` method object), not an outbound call. The reply to a valid `/start` carries the one-time verification PIN (Issue #1008) that the staff member must type into the admin to confirm; only its keyed hash is stored. Both commands are idempotent by construction (a code is consumed atomically, so a replayed `/start` cannot mint a second PIN or binding), so no update id is stored.
+
+**Parameters**
+
+| Name                              | In     | Required | Type   | Description                                                          |
+| --------------------------------- | ------ | -------- | ------ | -------------------------------------------------------------------- |
+| `X-Telegram-Bot-Api-Secret-Token` | header | yes      | string | The `secret_token` given to `setWebhook`. Compared in constant time. |
+
+**Request body** (required): object
+
+**Responses**
+
+| Status | Description                                                                                                                              | Schema                                 |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 200    | Handled or ignored. The body is `{}`, or a `sendMessage` method object carrying the fixed reply when the update was `/start` or `/stop`. | object                                 |
+| 400    | The body is not valid JSON.                                                                                                              | [`ApiError`](#standard-error-envelope) |
+| 401    | The secret header is missing or wrong. A generic envelope with no detail, and no work was done.                                          | [`ApiError`](#standard-error-envelope) |
+| 404    | Telegram is switched off on this deployment.                                                                                             | [`ApiError`](#standard-error-envelope) |
+| 413    | The body exceeds the request-body limit.                                                                                                 | [`ApiError`](#standard-error-envelope) |
+| 429    | Rate limited, per address; repeated wrong secrets from one address are throttled the same way.                                           | [`ApiError`](#standard-error-envelope) |
+| 503    | A transient failure. Telegram retries; both commands are idempotent.                                                                     | [`ApiError`](#standard-error-envelope) |
 
 ## Schema appendix
 
@@ -13202,6 +17745,460 @@ Shared shape for POST /api/v1/blog/posts (all fields required) and PATCH /api/v1
   "name": "string",
   "slug": "example-slug",
   "description": "string"
+}
+```
+
+### Schema: BookingBlockInput
+
+| Field        | Type                                      | Required | Nullable | Description                                                                               |
+| ------------ | ----------------------------------------- | -------- | -------- | ----------------------------------------------------------------------------------------- |
+| `resourceId` | string (uuid)                             | yes      | no       |                                                                                           |
+| `unitId`     | string (uuid)                             | no       | yes      | One unit of the resource; null or absent blocks every unit (including units added later). |
+| `fromDate`   | string (date)                             | yes      | no       | First blocked night, a local date in the resource's zone.                                 |
+| `toDate`     | string (date)                             | yes      | no       | Exclusive end (the day the unit is back in sale); at most 366 nights after fromDate.      |
+| `reasonCode` | enum(`maintenance`, `owner_use`, `other`) | yes      | no       |                                                                                           |
+
+**Example**
+
+```json
+{
+  "resourceId": "00000000-0000-0000-0000-000000000000",
+  "unitId": "00000000-0000-0000-0000-000000000000",
+  "fromDate": "2026-01-01",
+  "toDate": "2026-01-01",
+  "reasonCode": "maintenance"
+}
+```
+
+### Schema: BookingCancelInput
+
+| Field        | Type   | Required | Nullable | Description                              |
+| ------------ | ------ | -------- | -------- | ---------------------------------------- |
+| `reasonCode` | string | no       | yes      | A short lowercase code, never free text. |
+
+**Example**
+
+```json
+{
+  "reasonCode": "string"
+}
+```
+
+### Schema: BookingCreateReservationInput
+
+Exactly one of `resourceId` or `poolId`, and exactly one of `startsAt` (a slot) or `stay` (a night range). A payment field is refused by name.
+
+| Field                 | Type                                           | Required | Nullable | Description                                                                                   |
+| --------------------- | ---------------------------------------------- | -------- | -------- | --------------------------------------------------------------------------------------------- |
+| `offeringId`          | string (uuid)                                  | yes      | no       |                                                                                               |
+| `resourceId`          | string (uuid)                                  | no       | no       |                                                                                               |
+| `poolId`              | string (uuid)                                  | no       | no       |                                                                                               |
+| `startsAt`            | string (date-time)                             | no       | no       | RFC 3339 with an explicit offset or Z. Slot offerings only.                                   |
+| `stay`                | [`BookingStayDates`](#schema-bookingstaydates) | no       | no       |                                                                                               |
+| `partySize`           | integer                                        | no       | no       |                                                                                               |
+| `quantity`            | integer                                        | no       | no       | Units claimed at once, all-or-none.                                                           |
+| `holdSeconds`         | number                                         | no       | no       | Clamped to [60, max_hold_seconds].                                                            |
+| `externalCustomerRef` | string                                         | no       | yes      | The commerce authority's opaque customer token (no spaces, no '@'); null for a walk-in.       |
+| `externalRef`         | object                                         | no       | yes      |                                                                                               |
+| `source`              | string                                         | no       | no       |                                                                                               |
+| `customerNote`        | string                                         | no       | yes      | Free text; classified, never logged, audited or put in an event.                              |
+| `overridePolicy`      | boolean                                        | no       | no       | Lift opening hours, lead time and horizon. Needs `booking.reservations.override` in addition. |
+
+**Example**
+
+```json
+{
+  "offeringId": "00000000-0000-0000-0000-000000000000",
+  "resourceId": "00000000-0000-0000-0000-000000000000",
+  "poolId": "00000000-0000-0000-0000-000000000000",
+  "startsAt": "2026-01-01T00:00:00.000Z",
+  "stay": {
+    "checkInDate": "2026-01-01",
+    "checkOutDate": "2026-01-01"
+  },
+  "partySize": 1,
+  "quantity": 1,
+  "holdSeconds": 0,
+  "externalCustomerRef": "string",
+  "externalRef": {
+    "type": "string",
+    "id": "string"
+  },
+  "source": "string",
+  "customerNote": "string",
+  "overridePolicy": false
+}
+```
+
+### Schema: BookingLocalWindow
+
+A local wall-clock window [from, to) in the schedule's zone; it never crosses midnight.
+
+| Field  | Type   | Required | Nullable | Description                             |
+| ------ | ------ | -------- | -------- | --------------------------------------- |
+| `from` | string | yes      | no       |                                         |
+| `to`   | string | yes      | no       | HH:MM, or 24:00 for the end of the day. |
+
+**Example**
+
+```json
+{
+  "from": "09:00",
+  "to": "17:00"
+}
+```
+
+### Schema: BookingOfferingInput
+
+| Field                       | Type                                   | Required | Nullable | Description                       |
+| --------------------------- | -------------------------------------- | -------- | -------- | --------------------------------- |
+| `code`                      | string                                 | yes      | no       |                                   |
+| `name`                      | string                                 | yes      | no       |                                   |
+| `granularity`               | enum(`time`, `stay`)                   | yes      | no       |                                   |
+| `durationSeconds`           | integer                                | no       | yes      |                                   |
+| `setupSeconds`              | integer                                | no       | yes      |                                   |
+| `cleanupSeconds`            | integer                                | no       | yes      |                                   |
+| `slotStepSeconds`           | integer                                | no       | yes      | At least 300 for a time offering. |
+| `minNights`                 | integer                                | no       | yes      |                                   |
+| `maxNights`                 | integer                                | no       | yes      |                                   |
+| `minParty`                  | integer                                | no       | no       |                                   |
+| `maxParty`                  | integer                                | no       | no       |                                   |
+| `confirmationMode`          | enum(`immediate`, `hold_then_confirm`) | no       | no       |                                   |
+| `cancellationCutoffSeconds` | integer                                | no       | yes      |                                   |
+| `minLeadSeconds`            | integer                                | no       | yes      |                                   |
+| `maxHorizonDays`            | integer                                | no       | yes      |                                   |
+| `status`                    | enum(`active`, `inactive`)             | no       | no       |                                   |
+
+**Example**
+
+```json
+{
+  "code": "string",
+  "name": "string",
+  "granularity": "time",
+  "durationSeconds": 0,
+  "setupSeconds": 0,
+  "cleanupSeconds": 0,
+  "slotStepSeconds": 0,
+  "minNights": 0,
+  "maxNights": 0,
+  "minParty": 1,
+  "maxParty": 0,
+  "confirmationMode": "immediate",
+  "cancellationCutoffSeconds": 0,
+  "minLeadSeconds": 0,
+  "maxHorizonDays": 0,
+  "status": "active"
+}
+```
+
+### Schema: BookingOfferingPatch
+
+| Field                       | Type                                   | Required | Nullable | Description                       |
+| --------------------------- | -------------------------------------- | -------- | -------- | --------------------------------- |
+| `name`                      | string                                 | no       | no       |                                   |
+| `durationSeconds`           | integer                                | no       | yes      |                                   |
+| `setupSeconds`              | integer                                | no       | yes      |                                   |
+| `cleanupSeconds`            | integer                                | no       | yes      |                                   |
+| `slotStepSeconds`           | integer                                | no       | yes      | At least 300 for a time offering. |
+| `minNights`                 | integer                                | no       | yes      |                                   |
+| `maxNights`                 | integer                                | no       | yes      |                                   |
+| `minParty`                  | integer                                | no       | no       |                                   |
+| `maxParty`                  | integer                                | no       | no       |                                   |
+| `confirmationMode`          | enum(`immediate`, `hold_then_confirm`) | no       | no       |                                   |
+| `cancellationCutoffSeconds` | integer                                | no       | yes      |                                   |
+| `minLeadSeconds`            | integer                                | no       | yes      |                                   |
+| `maxHorizonDays`            | integer                                | no       | yes      |                                   |
+| `status`                    | enum(`active`, `inactive`)             | no       | no       |                                   |
+
+**Example**
+
+```json
+{
+  "name": "string",
+  "durationSeconds": 0,
+  "setupSeconds": 0,
+  "cleanupSeconds": 0,
+  "slotStepSeconds": 0,
+  "minNights": 0,
+  "maxNights": 0,
+  "minParty": 1,
+  "maxParty": 0,
+  "confirmationMode": "immediate",
+  "cancellationCutoffSeconds": 0,
+  "minLeadSeconds": 0,
+  "maxHorizonDays": 0,
+  "status": "active"
+}
+```
+
+### Schema: BookingPolicyInput
+
+| Field                       | Type    | Required | Nullable | Description |
+| --------------------------- | ------- | -------- | -------- | ----------- |
+| `defaultHoldSeconds`        | integer | yes      | yes      |             |
+| `maxHoldSeconds`            | integer | yes      | yes      |             |
+| `maxActiveHoldsPerCustomer` | integer | yes      | yes      |             |
+| `maxActiveHoldsPerTenant`   | integer | yes      | yes      |             |
+| `minLeadSeconds`            | integer | yes      | yes      |             |
+| `maxHorizonDays`            | integer | yes      | yes      |             |
+| `noShowGraceSeconds`        | integer | yes      | yes      |             |
+| `defaultTimezone`           | string  | yes      | yes      |             |
+| `defaultCheckInTime`        | string  | yes      | yes      |             |
+| `defaultCheckOutTime`       | string  | yes      | yes      |             |
+
+**Example**
+
+```json
+{
+  "defaultHoldSeconds": 60,
+  "maxHoldSeconds": 60,
+  "maxActiveHoldsPerCustomer": 1,
+  "maxActiveHoldsPerTenant": 1,
+  "minLeadSeconds": 0,
+  "maxHorizonDays": 1,
+  "noShowGraceSeconds": 0,
+  "defaultTimezone": "string",
+  "defaultCheckInTime": "string",
+  "defaultCheckOutTime": "string"
+}
+```
+
+### Schema: BookingRescheduleInput
+
+| Field            | Type                                           | Required | Nullable | Description |
+| ---------------- | ---------------------------------------------- | -------- | -------- | ----------- |
+| `startsAt`       | string (date-time)                             | no       | no       |             |
+| `stay`           | [`BookingStayDates`](#schema-bookingstaydates) | no       | no       |             |
+| `resourceId`     | string (uuid)                                  | no       | no       |             |
+| `poolId`         | string (uuid)                                  | no       | no       |             |
+| `overridePolicy` | boolean                                        | no       | no       |             |
+
+**Example**
+
+```json
+{
+  "startsAt": "2026-01-01T00:00:00.000Z",
+  "stay": {
+    "checkInDate": "2026-01-01",
+    "checkOutDate": "2026-01-01"
+  },
+  "resourceId": "00000000-0000-0000-0000-000000000000",
+  "poolId": "00000000-0000-0000-0000-000000000000",
+  "overridePolicy": false
+}
+```
+
+### Schema: BookingResourceInput
+
+| Field              | Type                       | Required | Nullable | Description |
+| ------------------ | -------------------------- | -------- | -------- | ----------- |
+| `code`             | string                     | yes      | no       |             |
+| `name`             | string                     | yes      | no       |             |
+| `kind`             | string                     | yes      | no       |             |
+| `capacity`         | integer                    | yes      | no       |             |
+| `poolId`           | string (uuid)              | no       | yes      |             |
+| `timezone`         | string                     | yes      | no       |             |
+| `bookingMode`      | enum(`slot`, `stay`)       | no       | no       |             |
+| `stayCheckInTime`  | string                     | no       | yes      |             |
+| `stayCheckOutTime` | string                     | no       | yes      |             |
+| `sortOrder`        | integer                    | no       | no       |             |
+| `status`           | enum(`active`, `inactive`) | no       | no       |             |
+| `unitLabels`       | array of string            | no       | no       |             |
+
+**Example**
+
+```json
+{
+  "code": "string",
+  "name": "string",
+  "kind": "string",
+  "capacity": 1,
+  "poolId": "00000000-0000-0000-0000-000000000000",
+  "timezone": "Asia/Jakarta",
+  "bookingMode": "slot",
+  "stayCheckInTime": "14:00",
+  "stayCheckOutTime": "12:00",
+  "sortOrder": 0,
+  "status": "active",
+  "unitLabels": ["string"]
+}
+```
+
+### Schema: BookingResourcePatch
+
+| Field              | Type                       | Required | Nullable | Description |
+| ------------------ | -------------------------- | -------- | -------- | ----------- |
+| `name`             | string                     | no       | no       |             |
+| `kind`             | string                     | no       | no       |             |
+| `status`           | enum(`active`, `inactive`) | no       | no       |             |
+| `poolId`           | string (uuid)              | no       | yes      |             |
+| `timezone`         | string                     | no       | no       |             |
+| `bookingMode`      | enum(`slot`, `stay`)       | no       | no       |             |
+| `stayCheckInTime`  | string                     | no       | yes      |             |
+| `stayCheckOutTime` | string                     | no       | yes      |             |
+| `sortOrder`        | integer                    | no       | no       |             |
+| `capacity`         | integer                    | no       | no       | Grow only.  |
+| `units`            | array of object            | no       | no       |             |
+
+**Example**
+
+```json
+{
+  "name": "string",
+  "kind": "string",
+  "status": "active",
+  "poolId": "00000000-0000-0000-0000-000000000000",
+  "timezone": "string",
+  "bookingMode": "slot",
+  "stayCheckInTime": "string",
+  "stayCheckOutTime": "string",
+  "sortOrder": 0,
+  "capacity": 1,
+  "units": [
+    {
+      "id": "00000000-0000-0000-0000-000000000000",
+      "label": "string",
+      "status": "active"
+    }
+  ]
+}
+```
+
+### Schema: BookingResourcePoolInput
+
+| Field              | Type               | Required | Nullable | Description |
+| ------------------ | ------------------ | -------- | -------- | ----------- |
+| `code`             | string             | yes      | no       |             |
+| `name`             | string             | yes      | no       |             |
+| `allocationPolicy` | enum(`first_free`) | no       | no       |             |
+
+**Example**
+
+```json
+{
+  "code": "string",
+  "name": "string",
+  "allocationPolicy": "first_free"
+}
+```
+
+### Schema: BookingResourcePoolPatch
+
+| Field              | Type               | Required | Nullable | Description |
+| ------------------ | ------------------ | -------- | -------- | ----------- |
+| `name`             | string             | no       | no       |             |
+| `allocationPolicy` | enum(`first_free`) | no       | no       |             |
+
+**Example**
+
+```json
+{
+  "name": "string",
+  "allocationPolicy": "first_free"
+}
+```
+
+### Schema: BookingScheduleExceptionInput
+
+| Field        | Type                                                        | Required | Nullable | Description                                        |
+| ------------ | ----------------------------------------------------------- | -------- | -------- | -------------------------------------------------- |
+| `scheduleId` | string (uuid)                                               | no       | yes      |                                                    |
+| `resourceId` | string (uuid)                                               | no       | yes      |                                                    |
+| `localFrom`  | string (date)                                               | yes      | no       |                                                    |
+| `localTo`    | string (date)                                               | yes      | no       | Exclusive end; after localFrom, at most 366 days.  |
+| `kind`       | enum(`closed`, `override_hours`)                            | yes      | no       |                                                    |
+| `windows`    | array of [`BookingLocalWindow`](#schema-bookinglocalwindow) | no       | no       | Required for override_hours, forbidden for closed. |
+| `reasonCode` | string                                                      | no       | yes      | A short code, never free text.                     |
+
+**Example**
+
+```json
+{
+  "scheduleId": "00000000-0000-0000-0000-000000000000",
+  "resourceId": "00000000-0000-0000-0000-000000000000",
+  "localFrom": "2026-01-01",
+  "localTo": "2026-01-01",
+  "kind": "closed",
+  "windows": [
+    {
+      "from": "09:00",
+      "to": "17:00"
+    }
+  ],
+  "reasonCode": "string"
+}
+```
+
+### Schema: BookingScheduleInput
+
+| Field           | Type                                                   | Required | Nullable | Description                                                                        |
+| --------------- | ------------------------------------------------------ | -------- | -------- | ---------------------------------------------------------------------------------- |
+| `resourceId`    | string (uuid)                                          | no       | yes      | Null (or absent) is the tenant default schedule.                                   |
+| `timezone`      | string                                                 | yes      | no       | An IANA zone name such as Asia/Pontianak; an offset or an abbreviation is refused. |
+| `effectiveFrom` | string (date)                                          | yes      | no       |                                                                                    |
+| `effectiveTo`   | string (date)                                          | no       | yes      | Exclusive end; null for open-ended.                                                |
+| `rules`         | [`BookingScheduleRules`](#schema-bookingschedulerules) | yes      | no       |                                                                                    |
+
+**Example**
+
+```json
+{
+  "resourceId": "00000000-0000-0000-0000-000000000000",
+  "timezone": "string",
+  "effectiveFrom": "2026-01-01",
+  "effectiveTo": "2026-01-01",
+  "rules": {
+    "weekly": "(operation-specific payload)"
+  }
+}
+```
+
+### Schema: BookingSchedulePatch
+
+| Field         | Type             | Required | Nullable | Description                  |
+| ------------- | ---------------- | -------- | -------- | ---------------------------- |
+| `effectiveTo` | string (date)    | no       | no       | May only shorten the window. |
+| `status`      | enum(`inactive`) | no       | no       |                              |
+
+**Example**
+
+```json
+{
+  "effectiveTo": "2026-01-01",
+  "status": "inactive"
+}
+```
+
+### Schema: BookingScheduleRules
+
+The closed rules schema. Only `weekly` is accepted; a weekday absent from it is closed.
+
+| Field    | Type   | Required | Nullable | Description                                                                                        |
+| -------- | ------ | -------- | -------- | -------------------------------------------------------------------------------------------------- |
+| `weekly` | object | yes      | no       | Weekday keys sun, mon, tue, wed, thu, fri, sat; at most 8 ascending, non-overlapping windows each. |
+
+**Example**
+
+```json
+{
+  "weekly": "(operation-specific payload)"
+}
+```
+
+### Schema: BookingStayDates
+
+| Field          | Type          | Required | Nullable | Description                                         |
+| -------------- | ------------- | -------- | -------- | --------------------------------------------------- |
+| `checkInDate`  | string (date) | yes      | no       | Local date in the resource's zone.                  |
+| `checkOutDate` | string (date) | yes      | no       | Exclusive; after `checkInDate`, at most 366 nights. |
+
+**Example**
+
+```json
+{
+  "checkInDate": "2026-01-01",
+  "checkOutDate": "2026-01-01"
 }
 ```
 
@@ -14347,6 +19344,938 @@ sectionType cannot be changed after creation — omit it, do not send the old or
 }
 ```
 
+### Schema: HrAccountInput
+
+| Field          | Type          | Required | Nullable | Description |
+| -------------- | ------------- | -------- | -------- | ----------- |
+| `tenantUserId` | string (uuid) | yes      | yes      |             |
+
+**Example**
+
+```json
+{
+  "tenantUserId": "00000000-0000-0000-0000-000000000000"
+}
+```
+
+### Schema: HrAttendanceCorrectionInput
+
+| Field                | Type                                                      | Required | Nullable | Description                                  |
+| -------------------- | --------------------------------------------------------- | -------- | -------- | -------------------------------------------- |
+| `employmentId`       | string (uuid)                                             | yes      | no       |                                              |
+| `kind`               | enum(`add`, `replace`)                                    | yes      | no       |                                              |
+| `targetEventId`      | string (uuid)                                             | no       | no       | Required for `replace`, forbidden for `add`. |
+| `proposedKind`       | enum(`clock_in`, `clock_out`, `break_start`, `break_end`) | yes      | no       |                                              |
+| `proposedOccurredAt` | string (date-time)                                        | yes      | no       |                                              |
+| `reason`             | string                                                    | yes      | no       |                                              |
+
+**Example**
+
+```json
+{
+  "employmentId": "00000000-0000-0000-0000-000000000000",
+  "kind": "add",
+  "targetEventId": "00000000-0000-0000-0000-000000000000",
+  "proposedKind": "clock_in",
+  "proposedOccurredAt": "2026-01-01T00:00:00.000Z",
+  "reason": "string"
+}
+```
+
+### Schema: HrAttendanceEventInput
+
+| Field            | Type                                                      | Required | Nullable | Description                                                                                                                                                                        |
+| ---------------- | --------------------------------------------------------- | -------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `employmentId`   | string (uuid)                                             | yes      | no       |                                                                                                                                                                                    |
+| `kind`           | enum(`clock_in`, `clock_out`, `break_start`, `break_end`) | yes      | no       |                                                                                                                                                                                    |
+| `occurredAt`     | string (date-time)                                        | yes      | no       | A UTC instant ending in Z.                                                                                                                                                         |
+| `source`         | enum(`self`, `supervisor`, `kiosk`, `import`)             | yes      | no       |                                                                                                                                                                                    |
+| `clientEventKey` | string                                                    | yes      | no       |                                                                                                                                                                                    |
+| `officeId`       | string (uuid)                                             | no       | no       |                                                                                                                                                                                    |
+| `positionSample` | [`HrPositionSample`](#schema-hrpositionsample)            | no       | yes      | Optional, `self` clock_in / clock_out only (any other source or kind -> 400). Evaluated by the server in the request and discarded (ADR-0138). `null` or absent is a declined fix. |
+
+**Example**
+
+```json
+{
+  "employmentId": "00000000-0000-0000-0000-000000000000",
+  "kind": "clock_in",
+  "occurredAt": "2026-01-01T00:00:00.000Z",
+  "source": "self",
+  "clientEventKey": "string",
+  "officeId": "00000000-0000-0000-0000-000000000000",
+  "positionSample": {
+    "latitude": -90,
+    "longitude": -180,
+    "accuracyMeters": 0
+  }
+}
+```
+
+### Schema: HrCommissionAccrual
+
+One commission earned by one employment from one source event. The monetary facts are immutable by trigger; only `status` and its stamps advance. `amount` is a fixed-scale decimal string.
+
+| Field              | Type                                                             | Required | Nullable | Description |
+| ------------------ | ---------------------------------------------------------------- | -------- | -------- | ----------- |
+| `id`               | string (uuid)                                                    | no       | no       |             |
+| `employmentId`     | string (uuid)                                                    | no       | no       |             |
+| `ruleId`           | string (uuid)                                                    | no       | no       |             |
+| `ruleKey`          | string                                                           | no       | no       |             |
+| `ruleVersion`      | integer                                                          | no       | no       |             |
+| `status`           | [`HrCommissionAccrualStatus`](#schema-hrcommissionaccrualstatus) | no       | no       |             |
+| `amount`           | string                                                           | no       | no       |             |
+| `currencyCode`     | string                                                           | no       | no       |             |
+| `sourceType`       | string                                                           | no       | no       |             |
+| `sourceRef`        | string                                                           | no       | no       |             |
+| `sourceLine`       | string                                                           | no       | no       |             |
+| `operation`        | enum(`accrue`)                                                   | no       | no       |             |
+| `calculation`      | enum(`percent`, `fixed`)                                         | no       | no       |             |
+| `baseAmount`       | string                                                           | no       | yes      |             |
+| `units`            | integer                                                          | no       | yes      |             |
+| `rate`             | string                                                           | no       | yes      |             |
+| `fixedAmount`      | string                                                           | no       | yes      |             |
+| `occurredAt`       | string (date-time)                                               | no       | no       |             |
+| `occurredOn`       | string (date)                                                    | no       | no       |             |
+| `createdAt`        | string (date-time)                                               | no       | no       |             |
+| `approvedAt`       | string (date-time)                                               | no       | yes      |             |
+| `releasedAt`       | string (date-time)                                               | no       | yes      |             |
+| `paidAt`           | string (date-time)                                               | no       | yes      |             |
+| `paymentReference` | string                                                           | no       | yes      |             |
+| `voidedAt`         | string (date-time)                                               | no       | yes      |             |
+| `voidReasonCode`   | string                                                           | no       | yes      |             |
+
+**Example**
+
+```json
+{
+  "id": "00000000-0000-0000-0000-000000000000",
+  "employmentId": "00000000-0000-0000-0000-000000000000",
+  "ruleId": "00000000-0000-0000-0000-000000000000",
+  "ruleKey": "string",
+  "ruleVersion": 1,
+  "status": "pending",
+  "amount": "25.000000",
+  "currencyCode": "string",
+  "sourceType": "string",
+  "sourceRef": "string",
+  "sourceLine": "string",
+  "operation": "accrue",
+  "calculation": "percent",
+  "baseAmount": "string",
+  "units": 0,
+  "rate": "string",
+  "fixedAmount": "string",
+  "occurredAt": "2026-01-01T00:00:00.000Z",
+  "occurredOn": "2026-01-01",
+  "createdAt": "2026-01-01T00:00:00.000Z",
+  "approvedAt": "2026-01-01T00:00:00.000Z",
+  "releasedAt": "2026-01-01T00:00:00.000Z",
+  "paidAt": "2026-01-01T00:00:00.000Z",
+  "paymentReference": "string",
+  "voidedAt": "2026-01-01T00:00:00.000Z",
+  "voidReasonCode": "string"
+}
+```
+
+### Schema: HrCommissionAccrualCreated
+
+| Field     | Type         | Required | Nullable | Description |
+| --------- | ------------ | -------- | -------- | ----------- |
+| `success` | enum(`true`) | no       | no       |             |
+| `data`    | object       | no       | no       |             |
+| `meta`    | object       | no       | no       |             |
+
+**Example**
+
+```json
+{
+  "success": true,
+  "data": {
+    "replayed": false,
+    "accrual": {
+      "id": "00000000-0000-0000-0000-000000000000",
+      "employmentId": "00000000-0000-0000-0000-000000000000",
+      "ruleId": "00000000-0000-0000-0000-000000000000",
+      "ruleKey": "string",
+      "ruleVersion": 1,
+      "status": "pending",
+      "amount": "25.000000",
+      "currencyCode": "string",
+      "sourceType": "string",
+      "sourceRef": "string",
+      "sourceLine": "string",
+      "operation": "accrue",
+      "calculation": "percent",
+      "baseAmount": "string",
+      "units": 0,
+      "rate": "string",
+      "fixedAmount": "string",
+      "occurredAt": "2026-01-01T00:00:00.000Z",
+      "occurredOn": "2026-01-01",
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "approvedAt": "2026-01-01T00:00:00.000Z",
+      "releasedAt": "2026-01-01T00:00:00.000Z",
+      "paidAt": "2026-01-01T00:00:00.000Z",
+      "paymentReference": "string",
+      "voidedAt": "2026-01-01T00:00:00.000Z",
+      "voidReasonCode": "string"
+    }
+  },
+  "meta": "(operation-specific payload)"
+}
+```
+
+### Schema: HrCommissionAccrualCreateInput
+
+Exactly one of `baseAmount` (a percent rule) or `units` (a fixed rule). No amount, rule version, status or stamp is accepted.
+
+| Field          | Type               | Required | Nullable | Description                                                                                                                                      |
+| -------------- | ------------------ | -------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `employmentId` | string (uuid)      | yes      | no       | The beneficiary, an hr_workforce employment.                                                                                                     |
+| `ruleKey`      | string             | yes      | no       |                                                                                                                                                  |
+| `source`       | object             | yes      | no       |                                                                                                                                                  |
+| `baseAmount`   | string             | no       | no       | Non-negative decimal string, at most 12 integer and 6 fractional digits. A JSON number is refused.                                               |
+| `units`        | integer            | no       | no       |                                                                                                                                                  |
+| `currencyCode` | string             | yes      | no       | Must equal the rule's currency.                                                                                                                  |
+| `occurredAt`   | string (date-time) | yes      | no       | The instant of the sale; not more than a day ahead of the server clock and not more than 730 days old.                                           |
+| `occurredOn`   | string (date)      | yes      | no       | The sale's civil date in the tenant's own time, derived by the caller; within one day of the UTC date of `occurredAt`. Selects the rule version. |
+
+**Example**
+
+```json
+{
+  "employmentId": "00000000-0000-0000-0000-000000000000",
+  "ruleKey": "string",
+  "source": {
+    "type": "string",
+    "ref": "string",
+    "line": "string"
+  },
+  "baseAmount": "1000.10",
+  "units": 0,
+  "currencyCode": "string",
+  "occurredAt": "2026-01-01T00:00:00.000Z",
+  "occurredOn": "2026-01-01"
+}
+```
+
+### Schema: HrCommissionAccrualPayInput
+
+| Field              | Type   | Required | Nullable | Description |
+| ------------------ | ------ | -------- | -------- | ----------- |
+| `paymentReference` | string | no       | no       |             |
+
+**Example**
+
+```json
+{
+  "paymentReference": "string"
+}
+```
+
+### Schema: HrCommissionAccrualStatus
+
+Enum values: `pending`, `approved`, `payable`, `paid`, `voided`.
+
+**Example**
+
+```json
+"pending"
+```
+
+### Schema: HrCommissionAccrualVoidInput
+
+| Field        | Type   | Required | Nullable | Description |
+| ------------ | ------ | -------- | -------- | ----------- |
+| `reasonCode` | string | no       | no       |             |
+
+**Example**
+
+```json
+{
+  "reasonCode": "string"
+}
+```
+
+### Schema: HrCommissionPublishInput
+
+| Field                   | Type   | Required | Nullable | Description                                                                                                        |
+| ----------------------- | ------ | -------- | -------- | ------------------------------------------------------------------------------------------------------------------ |
+| `expectedContentDigest` | string | yes      | no       | The `contentDigest` of the terms the publisher reviewed; a mismatch is 409 RULE_CHANGED.                           |
+| `backdatedReason`       | string | no       | no       | Required when the window starts before today (UTC); stored on the rule, never in the audit log. Ignored otherwise. |
+
+**Example**
+
+```json
+{
+  "expectedContentDigest": "string",
+  "backdatedReason": "string"
+}
+```
+
+### Schema: HrCommissionRuleCreateInput
+
+_No properties declared._
+
+**Example**
+
+```json
+{
+  "name": "string",
+  "sourceType": "string",
+  "calculation": "percent",
+  "rate": "2.5",
+  "fixedAmount": "10",
+  "minAmount": "string",
+  "maxAmount": "string",
+  "currencyCode": "string",
+  "roundingMode": "half_up",
+  "roundingScale": 0,
+  "effectiveFrom": "2026-01-01",
+  "effectiveTo": "2026-01-01",
+  "ruleKey": "string"
+}
+```
+
+### Schema: HrCommissionRuleFields
+
+The editable terms of a rule version. Money is a decimal STRING. PERCENT needs `rate` (2.5 means 2.5 %, at most 6 fractional digits, 0 to 100) and no `fixedAmount`; FIXED needs `fixedAmount` (per unit) and no `rate`. `minAmount` and `maxAmount` clamp the ROUNDED commission and carry no more fractional digits than `roundingScale`. The window is half-open, `effectiveTo` exclusive; omit it for an open-ended version.
+
+| Field           | Type                                                                        | Required | Nullable | Description |
+| --------------- | --------------------------------------------------------------------------- | -------- | -------- | ----------- |
+| `name`          | string                                                                      | yes      | no       |             |
+| `sourceType`    | string                                                                      | yes      | no       |             |
+| `calculation`   | enum(`percent`, `fixed`)                                                    | yes      | no       |             |
+| `rate`          | string                                                                      | no       | yes      |             |
+| `fixedAmount`   | string                                                                      | no       | yes      |             |
+| `minAmount`     | string                                                                      | no       | yes      |             |
+| `maxAmount`     | string                                                                      | no       | yes      |             |
+| `currencyCode`  | string                                                                      | yes      | no       |             |
+| `roundingMode`  | enum(`half_up`, `half_down`, `half_even`, `up`, `down`, `ceiling`, `floor`) | yes      | no       |             |
+| `roundingScale` | integer                                                                     | yes      | no       |             |
+| `effectiveFrom` | string (date)                                                               | yes      | no       |             |
+| `effectiveTo`   | string (date)                                                               | no       | yes      |             |
+
+**Example**
+
+```json
+{
+  "name": "string",
+  "sourceType": "string",
+  "calculation": "percent",
+  "rate": "2.5",
+  "fixedAmount": "10",
+  "minAmount": "string",
+  "maxAmount": "string",
+  "currencyCode": "string",
+  "roundingMode": "half_up",
+  "roundingScale": 0,
+  "effectiveFrom": "2026-01-01",
+  "effectiveTo": "2026-01-01"
+}
+```
+
+### Schema: HrCommissionRuleInput
+
+_No properties declared._
+
+**Example**
+
+```json
+{
+  "name": "string",
+  "sourceType": "string",
+  "calculation": "percent",
+  "rate": "2.5",
+  "fixedAmount": "10",
+  "minAmount": "string",
+  "maxAmount": "string",
+  "currencyCode": "string",
+  "roundingMode": "half_up",
+  "roundingScale": 0,
+  "effectiveFrom": "2026-01-01",
+  "effectiveTo": "2026-01-01",
+  "expectedContentDigest": "string"
+}
+```
+
+### Schema: HrEmploymentInput
+
+| Field                 | Type                                                   | Required | Nullable | Description                               |
+| --------------------- | ------------------------------------------------------ | -------- | -------- | ----------------------------------------- |
+| `profileId`           | string (uuid)                                          | yes      | no       |                                           |
+| `employeeNo`          | string                                                 | yes      | no       |                                           |
+| `hiredOn`             | string (date)                                          | yes      | no       |                                           |
+| `officeId`            | string (uuid)                                          | no       | yes      |                                           |
+| `managerEmploymentId` | string (uuid)                                          | no       | yes      |                                           |
+| `jobTitle`            | string                                                 | no       | yes      |                                           |
+| `employmentType`      | enum(`permanent`, `fixed_term`, `part_time`, `casual`) | yes      | no       |                                           |
+| `status`              | enum(`active`, `on_leave`, `suspended`)                | yes      | no       | A new employment cannot start terminated. |
+
+**Example**
+
+```json
+{
+  "profileId": "00000000-0000-0000-0000-000000000000",
+  "employeeNo": "string",
+  "hiredOn": "2026-01-01",
+  "officeId": "00000000-0000-0000-0000-000000000000",
+  "managerEmploymentId": "00000000-0000-0000-0000-000000000000",
+  "jobTitle": "string",
+  "employmentType": "permanent",
+  "status": "active"
+}
+```
+
+### Schema: HrGeofenceInput
+
+| Field          | Type                      | Required | Nullable | Description |
+| -------------- | ------------------------- | -------- | -------- | ----------- |
+| `officeId`     | string (uuid)             | yes      | no       |             |
+| `label`        | string                    | yes      | no       |             |
+| `shape`        | enum(`circle`, `polygon`) | yes      | no       |             |
+| `latitude`     | number                    | no       | no       |             |
+| `longitude`    | number                    | no       | no       |             |
+| `radiusMeters` | integer                   | no       | no       |             |
+| `vertices`     | array of array of number  | no       | no       |             |
+
+**Example**
+
+```json
+{
+  "officeId": "00000000-0000-0000-0000-000000000000",
+  "label": "string",
+  "shape": "circle",
+  "latitude": -90,
+  "longitude": -180,
+  "radiusMeters": 50,
+  "vertices": [[0]]
+}
+```
+
+### Schema: HrGeolocationAcknowledgeInput
+
+| Field          | Type          | Required | Nullable | Description |
+| -------------- | ------------- | -------- | -------- | ----------- |
+| `employmentId` | string (uuid) | yes      | no       |             |
+| `noticeId`     | string (uuid) | yes      | no       |             |
+
+**Example**
+
+```json
+{
+  "employmentId": "00000000-0000-0000-0000-000000000000",
+  "noticeId": "00000000-0000-0000-0000-000000000000"
+}
+```
+
+### Schema: HrGeolocationNoticeInput
+
+| Field   | Type   | Required | Nullable | Description |
+| ------- | ------ | -------- | -------- | ----------- |
+| `texts` | object | yes      | no       |             |
+
+**Example**
+
+```json
+{
+  "texts": "(operation-specific payload)"
+}
+```
+
+### Schema: HrGeolocationSettingsInput
+
+| Field                   | Type          | Required | Nullable | Description |
+| ----------------------- | ------------- | -------- | -------- | ----------- |
+| `enabled`               | boolean       | yes      | no       |             |
+| `accuracyCeilingMeters` | integer       | no       | no       |             |
+| `dpiaReference`         | string        | no       | yes      |             |
+| `dpiaRecordedOn`        | string (date) | no       | yes      |             |
+| `noticeId`              | string (uuid) | no       | yes      |             |
+
+**Example**
+
+```json
+{
+  "enabled": false,
+  "accuracyCeilingMeters": 10,
+  "dpiaReference": "string",
+  "dpiaRecordedOn": "2026-01-01",
+  "noticeId": "00000000-0000-0000-0000-000000000000"
+}
+```
+
+### Schema: HrPositionSample
+
+One position sample, evaluated by the server in the request and DISCARDED. It is never persisted, logged, audited, queued, cached or returned. Exactly these three numbers; an altitude, speed, heading, address or device value is refused.
+
+| Field            | Type   | Required | Nullable | Description |
+| ---------------- | ------ | -------- | -------- | ----------- |
+| `latitude`       | number | yes      | no       |             |
+| `longitude`      | number | yes      | no       |             |
+| `accuracyMeters` | number | yes      | no       |             |
+
+**Example**
+
+```json
+{
+  "latitude": -90,
+  "longitude": -180,
+  "accuracyMeters": 0
+}
+```
+
+### Schema: HrReasonInput
+
+| Field    | Type   | Required | Nullable | Description |
+| -------- | ------ | -------- | -------- | ----------- |
+| `reason` | string | no       | no       |             |
+
+**Example**
+
+```json
+{
+  "reason": "string"
+}
+```
+
+### Schema: HrShiftAssignmentInput
+
+Send EITHER `templateId` + `localDate` (work only) OR `startsAt` + `endsAt` + `timeZone`. Instants are whole-minute UTC ending in Z; a work shift is at most 24 hours, time off at most 31 days; an optional single break must lie inside a work interval.
+
+| Field           | Type                              | Required | Nullable | Description |
+| --------------- | --------------------------------- | -------- | -------- | ----------- |
+| `employmentId`  | string (uuid)                     | yes      | no       |             |
+| `kind`          | enum(`work`, `time_off`)          | yes      | no       |             |
+| `timeOffKind`   | enum(`leave`, `holiday`, `other`) | no       | no       |             |
+| `templateId`    | string (uuid)                     | no       | no       |             |
+| `localDate`     | string (date)                     | no       | no       |             |
+| `startsAt`      | string (date-time)                | no       | no       |             |
+| `endsAt`        | string (date-time)                | no       | no       |             |
+| `breakStartsAt` | string (date-time)                | no       | no       |             |
+| `breakEndsAt`   | string (date-time)                | no       | no       |             |
+| `timeZone`      | string                            | no       | no       |             |
+| `officeId`      | string (uuid)                     | no       | no       |             |
+
+**Example**
+
+```json
+{
+  "employmentId": "00000000-0000-0000-0000-000000000000",
+  "kind": "work",
+  "timeOffKind": "leave",
+  "templateId": "00000000-0000-0000-0000-000000000000",
+  "localDate": "2026-01-01",
+  "startsAt": "2026-01-01T00:00:00.000Z",
+  "endsAt": "2026-01-01T00:00:00.000Z",
+  "breakStartsAt": "2026-01-01T00:00:00.000Z",
+  "breakEndsAt": "2026-01-01T00:00:00.000Z",
+  "timeZone": "string",
+  "officeId": "00000000-0000-0000-0000-000000000000"
+}
+```
+
+### Schema: HrShiftTemplateInput
+
+| Field                | Type          | Required | Nullable | Description |
+| -------------------- | ------------- | -------- | -------- | ----------- |
+| `code`               | string        | yes      | no       |             |
+| `name`               | string        | yes      | no       |             |
+| `localStart`         | string        | yes      | no       |             |
+| `durationMinutes`    | integer       | yes      | no       |             |
+| `breakOffsetMinutes` | integer       | no       | no       |             |
+| `breakMinutes`       | integer       | no       | no       |             |
+| `timeZone`           | string        | yes      | no       |             |
+| `officeId`           | string (uuid) | no       | no       |             |
+
+**Example**
+
+```json
+{
+  "code": "string",
+  "name": "string",
+  "localStart": "string",
+  "durationMinutes": 15,
+  "breakOffsetMinutes": 0,
+  "breakMinutes": 1,
+  "timeZone": "string",
+  "officeId": "00000000-0000-0000-0000-000000000000"
+}
+```
+
+### Schema: HrShiftTemplatePatch
+
+| Field                | Type          | Required | Nullable | Description |
+| -------------------- | ------------- | -------- | -------- | ----------- |
+| `name`               | string        | no       | no       |             |
+| `localStart`         | string        | no       | no       |             |
+| `durationMinutes`    | integer       | no       | no       |             |
+| `breakOffsetMinutes` | integer       | no       | yes      |             |
+| `breakMinutes`       | integer       | no       | yes      |             |
+| `timeZone`           | string        | no       | no       |             |
+| `officeId`           | string (uuid) | no       | yes      |             |
+
+**Example**
+
+```json
+{
+  "name": "string",
+  "localStart": "string",
+  "durationMinutes": 15,
+  "breakOffsetMinutes": 0,
+  "breakMinutes": 0,
+  "timeZone": "string",
+  "officeId": "00000000-0000-0000-0000-000000000000"
+}
+```
+
+### Schema: HrTermsChangeInput
+
+| Field                 | Type                                                   | Required | Nullable | Description |
+| --------------------- | ------------------------------------------------------ | -------- | -------- | ----------- |
+| `effectiveFrom`       | string (date)                                          | yes      | no       |             |
+| `officeId`            | string (uuid)                                          | no       | yes      |             |
+| `managerEmploymentId` | string (uuid)                                          | no       | yes      |             |
+| `jobTitle`            | string                                                 | no       | yes      |             |
+| `employmentType`      | enum(`permanent`, `fixed_term`, `part_time`, `casual`) | yes      | no       |             |
+| `status`              | enum(`active`, `on_leave`, `suspended`, `terminated`)  | yes      | no       |             |
+
+**Example**
+
+```json
+{
+  "effectiveFrom": "2026-01-01",
+  "officeId": "00000000-0000-0000-0000-000000000000",
+  "managerEmploymentId": "00000000-0000-0000-0000-000000000000",
+  "jobTitle": "string",
+  "employmentType": "permanent",
+  "status": "active"
+}
+```
+
+### Schema: HrWorkforceSettingsInput
+
+| Field                   | Type    | Required | Nullable | Description |
+| ----------------------- | ------- | -------- | -------- | ----------- |
+| `clockSkewSeconds`      | integer | no       | no       |             |
+| `correctionWorkflowKey` | string  | no       | no       |             |
+
+**Example**
+
+```json
+{
+  "clockSkewSeconds": 0,
+  "correctionWorkflowKey": "string"
+}
+```
+
+### Schema: InventoryAdjustmentInput
+
+_No properties declared._
+
+**Example**
+
+```json
+{
+  "itemType": null,
+  "itemRef": null,
+  "unitCode": null,
+  "locationId": "00000000-0000-0000-0000-000000000000",
+  "quantityDelta": "12.5",
+  "reasonCode": "string",
+  "source": {
+    "type": "string",
+    "id": "string",
+    "line": "string"
+  },
+  "occurredAt": "2026-01-01T00:00:00.000Z",
+  "note": "string"
+}
+```
+
+### Schema: InventoryItemRef
+
+| Field      | Type   | Required | Nullable | Description                                                                                                                                                                   |
+| ---------- | ------ | -------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `itemType` | string | yes      | no       | The consumer's namespace for the item, e.g. `commerce.variant`. Lower case. Deliberately opaque — there is no foreign key to any catalogue.                                   |
+| `itemRef`  | string | yes      | no       | Opaque, stable reference chosen by the consumer. `A-Za-z0-9_.:-` only (no `/`, `+`, `=`), at most 200 characters, and never credential-shaped (a JWT-looking value is a 400). |
+| `unitCode` | string | no       | no       | The item's single stock unit at a location. The ledger refuses a different unit rather than converting. Defaults to `unit`.                                                   |
+
+**Example**
+
+```json
+{
+  "itemType": "string",
+  "itemRef": "string",
+  "unitCode": "string"
+}
+```
+
+### Schema: InventoryLocationCreateInput
+
+| Field      | Type          | Required | Nullable | Description |
+| ---------- | ------------- | -------- | -------- | ----------- |
+| `code`     | string        | yes      | no       |             |
+| `name`     | string        | yes      | no       |             |
+| `officeId` | string (uuid) | no       | yes      |             |
+
+**Example**
+
+```json
+{
+  "code": "string",
+  "name": "string",
+  "officeId": "00000000-0000-0000-0000-000000000000"
+}
+```
+
+### Schema: InventoryLocationUpdateInput
+
+| Field      | Type                       | Required | Nullable | Description |
+| ---------- | -------------------------- | -------- | -------- | ----------- |
+| `name`     | string                     | no       | no       |             |
+| `officeId` | string (uuid)              | no       | yes      |             |
+| `status`   | enum(`active`, `inactive`) | no       | no       |             |
+
+**Example**
+
+```json
+{
+  "name": "string",
+  "officeId": "00000000-0000-0000-0000-000000000000",
+  "status": "active"
+}
+```
+
+### Schema: InventoryMovement
+
+| Field                  | Type                                                     | Required | Nullable | Description                                                                                                                                                                                       |
+| ---------------------- | -------------------------------------------------------- | -------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                   | string (uuid)                                            | no       | no       |                                                                                                                                                                                                   |
+| `locationId`           | string (uuid)                                            | no       | no       |                                                                                                                                                                                                   |
+| `itemType`             | string                                                   | no       | no       |                                                                                                                                                                                                   |
+| `itemRef`              | string                                                   | no       | no       |                                                                                                                                                                                                   |
+| `unitCode`             | string                                                   | no       | no       |                                                                                                                                                                                                   |
+| `movementType`         | [`InventoryMovementType`](#schema-inventorymovementtype) | no       | no       |                                                                                                                                                                                                   |
+| `operation`            | string                                                   | no       | no       | Server-derived half of the source identity; `reversal` for a reversal.                                                                                                                            |
+| `quantityDelta`        | [`InventoryQuantity`](#schema-inventoryquantity)         | no       | no       |                                                                                                                                                                                                   |
+| `source`               | object                                                   | no       | no       |                                                                                                                                                                                                   |
+| `transferId`           | string (uuid)                                            | no       | yes      |                                                                                                                                                                                                   |
+| `reversesMovementId`   | string (uuid)                                            | no       | yes      |                                                                                                                                                                                                   |
+| `reversedByMovementId` | string (uuid)                                            | no       | yes      | The reversal that compensated this adjustment, or null when it has not been reversed. Populated by the movement listing and detail reads; a movement returned by a posting response carries null. |
+| `reasonCode`           | string                                                   | no       | yes      |                                                                                                                                                                                                   |
+| `note`                 | string                                                   | no       | yes      |                                                                                                                                                                                                   |
+| `occurredAt`           | string (date-time)                                       | no       | no       |                                                                                                                                                                                                   |
+| `createdAt`            | string (date-time)                                       | no       | no       |                                                                                                                                                                                                   |
+| `actorTenantUserId`    | string (uuid)                                            | no       | yes      |                                                                                                                                                                                                   |
+| `correlationId`        | string                                                   | no       | yes      |                                                                                                                                                                                                   |
+
+**Example**
+
+```json
+{
+  "id": "00000000-0000-0000-0000-000000000000",
+  "locationId": "00000000-0000-0000-0000-000000000000",
+  "itemType": "string",
+  "itemRef": "string",
+  "unitCode": "string",
+  "movementType": "opening",
+  "operation": "string",
+  "quantityDelta": "12.5",
+  "source": {
+    "type": "string",
+    "id": "string",
+    "line": "string"
+  },
+  "transferId": "00000000-0000-0000-0000-000000000000",
+  "reversesMovementId": "00000000-0000-0000-0000-000000000000",
+  "reversedByMovementId": "00000000-0000-0000-0000-000000000000",
+  "reasonCode": "string",
+  "note": "string",
+  "occurredAt": "2026-01-01T00:00:00.000Z",
+  "createdAt": "2026-01-01T00:00:00.000Z",
+  "actorTenantUserId": "00000000-0000-0000-0000-000000000000",
+  "correlationId": "string"
+}
+```
+
+### Schema: InventoryMovementPostInput
+
+_No properties declared._
+
+**Example**
+
+```json
+{
+  "itemType": null,
+  "itemRef": null,
+  "unitCode": null,
+  "locationId": "00000000-0000-0000-0000-000000000000",
+  "movementType": "receive",
+  "quantity": "12.5",
+  "source": {
+    "type": "string",
+    "id": "string",
+    "line": "string"
+  },
+  "occurredAt": "2026-01-01T00:00:00.000Z",
+  "reasonCode": "string",
+  "note": "string"
+}
+```
+
+### Schema: InventoryMovementType
+
+Enum values: `opening`, `receive`, `sale`, `sale_return`, `supplier_return`, `transfer_out`, `transfer_in`, `adjustment`.
+
+**Example**
+
+```json
+"opening"
+```
+
+### Schema: InventoryOpeningInput
+
+_No properties declared._
+
+**Example**
+
+```json
+{
+  "itemType": null,
+  "itemRef": null,
+  "unitCode": null,
+  "locationId": "00000000-0000-0000-0000-000000000000",
+  "quantity": "12.5",
+  "source": {
+    "type": "string",
+    "id": "string",
+    "line": "string"
+  },
+  "occurredAt": "2026-01-01T00:00:00.000Z",
+  "reasonCode": "string",
+  "note": "string"
+}
+```
+
+### Schema: InventoryPostResponse
+
+| Field     | Type         | Required | Nullable | Description |
+| --------- | ------------ | -------- | -------- | ----------- |
+| `success` | enum(`true`) | no       | no       |             |
+| `data`    | object       | no       | no       |             |
+
+**Example**
+
+```json
+{
+  "success": true,
+  "data": {
+    "replayed": false,
+    "movements": [
+      {
+        "id": "00000000-0000-0000-0000-000000000000",
+        "locationId": "00000000-0000-0000-0000-000000000000",
+        "itemType": "string",
+        "itemRef": "string",
+        "unitCode": "string",
+        "movementType": "opening",
+        "operation": "string",
+        "quantityDelta": "12.5",
+        "source": {
+          "type": "string",
+          "id": "string",
+          "line": "string"
+        },
+        "transferId": "00000000-0000-0000-0000-000000000000",
+        "reversesMovementId": "00000000-0000-0000-0000-000000000000",
+        "reversedByMovementId": "00000000-0000-0000-0000-000000000000",
+        "reasonCode": "string",
+        "note": "string",
+        "occurredAt": "2026-01-01T00:00:00.000Z",
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "actorTenantUserId": "00000000-0000-0000-0000-000000000000",
+        "correlationId": "string"
+      }
+    ]
+  }
+}
+```
+
+### Schema: InventoryQuantity
+
+An exact decimal as TEXT, never a float: `numeric(20,6)` in the database, at most 14 integer digits and 6 fractional digits, no exponent notation. A JSON number is accepted on input when it round-trips to a plain decimal; every response carries the canonical string (no trailing zeros).
+
+An exact decimal as TEXT, never a float: `numeric(20,6)` in the database, at most 14 integer digits and 6 fractional digits, no exponent notation. A JSON number is accepted on input when it round-trips to a plain decimal; every response carries the canonical string (no trailing zeros).
+
+**Example**
+
+```json
+"12.5"
+```
+
+### Schema: InventorySource
+
+Idempotent source identity: the business document behind a movement. Posting the same identity twice returns the ORIGINAL result.
+
+| Field  | Type   | Required | Nullable | Description |
+| ------ | ------ | -------- | -------- | ----------- |
+| `type` | string | yes      | no       |             |
+| `id`   | string | yes      | no       |             |
+| `line` | string | no       | no       |             |
+
+**Example**
+
+```json
+{
+  "type": "string",
+  "id": "string",
+  "line": "string"
+}
+```
+
+### Schema: InventoryThresholdInput
+
+_No properties declared._
+
+**Example**
+
+```json
+{
+  "itemType": null,
+  "itemRef": null,
+  "unitCode": null,
+  "locationId": "00000000-0000-0000-0000-000000000000",
+  "lowStockThreshold": "string"
+}
+```
+
+### Schema: InventoryTransferInput
+
+_No properties declared._
+
+**Example**
+
+```json
+{
+  "itemType": null,
+  "itemRef": null,
+  "unitCode": null,
+  "fromLocationId": "00000000-0000-0000-0000-000000000000",
+  "toLocationId": "00000000-0000-0000-0000-000000000000",
+  "quantity": "12.5",
+  "source": {
+    "type": "string",
+    "id": "string",
+    "line": "string"
+  },
+  "occurredAt": "2026-01-01T00:00:00.000Z",
+  "reasonCode": "string",
+  "note": "string"
+}
+```
+
 ### Schema: IssueMachineCredentialRequest
 
 | Field                   | Type                              | Required | Nullable | Description                                                                                                                                                                        |
@@ -14709,6 +20638,186 @@ One node of a CLOSED Portable Text vocabulary (ADR-0100). _type is one of block,
 }
 ```
 
+### Schema: ProcurementDecimal
+
+An exact decimal as TEXT, never a float: at most 14 integer digits and 6 fractional digits, no exponent notation. A JSON number is accepted on input when it round-trips to a plain decimal; responses carry the canonical string (no trailing zeros).
+
+An exact decimal as TEXT, never a float: at most 14 integer digits and 6 fractional digits, no exponent notation. A JSON number is accepted on input when it round-trips to a plain decimal; responses carry the canonical string (no trailing zeros).
+
+**Example**
+
+```json
+"12.5"
+```
+
+### Schema: ProcurementDocumentInput
+
+| Field               | Type                                                            | Required | Nullable | Description                                                                     |
+| ------------------- | --------------------------------------------------------------- | -------- | -------- | ------------------------------------------------------------------------------- |
+| `mode`              | enum(`receive`, `supplier_return`, `requisition`, `transfer`)   | yes      | no       |                                                                                 |
+| `supplierId`        | string (uuid)                                                   | no       | no       | Required for receive/supplier_return, forbidden otherwise.                      |
+| `locationId`        | string (uuid)                                                   | yes      | no       | Where stock arrives (receive/requisition/transfer) or leaves (supplier_return). |
+| `sourceLocationId`  | string (uuid)                                                   | no       | no       | Required for requisition/transfer (where stock leaves), forbidden otherwise.    |
+| `externalReference` | string                                                          | no       | yes      |                                                                                 |
+| `documentDate`      | string (date)                                                   | no       | yes      |                                                                                 |
+| `notes`             | string                                                          | no       | yes      |                                                                                 |
+| `currencyCode`      | string                                                          | no       | no       |                                                                                 |
+| `lines`             | array of [`ProcurementLineInput`](#schema-procurementlineinput) | yes      | no       |                                                                                 |
+
+**Example**
+
+```json
+{
+  "mode": "receive",
+  "supplierId": "00000000-0000-0000-0000-000000000000",
+  "locationId": "00000000-0000-0000-0000-000000000000",
+  "sourceLocationId": "00000000-0000-0000-0000-000000000000",
+  "externalReference": "string",
+  "documentDate": "2026-01-01",
+  "notes": "string",
+  "currencyCode": "string",
+  "lines": [
+    {
+      "itemType": "string",
+      "itemRef": "string",
+      "sku": "string",
+      "itemName": "string",
+      "unitCode": "string",
+      "quantity": "12.5",
+      "unitCost": "12.5"
+    }
+  ]
+}
+```
+
+### Schema: ProcurementIdentifierCreate
+
+| Field   | Type                                                             | Required | Nullable | Description |
+| ------- | ---------------------------------------------------------------- | -------- | -------- | ----------- |
+| `type`  | [`ProcurementIdentifierType`](#schema-procurementidentifiertype) | yes      | no       |             |
+| `value` | string                                                           | yes      | no       |             |
+| `label` | string                                                           | no       | yes      |             |
+
+**Example**
+
+```json
+{
+  "type": "tax_id",
+  "value": "string",
+  "label": "string"
+}
+```
+
+### Schema: ProcurementIdentifierType
+
+Enum values: `tax_id`, `business_id`, `payment_ref`, `contact_ref`, `other`.
+
+**Example**
+
+```json
+"tax_id"
+```
+
+### Schema: ProcurementLineInput
+
+| Field      | Type                                                           | Required | Nullable | Description                                                                                |
+| ---------- | -------------------------------------------------------------- | -------- | -------- | ------------------------------------------------------------------------------------------ |
+| `itemType` | string                                                         | yes      | no       |                                                                                            |
+| `itemRef`  | string                                                         | yes      | no       | Opaque ledger reference, `A-Za-z0-9_.:-`, never credential-shaped.                         |
+| `sku`      | string                                                         | yes      | no       | Snapshot of the SKU.                                                                       |
+| `itemName` | string                                                         | yes      | no       | Snapshot of the item name.                                                                 |
+| `unitCode` | string                                                         | no       | no       | Unit of measure; defaults to `unit`. The ledger refuses a mismatch rather than converting. |
+| `quantity` | [`ProcurementDecimal`](#schema-procurementdecimal) \\\| number | yes      | no       |                                                                                            |
+| `unitCost` | [`ProcurementDecimal`](#schema-procurementdecimal) \\\| number | no       | yes      | Required for `receive` and `supplier_return` (the approval threshold is cost-based).       |
+
+**Example**
+
+```json
+{
+  "itemType": "string",
+  "itemRef": "string",
+  "sku": "string",
+  "itemName": "string",
+  "unitCode": "string",
+  "quantity": "12.5",
+  "unitCost": "12.5"
+}
+```
+
+### Schema: ProcurementReason
+
+| Field    | Type   | Required | Nullable | Description |
+| -------- | ------ | -------- | -------- | ----------- |
+| `reason` | string | no       | no       |             |
+
+**Example**
+
+```json
+{
+  "reason": "string"
+}
+```
+
+### Schema: ProcurementReasonRequired
+
+| Field    | Type   | Required | Nullable | Description |
+| -------- | ------ | -------- | -------- | ----------- |
+| `reason` | string | yes      | no       |             |
+
+**Example**
+
+```json
+{
+  "reason": "string"
+}
+```
+
+### Schema: ProcurementSupplierCreate
+
+| Field        | Type                                  | Required | Nullable | Description |
+| ------------ | ------------------------------------- | -------- | -------- | ----------- |
+| `vendorCode` | string                                | yes      | no       |             |
+| `name`       | string                                | yes      | no       |             |
+| `status`     | enum(`active`, `inactive`, `blocked`) | no       | no       |             |
+| `profileId`  | string (uuid)                         | no       | yes      |             |
+| `categories` | array of string                       | no       | no       |             |
+| `tags`       | array of string                       | no       | no       |             |
+
+**Example**
+
+```json
+{
+  "vendorCode": "string",
+  "name": "string",
+  "status": "active",
+  "profileId": "00000000-0000-0000-0000-000000000000",
+  "categories": ["string"],
+  "tags": ["string"]
+}
+```
+
+### Schema: ProcurementSupplierUpdate
+
+| Field        | Type                                  | Required | Nullable | Description |
+| ------------ | ------------------------------------- | -------- | -------- | ----------- |
+| `name`       | string                                | no       | no       |             |
+| `status`     | enum(`active`, `inactive`, `blocked`) | no       | no       |             |
+| `profileId`  | string (uuid)                         | no       | yes      |             |
+| `categories` | array of string                       | no       | no       |             |
+| `tags`       | array of string                       | no       | no       |             |
+
+**Example**
+
+```json
+{
+  "name": "string",
+  "status": "active",
+  "profileId": "00000000-0000-0000-0000-000000000000",
+  "categories": ["string"],
+  "tags": ["string"]
+}
+```
+
 ### Schema: PushMessageStatus
 
 Enum values: `queued`, `retry_wait`, `sending`, `sent`, `failed`, `cancelled`.
@@ -15041,6 +21150,717 @@ Every field is optional — an omitted field keeps its current value.
 }
 ```
 
+### Schema: TaxComponentResult
+
+| Field         | Type                               | Required | Nullable | Description |
+| ------------- | ---------------------------------- | -------- | -------- | ----------- |
+| `code`        | string                             | no       | no       |             |
+| `name`        | string                             | no       | no       |             |
+| `rate`        | string                             | no       | no       |             |
+| `basis`       | enum(`net`, `cumulative`)          | no       | no       |             |
+| `taxableBase` | [`TaxDecimal`](#schema-taxdecimal) | no       | no       |             |
+| `taxAmount`   | [`TaxDecimal`](#schema-taxdecimal) | no       | no       |             |
+
+**Example**
+
+```json
+{
+  "code": "string",
+  "name": "string",
+  "rate": "string",
+  "basis": "net",
+  "taxableBase": "10.50",
+  "taxAmount": "10.50"
+}
+```
+
+### Schema: TaxComponentRule
+
+| Field   | Type                      | Required | Nullable | Description                                                                                                                                                            |
+| ------- | ------------------------- | -------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `code`  | string                    | yes      | no       |                                                                                                                                                                        |
+| `name`  | string                    | yes      | no       |                                                                                                                                                                        |
+| `rate`  | string                    | yes      | no       | Percent as a decimal string, at most six decimals, 0 to 1000.                                                                                                          |
+| `basis` | enum(`net`, `cumulative`) | no       | no       | `net` applies the rate to the line's net amount. `cumulative` applies it to net PLUS every earlier component's tax in declaration order — the stacked / compound case. |
+
+**Example**
+
+```json
+{
+  "code": "string",
+  "name": "string",
+  "rate": "11",
+  "basis": "net"
+}
+```
+
+### Schema: TaxComponentTotal
+
+| Field       | Type                               | Required | Nullable | Description |
+| ----------- | ---------------------------------- | -------- | -------- | ----------- |
+| `code`      | string                             | no       | no       |             |
+| `name`      | string                             | no       | no       |             |
+| `taxAmount` | [`TaxDecimal`](#schema-taxdecimal) | no       | no       |             |
+
+**Example**
+
+```json
+{
+  "code": "string",
+  "name": "string",
+  "taxAmount": "10.50"
+}
+```
+
+### Schema: TaxDecimal
+
+A plain decimal STRING — never a JSON number. No exponent, no sign prefix other than `-`, no separators.
+
+A plain decimal STRING — never a JSON number. No exponent, no sign prefix other than `-`, no separators.
+
+**Example**
+
+```json
+"10.50"
+```
+
+### Schema: TaxLineInput
+
+| Field          | Type                               | Required | Nullable | Description                                                                                                    |
+| -------------- | ---------------------------------- | -------- | -------- | -------------------------------------------------------------------------------------------------------------- |
+| `lineRef`      | string                             | yes      | no       | The caller's own reference for the line, unique within the request. Echoed back, and the key a reversal names. |
+| `categoryCode` | string                             | no       | yes      |                                                                                                                |
+| `quantity`     | [`TaxDecimal`](#schema-taxdecimal) | yes      | no       | Greater than zero, at most six decimals.                                                                       |
+| `unitPrice`    | [`TaxDecimal`](#schema-taxdecimal) | yes      | no       | Net per unit under exclusive pricing, gross per unit under inclusive. At most six decimals.                    |
+| `discount`     | [`TaxDecimal`](#schema-taxdecimal) | no       | no       | Total discount on the line, in currency. Defaults to "0".                                                      |
+
+**Example**
+
+```json
+{
+  "lineRef": "string",
+  "categoryCode": "string",
+  "quantity": "10.50",
+  "unitPrice": "10.50",
+  "discount": "10.50"
+}
+```
+
+### Schema: TaxLineResult
+
+| Field             | Type                                                        | Required | Nullable | Description                    |
+| ----------------- | ----------------------------------------------------------- | -------- | -------- | ------------------------------ |
+| `lineNo`          | integer                                                     | no       | no       |                                |
+| `lineRef`         | string                                                      | no       | no       |                                |
+| `originalLineRef` | string                                                      | no       | no       | Present on a reversal's lines. |
+| `categoryCode`    | string                                                      | no       | yes      |                                |
+| `treatment`       | enum(`taxable`, `exempt`, `zero_rated`)                     | no       | no       |                                |
+| `quantity`        | string                                                      | no       | no       |                                |
+| `unitPrice`       | string                                                      | no       | no       |                                |
+| `discount`        | string                                                      | no       | no       |                                |
+| `netAmount`       | [`TaxDecimal`](#schema-taxdecimal)                          | no       | no       |                                |
+| `taxAmount`       | [`TaxDecimal`](#schema-taxdecimal)                          | no       | no       |                                |
+| `grossAmount`     | [`TaxDecimal`](#schema-taxdecimal)                          | no       | no       |                                |
+| `components`      | array of [`TaxComponentResult`](#schema-taxcomponentresult) | no       | no       |                                |
+
+**Example**
+
+```json
+{
+  "lineNo": 0,
+  "lineRef": "string",
+  "originalLineRef": "string",
+  "categoryCode": "string",
+  "treatment": "taxable",
+  "quantity": "string",
+  "unitPrice": "string",
+  "discount": "string",
+  "netAmount": "10.50",
+  "taxAmount": "10.50",
+  "grossAmount": "10.50",
+  "components": [
+    {
+      "code": "string",
+      "name": "string",
+      "rate": "string",
+      "basis": "net",
+      "taxableBase": "10.50",
+      "taxAmount": "10.50"
+    }
+  ]
+}
+```
+
+### Schema: TaxQuoteRequest
+
+| Field         | Type                                            | Required | Nullable | Description                                                                                                                          |
+| ------------- | ----------------------------------------------- | -------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `profileCode` | string                                          | yes      | no       |                                                                                                                                      |
+| `taxDate`     | string (date)                                   | yes      | no       | The calendar date the supply happened — the caller's to state, never the server's clock. Selects the rule version in force that day. |
+| `lines`       | array of [`TaxLineInput`](#schema-taxlineinput) | yes      | no       |                                                                                                                                      |
+
+**Example**
+
+```json
+{
+  "profileCode": "string",
+  "taxDate": "2026-01-01",
+  "lines": [
+    {
+      "lineRef": "string",
+      "categoryCode": "string",
+      "quantity": "10.50",
+      "unitPrice": "10.50",
+      "discount": "10.50"
+    }
+  ]
+}
+```
+
+### Schema: TaxReversalRequest
+
+| Field        | Type            | Required | Nullable | Description                                                                                                                                                                 |
+| ------------ | --------------- | -------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `documentId` | string          | yes      | no       | The reversal's own document reference (a refund id); same opaque charset as a snapshot's `documentId`.                                                                      |
+| `taxDate`    | string (date)   | no       | no       | The period the reversal is reported in. The SERVER's date when omitted (never the original's). A stated date outside the server-date window needs `tax.snapshots.backdate`. |
+| `reason`     | string          | no       | no       |                                                                                                                                                                             |
+| `lines`      | array of object | no       | no       | Omit to reverse everything not yet returned.                                                                                                                                |
+
+**Example**
+
+```json
+{
+  "documentId": "string",
+  "taxDate": "2026-01-01",
+  "reason": "string",
+  "lines": [
+    {
+      "lineRef": "string",
+      "quantity": "10.50"
+    }
+  ]
+}
+```
+
+### Schema: TaxRule
+
+| Field          | Type                                                    | Required | Nullable | Description                                                                                                                                                                          |
+| -------------- | ------------------------------------------------------- | -------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `categoryCode` | string                                                  | no       | yes      | Null is the FALLBACK rule for lines whose category has no rule of its own (at most one).                                                                                             |
+| `treatment`    | enum(`taxable`, `exempt`, `zero_rated`)                 | yes      | no       | `taxable` needs at least one component. `exempt` and `zero_rated` must have none and are kept distinct because they are different lines on a return, not because the amount differs. |
+| `components`   | array of [`TaxComponentRule`](#schema-taxcomponentrule) | no       | no       |                                                                                                                                                                                      |
+
+**Example**
+
+```json
+{
+  "categoryCode": "string",
+  "treatment": "taxable",
+  "components": [
+    {
+      "code": "string",
+      "name": "string",
+      "rate": "11",
+      "basis": "net"
+    }
+  ]
+}
+```
+
+### Schema: TaxRuleDefinition
+
+| Field        | Type                                  | Required | Nullable | Description |
+| ------------ | ------------------------------------- | -------- | -------- | ----------- |
+| `categories` | array of object                       | yes      | no       |             |
+| `rules`      | array of [`TaxRule`](#schema-taxrule) | yes      | no       |             |
+
+**Example**
+
+```json
+{
+  "categories": [
+    {
+      "code": "string",
+      "name": "string",
+      "description": "string"
+    }
+  ],
+  "rules": [
+    {
+      "categoryCode": "string",
+      "treatment": "taxable",
+      "components": []
+    }
+  ]
+}
+```
+
+### Schema: TaxRuleVersion
+
+_No properties declared._
+
+**Example**
+
+```json
+{
+  "id": "00000000-0000-0000-0000-000000000000",
+  "profileCode": "string",
+  "versionNo": 0,
+  "status": "draft",
+  "name": "string",
+  "jurisdictionCode": "string",
+  "countryCode": "string",
+  "regionCode": "string",
+  "currencyCode": "string",
+  "pricingMode": "exclusive",
+  "roundingMode": "string",
+  "roundingScale": 0,
+  "roundingLevel": "line",
+  "effectiveFrom": "2026-01-01",
+  "effectiveTo": "2026-01-01",
+  "notes": "string",
+  "createdAt": "2026-01-01T00:00:00.000Z",
+  "createdBy": "00000000-0000-0000-0000-000000000000",
+  "publishedAt": "2026-01-01T00:00:00.000Z",
+  "publishedBy": "00000000-0000-0000-0000-000000000000",
+  "definition": {
+    "categories": [
+      {
+        "code": "string",
+        "name": "string",
+        "description": "string"
+      }
+    ],
+    "rules": [
+      {
+        "categoryCode": "string",
+        "treatment": "taxable",
+        "components": []
+      }
+    ]
+  }
+}
+```
+
+### Schema: TaxRuleVersionEnvelope
+
+| Field     | Type                                       | Required | Nullable | Description |
+| --------- | ------------------------------------------ | -------- | -------- | ----------- |
+| `success` | enum(`true`)                               | no       | no       |             |
+| `data`    | [`TaxRuleVersion`](#schema-taxruleversion) | no       | no       |             |
+
+**Example**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "00000000-0000-0000-0000-000000000000",
+    "profileCode": "string",
+    "versionNo": 0,
+    "status": "draft",
+    "name": "string",
+    "jurisdictionCode": "string",
+    "countryCode": "string",
+    "regionCode": "string",
+    "currencyCode": "string",
+    "pricingMode": "exclusive",
+    "roundingMode": "string",
+    "roundingScale": 0,
+    "roundingLevel": "line",
+    "effectiveFrom": "2026-01-01",
+    "effectiveTo": "2026-01-01",
+    "notes": "string",
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "createdBy": "00000000-0000-0000-0000-000000000000",
+    "publishedAt": "2026-01-01T00:00:00.000Z",
+    "publishedBy": "00000000-0000-0000-0000-000000000000",
+    "definition": {
+      "categories": [],
+      "rules": []
+    }
+  }
+}
+```
+
+### Schema: TaxRuleVersionInput
+
+| Field              | Type                                                                        | Required | Nullable | Description                                                                                                                                                                 |
+| ------------------ | --------------------------------------------------------------------------- | -------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `profileCode`      | string                                                                      | yes      | no       | The profile this is a version OF. Tenant-named.                                                                                                                             |
+| `name`             | string                                                                      | yes      | no       |                                                                                                                                                                             |
+| `jurisdictionCode` | string                                                                      | yes      | no       | Opaque, tenant-defined jurisdiction/scope code. The core ships no country list and no country's law.                                                                        |
+| `countryCode`      | string                                                                      | no       | no       |                                                                                                                                                                             |
+| `regionCode`       | string                                                                      | no       | no       |                                                                                                                                                                             |
+| `currencyCode`     | string                                                                      | yes      | no       |                                                                                                                                                                             |
+| `pricingMode`      | enum(`exclusive`, `inclusive`)                                              | yes      | no       |                                                                                                                                                                             |
+| `roundingMode`     | enum(`half_up`, `half_down`, `half_even`, `up`, `down`, `ceiling`, `floor`) | yes      | no       | `half_up` / `half_down` are symmetric about zero. `half_even` is banker's rounding. `up` / `down` are away from / toward zero; `ceiling` / `floor` are toward +/- infinity. |
+| `roundingScale`    | integer                                                                     | yes      | no       | Decimal places amounts are rounded to.                                                                                                                                      |
+| `roundingLevel`    | enum(`line`, `document`)                                                    | yes      | no       | `line` rounds each line's tax alone and sums. `document` sums the exact tax per component, rounds ONCE, and apportions back to the lines by largest remainder.              |
+| `effectiveFrom`    | string (date)                                                               | yes      | no       | Inclusive calendar date.                                                                                                                                                    |
+| `notes`            | string                                                                      | no       | no       |                                                                                                                                                                             |
+| `definition`       | [`TaxRuleDefinition`](#schema-taxruledefinition)                            | yes      | no       |                                                                                                                                                                             |
+
+**Example**
+
+```json
+{
+  "profileCode": "string",
+  "name": "string",
+  "jurisdictionCode": "string",
+  "countryCode": "string",
+  "regionCode": "string",
+  "currencyCode": "string",
+  "pricingMode": "exclusive",
+  "roundingMode": "half_up",
+  "roundingScale": 0,
+  "roundingLevel": "line",
+  "effectiveFrom": "2026-01-01",
+  "notes": "string",
+  "definition": {
+    "categories": [
+      {
+        "code": "string",
+        "name": "string",
+        "description": "string"
+      }
+    ],
+    "rules": [
+      {
+        "categoryCode": "string",
+        "treatment": "taxable",
+        "components": []
+      }
+    ]
+  }
+}
+```
+
+### Schema: TaxRuleVersionSummary
+
+A rule version without its `definition` (up to 256 KiB). What a list returns; the body comes from the detail endpoint.
+
+| Field              | Type                           | Required | Nullable | Description                                         |
+| ------------------ | ------------------------------ | -------- | -------- | --------------------------------------------------- |
+| `id`               | string (uuid)                  | no       | no       |                                                     |
+| `profileCode`      | string                         | no       | no       |                                                     |
+| `versionNo`        | integer                        | no       | no       |                                                     |
+| `status`           | enum(`draft`, `published`)     | no       | no       |                                                     |
+| `name`             | string                         | no       | no       |                                                     |
+| `jurisdictionCode` | string                         | no       | no       |                                                     |
+| `countryCode`      | string                         | no       | yes      |                                                     |
+| `regionCode`       | string                         | no       | yes      |                                                     |
+| `currencyCode`     | string                         | no       | no       |                                                     |
+| `pricingMode`      | enum(`exclusive`, `inclusive`) | no       | no       |                                                     |
+| `roundingMode`     | string                         | no       | no       |                                                     |
+| `roundingScale`    | integer                        | no       | no       |                                                     |
+| `roundingLevel`    | enum(`line`, `document`)       | no       | no       |                                                     |
+| `effectiveFrom`    | string (date)                  | no       | no       |                                                     |
+| `effectiveTo`      | string (date)                  | no       | yes      | EXCLUSIVE end of the window; null while open-ended. |
+| `notes`            | string                         | no       | yes      |                                                     |
+| `createdAt`        | string (date-time)             | no       | no       |                                                     |
+| `createdBy`        | string (uuid)                  | no       | yes      |                                                     |
+| `publishedAt`      | string (date-time)             | no       | yes      |                                                     |
+| `publishedBy`      | string (uuid)                  | no       | yes      |                                                     |
+
+**Example**
+
+```json
+{
+  "id": "00000000-0000-0000-0000-000000000000",
+  "profileCode": "string",
+  "versionNo": 0,
+  "status": "draft",
+  "name": "string",
+  "jurisdictionCode": "string",
+  "countryCode": "string",
+  "regionCode": "string",
+  "currencyCode": "string",
+  "pricingMode": "exclusive",
+  "roundingMode": "string",
+  "roundingScale": 0,
+  "roundingLevel": "line",
+  "effectiveFrom": "2026-01-01",
+  "effectiveTo": "2026-01-01",
+  "notes": "string",
+  "createdAt": "2026-01-01T00:00:00.000Z",
+  "createdBy": "00000000-0000-0000-0000-000000000000",
+  "publishedAt": "2026-01-01T00:00:00.000Z",
+  "publishedBy": "00000000-0000-0000-0000-000000000000"
+}
+```
+
+### Schema: TaxSnapshot
+
+_No properties declared._
+
+**Example**
+
+```json
+{
+  "id": "00000000-0000-0000-0000-000000000000",
+  "kind": "sale",
+  "documentType": "string",
+  "documentId": "string",
+  "originalSnapshotId": "00000000-0000-0000-0000-000000000000",
+  "ruleVersionId": "00000000-0000-0000-0000-000000000000",
+  "profileCode": "string",
+  "versionNo": 0,
+  "taxDate": "2026-01-01",
+  "currencyCode": "string",
+  "pricingMode": "exclusive",
+  "roundingMode": "string",
+  "roundingScale": 0,
+  "roundingLevel": "line",
+  "netTotal": "10.50",
+  "taxTotal": "10.50",
+  "grossTotal": "10.50",
+  "componentTotals": [
+    {
+      "code": "string",
+      "name": "string",
+      "taxAmount": "10.50"
+    }
+  ],
+  "treatmentTotals": [
+    {
+      "treatment": "taxable",
+      "netAmount": "10.50",
+      "taxAmount": "10.50",
+      "grossAmount": "10.50"
+    }
+  ],
+  "reason": "string",
+  "createdAt": "2026-01-01T00:00:00.000Z",
+  "createdBy": "00000000-0000-0000-0000-000000000000",
+  "lines": [
+    {
+      "lineNo": 0,
+      "lineRef": "string",
+      "originalLineRef": "string",
+      "categoryCode": "string",
+      "treatment": "taxable",
+      "quantity": "string",
+      "unitPrice": "string",
+      "discount": "string",
+      "netAmount": "10.50",
+      "taxAmount": "10.50",
+      "grossAmount": "10.50",
+      "components": []
+    }
+  ]
+}
+```
+
+### Schema: TaxSnapshotEnvelope
+
+| Field     | Type                                 | Required | Nullable | Description |
+| --------- | ------------------------------------ | -------- | -------- | ----------- |
+| `success` | enum(`true`)                         | no       | no       |             |
+| `data`    | [`TaxSnapshot`](#schema-taxsnapshot) | no       | no       |             |
+
+**Example**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "00000000-0000-0000-0000-000000000000",
+    "kind": "sale",
+    "documentType": "string",
+    "documentId": "string",
+    "originalSnapshotId": "00000000-0000-0000-0000-000000000000",
+    "ruleVersionId": "00000000-0000-0000-0000-000000000000",
+    "profileCode": "string",
+    "versionNo": 0,
+    "taxDate": "2026-01-01",
+    "currencyCode": "string",
+    "pricingMode": "exclusive",
+    "roundingMode": "string",
+    "roundingScale": 0,
+    "roundingLevel": "line",
+    "netTotal": "10.50",
+    "taxTotal": "10.50",
+    "grossTotal": "10.50",
+    "componentTotals": [
+      {
+        "code": "string",
+        "name": "string",
+        "taxAmount": null
+      }
+    ],
+    "treatmentTotals": [
+      {
+        "treatment": "taxable",
+        "netAmount": null,
+        "taxAmount": null,
+        "grossAmount": null
+      }
+    ],
+    "reason": "string",
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "createdBy": "00000000-0000-0000-0000-000000000000",
+    "lines": [
+      {
+        "lineNo": 0,
+        "lineRef": "string",
+        "originalLineRef": "string",
+        "categoryCode": "string",
+        "treatment": "taxable",
+        "quantity": "string",
+        "unitPrice": "string",
+        "discount": "string",
+        "netAmount": null,
+        "taxAmount": null,
+        "grossAmount": null,
+        "components": []
+      }
+    ]
+  }
+}
+```
+
+### Schema: TaxSnapshotRequest
+
+| Field          | Type                                            | Required | Nullable | Description                                                                                                                                                                                                                                                      |
+| -------------- | ----------------------------------------------- | -------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `profileCode`  | string                                          | yes      | no       |                                                                                                                                                                                                                                                                  |
+| `taxDate`      | string (date)                                   | yes      | no       | The calendar date the supply happened. Bounded against the SERVER's date (default 7 days back, 1 day forward, configurable): outside that window the caller must also hold `tax.snapshots.backdate`, and gets `403 TAX_BACKDATE_PERMISSION_REQUIRED` without it. |
+| `documentType` | string                                          | yes      | no       | The consumer's document kind (order, invoice, receipt...). Opaque.                                                                                                                                                                                               |
+| `documentId`   | string                                          | yes      | no       | The consumer's document reference: an opaque handle of letters, digits and `. _ : / -` (no spaces, markup or control characters, never trimmed). No customer data is stored. Finalised once per (documentType, documentId).                                      |
+| `lines`        | array of [`TaxLineInput`](#schema-taxlineinput) | yes      | no       |                                                                                                                                                                                                                                                                  |
+
+**Example**
+
+```json
+{
+  "profileCode": "string",
+  "taxDate": "2026-01-01",
+  "documentType": "string",
+  "documentId": "string",
+  "lines": [
+    {
+      "lineRef": "string",
+      "categoryCode": "string",
+      "quantity": "10.50",
+      "unitPrice": "10.50",
+      "discount": "10.50"
+    }
+  ]
+}
+```
+
+### Schema: TaxSnapshotSummary
+
+A snapshot without its `lines` (up to 500 per document). What a list returns; the lines come from the detail endpoint. The rule definition the snapshot was computed under is never returned here — read the version (`ruleVersionId`) with `tax.rules.read`.
+
+| Field                | Type                                                      | Required | Nullable | Description                                                                                                         |
+| -------------------- | --------------------------------------------------------- | -------- | -------- | ------------------------------------------------------------------------------------------------------------------- |
+| `id`                 | string (uuid)                                             | no       | no       |                                                                                                                     |
+| `kind`               | enum(`sale`, `reversal`)                                  | no       | no       | `sale` is a finalised document (non-negative amounts). `reversal` is a refund/return of one (non-positive amounts). |
+| `documentType`       | string                                                    | no       | no       |                                                                                                                     |
+| `documentId`         | string                                                    | no       | no       |                                                                                                                     |
+| `originalSnapshotId` | string (uuid)                                             | no       | yes      |                                                                                                                     |
+| `ruleVersionId`      | string (uuid)                                             | no       | no       |                                                                                                                     |
+| `profileCode`        | string                                                    | no       | no       |                                                                                                                     |
+| `versionNo`          | integer                                                   | no       | no       |                                                                                                                     |
+| `taxDate`            | string (date)                                             | no       | no       |                                                                                                                     |
+| `currencyCode`       | string                                                    | no       | no       |                                                                                                                     |
+| `pricingMode`        | enum(`exclusive`, `inclusive`)                            | no       | no       |                                                                                                                     |
+| `roundingMode`       | string                                                    | no       | no       |                                                                                                                     |
+| `roundingScale`      | integer                                                   | no       | no       |                                                                                                                     |
+| `roundingLevel`      | enum(`line`, `document`)                                  | no       | no       |                                                                                                                     |
+| `netTotal`           | [`TaxDecimal`](#schema-taxdecimal)                        | no       | no       |                                                                                                                     |
+| `taxTotal`           | [`TaxDecimal`](#schema-taxdecimal)                        | no       | no       |                                                                                                                     |
+| `grossTotal`         | [`TaxDecimal`](#schema-taxdecimal)                        | no       | no       |                                                                                                                     |
+| `componentTotals`    | array of [`TaxComponentTotal`](#schema-taxcomponenttotal) | no       | no       |                                                                                                                     |
+| `treatmentTotals`    | array of [`TaxTreatmentTotal`](#schema-taxtreatmenttotal) | no       | no       |                                                                                                                     |
+| `reason`             | string                                                    | no       | yes      |                                                                                                                     |
+| `createdAt`          | string (date-time)                                        | no       | no       |                                                                                                                     |
+| `createdBy`          | string (uuid)                                             | no       | yes      |                                                                                                                     |
+
+**Example**
+
+```json
+{
+  "id": "00000000-0000-0000-0000-000000000000",
+  "kind": "sale",
+  "documentType": "string",
+  "documentId": "string",
+  "originalSnapshotId": "00000000-0000-0000-0000-000000000000",
+  "ruleVersionId": "00000000-0000-0000-0000-000000000000",
+  "profileCode": "string",
+  "versionNo": 0,
+  "taxDate": "2026-01-01",
+  "currencyCode": "string",
+  "pricingMode": "exclusive",
+  "roundingMode": "string",
+  "roundingScale": 0,
+  "roundingLevel": "line",
+  "netTotal": "10.50",
+  "taxTotal": "10.50",
+  "grossTotal": "10.50",
+  "componentTotals": [
+    {
+      "code": "string",
+      "name": "string",
+      "taxAmount": "10.50"
+    }
+  ],
+  "treatmentTotals": [
+    {
+      "treatment": "taxable",
+      "netAmount": "10.50",
+      "taxAmount": "10.50",
+      "grossAmount": "10.50"
+    }
+  ],
+  "reason": "string",
+  "createdAt": "2026-01-01T00:00:00.000Z",
+  "createdBy": "00000000-0000-0000-0000-000000000000"
+}
+```
+
+### Schema: TaxTreatmentTotal
+
+| Field         | Type                                    | Required | Nullable | Description |
+| ------------- | --------------------------------------- | -------- | -------- | ----------- |
+| `treatment`   | enum(`taxable`, `exempt`, `zero_rated`) | no       | no       |             |
+| `netAmount`   | [`TaxDecimal`](#schema-taxdecimal)      | no       | no       |             |
+| `taxAmount`   | [`TaxDecimal`](#schema-taxdecimal)      | no       | no       |             |
+| `grossAmount` | [`TaxDecimal`](#schema-taxdecimal)      | no       | no       |             |
+
+**Example**
+
+```json
+{
+  "treatment": "taxable",
+  "netAmount": "10.50",
+  "taxAmount": "10.50",
+  "grossAmount": "10.50"
+}
+```
+
+### Schema: TelegramBindingStatus
+
+Enum values: `pending_confirmation`, `active`, `revoked`, `suspended`.
+
+**Example**
+
+```json
+"pending_confirmation"
+```
+
+### Schema: TelegramMessageStatus
+
+Enum values: `queued`, `retry_wait`, `sending`, `sent`, `failed`, `cancelled`, `expired`.
+
+**Example**
+
+```json
+"queued"
+```
+
 ### Schema: ThemeConfigRequest
 
 A tenant's DATA-only theme configuration. Every key/value is validated against the chosen theme descriptor; unknown tokens/slots/assets/sections are rejected, and token values are validated by rejection against strict CSS grammars (no url()/expression()/@import/javascript:/comment-breakout).
@@ -15105,6 +21925,62 @@ At least one field required. `status` may not be `active` (use verify); `hostnam
 }
 ```
 
+### Schema: WhatsappConsentGrantRequest
+
+| Field                | Type    | Required | Nullable | Description                                                                                    |
+| -------------------- | ------- | -------- | -------- | ---------------------------------------------------------------------------------------------- |
+| `phone`              | string  | yes      | no       | Same forms as the suppression request. Never echoed back.                                      |
+| `reinstateWithdrawn` | boolean | no       | no       | Must be true to grant over a recorded opt-out; needs `consents.restore` and `evidenceRef`.     |
+| `evidenceRef`        | string  | no       | no       | A reference to the evidence of the new consent (ticket, form id). Required when reinstating.   |
+| `source`             | string  | yes      | no       | Where the opt-in came from (`admin`, `form`, `import`, `inbound_reply`); recorded as evidence. |
+
+**Example**
+
+```json
+{
+  "phone": "string",
+  "reinstateWithdrawn": false,
+  "evidenceRef": "string",
+  "source": "string"
+}
+```
+
+### Schema: WhatsappConsentStatus
+
+Enum values: `granted`, `withdrawn`.
+
+**Example**
+
+```json
+"granted"
+```
+
+### Schema: WhatsappMessageStatus
+
+Enum values: `queued`, `retry_wait`, `sending`, `sent`, `failed`, `cancelled`, `expired`.
+
+**Example**
+
+```json
+"queued"
+```
+
+### Schema: WhatsappSuppressionCreateRequest
+
+| Field    | Type                         | Required | Nullable | Description                                                                                                                                                      |
+| -------- | ---------------------------- | -------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `phone`  | string                       | yes      | no       | E.164 (`+62...`) or `00`-prefixed; a national number with a leading 0 is accepted only when the deployment configures a default country code. Never echoed back. |
+| `reason` | enum(`manual`, `stop_reply`) | yes      | no       |                                                                                                                                                                  |
+
+**Example**
+
+```json
+{
+  "phone": "string",
+  "reason": "manual"
+}
+```
+
 ## Domain events
 
 Every channel below carries the SAME message envelope (`DomainEvent` /
@@ -15159,7 +22035,7 @@ consumer/subscriber contract in this file).
 }
 ```
 
-### Channels (56)
+### Channels (80)
 
 - `awcms.blog-content.ad.created` — An advertisement was created. Documented contract only; producer is `pages/api/v1/blog/ads/index.ts`'s `blog-content.ad.created` log line.
 - `awcms.blog-content.ad.deleted` — An advertisement was soft-deleted. Documented contract only; producer is `pages/api/v1/blog/ads/[id].ts`'s `blog-content.ad.deleted` log line.
@@ -15188,6 +22064,15 @@ consumer/subscriber contract in this file).
 - `awcms.blog-content.widget.created` — A widget was created. Documented contract only; producer is `pages/api/v1/blog/widgets/index.ts`'s `blog-content.widget.created` log line.
 - `awcms.blog-content.widget.deleted` — A widget was soft-deleted. Documented contract only; producer is `pages/api/v1/blog/widgets/[id].ts`'s `blog-content.widget.deleted` log line.
 - `awcms.blog-content.widget.updated` — A widget was updated. Documented contract only; producer is `pages/api/v1/blog/widgets/[id].ts`'s `blog-content.widget.updated` log line.
+- `awcms.booking.reservation.cancelled` — Booking reservation event (ADR-0131, Issue #941; docs/awcms/booking.md section 7.4). A held or confirmed reservation was cancelled and its allocations released. Producer: `transitionReservation`. Same payload shape as `reservation.created`, plus `lateCancellation` (the module records the fact; any fee is the commerce layer's). The cancellation reason code is on the append-only history row, never in the event.
+- `awcms.booking.reservation.checked_in` — Booking reservation event (ADR-0131, Issue #941; docs/awcms/booking.md section 7.4). A confirmed reservation was checked in. Producer: `transitionReservation`. Same payload shape as `reservation.created`.
+- `awcms.booking.reservation.completed` — Booking reservation event (ADR-0131, Issue #941; docs/awcms/booking.md section 7.4). A checked-in reservation was completed (checked out). Producer: `transitionReservation`. Same payload shape as `reservation.created`.
+- `awcms.booking.reservation.confirmed` — Booking reservation event (ADR-0131, Issue #941; docs/awcms/booking.md section 7.4). A hold became confirmed (`previousStatus` held) or a reservation was created already confirmed (`previousStatus` null). Producer: `booking/application/booking-reservation-service.ts`'s `transitionReservation` and `placeHold`. Same payload shape as `reservation.created`.
+- `awcms.booking.reservation.created` — Booking reservation event (ADR-0131, Issue #941; docs/awcms/booking.md section 7.4). A reservation exists: held, or confirmed when the offering confirms immediately, or the confirmed replacement of a reschedule (then `rescheduledFromId` names the reservation it replaced). Producer: `booking/application/booking-hold-service.ts`'s `placeHold`, in the SAME transaction as the claim: a rolled-back or refused claim emits nothing. Payload: `reservationId`, `reservationNo`, `lineageId`, `status`, `previousStatus`, `startsAt`/`endsAt` (RFC 3339 UTC), `resourceIds`, `offeringIds`, `partySize`, `externalRefType`/`externalRef` (the adapter's own opaque pair), `stays` (additive, only when the reservation holds a stay: `resourceId`, `checkInDate`, `checkOutDate`, `nights`, `timezone`), `occurredAt`, `correlationId`. NEVER a customer name, contact, reference or note, a reason text, an actor in the payload (the envelope carries `actorTenantUserId` like every module's events) or any amount or payment state: the module stores none.
+- `awcms.booking.reservation.expired` — Booking reservation event (ADR-0131, Issue #941; docs/awcms/booking.md section 7.4). A hold expired and its allocations were released: found by the `booking:holds:expire` sweep (published in the sweep's own tenant transaction, `booking/application/booking-hold-expiry-job.ts`) or reclaimed by a claim that wanted its units (`booking-hold-expiry.ts`'s `reclaimExpiredHolds`). Same payload shape as `reservation.created`; `previousStatus` is held.
+- `awcms.booking.reservation.held` — Booking reservation event (ADR-0131, Issue #941; docs/awcms/booking.md section 7.4). A hold was placed; not emitted when the offering confirms immediately. Producer: `placeHold`. Same payload shape as `reservation.created`.
+- `awcms.booking.reservation.no_show` — Booking reservation event (ADR-0131, Issue #941; docs/awcms/booking.md section 7.4). A confirmed reservation was marked no-show by a person after its start plus the grace period (there is no automatic no-show). Producer: `transitionReservation`. Same payload shape as `reservation.created`.
+- `awcms.booking.reservation.rescheduled` — Booking reservation event (ADR-0131, Issue #941; docs/awcms/booking.md section 7.4). A confirmed reservation was superseded by its replacement in one transaction. Producer: `placeHold` with `replaces`, called by `rescheduleReservation`. Same payload shape as `reservation.created`, plus `supersededById` (the replacement); the replacement announces itself with `created` and `confirmed` carrying `rescheduledFromId`.
 - `awcms.comments.comment.approved` — A comment became publicly visible, either by auto-approval under the thread policy or by a moderator's approve decision. Producers: `comments/application/comment-service.ts`'s `submitComment` and `comments/application/comment-moderation.ts`'s `moderateComment`. The reply-notification consumer keys off THIS event rather than `comment.submitted`, so a comment still held for moderation never triggers a notification.
 - `awcms.comments.comment.submitted` — A comment was submitted against a published, public commentable resource (ADR-0041). Producer: `comments/application/comment-service.ts`'s `submitComment`. The payload carries opaque references only — comment and thread id, resource type, the server-derived public URL, and the resulting status. Never the body text, the author address, or any identity hash.
 - `awcms.comments.reply.created` — A submitted comment was a reply to an existing comment. Producer: `comments/application/comment-service.ts`'s `submitComment`, published alongside `comment.submitted` so a consumer can distinguish thread replies without re-reading the row. The recipient address is resolved from encrypted storage by the dispatcher at send time and is never carried here.
@@ -15203,12 +22088,27 @@ consumer/subscriber contract in this file).
 - `awcms.commerce.product.updated` — A product's fields other than `status` were changed. Producer: `commerce/application/product-directory.ts`'s `updateProduct`. Published alongside `commerce.product.status_changed` when a single `PATCH` changes both.
 - `awcms.commerce.review.published` — A pending review was moderated to `published` by an admin. Producer: `commerce/application/review-directory.ts`'s `moderateReview` — never fired on review creation, since a pending review is not yet a fact worth publishing to anyone.
 - `awcms.commerce.voucher.redeemed` — A voucher's `used_count` was incremented by a real order. Producer: `commerce/application/order-directory.ts`'s `createOrderFromCart`, in the same transaction as the order that redeemed it.
-- `awcms.domain-event-runtime.sample.recorded` — Reference/example event used to exercise the domain-event-runtime outbox, dispatcher, ordering, retry/backoff, dead-letter, and replay mechanism end-to-end. Real producer modules publish their OWN event types the same way, via `appendDomainEvent` — this one is intentionally self-contained rather than tied to another module's business logic in this foundation module (see `src/modules/domain-event-runtime/domain/event-type-registry.ts`'s own doc comment). Producer: any caller of `application/append-domain-event.ts`'s `appendDomainEvent` for this event type; consumers: `infrastructure/consumer-registry.ts`'s two reference consumers (a same-process cross-module audit projector and a self-contained read-model activity-rollup projection).
+- `awcms.domain-event-runtime.sample.recorded` — Reference/example event used to exercise the domain-event-runtime outbox, dispatcher, ordering, retry/backoff, dead-letter, and replay mechanism end-to-end. Real producer modules publish their OWN event types the same way, via `appendDomainEvent` — this one is intentionally self-contained rather than tied to another module's business logic in this foundation module (see `src/modules/domain-event-runtime/domain/event-type-registry.ts`'s own doc comment). Producer: any caller of `application/append-domain-event.ts`'s `appendDomainEvent` for this event type; consumers: the reference consumers declared in the descriptors of `domain_event_runtime` (a same-process cross-module audit projector and a self-contained read-model activity-rollup projection) and `reporting` (an event-activity projector), ADR-0134.
 - `awcms.email.message.cancelled` — An operator cancelled a still-queued message (`POST /api/v1/email/messages/{id}/cancel`) before dispatch. Documented contract only; producer is the structured JSON logger (`pages/api/v1/email/messages/[id]/cancel.ts`'s `email.message.cancelled` log line).
 - `awcms.email.message.failed` — The email dispatcher exhausted retries (or hit a non-retryable failure) for a queued message. Documented contract only; producer is the structured JSON logger (`email/application/email-dispatch.ts`'s `email.dispatch.failed` log line).
 - `awcms.email.message.queued` — An email message was enqueued into `awcms_email_messages`. Documented contract only, same convention as `database.pool.saturated` — the concrete producer is the structured JSON logger, invoked from `email/application/announcement-directory.ts`'s `enqueueAnnouncement` (`email.message.queued` log line).
 - `awcms.email.message.sent` — The email dispatcher (`bun run email:dispatch`) delivered a message through the configured provider. Documented contract only; producer is the structured JSON logger (`email/application/email-dispatch.ts`'s `email.dispatch.sent` log line).
 - `awcms.email.message.suppressed` — The email dispatcher found a claimed message's recipient newly present on `awcms_email_suppression_list` (added after enqueue, before dispatch) and skipped the provider call entirely. Documented contract only; producer is the structured JSON logger (`email/application/email-dispatch.ts`'s `email.dispatch.suppressed` log line).
+- `awcms.hr.commission.voided` — A commission accrual was voided (ADR-0132, Issue #1109), in the transaction that voided it: a pending or approved accrual, by the HTTP void route or by `CommissionAccrualPort.void` when the sale it came from was voided, refunded or cancelled. Producer: `hr-commission/application/hr-commission- accrual-ledger.ts`'s `transitionAccrual`. Payload: `accrualId`, `employmentId`, `sourceType`, `ruleKey`, `ruleVersion`, `fromStatus` (`pending` or `approved`), `reasonCode` (a code or null). Never an amount, a source reference, a payment reference or a name. A replayed void publishes nothing.
+- `awcms.inventory.movement.posted` — A stock movement was posted to the append-only inventory ledger and its balance updated, in ONE transaction (ADR-0126, Issue #887). Producer: `inventory/application/inventory-ledger.ts`'s posting core, shared by `postMovement`, `postAdjustment`, `reverseAdjustment` and `postTransfer` (a transfer publishes one event per leg). Published in the same commit as the movement, so a rolled-back posting publishes nothing; a REPLAY of an already-posted source identity publishes nothing either. Ordered per balance (`order_key` = location + item). The payload carries opaque item and source references and decimal-string quantities only — `movementId`, `locationId`, `itemType`, `itemRef`, `unitCode`, `movementType`, `operation`, `quantityDelta`, `balanceAfter`, `sourceType`, `sourceId`, `sourceLine`, `transferId`, `reversesMovementId`. Never the free-text note and never anything identifying a person.
+- `awcms.inventory.stock.low` — A stock balance crossed to or below its low-stock threshold (ADR-0126, Issue #887) — by a movement or by a threshold change. Producer: `inventory/application/inventory-ledger.ts`'s `recordLowStockTransition`. Published ONCE per downward crossing, not on every movement while the balance stays low, and never for the recovery (that is recorded in the signals table the reporting projection reads). Payload: `locationId`, `itemType`, `itemRef`, `onHand`, `threshold`, `movementId` (null when a threshold change caused it).
+- `awcms.procurement.document.finalised` — A procurement document (receive, supplier_return, requisition or transfer) was finalised and its inventory movements posted through the ledger's port (ADR-0128, Issue #888), in one transaction. Producer: `procurement/application/procurement-posting.ts`'s `finaliseDocument`. Published once per document — a replayed finalise posts and publishes nothing. Payload: `documentId`, `documentNo`, `mode`, `supplierId`, `locationId`, `sourceLocationId`, `currencyCode`, `totalCost` (decimal string), `lineCount`, `movementCount`. Never a supplier name, an identifier, a note or a reason.
+- `awcms.procurement.document.reversed` — A finalised procurement document was reversed: compensating inventory movements were posted and the document marked reversed (ADR-0128, Issue #888), in one transaction. Producer: `procurement/application/procurement-posting.ts`'s `reverseDocument`. Same payload shape as `document.finalised`.
+- `awcms.tax.rule_version.published` — A tax rule version was published and became the rule in force from its effective date (ADR-0127). Producer: `tax/application/tax-event-publisher.ts`'s `publishRuleVersionPublishedEvent`, called by `POST /api/v1/tax/rule-versions/{id}/publish` inside the same transaction as the publish. Ordered per profile (`orderKey` `tax.profile:<code>`). The payload carries identifiers, codes and dates only — `ruleVersionId`, `profileCode`, `versionNo`, `jurisdictionCode`, `effectiveFrom`, and `closedVersionId` (the predecessor whose window this ended, or null).
+- `awcms.tax.snapshot.finalised` — A document's tax was finalised into an immutable snapshot (ADR-0127). Producer: `tax/application/tax-event-publisher.ts`'s `publishSnapshotEvent`, called by `POST /api/v1/tax/snapshots` only when a NEW snapshot is written — an idempotent replay publishes nothing. The payload carries the opaque document reference, the rule version used, the tax date and decimal-string totals; no customer data of any kind.
+- `awcms.tax.snapshot.reversed` — A finalised document's tax was reversed from its original snapshot (refund or return, ADR-0127). Producer: `publishSnapshotEvent`, called by `POST /api/v1/tax/snapshots/{id}/reverse` only when a NEW reversal is written. Same payload shape as `snapshot.finalised`; the totals are negative decimal strings and `originalSnapshotId` is set.
+- `awcms.whatsapp.consent.granted` — A recipient's WhatsApp marketing consent was recorded (ADR-0133, Issue #963). Producer: `whatsapp-delivery/application/whatsapp-consent- directory.ts`'s `grantMarketingConsent`. Payload: `consentId`, `purpose`, `recipientMasked`. Never the number.
+- `awcms.whatsapp.consent.withdrawn` — A recipient's WhatsApp marketing consent was withdrawn; their waiting marketing messages were cancelled in the same transaction (ADR-0133, Issue #963). Producer: `whatsapp-delivery/application/whatsapp-consent- directory.ts`'s `withdrawMarketingConsent`. Same payload shape as `consent.granted`.
+- `awcms.whatsapp.dispatch.failed` — A WhatsApp dispatcher pass failed as a whole — job level, not one message (ADR-0133, Issue #963). Producer: `whatsapp-delivery/application/whatsapp- dispatch.ts`'s `recordWhatsappDispatchFailure`, called by `scripts/whatsapp- dispatch.ts`. Payload: `failureCode`, optional `batchSize`, `occurredAt`.
+- `awcms.whatsapp.message.expired` — A WhatsApp message passed its expiry before it was sent and was not retried late (ADR-0133, Issue #963) — an OTP that arrives after its validity is worse than none. Producer: `whatsapp-delivery/application/whatsapp- dispatch.ts`. Same payload shape as `message.queued` with `status` expired.
+- `awcms.whatsapp.message.failed` — A WhatsApp message reached a terminal failure (ADR-0133, Issue #963): a non- retryable provider rejection, exhausted retries, or a template that is no longer registered. Producer: `whatsapp-delivery/application/whatsapp- dispatch.ts`. Same payload shape as `message.queued` with `status` failed and a coarse `failureCode`.
+- `awcms.whatsapp.message.queued` — A message was accepted into the WhatsApp outbox (ADR-0133, Issue #963), in the SAME transaction as the caller's fact: a rolled-back booking emits nothing. Producer: `whatsapp-delivery/application/whatsapp-enqueue.ts`'s `enqueueWhatsappMessage`. Payload: `messageId`, `templateKey`, `purpose` (transactional | security | marketing), `recipientMasked`, `status` (queued). Never a phone number, message body or template variable; the caller's own record is joined through the envelope `correlationId`.
+- `awcms.whatsapp.message.sent` — The provider accepted the WhatsApp message (ADR-0133, Issue #963). Producer: `whatsapp-delivery/application/whatsapp-dispatch.ts`, in the finalise transaction after the provider call returned. Same payload shape as `message.queued` with `status` sent.
 - `awcms.workflow.delegation.created` — A workflow delegation/substitute assignment was created. Producer: `workflow-approval/application/workflow-delegation-directory.ts`'s `createWorkflowDelegation`.
 - `awcms.workflow.delegation.revoked` — A workflow delegation/substitute assignment was revoked. Producer: `workflow-approval/application/workflow-delegation-directory.ts`'s `revokeWorkflowDelegation`.
 - `awcms.workflow.instance.advanced` — A workflow instance's active task was decided (or force-decided) and the instance advanced to its next node(s), without yet reaching a terminal outcome. Producer: `workflow-approval/application/workflow-instance-decision.ts`'s `completeApprovalTaskAndAdvance`.

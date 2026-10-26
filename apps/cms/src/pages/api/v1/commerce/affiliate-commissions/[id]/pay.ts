@@ -7,7 +7,8 @@ import { defineTenantRoute } from "../../../../../../modules/_shared/tenant-rout
 import {
   computeRequestHash,
   findIdempotencyRecord,
-  saveIdempotencyRecord
+  saveIdempotencyRecord,
+  userIdempotencyActor
 } from "../../../../../../modules/_shared/idempotency";
 import {
   payAffiliateCommission,
@@ -52,7 +53,8 @@ export const POST = defineTenantRoute<Prepared>({
       tx,
       tenantId,
       IDEMPOTENCY_SCOPE,
-      prepared.idempotencyKey
+      prepared.idempotencyKey,
+      userIdempotencyActor(auth.context.tenantUserId)
     );
     if (existing) {
       if (existing.requestHash !== requestHash) {
@@ -86,12 +88,17 @@ export const POST = defineTenantRoute<Prepared>({
         tenantId,
         IDEMPOTENCY_SCOPE,
         prepared.idempotencyKey,
+        userIdempotencyActor(auth.context.tenantUserId),
         requestHash,
         200,
         successBody
       );
       return successResponse;
     } catch (error) {
+      // tx-swallow-ok: healthy transaction:
+      // `InvalidCommissionTransitionError` is raised by the directory's own
+      // pre-checks or after its fallible statement ran inside a savepoint, so
+      // the transaction is still valid when this catch returns.
       if (error instanceof InvalidCommissionTransitionError) {
         return fail(409, "COMMISSION_NOT_PAYABLE", error.message);
       }

@@ -78,6 +78,10 @@ export const POST = defineTenantRoute({
       );
       return created(slider);
     } catch (error) {
+      // tx-swallow-ok: healthy transaction:
+      // `SliderMediaReferenceInvalidError` is raised by the directory's own
+      // pre-checks or after its fallible statement ran inside a savepoint, so
+      // the transaction is still valid when this catch returns.
       if (error instanceof SliderMediaReferenceInvalidError) {
         return fail(
           400,

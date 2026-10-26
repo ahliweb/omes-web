@@ -1,5 +1,1333 @@
 # awcms
 
+## 10.10.2
+
+### Patch Changes
+
+- 5e2c124: Scope job-specific secrets to the jobs that read them (Issue #1120). The generated job env list reached every job container, so after #1119 `PUSH_VAPID_PRIVATE_KEY` and `TELEGRAM_CHAT_HASH_KEYS` (and the push/Telegram rings, FCM credentials and bot token, and many more) were copied into all ~31 cron jobs although only a few read them. The generator now writes two files from the explicit `JOB_SCOPED` map in `scripts/jobs-env-allowlist.ts`: `ops/awcms-jobs.env-global` (every variable minus the scoped and web-only ones) and `ops/awcms-jobs.env-scoped` (`<job-target> <VAR>` lines). `ops/run-job.sh` copies a scoped variable only into the container whose job target matches exactly. Secrets no job reads (MFA/SSO/URL-param/comment-subscriber encryption keys, comment timing secret, sync HMAC secret, Turnstile secret) are now web-only, and a new gate fails `bun run jobs:env-allowlist:check` when any other secret-looking name is left in the global list without an entry (and a reason) in `GLOBAL_SECRETS`.
+  
+  The runner fails closed: it refuses to run when either file is missing, when a scoped variable is also in the global file (an old complete list beside the new scoped file), when the two files carry different `# awcms-jobs-env-fingerprint:` digests or none (a pair from different releases), when a file contains CRLF or a malformed line, when the scoped file has no grants, or when the global file lists no variables. `REDIS_URL` is scoped to `redis:health`, and the secret-name gate now also covers `_URL`, `_DSN`, `ACCESS_KEY`, `PEPPER`, `HMAC` and `_AUTH` names. A new import-graph tracer (`scripts/lib/job-import-graph.ts`) and `tests/jobs-env-scoped-reach.test.ts` hold the maps to the code in both directions, treat a literal mention of a variable name as a read, and reject unfollowable imports, `require(`, `Bun.spawn(` and unknown packages in a job's reach.
+  
+  **Operator action:** the global file is renamed from `ops/awcms-jobs.env-allowlist` to `ops/awcms-jobs.env-global` so an old runner keeps its old complete list. Deploy `ops/awcms-jobs.env-global`, `ops/awcms-jobs.env-scoped` and the new `ops/run-job.sh` together, in the order given in `docs/awcms/deploy-coolify.md`, then delete the old allowlist.
+- d0c3cf6: Govern the technology choice per product surface (ADR-0146, Proposed; refines ADR-0055 and ADR-0070). Every admin surface and every public web surface stays Astro; persona apps (customer, courier, driver, partner, warehouse and field staff) prefer LynxJS + ReactLynx as a candidate in their own consumer repos, as clients of the public API contracts, after a proof-of-concept gate. Adds `scripts/lib/product-surface-policy.ts` (surface table and `classifySurface`) and `tests/product-surface-policy.test.ts`, which pins the seven issue scenarios, fails if the ADR decision table and the module drift, and fails if a `@lynx-js/*` dependency, an import from `@lynx-js/` under `src/`, or a `lynx.config.*` enters this repository. No runtime, API, schema or dependency change.
+- 5f3c5f4: Admin topbar: the brand link, theme toggle and account link now take their accessible name from content instead of an `aria-label` that omitted their visible text (WCAG 2.5.3 Label in Name, flagged by axe-core 4.14's `label-content-name-mismatch`). The theme toggle's name now always states the active mode, replacing `aria-description`. The `/admin/users` role-chip remove button's label is now translated ("Hapus peran {code}"), and the Indonesian booking "Edit {code}" label now uses the same verb as its visible text ("Sunting").
+- 5f5e18d: Test-only: the `hr_workforce` attendance `Idempotency-Key` replay integration test now builds one request body and posts it twice. Two separate `clock()` calls each defaulted `occurredAt` to a second-precision timestamp, so under load the two posts could straddle a second, hash differently, and correctly return `409 IDEMPOTENCY_CONFLICT` where the test expected a replay. No production behaviour changes.
+- 5f3c5f4: Dependency refresh (Dependabot #1123–#1129): `astro` 7.4.0, `prettier` 3.9.10, `prettier-plugin-astro` 1.1.1, `@playwright/test` 1.64.1, `@axe-core/playwright` 4.14.0, and `github/codeql-action` `init`+`analyze` bumped together. `astro@7.4.0` brings the patched `http-cache-semantics@4.3.0`, so the last dependency-audit exception (GHSA-ch52-4w7c-c8xp) is removed and the exception list is empty again.
+
+## 10.10.1
+
+### Patch Changes
+
+- 46770ce: fix(ops): scan `ProcessEnv`-typed parameters so the jobs env allow-list carries the VAPID and Telegram hash keys (#1119).
+  
+  `ops/awcms-jobs.env-allowlist` is generated from the same scanner as `config:env:coverage:check`, and that scanner only recognised an environment object bound with `= process.env`. A function that merely RECEIVES the environment (`parseVapidConfig(env: NodeJS.ProcessEnv)`) was invisible, so a host running `push:dispatch` through `ops/run-job.sh` started the dispatcher with push enabled and no `PUSH_VAPID_*` material.
+  
+  - The scanner now also treats a name DECLARED as `NodeJS.ProcessEnv` / `ProcessEnv` / `Readonly<…>` / `typeof process.env` as the environment (parameter, field or local, with or without a default), accepts generic annotations with commas (`Record<string, string | undefined> = process.env`), reads `env["X"]`, `env?.X`, `process.env["X"]` and `const { X } = env`, and no longer counts `env.X = …` assignments as reads.
+  - Newly on the allow-list: `PUSH_VAPID_PUBLIC_KEY`, `PUSH_VAPID_PRIVATE_KEY`, `PUSH_VAPID_SUBJECT`, `TELEGRAM_CHAT_HASH_KEYS` (the encryption-ring resolver `telegram:dispatch` calls checks distinctness against it, so a job without it passed that guard vacuously; removed from `WEB_ONLY`), `DATABASE_POOL_MAX`, `DATABASE_WORK_CLASS_QUEUE_MULTIPLIER`, `TAX_TAXDATE_PAST_DAYS`, `TAX_TAXDATE_FORWARD_DAYS`.
+  - Computed reads the scanner cannot see are now declared in `COMPUTED_ENV_READS`, each with a code-shape `needle` that is matched against the file with comments stripped (so a doc comment cannot keep a stale entry alive): `WORKER_DATABASE_URL` (read only as `process.env[name]`, so every job silently fell back to the `awcms_app` connection instead of `awcms_worker`) and `DATABASE_POOL_MAX_WORKER` join the allow-list. Declared but kept web-only in `WEB_ONLY`: `SETUP_DATABASE_URL`, `DATABASE_POOL_MAX_SETUP`, `AUTH_IP_HASH_SECRET`, `PLATFORM_TENANT_ID` (no cron job imports `client-fingerprint` or `platform-tenant`, directly or transitively), every `DATABASE_CAPACITY_*` (read only by the pool-health route and `database:capacity:check`), and `SETUP_RATE_LIMIT_MAX` / `SETUP_RATE_LIMIT_WINDOW_SEC`.
+  - `.env.example` gains commented placeholders for the pool override, capacity and work-class variables.
+  
+  Deployments that already pass the whole env file (compose `env_file:`) are unaffected. Hosts using `ops/run-job.sh` must redeploy `ops/awcms-jobs.env-allowlist` beside it and make sure the new names exist in the app container's environment.
+  
+  **Rollout note (production hosts).** Hosts that set `WORKER_DATABASE_URL` will now run worker-client jobs through `ops/run-job.sh` as the least-privilege `awcms_worker` role instead of silently using `DATABASE_URL`. That is the documented behaviour but it is a role switch:
+  
+  - Before redeploying `ops/awcms-jobs.env-allowlist`, verify grants (for example `has_table_privilege('awcms_worker', '<table>', …)` for each job's tables) or run one manual tick per job with the worker DSN.
+  - Watch the first ticks, especially `push:dispatch`, `booking:*`, `tenant-domain:dns:sync` and `idn-regions:*`.
+  - Do not roll back to `DATABASE_URL`; fix the grant instead.
+  
+  See `docs/awcms/deploy-coolify.md` (§Rollout: jobs started through `ops/run-job.sh` now use `WORKER_DATABASE_URL`).
+
+## 10.10.0
+
+### Minor Changes
+
+- 8af77b8: Key re-rotation and an explicit endpoint transfer for push and Telegram (Issue #1098, follow-up to #1089).
+  
+  - `bun run push:auth-secret:rekey` (the `--rekey` mode of `push:auth-secret:backfill`) and the new `bun run telegram:chat:rekey` re-encrypt every ciphertext whose key id is not the ring's active key, so an old key can finally be retired. Idempotent, resumable, keyset-batched; the push job runs as `awcms_worker`, the Telegram job as `awcms_app` (the binding guard trigger refuses the worker any live ciphertext write). Neither prints key material or ciphertext.
+  - `security:readiness` gains two warning checks that report ciphertext row counts per key id for both rings and warn while any row is under a non-active key.
+  - Registering a push endpoint that an active row already holds for another tenant user now transfers it explicitly: the previous owner is read with the row locked, their still-queued notifications for the device are cancelled, and a `subscription.transfer` audit event (ids only, never the endpoint or secret) is written in the same transaction, fail closed.
+  - No schema or API change. Operator runbook in `docs/awcms/push-notifications.md` (EN and ID).
+  - Security-audit follow-up: `sql/315` adds `awcms_push_messages.recipient_tenant_user_id` (backfilled from the subscription's current owner, then `NOT NULL`, composite FK to `awcms_tenant_users`); enqueue sets it and the dispatcher refuses (non-retryable, fixed message) any message whose recipient no longer owns the device. Any owner change on registration (including a revoked or disabled row) now cancels the pending messages and writes the `subscription.transfer` audit; revoke and disable also cancel `queued`/`retry_wait` messages. Readiness key-id buckets match the key-id pattern. Runbook gains the compromise and undecryptable-row guidance.
+- 81ab41f: Installable iOS/iPadOS Home Screen admin with guided Web Push enrolment (Issue #1105).
+  
+  - One origin-level web app manifest at `/manifest.webmanifest` (`id`/`start_url`/`scope` `/admin/`, `display: standalone`; name and colours from the new optional `PWA_APP_NAME`, `PWA_APP_SHORT_NAME`, `PWA_THEME_COLOR`, `PWA_BACKGROUND_COLOR`, never from the Host or a tenant), self-hosted 192/512/maskable/180 PNG icons generated by `bun run pwa:icons:generate`, and manifest + `apple-touch-icon` + `apple-mobile-web-app-*` links from the shared admin layout only.
+  - `/admin/push-notifications` detects capability and standalone mode and shows translated (EN/ID) "Add to Home Screen, open from the icon, then enable" guidance on an iOS browser tab, an OS-too-old notice, and a non-looping explanation when permission is denied. Permission is still requested only on the button click.
+  - No CSP, routing, `public/push-sw.js` or push-sender change. Real-device UAT is pending (see `docs/awcms/push-notifications.md`).
+- b2aebd0: Declarative Web Push payload with a dual-reader service worker (Issue #1106).
+  
+  - `public/push-sw.js` reads both the legacy `{title, body, targetPath, data}` and the WebKit declarative `{web_push: 8030, notification: {...}}` shapes, shows exactly one notification per event, and navigates only to a validated same-origin http(s) URL (checked on arrival and again on click). Scope, registration path and cache policy are unchanged.
+  - New `PUSH_PAYLOAD_FORMAT=legacy|declarative` (default `legacy`). `declarative` makes the `web_push` adapter emit the new shape with an absolute https `navigate` derived from `APP_URL` (never the Host header); off-origin, protocol-relative and non-http(s) targets fail closed to the admin root, and an empty title, a missing https origin or an oversize payload fall back to legacy. `config:validate` requires an https `APP_URL` when it is `declarative`.
+  - VAPID, aes128gcm (RFC 8291) vectors, subscriptions, recipient binding and the queue are unchanged. No migration, no API change. Rollout and rollback runbook in `docs/awcms/push-notifications.md` (EN and ID).
+- 3c7fc29: BookingPort additions, capability contract `booking` 1.1.0 (Issue #1108, tracking ahliweb/awcms-one#420 item 1). Purely additive: no existing port signature changed.
+  
+  - `checkIn`, `checkOut` (the module's `complete` transition) and `markNoShow` are exposed through `createBookingPort` over the adapter's existing `transition()`, with the contract of `confirm`: an actor-namespaced idempotency key (ADR-0145), the actor and a `Targeted` reservation. Refusals are returned as `BookingOutcome` values and the same history row, audit row and `awcms.booking.reservation.*` event are written as by the HTTP routes. `BookingRefusal` gains `CHECK_IN_TOO_EARLY` and `NO_SHOW_TOO_EARLY` (previously folded into `INVALID_STATE`).
+  - `get(tx, { tenantId, reservationId } | { tenantId, reservationNo })` returns `status`, `startsAt`, `endsAt`, `reservationNo`, `holdExpiresAt`, `lineageId`, `supersededById`, `stays[]` and `externalRef` from an explicit column allow-list, with no customer reference, contact or note. Not found is a value.
+  - `getOffering` and `listOfferings` (keyset paging, limit 1..100) return `granularity`, `confirmationMode` and `status` for live offerings.
+  - `availability` is an actor-less read for a public booking page: slots or a stay's night and free-unit counts for one offering on one resource, bounded to a 31-day window and 500 slots, with no personal or internal data. It never reveals the tenant's policy or size: an unavailable stay is always `available: false`, `nights: null`, `reason: SLOT_UNAVAILABLE` (no min/max-stay, lead-time, horizon or schedule code), and an over-capacity quantity or an unknown resource is the same empty answer as a fully-booked window (every answer without free capacity carries `timezone: "UTC"`); a malformed `tenantId` on `get`, `getOffering`, `listOfferings` and `availability` is `VALIDATION_ERROR`. It takes no actor and does no ABAC check by design, so a consumer route MUST rate-limit and cache-bound it, and `get` by `reservationNo` must never be exposed publicly by number. No HTTP route is added; the public route, its rate limit and caching belong to the consumer.
+  - The `booking` key enters `CAPABILITY_CONTRACT_VERSIONS` and `awcms-family-compatibility.yaml` at `1.1.0`. Docs: `booking.md` section 10.1, `cross-domain-contracts.md` section 3, the module README and an ADR-0131 addendum, each with its Indonesian mirror.
+- cdd05fe: `CommissionAccrualPort.void` for `hr_commission` (Issue #1109, follow-up to #951).
+  
+  - New port method `void(tx, tenantId, actorTenantUserId, { source, employmentId, reason, correlationId? })`, keyed by the same source identity as `accrue`, so a consumer that voids, refunds or cancels a sale reverses its commission without storing internal ids. Outcomes: `voided`, `already_voided` (a replay writes, audits and publishes nothing), `not_found`, `period_closed`, plus `actor_required` and `input_invalid`.
+  - The accrual is never edited or deleted: a `pending` or `approved` accrual moves to `voided` through the one transition core (immutable monetary facts, append-only transition log, FOR UPDATE serialisation), so the ledger reconciles. No migration.
+  - Closed-period policy: a `payable` or `paid` accrual is refused as `period_closed` and nothing is written (no reversal-into-the-current-period mechanism exists yet; the negative reversal row stays the recorded follow-up). Documented in the `hr_commission` README and `hr-payroll.md` section 6.3, with Indonesian mirrors.
+  - New domain event `awcms.hr.commission.voided` (ids, source type, rule key and version, prior status, reason code; no amount or source reference), published in the voiding transaction by both the HTTP void route and the port; registered in the event registry, AsyncAPI and `events.publishes`. `hr_commission` now depends on `domain_event_runtime` and declares `provides: ["commission_accrual"]`.
+  - Capability contract `commission_accrual` declared at `1.1.0` (the accrue-only port was never listed; `void` is the MINOR addition) in `capability-contract-versions.ts` and `awcms-family-compatibility.yaml`.
+
+### Patch Changes
+
+- 59f8839: Push delivery operator test matrix, runbook and mock-provider integration coverage (Issue #1107). No runtime behaviour change: adds `docs/awcms/push-notifications-test-matrix.md` (EN/ID) and 13 integration tests that drive the real web-push adapter through a scripted push service (both payload formats, retry/backoff, 403/404/410, tenant isolation, revoke, worker crash recovery, concurrent workers). Real-device UAT rows are recorded as pending. Code comments now state that `sent` means the push service accepted the message, not that a device displayed it.
+- 0bb548c: `release:verify` now refuses to run outside the tagged commit: it reads `package.json`, `CHANGELOG.md` and `.changeset/` from the working tree, so a stale checkout produced a confident but wrong version mismatch. The release procedure (docs and the `awcms-release` skill, EN/ID) now verifies from the tag checkout and pushes the tag only with `&&`.
+
+## 10.9.0
+
+### Minor Changes
+
+- d997700: security(hr_payroll): the payroll SQL boundary is now enforced on the migrated catalog, and the sensitive-reads gate attributes audits per table (#1015, follow-up to #978 PS-18). No migration, no runtime behaviour change; two gates get teeth.
+  
+  M-B: `payroll:sql-boundary:check` was text-only and 10 of 14 audit probes evaded it. The static layer is rewritten (quote-aware statement splitter, case-insensitive, folds `'a' || 'b'`, follows `ALTER ... RENAME` and function call chains, reads inside `DO` blocks and `EXECUTE` literals, covers `SELECT ... INTO`, `INSERT ... SELECT`, `CREATE RULE`, `SETOF <payroll table>` functions and triggers in both directions) and a catalog layer is added: `scripts/lib/payroll-catalog-boundary.ts` reads `pg_rewrite`/`pg_depend`, `pg_proc`, `pg_trigger`, `pg_inherits` and the ACLs of a fully migrated database and fails when a relation, rule, function, trigger or grant outside the payroll family reaches a payroll table (a payroll table or SECURITY DEFINER payroll function granted to `PUBLIC` or a role outside `PAYROLL_ALLOWED_GRANTEES` fails too). It runs in `tests/integration/payroll-catalog-boundary.integration.test.ts` (CI integration job; 19 evasion probes applied in a rolled-back transaction, plus clean twins) and as `bun run payroll:catalog-boundary:check` for any database. A non-family function that is now flagged must be renamed into the payroll family; an existing test that used a non-family trigger function on a payroll table now uses a family-named one.
+  
+  M-A remainder: the gate attributes an audit to the table it covers (`PAYROLL_TABLE_READ_PERMISSIONS`), so auditing `compensation.read` no longer clears a file that also reads `payslips`; the exempt accrual ledger's read functions (`listAccruals`, `getAccrual`, `reconcileAccruals`) can be imported only by the allow-listed, auditing route files (`PAYROLL_READ_FUNCTION_IMPORTS`); concatenated table names are documented as a known limit. Blocks #957 and #961 until merged.
+  
+  Audit follow-up: direct privileges on payroll relations are `awcms_app` only (the worker no longer passes); `awcms_worker` may EXECUTE a payroll SECURITY DEFINER function only if it is on the (empty) `PAYROLL_WORKER_EXECUTE_ALLOWLIST`, returns a scalar integer/boolean, no set, no payroll row type. Quoted calls are followed; `WITH ... INSERT/SELECT INTO/CTAS` and migration `DO ... EXECUTE` are flagged; the sensitive-reads gate scans `.tsx/.js/.mjs`, limits the `module.ts` exemption to real descriptors, ignores calls inside literals and treats computed `import()` of the ledger as importing everything.
+- 2b683bb: feat(hr_workforce): tell the requester how their attendance correction ended (#1044, follow-up to #998). After the settler consumer settles a correction it queues one e-mail to the requester through the optional `workflow_notification` capability (now provided by `email`): an outbox INSERT in the consumer's transaction, sent later by `email:dispatch`, never on the settlement path and never able to fail it. Three EN/ID templates (`hr.attendance_correction_applied` / `_rejected` / `_cancelled`) carry the employee's display name and the date, never the reason; one notice per (correction, outcome). The email workflow-notification adapter now renders the subject in the tenant's default locale. Migration `302` gives `awcms_worker` column-scoped INSERT on `awcms_email_messages` and SELECT on the requester/profile columns the enqueue reads. Tenants opt in by seeding the templates (`bun run email:templates:seed-defaults`).
+- 1b688c8: security(hr_payroll): close the remaining payroll catalog-boundary gaps M1, M2, M4, M5, M6, M7 of the #1015 security review (#1077). One migration (`sql/311`, `COMMENT ON TABLE` markers on the two commission ledger tables); no runtime behaviour change; the two boundary gates get more teeth.
+  
+  M1: a payroll table renamed out of the name-based family is now caught (`payroll-boundary` marker comment, `PAYROLL_REQUIRED_TABLES` manifest, static `ALTER ... RENAME TO` / `SET SCHEMA` / unlucky-prefix table names, and every table a payroll-owner module owns must be a family name or a reasoned `PAYROLL_OWNED_NON_PAYROLL_TABLES` entry). M2: non-family SECURITY DEFINER functions may not use `schema_to_xml`/`query_to_xml`/`table_to_xml`/`regclass`/`format()`/`ts_stat`/`dblink`/`U&"..."`. M4: the catalog layer reads relation and function owners, `pg_auth_members` (transitive), publications and foreign tables; the static layer refuses `COPY <payroll> TO`. M5: a migration `DO` or plpgsql function with `EXECUTE` (judged at creation) and top-level query-text helpers are refused, so the one-shot-copy limit is removed for migrations. M6: a generic `pg_depend` sweep fails policies, constraints, defaults, index expressions, statistics and row-type columns on a non-family table that depend on a payroll relation, function or row type. M7: `sensitive-reads:check` scans `scripts/`, and `accrueCommission` / `transitionAccrual` are guarded imports. Info: functions in other languages are findings, and `payroll:catalog-boundary:check` runs in the CI and release jobs.
+  
+  Security-audit hardening (same PR): the rename trick is closed at every entry point (ALTER INDEX/SEQUENCE/VIEW/..., last-COMMENT marker, DROP/DISABLE TRIGGER, required triggers, family-named leftovers), every function is judged at creation with its body, UPDATE/MERGE and more query-text helpers are copies, predefined and BYPASSRLS roles are holders, owners are an allow-list (the migration ledger's owner), the commission port is a guarded import, domain CHECKs are swept, `.mts/.cts/.jsx/.cjs` are scanned. M5 and H1/H2 are narrowed, not closed; replication slots are a documented limit.
+  
+  Re-verification audit (same PR): escaped literals as DO/function bodies are refused, DISABLE TRIGGER is paired per trigger and a disabled required trigger is a catalog finding, the catalog fails a missing required foreign key and look-alike relations, a missing migration ledger fails closed, `PAYROLL_EXPECTED_OWNERS` (env) covers split-role deployments, `session_replication_role` and direct catalog writes are refused. The documentation now states the model honestly: static scan plus catalog detection are defence in depth, and migration review remains the primary control.
+  
+  Remaining (documented in hr-payroll.md section 13.3): the existing mutation routes are allow-listed without a read audit (a product decision on masking or auditing their response), the check is not scheduled against a deployed database, and the dead-branch limit of the audit-call check.
+- a53cdb4: feat(booking): booking consults the hr_workforce `StaffAvailabilityPort` when a resource requires staff (#949, epic ahliweb/awcms-one#280 item 20, Booking half). New optional capability `staff_availability` (provided by `hr_workforce`, consumed by `booking` as a soft edge: lazy import in `booking/module.ts` only, no `dependencies` entry, no cycle; contract version 1.0.0 in the registry and the family manifest). Migration 305: `awcms_booking_resources.required_staff_refs` (the opaque people who serve a resource; empty means no staff constraint), `awcms_booking_staff_assignments` (one live person per claimed item and resource, a single exclusion constraint on tenant, staff reference and range refuses two live overlapping assignments of one person), a release trigger so cancel, expiry and reschedule free the person with the allocation, and the lifecycle count branch. Availability narrows to slots inside a rostered shift and not already serving a claim (`staffAvailability: "checked" | "unchecked"` on the slot answer, OpenAPI updated); a claim wins a person in the same savepoint as the units, and a staff conflict is `SLOT_UNAVAILABLE` with nothing allocated partially. With `hr_workforce` off for the tenant, or unloadable, no staff constraint applies at all. `PlaceHoldContext.staff` is required (no default) and `createBookingPort(resolveStaff)` / `createComposedBookingPort()` make the BookingPort adapter staff-aware; occupancy does not depend on the reaper (elapsed holds are ignored by the busy read and reclaimed by staff reference on claim). Reservations made while `hr_workforce` was off are not protected after enabling it (see booking.md section 10.3). Not yet: an admin surface for `required_staff_refs`.
+- 07715e6: feat(hr_workforce, hr_commission): employee self-service, supervisor and HR screens (#952, with the employee-facing screen of #1083). Five screens under `/admin/hr/`: `my-work` (own published shifts, own effective attendance, own correction requests and the request form), `my-metrics` (own workforce facts with the definition of each figure and the way to challenge one), `my-commission` (own accruals, read-only), `team` (direct reports' facts, attendance and pending corrections) and `workforce` (HR: employments, pending corrections, recent attendance, each panel behind its own permission). Every read runs in basis `mine`/`reports` computed in the query from the persisted login link and the manager link; no screen takes a person or employment parameter, exports, downloads, shows a correction reason, or reads HR's per-person `all`-mode metrics (left to #1083). New API: `GET /api/v1/hr-workforce/me` and `GET /api/v1/hr-commission/my-accruals[/{id}]` (another employee's accrual is 404, the same as a missing id; no approver, payer or payment reference). Migration `313` seeds `hr_workforce.self_service.read` and `hr_commission.my_accruals.read` (screen gates; nothing grants them to a role, run `identity-access:permissions:backfill` for existing tenants). `hr_workforce` and `hr_commission` are now `active`. Security review fixes: every panel is authorised with its route's guard and ownership grant (an ABAC deny hides it), the supervisor and HR loads record the same `sensitive_read` audit rows as the routes (fail-closed), the supervisor screen reads direct reports only since each line began, and the own-only commission readers are on the payroll read-import registry.
+- fc4e106: feat(hr_workforce): workforce metrics as transparent business facts (#953). Two read routes under `/api/v1/hr-workforce/workforce-metrics/`: `employees` (attendance, hours, shift coverage and a worked-to-scheduled productivity ratio per employee) and `groups` (per-office aggregates). Visibility is default-deny: an employee reads their own (`?mine=true`) and a supervisor their DIRECT reports (`?reports=true`) through ownership grants, HR needs the new `hr_workforce.workforce_metrics.read`, and the aggregate needs `workforce_metrics.analyze` and returns no individual row; another employee's id is 403, the same as a missing one. The aggregate takes only one whole closed UTC ISO week (sliding windows would isolate a person), counts as a contributor only an employee with at least four hours in the bucket, reports a contributor band instead of a count, and a group with fewer than five contributors returns no number at all; there is no tenant-wide total to subtract from. A supervisor sees a report only from when the reporting line began. No composite score, ranking or flag; no photo, biometric, device, location or payroll data is read; every response carries the governance notice (a figure needs the review in `docs/awcms/workforce-metrics.md` before any consequential use). The module registers the `hr_workforce.attendance_events` reporting projection (event volume per kind, HR-only). Migration `308` seeds the two permissions (not granted to any role; existing tenants need `identity-access:permissions:backfill`) and indexes the projection cursor. Docs EN and ID: `docs/awcms/workforce-metrics.md`.
+- 6270b5e: feat(hr_workforce): geolocation attendance evidence, verdict-only, off by default, 30/90/180-day retention (#970, ADR-0138, owner decision O6). Migration `sql/306`; inert in every tenant until a person holding the new `hr_workforce.geolocation_evidence.configure` enables it.
+  
+  A `self` clock-in/out may carry one optional `positionSample` (`latitude`, `longitude`, `accuracyMeters`, nothing else; any other source or kind is 400). The server evaluates it IN THE REQUEST against the office's geofences with a pure evaluator and DISCARDS it: only a verdict (`inside`/`outside`/`not_provided`), a coarse distance band, a coarse accuracy band, the geofence reference, the rule version and the database time are stored, in the separate append-only `awcms_hr_attendance_location_evidence` (RLS FORCE, composite tenant keys, one row per event, no UPDATE/DELETE for `awcms_app`). The attendance event table is untouched. A sample worse than the tenant's accuracy ceiling, a declined or missing fix, or a sample from an employee who has not acknowledged the current notice all record the clock event normally with `not_provided`; the clock response gains `locationVerdict` (null while the switch is off).
+  
+  Enabling needs the new permission, a DPIA reference and date, a published notice version and a live geofence (403 / 409, also enforced by a CHECK and a trigger); disabling has no precondition and stops capture at once (the database refuses an evidence insert while the switch is off). Both directions are audited at `critical` with the before/after state. The permission is NOT granted to the tenant owner: it stays `scope = 'tenant'` but is listed in the new `OWNER_GRANT_EXCLUDED_PERMISSION_KEYS`, honoured by the new-tenant blanket grant and the owner backfill job. New routes under `/api/v1/hr-workforce/geolocation/`: `settings`, `geofences` (+ `{id}`, `{id}/restore`), `notices`, `notice`, `notice-acknowledgements` and `evidence` (own rows through an ownership grant, everyone else needs `hr_workforce.attendance_evidence.read`; reads of other people's verdicts are audited; `no-store`). All mutations are idempotent. OpenAPI updated; no AsyncAPI event (an event payload would be a copy).
+  
+  Retention: the evidence descriptor is `generic` (30/90/180 days on `evaluated_at`, hard delete, no archive, legal hold overrides; the worker gets `SELECT, DELETE` on that table only); the four other new tables are `delegated` and counted through a `sql/306` replacement of the `sql/303` count-only function. Subject data: evidence and acknowledgements are exported through the employment (ADR-0142); erasure follows retention (open legal question recorded in ADR-0138). Log scrubbing: the shared redaction now masks `latitude`, `longitude`, `coordinate`, `geolocation` and `positionsample` keys and the same words in free text; the idempotency hash covers only the presence of a sample; validation errors never echo a value. No admin screen (the issue asks for none): both permissions join the shrink-only `NOT_YET_SCREENED` ledger. Needs the security review `hr_workforce` always gets, and a per-tenant DPIA before any tenant enables it.
+  
+  Hardening after the security audit: geofences are at least 50 m (circle) or a simple polygon of 2,500 m2 to 10 km, at most 10 live per office, and an enabled tenant cannot delete its last live geofence (409 + trigger); create/replace audit a revision and a geometry fingerprint; the evidence guard checks the geofence is live and belongs to the check-in's office; the worker's SELECT on a verdict is column-scoped (`id`, `tenant_id`, `evaluated_at`) plus DELETE; a trigger refuses attaching the configure permission to a system `owner` role; redaction also covers escaped-quote JSON and `lat`/`lng`/`lon` aliases; an operator-run `awcms_hr_erase_location_evidence` can delete one employment's verdicts immediately. ADR-0138 records the erasure deviation as pending counsel (enabling in any tenant waits for sign-off) and that `attendance_evidence.read` is tenant-wide, HR-only.
+
+### Patch Changes
+
+- 564d262: feat(data_lifecycle): delegated retention snapshots now report real backlog counts for the 25 inventory, procurement, HR-workforce and booking tables the worker may not read (#1042, `sql/303`, follow-up to #1040). One count-only `SECURITY DEFINER` function per owning module (`awcms_{inventory,procurement,hr_workforce,booking}_lifecycle_eligible_count(p_table, p_tenant_id, p_cutoff)`) returns a single integer, never a row; `search_path` is pinned to `public, pg_temp`, `EXECUTE` is granted to `awcms_worker` only, each function is owned by a dedicated NOLOGIN role holding column-level `SELECT (tenant_id, cursor column)` on its module's tables, RLS is untouched (tenant scoping relies on the caller's own `app.current_tenant_id` under FORCE RLS with a NOBYPASSRLS owner, plus `p_tenant_id`; it adds no capability beyond the worker's existing per-tenant iteration and is not a boundary against the worker) and an unknown table name raises `22023`. `planLifecycleDryRun` calls it for tables listed in `DELEGATED_COUNT_FUNCTIONS`; held, purgeable and blocked are still derived in TypeScript from the legal-hold records. `KNOWN_UNREADABLE_DELEGATED_TABLES` is now empty, and `data-lifecycle:worker-grants:check` verifies from `sql/` that every mapped function is granted to the worker and has a branch for its table. No row-level `SELECT` was granted to the worker, and no payroll relation is reachable.
+- c148aee: fix(identity-access): a role grant whose `effective_to` has passed no longer blocks granting the same role again (#1056). The grant writer now marks the subject's elapsed grants of that role `expired` (kept as history, with an `expired` lifecycle event and an `expire` audit row) before inserting, instead of letting the `status = 'active'` partial unique index turn the re-grant into a `409`. Future-dated and still-effective grants keep their `409`.
+- b0b9372: security(identity_access): `awcms_worker` can no longer read credential columns (#1078, found by the security review of #1044). `sql/022` gave the worker a table-level `SELECT` on `awcms_identities`, which silently included `password_hash`; since RLS trusts `app.current_tenant_id`, anyone able to run SQL as the worker could read every tenant's password hashes. `sql/304` revokes it and re-grants only the six columns the worker jobs read (`id, tenant_id, profile_id, status, login_identifier, created_at`: recipient resolution for `workflow:escalations:dispatch`, the identity cursor stream of `reporting:projections:refresh`). The same audit narrowed the token-bearing tables the worker only purges (`awcms_password_reset_tokens`, `awcms_invitations`, `awcms_delegated_access_grants`, `awcms_omes_enrollments`, `awcms_newsletter_subscribers`, `awcms_comments_reply_subscriptions`) to `id, tenant_id, created_at`, and `awcms_tenant_domains` / `awcms_telegram_link_codes` / `awcms_telegram_bindings` to every column except their token or PIN hash. `security:readiness` gains a `critical` check, "Worker roles cannot read credential columns", that fails if any worker role can SELECT a column in the central `CREDENTIAL_COLUMNS` list (`has_column_privilege`, table-level or column-level) or if a credential-looking column is unclassified; `WORKER_ROLE_GRANTS` / `WORKER_COLUMN_GRANTS` are updated to match. Two documented exceptions stay readable (`awcms_push_subscriptions.auth_secret`, `awcms_omes_repository_progress_config.secret_ref`). No application behaviour change.
+- 5c755d2: security(identity_access): `awcms_setup` can no longer read credential columns (#1082, found by the security review of #1078). `sql/022` gave the one-time setup role a table-level `SELECT` on `awcms_identities`, which included `password_hash`; an operator can activate that role for LOGIN, and RLS trusts a session setting the caller picks. `sql/310` revokes it and re-grants only what `POST /api/v1/setup/initialize` (`bootstrapPlatformTenant`, the role's only flow) reads: `SELECT (id, principal_id)` and `UPDATE (principal_id)` on `awcms_identities`. It also fixes a pre-existing break found while proving the wizard works: under `SETUP_DATABASE_URL` the wizard failed with `permission denied for table awcms_principals` since ADR-0086. The principal find-or-create is now the SECURITY DEFINER function `awcms_ensure_principal_id(text)` (owner `awcms_principal_ensure`, NOLOGIN and memberless, returns only the id, never `password_hash`), so `awcms_setup` holds no direct privilege on `awcms_principals`; `principal-store.ts` uses it for every caller. Because `UPDATE (principal_id)` would otherwise let the setup role repoint a linked identity (account takeover), the link is one-way: a BEFORE UPDATE trigger rejects changing a non-NULL `principal_id` for every role (no code path repoints; every writer already says `principal_id IS NULL`) and a RESTRICTIVE policy limits `awcms_setup` to `principal_id IS NULL` rows with an explicit `WITH CHECK (principal_id IS NOT NULL)`. `security:readiness` check "Worker and setup roles cannot read credential columns" now covers `awcms_setup` with an explicitly empty exception list (the worker exceptions do not extend to it), `SETUP_COLUMN_GRANTS` pins the setup column grants, and the grants check now sweeps EVERY awcms_ table for column-level privileges held by `awcms_setup` and `awcms_worker` (previously only pinned tables were inspected, so a stray column grant elsewhere passed); it found one unpinned legitimate grant, `awcms_worker` UPDATE on `awcms_booking_reminder_intents` (sql/284), now pinned. It also fails if the link-once trigger or policy is missing. Encrypting `awcms_push_subscriptions.auth_secret` at rest is deliberately not part of this change (needs a runtime backfill).
+- fead88e: fix(hr_workforce): audit HR bulk reads of person-level workforce facts and stop naming suppressed offices (#1083). An all-employee read of the workforce-metrics employee list, the aggregate route, and the all-employee attendance list now leaves a coalesced `sensitive_read.workforce_metrics` / `sensitive_read.attendance_events` audit row (employment ids and a count only); `hr_workforce` joins `SENSITIVE_READ_MODULE_KEYS`, its other read permissions are classified with reasons, and the sensitive-read gate now reads the `authorize: [A, B]` array form. A suppressed aggregate group no longer carries `officeId` and is listed after the shown groups. The permission-combining risk (M1) is documented in `docs/awcms/workforce-metrics.md` (not an SoD rule: the owner role holds every permission). Follow-up from the security audit: the manager-chain `reports` mode is recorded too (attribute `mode`), attendance corrections (list, and the single record when its reason comes from the role grant) are a sensitive read (`sensitive_read.attendance_corrections`), the aggregate records the permission that actually granted (`.analyze` under `sensitive_read.workforce_metrics_aggregate`), the location-evidence audit row carries the employment ids, and the gate parser handles inline guard objects inside `authorize: [...]`. No migration.
+- f24ff99: test(booking): the allocation soak now fails with full diagnostics (offending row ids, ranges, xmin/xmax, created/released timestamps, reservation, txid snapshot, server version) via a reusable post-hoc overlap invariant query (#1087). No allocator or schema change.
+- 8094eb1: security(push_delivery): encrypt `awcms_push_subscriptions.auth_secret` at rest, backfill-safe (#1089, follow-up to #1082). `sql/314` adds `auth_secret_ciphertext` (AES-256-GCM through the ADR-0137 helper, own key ring `PUSH_AUTH_SECRET_ENCRYPTION_KEYS`, AAD = tenant + `endpoint_hash` because registration is an upsert whose surviving row `id` is unknown beforehand), replaces the transport CHECK with "exactly one of plaintext/ciphertext", and narrows `awcms_worker` `UPDATE` on the table to the columns jobs write (pinned in `WORKER_COLUMN_GRANTS`, so the worker can no longer rewrite `endpoint`). Registration writes ciphertext only and fails closed (`503 PUSH_MISCONFIGURED`, capability `webPush.enabled=false`) without the key ring, with no plaintext fallback; re-registering a legacy row migrates it. The dispatcher decrypts ciphertext (never falling back to plaintext when it fails) and reads the legacy plaintext only for a row with no ciphertext; a missing ring or rotated-away key is a retryable failure, a failed authentication is not. New idempotent, resumable, batched keyset job `bun run push:auth-secret:backfill` (worker role) encrypts the remaining rows and NULLs the plaintext. `security:readiness` gains a warning check that reports how many plaintext rows remain; the `auth_secret` worker exception stays (documented as transitional) and `auth_secret_ciphertext` is added as a ciphertext exception. The plaintext column is NOT dropped here: a later migration drops it and the exception once every deployment reports zero. Rollout order and trade-offs: `docs/awcms/push-notifications.md`. New env `PUSH_AUTH_SECRET_ENCRYPTION_KEYS` (required for `PUSH_PROVIDER=web_push`); set it before deploying.
+- cd1cb94: fix(database): every catch-and-continue inside a database transaction is now explicit with a savepoint, so behaviour is identical on Bun 1.4.2 and 1.4.3 (#1099, blocks #1097). No migration.
+  
+  Up to Bun 1.4.2 `sql.begin(cb)` quietly returned `cb`'s value when a statement inside it had failed and the callback had caught the error; the `COMMIT` degraded to a `ROLLBACK`. Bun 1.4.3 throws `ERR_POSTGRES_COMMIT_ROLLED_BACK` there, which turned every "catch the `23505`, answer a 409 / `duplicate_key` / 404" into a 500 (reproduced by `tests/oidc-integration.test.ts` and `tests/partner-delegated-access-e2e.test.ts`). The statement that is expected to fail now runs in `tx.savepoint(...)`: roles, user groups, ABAC policies, role-permission grants, role/group assignments, offices, profile identifiers, tenant domains (the demote+promote pair shares ONE savepoint), SSO providers, delegated grants, partner engagements, blog posts/pages/terms/menus/templates/institutions, homepage sections, SEO redirects, email templates, the module health signals, the data-lifecycle dry-run, the site-search reconcile pass, the redirect hit counter, the SSR tenant-defaults read and the OMES worker poll's best-effort promotion. The MFA TOTP verify no longer wraps its compare-and-swap in the catch that treats a wrong code as "not matched". Domain errors raised on a healthy transaction are marked `// tx-swallow-ok: <reason>` in place. There is deliberately no central swallowing of `ERR_POSTGRES_COMMIT_ROLLED_BACK`.
+  
+  Behaviour note: a write made in the same transaction before the failed statement (in practice the ABAC decision-log row of the allowed request) now commits instead of being rolled back by the degraded commit, exactly like any other 4xx; the failed statement's own effects still never commit.
+  
+  New gate `bun run db:transaction-swallow:check` (in `bun run check`) refuses a catch that can complete normally around SQL issued on a transaction handle outside a savepoint. Convention documented (EN+ID) in `docs/awcms/16_backend_data_access_integration`; skills `awcms-new-endpoint` and `awcms-testing` updated.
+  
+  Security-audit follow-up: the gate now also refuses a rethrowing catch that maps a database error without a savepoint in the callee, `.then(ok, onRejected)` / `Promise.allSettled` swallows, and `Bun.SQL`-typed handles; the `tx-swallow-ok` marker is accepted only as the first comment of that catch with a substantive reason. The delegated-grants and partner-engagements routes no longer turn every error into a 404: only a foreign-key violation (23503) is a 404, a lost engagement race (23505) is the existing 409 `CONFLICT`, and anything else surfaces as a 500.
+- 5f663a1: test(booking, hr_workforce): reproducible load, stress and concurrency benchmarks (#967). `bun run bench:booking` runs the booking allocator (last slot, last night, pool of 3 at 8 and 32 workers), availability reads at 500 resources and 2,000 live holds, the hold-expiry reaper draining a 5,000-hold backlog while claims race it, and hr_workforce attendance event ingest, against the integration harness's throwaway database under the production roles. It is a separate target (not a `*.test.ts`, not in `bun test`, `tests/integration/` or `bun run check`): correctness invariants always fail the run, p95/throughput thresholds are a documented regression gate. Numbers and hardware: `docs/awcms/booking-benchmarks.md` (+ `.id.md`). The integration harness gains `reassertRuntimeRoleLogins()` so a minutes-long run survives another process's teardown. No migration, no runtime behaviour change.
+- 42bfefc: chore(bun): the pinned Bun version moves 1.4.2 → 1.4.3 (#1097) across every place that pins it — `package.json`'s `packageManager` and `@types/bun` (`^1.4.3`), the current-pin `setup-bun` steps in `ci.yml` (`quality`, integration, E2E), `changesets.yml` and `release.yml`, `Dockerfile.production`'s base image, `deploy/cron/awcms.crontab`'s job runner image, `scripts/ci-local.ts` `CI_BUN_CURRENT` (+ `tests/ci-local-parity.test.ts`), and `awcms-family-compatibility.yaml` — plus the EN/ID docs that name the current pin (family-compatibility, ci-local, implementation blueprint, ADR-0032). `bun.lock` is regenerated under 1.4.3. The `engines.bun >=1.3.0` floor and the CI `minimum-supported` cell deliberately stay at 1.3.0 (a separate ADR-0032 support-contract decision). The `apt-get upgrade` perl-base CVE workaround in `Dockerfile.production` (#833) is kept: the 1.4.3 image could not be inspected in this environment, so its absence of the CVEs is unverified; the step is a no-op when the base is already patched and loosens nothing.
+
+## 10.8.0
+
+### Minor Changes
+
+- 681e1b6: Add the generic `whatsapp_delivery` module, inert behind `WHATSAPP_ENABLED` (Issue #963, ADR-0133 phase 1).
+  
+  - **One WhatsApp queue per deployment, not per domain.** A channel queue table (`awcms_whatsapp_messages`, the repo's third after email and push) with the lease mechanism email and push already use (`FOR UPDATE SKIP LOCKED`, `next_attempt_at` as the lease, send outside any transaction). It joins neither `awcms_domain_events` nor the e-mail table. Booking, hr_payroll and commerce enqueue through `WhatsappDeliveryPort` (`_shared/ports/whatsapp-delivery-port.ts`; WhatsApp-specific, not a multi-channel facade), whose `enqueue` is one INSERT in the caller's transaction and returns refusals instead of throwing.
+  - **Consent and purpose classes.** Templates are registered with exactly one purpose and a variable allow-list that drops unlisted variables. Marketing needs an explicit recorded opt-in, checked at enqueue and again at dispatch, independent of segment membership; a withdrawal or suppression cancels the recipient's waiting messages in the same transaction. A `security` message needs `expiresAt`, is expired rather than sent late, and has its secret cleared at a terminal state.
+  - **Providers and safety.** Meta Cloud API (template messages only), Fonnte and a safe `log` adapter, chosen per deployment from the environment, never per tenant. Every call goes through `ssrfSafeFetch` under a timeout; only the adapter feeds the circuit breaker; a number the provider reports undeliverable becomes a hard-failure suppression. A phone number is E.164-normalised or refused, stored raw in one column and masked or keyed-hashed everywhere else (HMAC-SHA256 under the secret key ring `WHATSAPP_RECIPIENT_HASH_KEYS`, required when enabled, fail closed without it), including logs, audit rows and events.
+  - **Surface.** Migrations `sql/178` (4 tables, FORCE RLS, worker grants) and `sql/179` (10 permissions; `AccessAction` gains the non-high-risk `withdraw`), 8 routes under `/api/v1/whatsapp`, the `/admin/whatsapp` console with its navigation entry, jobs `whatsapp:dispatch` and `whatsapp:queue:purge` (delegated retention that never deletes a waiting message, a consent or a suppression), `WHATSAPP_*` environment variables validated by `config:validate`, OpenAPI updated, and seven `awcms.whatsapp.*` events moved from the provisional AsyncAPI document to the live one and the event registry.
+  - **Hardening from the security audit.** The dispatcher renews and verifies its lease per row and finalises only under the lease it wrote (a lease lost mid-batch is skipped, never sent twice), counts re-claims against the retry cap, and fails one throwing row instead of the pass; re-granting consent over an opt-out needs an explicit flag, evidence and the high-risk `consents.restore` and keeps `withdrawal_history`; the purge job expires stale non-terminal rows and clears an OTP for every tenant; provider error text is redacted before storage; Fonnte free text never creates a hard-failure suppression; security messages have their own per-recipient rate bucket.
+  - **Not in this phase.** Inbound webhooks (delivery receipts, "stop" replies), per-tenant sender selection, an admin reveal of the raw number, Telegram and notification orchestration; the commerce adapter and per-tenant cutover are later pull requests.
+- 20e2555: feat(booking): admin screens for resources and units, pools, offerings, schedules and closures, blocked nights, reservations (list, hold and expiry, detail with history and transitions) and the policy (#942, epic item 16, generic half). Six pages under `/admin/booking/` over the #1030 admin APIs and the existing reservation, block and schedule routes; no migration and no API change. Each is a `navigation` entry of `booking` whose `requiredPermission` is seeded (`sql/181`) and enforced by the route it drives, so the module moves from `experimental` to `active` (ADR-0021 criterion 1). Every mutation carries a fresh `Idempotency-Key` through one shared sender; refusals are translated sentences keyed by the API's error code (en and id catalogues, 218 entries); delete, cancel, no-show, release and deactivate use the native confirm dialog; every action has a keyboard path (Playwright flow, axe in both themes and the 360 px sweep cover the screens). The reservation detail is a view of the list page (`?id=`), never showing the customer reference or note. Creating, rescheduling and overriding a reservation, the availability search, notes and reports are not on a screen (the admin-screen coverage ledger keeps those seven permissions). `APP_BUDGET_BYTES` rises by the measured 11,259 B of the new scripts.
+- cf08c7f: feat(data_lifecycle): a subject-data descriptor can reach the person through one parent row (#985, ADR-0142, `MODULE_CONTRACT_VERSION` 4.6.0). `SubjectDataDescriptor.subjectVia` names a foreign key to another descriptor's table and which of that parent's subject columns mean "about the person"; the planner emits `column IN (SELECT id FROM parent WHERE tenant AND match)`. It excludes the table's own actor stamps, so a recorder's export never carries other people's rows, and erasure does NOT follow the join (the registry gate requires `retain_under_obligation`). `subject-data:registry:check` proves the foreign key, the parent and its columns. `hr_workforce` employment terms and shift assignments become exportable: an employee's subject-access export now carries their own terms history and schedule, and nothing of a colleague's or another tenant's. Attendance events and corrections stay a recorded follow-up. No migration.
+- c59e3ef: feat(hr_workforce): the employment context, phase 1 foundation of the hr_* family (#945, ADR-0132). New module `hr_workforce` (`experimental`, flag off, depends only on tenant_admin and profile_identity): an employment header that REFERENCES a profile_identity party by composite foreign key and copies no name, contact or national id (and has no photo, biometric or device field), effective-dated append-only terms (office, manager, title, type, status) with no overlap, a bounded acyclic manager chain and a terminal `terminated`, tenant settings, one active employment per profile and per login enforced by the database, and a profile-merge guard. An employee reads their own employment through an ownership grant on the persisted login link (ADR-0063), via a new optional `ownershipGrant` on `defineTenantRoute`; the link itself is a high-risk, audited `assign`. Migrations `sql/176`-`sql/177` (schema, permissions); existing tenants need `identity-access:permissions:backfill`. Registered with data_lifecycle and subject-data (employments exported and retained under the employer's obligations; terms retained, not exported); the module has no admin screen yet.
+- 7284767: feat(booking): reservation APIs with idempotency, audit, the BookingPort and the nine live events (#941, ADR-0131, ADR-0135). `booking` (still `experimental`: leaving it needs the admin screens of #942) gains `POST/GET /api/v1/booking/reservations`, `GET /reservations/{id}` and the transitions `confirm`, `cancel`, `reschedule`, `check-in`, `check-out` and the staff-only `no-show`, for slots AND nightly stays through the one allocator. Every mutation takes the shared `Idempotency-Key` (a replay returns the SAME stored response; the acting user is in the request hash; five parallel requests with one key make one reservation) and has a second idempotency layer: asking for the state a reservation is already in returns it `replayed: true` and writes nothing. A transition locks the reservation row, decides with the pure state machine on the DATABASE clock, writes exactly one history row, one audit row and one outbox event in the same transaction, and refuses as a value before any write; a confirm racing the expiry sweep has exactly one outcome and a payment observed after expiry is `409 HOLD_EXPIRED`. Reschedule is one transaction (release the old allocations, mark the old `rescheduled`, insert the replacement under the same `lineageId` with `rescheduledFromId`, move the adapter's `externalRef`), so moving over one's own slot or nights does not conflict with itself and ANY refusal rolls back to the untouched original; two reservations moving into each other's slots never hang or double-book. Opening hours, lead time and horizon are refused (`OUTSIDE_SCHEDULE`, `LEAD_TIME_VIOLATION`, `HORIZON_EXCEEDED`) unless the body asks `overridePolicy` AND the caller also holds the HIGH-RISK `booking.reservations.override`, which is checked first through the access chokepoint (action-time separation of duties applies) and audited `critical`; an override never lifts a conflict. A body naming a payment field is `400 PAYMENT_FIELD_NOT_ACCEPTED` naming it; `no-show` is marked by a person only, after the start plus a grace (default 15 minutes), and a stay cannot be checked in before its check-in date. Not-found is neutral (unknown and another tenant's id are one answer). The capability port of cross-domain-contracts section 3 is built: `_shared/ports/booking-port.ts` and its adapter (`quote`, `hold`, `confirm`, `cancel`, `reschedule`; refusals are values, idempotent by key, no override, no payment field). The nine `awcms.booking.reservation.*` events moved from the provisional AsyncAPI document to the live one and the runtime registry; they carry ids, enums, counts, UTC instants and the adapter's opaque external reference, never a customer reference, note, reason or amount, and no actor in the payload (the envelope carries `actorTenantUserId`, as other modules' events do); `expired` is published by lazy reclaim and by the sweep job alike. Decided here (booking.md section 13, left open by #939): the hold caps now DEFAULT to 5 live holds per customer and 500 per tenant (`NULL` in the settings means the module default, not unlimited), at the price of serialising the holds of one tenant on an advisory lock. Migrations `sql/208` (the `superseded_by_id` foreign key becomes DEFERRABLE INITIALLY DEFERRED so a reschedule can leave the live set of the external-ref unique index before its replacement exists) and `sql/209` (`awcms_booking_reservation_event_facts`, the one allow-list of non-personal facts an event may carry, and the sweep function returning what it expired); existing tenants need nothing new (the permissions were seeded by `sql/181`). Block create/release routes are still not built (#1012).
+- f55ba4f: feat(hr_commission): versioned commission rules, the phase 2 rule foundation of the hr_* family (#950, ADR-0132). New module `hr_commission` (`experimental`, flag off, depends only on tenant_admin and hr_workforce): jurisdiction-neutral, tenant-authored commission rules (a percent of a base amount or a fixed amount per unit, one currency, an explicit rounding mode and scale, an optional floor and ceiling) with draft, publish and retire. A draft is editable; a published version is immutable and may only become retired, a retired one never changes, no row is ever deleted, and no two published windows of one rule overlap (including under concurrent publishes) — all enforced by database triggers. Publish and retire are high-risk, separately grantable, idempotency-keyed and audited without any rate or amount (the publish audit row carries a content digest of the published terms); publish and edit name the content digest they were based on (409 when the terms moved) and the draft's creator or last editor cannot publish it (maker / checker); every money column refuses NaN, a row is born a draft, and a result that would not fit numeric(18, 6) is refused. Evaluation is a pure function over `bigint` decimal strings (no float, no expression language, no tiers) with table tests; money crosses the API as decimal strings and a JSON number is a 400. A rule references no person or employment. Migrations `sql/182`-`sql/183` (schema, permissions); existing tenants need `identity-access:permissions:backfill`. Registered with data_lifecycle (retained, never purged) and subject-data (actor stamps only); no admin screen yet. The accrual ledger, its lifecycle and the source-event port are later phases.
+- 9a800e7: Add the shared field-encryption helper and keyed-hash key ring (Issue #986, ADR-0137 sections 2-3; second consumer ADR-0140).
+  
+  - **`src/lib/security/field-encryption.ts`.** AES-256-GCM with a versioned envelope `v2:<keyId>:<iv>:<tag>:<ciphertext>` (base64url, 12-byte random IV), the key id stored inside the value so rotation needs no schema change, and associated data binding purpose, tenant and row (length-prefixed encoding), so a ciphertext moved to another row, tenant or dataset fails authentication. The first ring key encrypts, every ring key decrypts.
+  - **Fail closed.** No default key; `keyId:base64` rings are refused when unset, malformed, placeholder, shorter than 32 bytes, constant, or duplicated. Errors are fixed strings per code and never carry key material or plaintext. `resolveKeyRing(envName)` is the seam a KMS provider replaces; the helper reads no consumer-specific variable, so nothing is required at boot.
+  - **Keyed hash.** HMAC-SHA256 with purpose and tenant domain separation returning `keyId:hex`, a candidates list under every ring key for lookups across rotation, and constant-time comparison.
+  - **Shared parser.** The `WHATSAPP_RECIPIENT_HASH_KEYS` ring parser now lives in the helper and `whatsapp_delivery` calls it; behaviour and messages are unchanged. The three older `v1` helpers are untouched. No table, migration or consumer wiring.
+- a68973a: Add `booking` stay mode: nightly stays through the same allocator, blocked nights as allocation rows, and the tests T9 to T13 (Issue #940, ADR-0135; booking.md section 2.5, 3.1, 4, 8.1 rule 7 and 8.3).
+  
+  - **A stay is claimed through the same `placeHold`** with `stay: { checkInDate, checkOutDate }` (local `YYYY-MM-DD` dates in the resource's zone, half-open) instead of an instant. `deriveStay` (`domain/booking-stay.ts`) applies the checks `evaluateStay` applies, in the same order (a test asserts the two agree): well-formed calendar dates, check-out after check-in, at most 366 nights, both dates exist in the zone, check-in not before today in the zone on the DATABASE clock. The night count is date arithmetic, so a 23- or 25-hour day changes nothing; the arrival and departure instants come from the resource's check-in and check-out times with the RFC 5545 gap and fold rules and are SNAPSHOTTED onto the item with the zone and the local times. The offering's `min_nights` / `max_nights` are `MIN_STAY_VIOLATION` / `MAX_STAY_EXCEEDED`; a pool whose stay resources disagree on zone or times is `STAY_POOL_INCONSISTENT`. A stay takes one unit for all its nights.
+  - **The allocator is the same loop** (`UnitClaim` is now `time` | `stay` | `block`): the stay free-unit hint probes `daterange` overlap, the insert is `ON CONFLICT DO NOTHING`, and the second exclusion constraint of `sql/180` is the authority. Lazy reclaim (`ReclaimWindow` `kind: "stay"`) expires the elapsed holds that overlap a stay's or a block's nights; the reaper and `sql/200` needed no change, because a stay hold expires on the same column and releases through the same item join.
+  - **Blocked nights are allocation rows owned by `resource_blocks`** (`application/booking-block-service.ts`, `createBlock` / `releaseBlock`). One row per covered unit (the named unit, or every unit including inactive ones), inserted in `(resource_id, ordinal)` order inside a savepoint, all-or-none, under the SAME stay constraint as a guest's nights: a block cannot overlap a live stay and a stay cannot take a blocked night, and a block and a booking racing for one night are decided by the database in either order. Over a live stay (or another block) a block is `BLOCK_CONFLICT`: it writes nothing and cancels nothing, and names the conflicting reservations only when the caller asks (`revealConflicts`). Releasing a block releases its nights in the same statement (a trigger), and releasing twice is a replay. Creating a block is audited `warning` and releasing `info`, with ids, dates and the closed reason code and never a customer reference.
+  - **One migration, `sql/204`**: `block_id` on the allocations (exactly one of `item_id` / `block_id`; `starts_at` / `ends_at` nullable and NULL on a block row; `block_released` as a release reason); the allocation insert guard learns the block form and the update guard refuses to release a block row any way but through its block; the AFTER UPDATE trigger on the block that releases its rows; `BOOKING_MODE_IN_USE` for a mode change under live allocations or blocks (it was reported as `TIMEZONE_IN_USE`); and the instant bound on a reservation and an item widened from 366 / 367 to 368 days, so a 366-night stay with a later check-out than check-in time is not refused by a CHECK on instants. No permission is added (`blocks.*` were seeded by `sql/181`).
+  - **Availability** keeps reading the blocks table (its answer says `BLOCKED`); the stay read now excludes block rows (`block_id IS NULL`), otherwise every block would count as a booking. **Reconciliation** gains three checks: `block_allocation_orphan`, `block_missing_allocation`, `block_allocation_mismatch`.
+  - **Tests.** `tests/integration/booking-stay.integration.test.ts` (real PostgreSQL, the runtime role, one connection per contender): T9 (an overlapping stay blocks on an uncommitted one, observed in `pg_stat_activity`, then fails `23P01` on commit and succeeds on rollback; same-day turnover; a one-night overlap; a released stay frees its nights), T10 (20 parallel claims for the last room, exactly one wins, repeated 50 times; capacity 3 and 2-room claims with no stay split across units; a mixed soak), T11 (block against booking in both orders deterministically and as a 30-round soak, `BLOCK_CONFLICT` over a stay without cancelling, release, an elapsed hold not refusing a block, all-or-none over several units), T12 (DST and zones through a real claim: the 23- and 25-hour days, gap and fold snapshots, a configuration change not moving a claimed stay, `TIMEZONE_IN_USE` / `BOOKING_MODE_IN_USE`) and T13 (with the stay constraint dropped, two overlapping stays and a block with a stay both commit, deterministically; the granularity guard in both directions), plus stay holds under lazy reclaim and the `awcms_worker` sweep and the block reconciliation. `tests/booking-stay.test.ts` pins the pure rules.
+  - **Deferred.** The reservation routes and the block routes (Issues #941 and #942), the stay fields on the live AsyncAPI events when they go live (#941), the admin screens (#942). The module stays `experimental`; no route, OpenAPI path or AsyncAPI channel is added.
+- 9b8c4db: security(idempotency): idempotency keys are scoped per actor and the request hash is keyed (#1000, audit F4 of #990, ADR-0145).
+  
+  - Migration 256: `awcms_idempotency_keys` gains `actor_key` and is unique on `(tenant_id, request_scope, actor_key, idempotency_key)`. A colleague can no longer claim another user's predictable key (the victim used to get `409`) or be replayed their stored response. Pre-existing rows become `legacy:unscoped`: for 24 hours a retry with the same key answers `409 IDEMPOTENCY_CONFLICT` (never the stored body), after which the row blocks nothing.
+  - `findIdempotencyRecord`/`saveIdempotencyRecord` take an explicit branded `IdempotencyActor` (`userIdempotencyActor`, `machineIdempotencyActor`, `ANONYMOUS_IDEMPOTENCY_ACTOR`); all ~100 callers updated.
+  - `computeRequestHash` is now HMAC-SHA-256 keyed by the new `IDEMPOTENCY_HMAC_SECRET` (required in production, >= 32 characters; fail closed otherwise; per-process random key outside production). Rotating it answers `409` for retries of requests recorded before the change; rotate in a quiet period.
+  
+  **Upgrade note (required before deploying).**
+  
+  - Set `IDEMPOTENCY_HMAC_SECRET` (at least 32 characters, e.g. `openssl rand -base64 48`) in every production environment. Without it the server refuses to start and `config:validate` fails.
+  - Run `bun run db:migrate` (migration 256) and redeploy back-to-back, or use a maintenance window. Migration 256 drops the old unique index, so an old instance still serving traffic fails its idempotent mutations with a 500 until it is replaced.
+  - For 24 hours after the migration, a retry that carries the key of a request stored before it answers `409 IDEMPOTENCY_CONFLICT` instead of running again.
+  - Rollback is forward-fix only (see ADR-0145): do not re-add the old index.
+- 3d63407: feat(security): forbid payroll tables in projections and exports, neutralise CSV formulas, add the sensitive-read audit helper (#978, finding PS-18). One list of forbidden payroll table names (`src/modules/_shared/payroll-data-boundary.ts`) is now enforced by the reporting projection registry and its engines, the site-search and comments registries, `edge-cache:surfaces:check` and report exports; every CSV writer goes through `src/lib/security/csv-formula.ts` (the data-lifecycle archive stays exactly reversible); and `recordSensitiveRead` (rate-aware, ids and counts only, fail-closed, `sql/224`) plus the new `bun run sensitive-reads:check` gate make an unaudited read of compensation, line-level pay, other employees' payslips or an export impossible once `hr_payroll` exists. No behaviour change for existing modules.
+- 02b247b: feat(data-lifecycle): retention and subject-data classification for `awcms_idempotency_keys` (#1034, follow-up to #1000, ADR-0145 amendment 1).
+  
+  - New lifecycle descriptor `domain_event_runtime.idempotency_keys`: rows are hard-deleted by `created_at` after **30 days** by default (tenant-configurable 7 to 90), by the existing daily `bun run data-lifecycle:archive-purge`. No new job.
+  - Migration 276 grants `awcms_worker` `SELECT, DELETE` on the table (the two verbs the generic purge issues); `scripts/security-readiness.ts` lists the same pair.
+  - The table now answers the subject question with a `subjectData` descriptor (`unreachableBySubject`, never exported, retention-bounded) instead of the `NO_SUBJECT_DATA` refusal that claimed no personal data. `actor_key` and `response_body` are not exported.
+  - The `#1034` text in `scripts/subject-data-coverage-check.ts` is removed; the stale "no retention" comment in `sql/256` stays (applied migrations are immutable) and is superseded by `sql/276` and the ADR.
+  
+  **Upgrade note.** Run `bun run db:migrate` (migration 276) before the next `data-lifecycle:archive-purge` run, otherwise the purge fails with `permission denied for table awcms_idempotency_keys`. The first run deletes the accumulated backlog in bounded batches; preview it with `bun run data-lifecycle:archive-purge --dry-run`.
+- 2ea5cab: feat(booking): confirmation and reminder intents routed through the WhatsApp delivery port (#943, epic item 17, ADR-0133 sections 3 and 8).
+  
+  - Migrations 284 and 285: `awcms_booking_reminder_intents` (one row per reservation, kind and occurrence; RLS FORCE; never deleted; holds no contact, body or credential) and three narrow `SECURITY DEFINER` reads for the worker (the `awcms_worker` role still holds no privilege on the reservation tables).
+  - New scheduled job `booking:reminders:dispatch` (every minute, database-only): creates the intents for confirmed reservations, hands each to `whatsapp_delivery` through `WhatsappDeliveryPort.enqueue` (idempotent per reservation, kind and occurrence), cancels the queued message of a reservation that was cancelled, expired, rescheduled or marked no-show. Nothing on the reservation transaction path changes.
+  - New port `BookingReminderRecipientPort`: booking holds only the opaque customer reference, so a deployment registers the adapter that turns it into a recipient (`registerBookingReminderRecipients`). With none registered the job is inert. No implementation ships here.
+  - Templates `booking.confirmation` and `booking.reminder` (transactional, English wording, reservation number and local start only); `whatsapp:dispatch` registers them in its own process.
+  
+  **Upgrade note.** Run `bun run db:migrate` (284, 285) and add `booking:reminders:dispatch` to the scheduler (`ops/awcms-jobs.crontab` is regenerated). Nothing is sent until a recipient resolver is registered and `WHATSAPP_ENABLED=true`. Open policy questions are recorded as O13 in `docs/awcms/booking.md`.
+  - Hardening: a queued message is reconciled only once terminal (a leased `sending` message that falls to `retry_wait` is still cancelled), every message carries an expiry, a mass cancellation drains in one run, the dispatch holds at most 25 reservation locks under lock/statement timeouts, the worker's UPDATE is column-scoped, and dispatch failures are logged by intent id and error class.
+- 8c081b2: feat(hr-workforce): attendance follow-ups from the #990 review (#998, ADR-0132).
+  
+  - **Audit for events recorded for somebody else.** Every `supervisor` event and every `kiosk`/`import` event flagged `late` writes `hr_workforce.attendance_event.recorded_for_other` (ids, kind, source, `late`; the recorder is the actor). `self` events and punctual kiosk/import taps stay un-audited (high volume); a replay adds no second row. The README now says the seven-day replay window bypasses correction approval by design.
+  - **Settle guard scope.** The self-approval guard on `POST .../attendance-corrections/{id}/settle` now applies to a pending or approved instance only. A requester (or the employee concerned) holding `corrections.approve` may settle their own `rejected` / `cancelled` correction (nothing is applied); approving stays segregated, in the handler and in the database.
+  - **Automatic settlement.** The domain-event consumer `hr_workforce.attendance_correction_settler` applies a finished approval's verdict (`awcms.workflow.instance.approved` / `.rejected` / `.cancelled`) through the same `settleCorrection`, with no acting user (`trigger = workflow_event` on the audit row). A refusal leaves the correction `pending`, writes an `auto_settle_skipped` warning audit row and is not retried; `settle` remains the manual fallback.
+  - Migration 280 grants `awcms_worker` exactly what that needs (column-scoped UPDATE on corrections, `SELECT`/`INSERT` on events restricted by a trigger to `source = 'correction'`, column-scoped read access that omits the correction `reason` and the workflow decisions' `reason`/`override_reason`; the correction-only rule holds for every member of `awcms_worker`, not just the role itself). Migration 281 lets `decided_by` be NULL on a rejected/withdrawn correction nobody decided, instead of recording the settler as its decider. `hr_workforce` now depends on `domain_event_runtime`.
+  
+  **Upgrade note.** Run `bun run db:migrate` (migration 280). Settlement follows the decision only where `bun run domain-events:dispatch` runs on a schedule; workflow instances that finished before this release have no delivery and are settled by hand once. With `WORKER_DATABASE_URL` set, the dispatcher needs migration 280's grants.
+- 36e6ded: feat(booking): block create/release routes, and the follow-ups N1 to N4 of the #940 review (#1012, ADR-0131, ADR-0135). `booking` gains `POST /api/v1/booking/blocks`, `POST /blocks/{id}/release`, `GET /blocks` (keyset; filters `resourceId`, `unitId`, `status`) and `GET /blocks/{id}`, gated by the already-seeded `booking.blocks.create` / `.release` / `.read` (default deny, neutral `404 BLOCK_NOT_FOUND` for an unknown or another tenant's id, RLS). Both mutations take the shared `Idempotency-Key` through the same per-key-locked `runIdempotent` as the reservation routes (N2): a client that retries after the commit receives the stored `201` for its own block and never `409 BLOCK_CONFLICT` naming it; five parallel requests with one key make one block; a refusal is never stored. A conflicting reservation (number, status, dates; never a customer reference) is named in `error.details.conflicts` only to a caller who also holds `booking.reservations.read`, checked through the access chokepoint; creating a block never cancels anything. Audited `warning` / `info` with ids, dates and the closed reason code; no domain event in v1 (blocks are configuration of what is for sale and nothing consumes them; an event can be added later under the AsyncAPI rules). N1: a resource-wide block now also covers units added later (`sql/240`: an AFTER INSERT trigger on `awcms_booking_resource_units` inserts the block row of the new unit for every active resource-wide block, after locking the resource row `FOR NO KEY UPDATE`; `readBlockUnits` takes the same row `FOR SHARE`, so a unit insert and a block placement serialise and no unit is left uncovered in either order; both orders and a race are tested with the interleaving proven through `pg_stat_activity`). N3: the lazy reclaim before a block expires only the elapsed holds on the covered unit(s), and its audit text and attributes say so. N4: a block and its allocation rows carry one release instant (`sql/241`, the trigger copies the block's `released_at`). OpenAPI, the bundle, the API reference and docs (booking.md EN/ID, module README EN/ID) are updated. Existing tenants need nothing new (the permissions were seeded by `sql/181`); units added before this release to a resource with an active resource-wide block stay reported by the reconciliation (`block_missing_allocation`).
+- 6f2f21c: Add the `booking` slot allocator, holds with expiry and the required concurrent-final-slot test (Issue #939, ADR-0131; booking.md section 5.1, 7.1, 8.1 and 8.3).
+  
+  - **The allocator** (`application/booking-allocator.ts`) claims the units of one reservation item all-or-none under the existing exclusion constraint of `sql/180`: `INSERT ... ON CONFLICT DO NOTHING RETURNING id` (an exclusion violation is absorbed, so a lost race is "no row", not an error, and no savepoint per attempt), the first free unit in `(sort_order, resource id, ordinal)` order, and the units chosen together inserted in `(resource_id, ordinal)` order so two writers cannot wait on each other in a cycle. The free-unit read is a hint; the constraint is the authority. A residual deadlock (`40P01`) is retried at most three times with jittered backoff, then refused `CONTENTION_RETRY`; an escaped `23P01` still reads as `SLOT_UNAVAILABLE`.
+  - **Holds with expiry** (`application/booking-hold-expiry.ts`). Two cooperating parts, and correctness depends only on the first: **lazy reclaim** expires, inside the claim's own transaction and under the reservation row lock, the elapsed holds whose units overlap the claim; the **reaper** (`bun run booking:holds:expire`, every minute, bounded, `SKIP LOCKED`) expires the rest. It runs as `awcms_worker` under a per-tenant context and holds no privilege on the booking tables: it calls `awcms_booking_expire_due_holds`, a narrow SECURITY DEFINER function (`sql/200`, the `sql/142` / ADR-0090 pattern, a NOLOGIN memberless owner, `EXECUTE` granted to the worker alone) that can only expire an elapsed hold of the session's own tenant (it refuses any other tenant), writes no actor, and cannot confirm or cancel. One statement moves the reservation to `expired`, releases its units and appends the `expired` history row; lazy reclaim does the same as application SQL, works in batches until none is left (never truncating), and an integration test holds the two implementations to the same end state. "Elapsed" is the database clock, checked again by the `held -> expired` trigger.
+  - **`placeHold`** (`application/booking-hold-service.ts`) is the claim a reservation route will call: it validates the claim's integrity, derives the interval from the offering (the server owns the interval and the buffers), clamps the hold on the database clock, enforces the per-customer and per-tenant caps on live holds under a per-tenant transaction advisory lock (a sum, not a non-overlap; default unlimited, an open owner question), and runs the whole claim in a savepoint so a refusal leaves no reservation, item or allocation behind. Refusals are values. Opening hours, lead time, horizon and the `override` path are the create handler's (Issue #941). Audit rows name ids and instants, never the customer reference or the note.
+  - **Reconciliation** (`application/booking-reconciliation.ts`): read-only, tenant-scoped, eleven checks that reservations and allocations agree (a live unit under a cancelled reservation, a kept reservation missing a unit, a mismatched buffer or release reason, a broken lineage, a missing history row, ...) plus the reaper's health (`hold_overdue_unswept`, `reaper.oldestOverdueSeconds`). It repairs nothing. The route is Issue #941.
+  - **Tests.** `tests/integration/booking-concurrency.integration.test.ts` (real PostgreSQL, the runtime role, one connection per contender): T2 (20 parallel claims for the last unit, exactly one wins, nineteen `SLOT_UNAVAILABLE`, one live allocation, repeated 50 times), T3 (capacity N, all-or-none for several units, no partial allocation, a mixed soak with a no-overlap invariant), the `DO NOTHING` interleaving it rests on (the loser blocks on the winner's uncommitted row, observed in `pg_stat_activity`, then is refused on commit or wins on rollback), T6 (an elapsed hold never blocks a claim with the reaper stopped, claimers and the reaper racing for it expire it once, the reaper never waits on a locked hold), the cap race, the sweep as `awcms_worker` (it cannot read, confirm, cancel, release or write history directly, `EXECUTE` is its alone, a foreign tenant is refused), and T7 (with the constraint dropped, two overlapping claims that are open at the same time both commit, deterministically, so the assertions are not vacuous). `tests/booking-allocation.test.ts` pins the pure rules.
+  - **One migration, `sql/200`, only for the job's privilege** (the sweep function, its read-only `--dry-run` twin `awcms_booking_count_due_holds`, and the owner role). The schema of `sql/180` already holds every invariant the allocator needs. The `btree_gist` pre-flight line is added to the production preflight runbook. The module stays `experimental`; no route, OpenAPI path or AsyncAPI channel is added.
+  - **Deferred.** Stay claims and blocks as allocation rows (Issue #940, which reuses this allocator through the `UnitClaim` union), the reservation routes, `Idempotency-Key` on them, the confirm/cancel/reschedule transitions and the live events (Issue #941), `staff_assignments` and test T8.
+- dd5c9bc: Add the `booking` reporting projections and report routes on the existing `reporting` engine (Issue #944, ADR-0131).
+  
+  - **Three projections, no second analytics engine.** `booking.reservations` (created, held, confirmed, cancelled, `late_cancelled` as a subset of cancelled, rescheduled, expired, checked_in, completed, no_show), `booking.time` (booked and released service seconds, buffers excluded) and `booking.nights` (booked and released unit-nights, one per unit and night). Registered through `reportingProjections`, read with `booking.reports.read`, run by the same worker, rebuild and reconciliation as every other projection. Every metric only increases; net is `booked - released`, computed at read.
+  - **The event table is the source, not the live domain events.** A rebuild is always a table re-scan, so the steady state and the rebuild are the same scan; the table is genuinely append-only. The cost is polling latency (current within 5 minutes). Trade-off recorded in `domain/booking-reporting.ts` and booking.md section 7.2.1.
+  - **Migration `sql/244`.** Four non-negative quantity columns and a generated `projection_kind` on `awcms_booking_reservation_events`, filled by a BEFORE INSERT trigger from the reservation's allocation rows (a `confirmed` event books, a cancel or reschedule from `confirmed` releases), with a one-statement backfill under the append-only trigger. No new table, no new privilege.
+  - **Engine additions.** `ProjectionCursorMetricRule.sumColumn` (add up a column instead of counting rows; `MODULE_CONTRACT_VERSION` 4.5.0, MINOR) used by the worker, the rebuild and the reconciliation; a page never ends inside a millisecond (`trimIncompleteTail`, one lookahead row), which closes a silent loss of the second history row of a transaction at a page boundary. A test fails without it. If `limit + 1` rows share one millisecond the pass now fails loudly (rolls back, records a projection failure) instead of skipping the rest of it. **Operators: after deploying, rebuild existing `cursor_table` projections over sources that write several rows per transaction (`procurement.*`, `inventory.*`)**, which may have lost rows at page boundaries before; a reconciliation mismatch is the sign. Decision record: ADR-0143 (which also amends ADR-0131's "two projections" to three; a keyset cursor is the recorded follow-up).
+  - **Three live, re-authorized report routes** under `/api/v1/booking/reports`: `occupancy` (stay, per unit-night; holds excluded per owner decision O8 and reported beside as `heldUnitNights`; blocked nights apart), `utilization` (slot; net-booked seconds over open schedule seconds, a separate metric) and `reservations` (hold pipeline, lead time, cancellation, late cancellation and no-show). Asia/Jakarta day windows, at most 92 days, never cached. A ratio or mean over fewer than 5 reservations is withheld; counts are the tenant's own operational figures, not anonymised (the reader already holds `booking.reports.read`).
+  - **No revenue figure and no person.** Booking holds no price, so nothing here computes one; no projection or report reads a customer reference, note, reason or actor. No projection source is a payroll table (the PS-18 gate is untouched).
+  - **Tests.** Pure rules in `tests/booking-report.test.ts` and `tests/reporting-projection-metric-delta.test.ts`; `tests/integration/booking-reporting.integration.test.ts` proves the projections against real history (as `awcms_worker`), reconciliation, rebuild idempotency, the page boundary, the worked villa, Jakarta day windows across midnight, suppression and tenant isolation.
+  - **Open under O8, unchanged:** whether the utilization denominator excludes maintenance closures, and booked versus actual time. `blockedUnitNights` is returned beside the occupancy rate for a consumer that wants it.
+- 76ac289: Add the `booking` schedule, exception and availability engine (Issue #938, ADR-0131 as amended by ADR-0135; booking.md section 2.1, 2.2, 2.5 and 3.1).
+  
+  - **Pure calculation, no I/O.** `domain/booking-time.ts`, `booking-schedule.ts` and `booking-availability.ts` take already-loaded facts and return a value: no clock (the caller passes the database clock), no query. Slot mode works in UTC half-open intervals with the zone snapshotted from the resource, expanding local weekly windows by the RFC 5545 gap rule (a nonexistent local time takes the offset before the gap) and fold rule (an ambiguous one takes its first occurrence), with setup and cleanup buffers, lead time and horizon. Stay mode works in local date intervals: nights are date arithmetic (a stay across a daylight-saving change still counts by dates), same-day turnover is allowed, check-in and check-out times only derive the arrival and departure instants, and a date that does not exist in the zone is `STAY_DATES_INVALID`. Table tests cover DST gap and fold fixtures in several zones.
+  - **Blocks are a hard exclusion, closures a soft one.** A block of nights makes a unit unavailable and nothing overrides it; a `closed` schedule exception is `OUTSIDE_SCHEDULE`, flagged overridable. Each refusal reason carries `overridable`.
+  - **API.** `GET /api/v1/booking/availability` (gated by `booking.availability.read`, read-only, bounded to 500 slots with a `truncated` flag, rate limited per principal with `429 RATE_LIMITED`), plus schedule and schedule-exception routes (`GET`/`POST` `/schedules`, `GET`/`PATCH`/`DELETE` `/schedules/{id}`, `GET`/`POST` `/schedule-exceptions`, `DELETE` `/schedule-exceptions/{id}`) gated by `booking.schedules.*` and audited. A schedule is superseded, not edited: a new window conflicts (`409 SCHEDULE_OVERLAP`) with an active overlapping one, and the only changes are a shorter `effectiveTo` and deactivation. The module stays `experimental` (no admin screen yet) and declares its OpenAPI fragment.
+  - **Schema (`sql/186`).** `awcms_booking_resource_blocks` (stay resources only, RLS FORCE, composite foreign keys, release once, never deleted), a closed `rules` shape check, an exclusion constraint that holds the schedule non-overlap (the same fact as the pure `effectiveRangesOverlap`, asserted pair for pair in an integration test), a zone-agreement and supersede-not-edit trigger on schedules, and a resource guard that also refuses a mode or zone change under a live block or an active bound schedule. Guards that read a parent row take `FOR SHARE`.
+  - **Staff seam.** `StaffAvailabilityConsumer` is declared inside booking with a no-op binding (no constraint); the `hr_workforce` port is wired by Issue #949, and a staff filter can only narrow availability.
+  - **Deferred.** The allocator that claims units and writes blocks (and the allocation rows a block will also hold) is Issue #939; reservation-series recurrence, `service_requirements` and `staff_assignments` are later slices; an availability search that lists arrival dates for a stay is not part of this slice. A tenant-default schedule applies only to resources in its own zone. The migration is `sql/186`.
+- 83d57bd: Add the `booking` module foundation: generic resources, capacity units, schedules and reservations (Issue #937, ADR-0131 as amended by ADR-0135).
+  
+  - **Schema only, no behaviour yet.** `sql/180` adds eleven `awcms_booking_*` tables (settings, resource pools, resources, units, service offerings, schedules and exceptions as empty shells, reservations, items, allocations, append-only reservation events), all with RLS `ENABLE` + `FORCE` and composite `(tenant_id, id)` foreign keys. `sql/181` seeds 32 permissions, granted to no role (run `identity-access:permissions:backfill` for existing tenants). A hold is a reservation in `held`, so there is no separate holds table.
+  - **Double-booking is unrepresentable.** Two partial GiST exclusion constraints on allocations (instants for slot mode, dates for stay mode, live rows only) need the trusted `btree_gist` extension, created by the migration: a managed database whose migration role cannot create trusted extensions fails the migration before any table exists.
+  - **The state machine is a trigger and a pure function.** `awcms_booking_reservations_update_guard` allows only the legal transitions and, per transition, only its columns; terminal states cannot move. `evaluateTransition` mirrors it for handlers, and an integration test asserts the two agree for every pair of states. History tables reject UPDATE and DELETE by trigger and revoked privileges.
+  - **No money, product id or customer name** is stored (booking.md section 10.2); a test reads `information_schema` to keep it so.
+  - **Contract additions.** `AccessAction` gains `confirm`, `reschedule`, `check_in`, `complete`, `no_show` and the high-risk `override`. The module is `experimental` with no route, navigation, OpenAPI path or AsyncAPI channel: the allocator, availability search and API are Issues #938 to #941. It does not depend on `commerce`.
+  - **Deferred inside the schema.** `service_requirements`, `resource_blocks` and `staff_assignments` of the design arrive with the slices that need them. Migrations are `sql/180` and `sql/181`.
+- 9694b91: Add the optional `telegram_delivery` module for operational and staff alerts only, inert behind `TELEGRAM_ENABLED` (Issue #965, ADR-0140).
+  
+  - **Off at three levels.** The deployment flag, the tenant (Module Management plus the audited high-risk `settings.configure` switch, whose OFF ends every binding in the same transaction) and the person (nothing is sent before a confirmed chat binding).
+  - **One Telegram queue per deployment, never a fallback.** `awcms_telegram_messages` is the repo's fourth channel table, with the lease dispatcher the others use. `TelegramDeliveryPort` (`_shared/ports/telegram-delivery-port.ts`) takes a template key, allow-listed variables, a recipient principal and a mandatory expiry; `enqueue` is one INSERT in the caller's transaction and returns `DISABLED`, `TEMPLATE_UNKNOWN`, `NO_BINDING`, `RATE_LIMITED` or `EXPIRY_REQUIRED`. `NO_BINDING` triggers nothing on another channel.
+  - **Only `staff_ops`, enforced by what the registry can express.** Typed variables (`reference`, `count`, `token`, `link`) cannot carry free text, a deny list of PII-like names fails at registration, fixed wording may carry no URL or mention, and a payroll-owning module cannot register a template; `bun run telegram:templates:check` (now in `bun run check`) fails CI if one tries.
+  - **A chat is bound by an audited, revocable handshake.** A one-time code (32 random bytes, SHA-256 stored, 10 minutes, atomically consumed) opened in a PRIVATE chat creates a `pending_confirmation` binding that the staff member must confirm in their own authenticated session; groups, supergroups and channels are ignored. The chat id exists only as AES-256-GCM ciphertext through the shared ADR-0137 helper (AAD bound to tenant and binding, its own key ring) plus a keyed hash and a mask. Every revocation (person, `/stop`, administrator, deactivated or roleless principal, module or tenant off, Telegram 403) nulls the ciphertext and cancels the queue, and the schema refuses a revoked binding that holds one.
+  - **The bot token never reaches a sink.** It is built into the URL only inside the HTTP seam (fixed host, `ssrfSafeFetch`, `withTimeout`) and redacted, together with anything shaped like a token and long number runs, from every error, refusal reason, Telegram description and log line. Plain text only (no `parse_mode`), no link preview, `protect_content`.
+  - **Rate rules.** At least one second per chat (deferred, not slept on), a global ceiling of 20 a second (hard cap 25) held by one adapter shared across tenants, and a `429` is honoured to Telegram's `retry_after` without spending the retry budget or escalating the backoff, releasing the rest of the batch.
+  - **The webhook** `POST /api/v1/telegram/webhook` compares `X-Telegram-Bot-Api-Secret-Token` in constant time before reading the body or touching the database (an unset server secret refuses everything), is `404` when off, and handles only `/start <code>` and `/stop` from a private chat. Its acknowledgements are the HTTP response, not queue rows (a recorded deviation from ADR-0140 section 4, with the reason). The two cross-tenant lookups it needs are narrow `SECURITY DEFINER` functions. Registration is an operator act: `bun run telegram:webhook:register`.
+  - **Surface.** Migrations `sql/216` (5 tables, FORCE RLS, worker grants), `sql/217` (4 narrow `SECURITY DEFINER` functions and their `NOLOGIN` owner) and `sql/218` (6 permissions), 10 routes under `/api/v1/telegram`, the `/admin/telegram` screen with its navigation entry, jobs `telegram:dispatch` and `telegram:queue:purge` (delegated retention: messages 14 days, revoked bindings 90, link codes 1, all settings inside bounds; it also enforces expiry and ends unconfirmed bindings independently of the dispatcher), `TELEGRAM_*` environment variables validated by `config:validate`, OpenAPI updated, no AsyncAPI change (no binding events), and `data_lifecycle` plus ADR-0094 `subjectData` descriptors for every table.
+  - **Not in this change.** Group chats, inbound business commands, customer or payroll traffic, and the consumers' own templates (`booking.staff_reminder`, `workflow_approval.approval_pending`), which their owning modules register in their own issues.
+  - **Security-audit hardening.** A machine credential cannot mint, read, confirm, reject or revoke a binding (403 `INTERACTIVE_SESSION_REQUIRED`); confirm and reject name the `bindingId` shown (409 on mismatch). The webhook secret must be at least 43 characters, 12 distinct, with no placeholder word, at start-up and at every request. A sweep ends the binding of a deactivated or roleless person and of a tenant whose module or switch is off, in the dispatcher and in the nightly purge, which runs with `TELEGRAM_ENABLED` off. Payroll ownership is now a declaration: `ModuleDescriptor.handlesPayrollData` and `ModuleNavigationEntry.requiredAnyPermission` (`MODULE_CONTRACT_VERSION` 4.4.0, MINOR, both optional); `hr_commission` declares payroll, a template's key prefix must equal its registering module (`ownerModuleKey`), and the CI gate follows aliased imports (a heuristic, not a proof). Confirming queues a notice naming the tenant; `/start` names the tenant. `sql/216` guards `pending_confirmation` to `active` to `awcms_app`; `sql/217` uses column-level grants on the identity table; the HTTP seam pins the host and follows no redirect; the job env allow-list drops the webhook secret and hash ring.
+  - **Second audit round.** The payroll gate follows route ownership, navigation paths, `src/pages` and `scripts`, and fails on a missing declared directory; `system.*` templates are enqueueable only by `telegram_delivery` itself; the worker's binding UPDATE is column-scoped and the activation trigger limits non-app roles to ending a binding; pay, earnings, payment, statement and slip wording is refused; a suspended or inactive tenant loses its bindings (`tenant_suspended`).
+  - **Third audit round.** No exported option admits a `system.*` template (the activation notice is a module-internal sender and a CI gate fails any outside file naming one beside the enqueue path); the binding trigger covers the display data and pending window; payment/incentive wording in Indonesian and English is refused; the payroll-ownership gate matches on a path boundary and on snake_case and kebab-case tokens across `src/` and `scripts/`.
+- ffe9e9e: hr_workforce: attendance events and corrections with approval (Issue 947, ADR-0132, migrations sql/198-sql/199). Attendance events are append-only (no UPDATE or DELETE for the runtime role, plus triggers), recorded by the database clock, with a claimed time bounded by the tenant clock-skew setting: a future claim is refused for every source, a self or supervisor event cannot be back-dated, and a kiosk or import replay is accepted up to seven days and flagged late; replay-safe by a client event key. There is no location, photo, device or network column (geolocation evidence stays a separate follow-up). A correction never edits an event: it proposes an add or a replace with a mandatory reason and starts a workflow_approval instance (fail-closed when none is published), only its status moves and that status must follow the workflow verdict, and on approval a new event supersedes the old one. The requester can never be the approver: a CHECK, a trigger over the workflow decision rows (including a delegate acting on the requester's behalf), the chokepoint self-approval guard and a handler check for a workflow that finished without a human decision. An employee reads their own events and corrections and a supervisor their reports through ownership grants on the read routes only (the manager chain, ten levels, a soft-deleted employment breaks it); a correction whose proposed instant is further in the future than the tenant skew is refused at creation (422 ATTENDANCE_TIME_IN_FUTURE) because approval could never record it, and ?mine=true covers every live employment of the caller so a rehired person reads the old and the new; the correction reason is sensitive and never reaches an audit row, event, log, write response or the workflow store. Seven new permissions (clock, attendance and corrections); existing tenants need the permission backfill, and an operator must publish a workflow under hr.attendance_correction before corrections can be requested.
+- ed8ce67: A permission can require an enrolled MFA factor to be exercised (Issue #977, finding PS-13, ADR-0141).
+  
+  - **Declaration.** `ModulePermissionDescriptor.requiresMfaEnrolment?: boolean` (`MODULE_CONTRACT_VERSION` 4.3.0, MINOR and purely additive). Declared in code and never read from a database column, so there is no migration and no tenant setting to forget. No base module sets it; `hr_payroll` will (the eight keys are listed in `hr-payroll.md` section 17, PS-13).
+  - **Enforcement at the chokepoint.** `authorizeInTransaction` refuses a flagged permission with `403 MFA_ENROLMENT_REQUIRED` to anyone without an **active** factor, after an ordinary allow and only ever as a deny (a caller lacking the permission still gets `ACCESS_DENIED`). `details.reason` is `not_enrolled` (the message names `/admin/account`), `enrolment_unavailable` (`AUTH_MFA_ENABLED` off: fail-closed, names an administrator) or `machine_credential`. One decision-log row (`mfa_enrolment_required`); enrolment is read fresh on every flagged decision and never memoised. `evaluateFieldAccessInTransaction` applies the same check.
+  - **Not a step-up, not a lockout.** The gate asks whether a factor exists and never calls `requireStepUp`; step-up stays the owning module's conditional call (ADR-0136/0137). Enrolment needs no permission and sits outside the chokepoint, so a tenant with no enrolled holder bootstraps by having the owner enrol; every unflagged permission keeps working throughout.
+  - **Readiness.** `bun run security:readiness` gains a `critical` check that enrolment is available when any permission is flagged, and a `warning` listing, per tenant where the module is usable, holders (from every grant source) who have no active factor (ids and counts only).
+  - **Internals.** New `domain/mfa-required-permissions.ts`, `application/mfa-enrolment-gate.ts`, `application/mfa-required-holders.ts` (added to the grant-readers allow-list with its reason). `authorizeInTransaction` gains an optional `mfaRequiredKeys` test seam, which is additive only (unioned with the registry, so it can never narrow enforcement) and stamps `viaMachineCredential` on the context it returns so field-level checks cannot mistake a machine credential for a session. A refused `AuthorizeResult` carries `code`, and the any-of rules (`defineTenantRoute`, `loadAdminScreen`) surface `MFA_ENROLMENT_REQUIRED` in preference to a sibling's generic denial. `POST /api/v1/access/evaluate` applies the requirement to the caller's own enrolment. Contract tests plus two integration suites using a test-only fixture permission.
+- 31444c4: hr_workforce: shift templates, shift assignments and the StaffAvailabilityPort (Issue 946, ADR-0132, migrations sql/184-sql/185). Templates are patterns (local start, elapsed duration, optional break, IANA zone) resolved to UTC once when put on a date; assignments are UTC half-open intervals per employment (work or time off with a coarse category and no reason field), draft then published then cancelled, never deleted, immutable once published. The database refuses overlapping non-cancelled assignments of one employment across kinds, including under concurrent writers (advisory-lock trigger). Publish, cancel and template delete are high-risk, idempotent and audited without personal data; an employee reads their own published schedule through an ownership grant. The generic StaffAvailabilityPort (shared port type plus hr_workforce adapter) returns working intervals per opaque staff reference, fail-closed, read-only and tenant-scoped, with daylight-saving table tests; no Booking code is touched. Existing tenants need the permission backfill for the new shifts and templates permissions.
+- 0d9a5d3: feat(data_lifecycle): subject-access export reaches attendance events, attendance corrections and commission accruals through the employment, and stops matching employment headers by actor stamp (#1018, ADR-0142 addendum). Correction free-text `reason` is withheld from the export. Commission accruals sit on the payroll boundary: the export route now requires `hr_commission.accruals.read` IN ADDITION to `data_lifecycle.subject_request.export`, otherwise the table is withheld and named under the new `withheld` response field (replays re-check), and every earnings read is recorded as a sensitive read (ids and a count, no amount). `awcms_hr_employments` no longer treats `created_by`/`updated_by`/`deleted_by`/`restored_by` as subject columns, so an HR user's export no longer carries the headers they entered for other people. No migration.
+  
+  Audit follow-up: the join uses `profile_id` only (a corrected mislinked login no longer exports a colleague's rows); the 30-day idempotency record keeps payroll tables as ids only and a replay re-reads them under a fresh permission check; payroll detection is by table name OR owner module; `beneficiary_tenant_user_id` is redacted; the admin page shows withheld and truncated tables (EN/ID).
+- 4f061a5: feat(hr_commission): the commission accrual ledger, its transitions and the sale-attribution port (#951, ADR-0132). `hr_commission` (still `experimental`) gains `awcms_hr_commission_accruals` — one commission per (source, employment), with monetary facts immutable by trigger and a status that advances `pending` → `approved` → `payable` → `paid` or to `voided` from pending or approved (a voided accrual can never be paid, also when the application is bypassed) — and `awcms_hr_commission_transitions`, an append-only log written only by the accrual's own triggers so status and log cannot diverge, with a reconciliation that proves it. A downstream adapter reports a sale through the new neutral `CommissionAccrualPort` (`_shared/ports/commission-accrual-port.ts`; the module imports nothing from commerce) or `POST /api/v1/hr-commission/accruals`: a double delivery is one accrual by a database unique key (ten racing deliveries tested), a redelivery returns the original, a different amount for the same source is 409 `SOURCE_CONFLICT`, and the amount is computed by exact `bigint` decimal arithmetic from the published rule in force on the event's own date — the body can never assert an amount, a rule version or a status. The rule and employment are validated under `FOR SHARE` by the service and by trigger (concurrency tests fail without the locks); segregation of duties is enforced in the handler and by trigger (the beneficiary can approve, release or pay none of their own accrual, the creator cannot approve it, the approver cannot pay it), the database recomputes the stored amount from the rule version and refuses a mismatch, and an event may be at most 730 days old. New permissions `accruals.read|accrue|approve|release|cancel|pay` (`accrue` and `pay` are new high-risk access actions; approve, release, cancel and pay are high-risk, idempotency-keyed and audited without any amount, base, rate, source or payment reference). Decided here: publishing a rule version whose window starts before today (UTC) now needs a `backdatedReason` (409 `RULE_BACKDATED_REASON_REQUIRED`), stamped by the database and audited as a flag only. Employee commission only (not affiliate); reversal and events are later phases; the payroll claim of an accrual (PS-19) is designed for and left to #962. Migrations `sql/187`-`sql/189` (rules back-dating, accrual schema, permissions); existing tenants need `identity-access:permissions:backfill`. Retention is answered by BOUNDED_BY_DESIGN entries (retained for the life of the tenant, no period asserted) and subject-data (export gap tracked in #985); a void permanently consumes its source key until reversal (known gap); no admin screen yet.
+- 44d9161: feat(booking): admin APIs for resources, units, pools, offerings and the policy (#1030, prerequisite of the #942 admin screens). `GET/POST /api/v1/booking/resources`, `GET/PATCH/DELETE /resources/{id}` and `POST /resources/{id}/restore` (a resource with its units, `poolId` as the pool membership, capacity that only grows, unit relabel and deactivate); the same set for `/resource-pools` and `/offerings`; `GET` and `PUT /api/v1/booking/policy` (replaces the whole policy, `null` is the module default, audited `critical`). Every write takes `Idempotency-Key` with replay and runs under a savepoint; the database guards reach the caller as named 409s (`BOOKING_MODE_IN_USE`, `TIMEZONE_IN_USE`, `SCHEDULE_TIMEZONE_MISMATCH`, `CODE_TAKEN`), delete is soft and refused while the resource is in use (`RESOURCE_IN_USE`, `POOL_NOT_EMPTY`), and soft-deleted rows need `.restore` as well. No migration. New audit events `booking.pool.*` and `booking.offering.restored`.
+- 78acbe8: security(telegram_delivery): post-merge hardening from the #965 audit (#1008, ADR-0140).
+  
+  - **Proof of possession (M5).** The bot answers a valid `/start` with a 6-digit PIN, and `POST /api/v1/telegram/bindings/me/confirm` now takes `{ bindingId, pin }`. Migration 288 adds `pin_hash` (keyed hash only) and `pin_attempts`; wrong answers are counted in the database, the fifth ends the pending binding (`423 TELEGRAM_PIN_LOCKED`), a wrong one is `422 TELEGRAM_PIN_INVALID`. A trigger lets only `awcms_app` write a hash or raise the counter. A pending binding created before the upgrade has no PIN and cannot be confirmed: the person requests a new link. **Breaking for API clients of `confirm`.**
+  - **Per-chat rate limit (L3).** After the secret check and body limit, one chat may send 10 updates a minute; beyond that it is answered `200` with no reply and does not spend the per-address bucket, so a noisy user can no longer cause `429`s for everyone. The shared limiter still fails open on a Redis outage, so this is fairness, not security.
+  - **Idempotency (L12).** `PUT /api/v1/telegram/settings` and `POST /api/v1/telegram/bindings/{id}/revoke` now require an `Idempotency-Key` (a retried revoke replays its `200` instead of `404`) and refuse machine credentials (`403 INTERACTIVE_SESSION_REQUIRED`). **Breaking for API clients of these two routes.**
+  - **Key rings (L11)** are checked for distinctness at runtime, not only by `config:validate`.
+  - **Upgrade note.** A deployment whose `TELEGRAM_CHAT_ENCRYPTION_KEYS` and `TELEGRAM_CHAT_HASH_KEYS` share any key will, after this upgrade, stop Telegram dispatch, `/start` and `/stop` (both rings resolve as unavailable and fail closed) until the rings are split into distinct keys. Detect it before deploying: `bun run config:validate` with the production environment reports "TELEGRAM_CHAT_ENCRYPTION_KEYS ... tidak boleh berbagi kunci yang sama". Splitting means issuing a new hash ring, which orphans existing chat hashes (staff re-link). If you use a reverse proxy, WAF or APM, it must not log response bodies of `/api/v1/telegram/webhook` (the PIN is in them).
+  - Documented, not changed: per-run circuit breaker (L10), revoke racing a `sending` row (L13), `/stop` cost per tenant (L4).
+
+### Patch Changes
+
+- c5ec84e: fix(identity-access): ABAC `in`/`nin` on date attributes now compare by epoch like `eq`/`ne` (so `...00.000Z` matches `...00Z`), and ABAC date literals with a time part must carry an offset (`Z` or `±hh:mm`) so decisions no longer depend on the server's local time zone; impossible calendar dates such as `2024-02-31` are rejected.
+  
+  **Upgrade note:** a stored DSL policy whose condition holds a date-time without an offset (for example `2024-01-01T10:00`) no longer parses. The policy cache compiles it as invalid, which fails closed: the policy denies across its whole applicability scope until it is edited to carry an offset. Before upgrading, list such policies with `SELECT id, tenant_id, policy_code FROM awcms_abac_policies WHERE is_dsl_managed AND conditions::text ~ '"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?"'` and add an offset to each.
+- de15068: fix(identity-access): the entitlement backfill no longer leaves an expired tenant entitlement row expired while reporting it as granted. The plan treats expired rows as not held, but the grant used `ON CONFLICT DO NOTHING`, so the row stayed inert and `granted` was still incremented. The grant now renews only expired rows on conflict (`DO UPDATE ... WHERE expires_at <= now`, clearing `expires_at`), leaves live rows untouched, and counts only rows actually written (`RETURNING`).
+- 1b905cf: fix(identity-access): the subscription ladder job now checks the row count of its compare-and-swap UPDATE (`RETURNING id`); when the subscription's status changed between planning and applying (zero rows updated) it no longer writes a `identity_access.subscription.transitioned` audit event or counts the transition / entitlement loss in the run result.
+- ed4a59e: fix(identity-access): `restoreRole` now runs its UPDATE in a savepoint, so a reused `role_code` (23505) surfaces as `DuplicateRoleCodeError` (409) instead of a 500 from the aborted transaction (25P02); `readPreferences` and `resolvePrincipalIdForIdentity` run their SELECTs in savepoints, so a read fault really degrades to "no preferences"/`null` without poisoning the caller's transaction.
+- 12d183b: fix(identity-access): the `/admin/registrations` sidebar entry no longer shares navigation order 23 with `/admin/access-policies`; it now uses order 44, which no other module uses, so the sidebar sequence is deterministic.
+- a95f828: security(workflow_approval): decision inserts and instance verdicts are made consistent with the engine's records in the database (#1032, `sql/301`, ADR-0144 amended). A decision must come from a user holding a pending assignment (or an active delegation) on a pending task of a pending instance, once per seat; a task completes only on a met quorum and is cancelled only once its instance is no longer pending; an instance reaches `approved`/`rejected` only when a simulation of its frozen graph (conditions evaluated against its frozen facts) reaches that outcome through completed approvals; a published definition's graph is immutable; every guard pins `search_path`. `DELETE`/`TRUNCATE` on workflow tasks, assignments and join arrivals are revoked from `awcms_app`. The graph engine now cancels the pending sibling tasks of an instance a rejection finishes. These bind rows to each other, not to a person: `decided_by` is not proof of identity.
+  
+  Also: an override must come from an active, non-requester user of the tenant; seats cannot be retired without a replacement or decision; shared approval nodes on parallel branches resolve per branch; `awcms_app` can only create draft definitions and start instances on the active version; a trigger backstops the `DELETE`/`TRUNCATE` revoke. The permission to force a decision is still enforced by the route only.
+- 8b6a7e9: test(e2e): the procurement write spec waits for the page's own reload after delete and restore, so "deletes and restores the supplier" no longer races `window.location.reload()` and passes only on retry (#1052). Test-only; no runtime change.
+- 4a40a69: security(procurement): a document's `approval_status` can no longer be set without the bound workflow instance deciding it (#1045, audit e10 of #1032, `sql/300`). The document status trigger now requires, at `draft -> submitted`, an instance of this tenant that names this procurement document, was requested by the submitter and agrees with the recorded status, and, whenever `approval_status` leaves `pending`, re-reads the instance `FOR SHARE` and requires a matching verdict (`approved`; `rejected` or `cancelled` for `rejected`). The runtime role could previously mark a document approved while its instance was still pending and then finalise it. The function pins `search_path` and schema-qualifies the instance table. No API or event contract changes; the engine's own submit, approve, reject, finalise and cancel paths are unchanged.
+- aef8f69: fix(identity-access): enforce the 24h delegated access code TTL (from the grant's `created_at`) in both the redemption lookup and its compare-and-swap UPDATE, bind redemption to the grant's `partner_tenant_id` (the redeemer's source tenant; a mismatch returns the existing `CODE_INVALID`), and make `validateDelegatedGrantTtl` reject an Invalid Date instead of accepting it. No schema change; error codes and response shapes are unchanged.
+- c8eb914: security(identity_access): TOTP enrolment can no longer be started by a session alone (#1004, audit F-3 of #977, ADR-0141 section 7). `POST /api/v1/auth/mfa/totp/enroll/start` from a session now needs `currentPassword` (`400 PASSWORD_REQUIRED` / `INVALID_CREDENTIALS`), or an SSO session minted within 5 minutes (`403 REAUTHENTICATION_REQUIRED` when stale), verified by the login rule (principal credential, else identity hash), counted toward the principal lockout, rate limited per session and per source, and the SSO exemption holds only when the person works in no other tenant (`sql/261`); the login-forced enrolment-grant path is unchanged and an account with an active factor still gets `409 MFA_ALREADY_ACTIVE`. `enroll/verify` is now rate limited, bound to the session or grant that started the enrolment, expires after 10 minutes and destroys the pending secret after 5 wrong codes (`sql/260`). Activating a factor now writes a `critical` `mfa_enrolled` audit event and, like disabling one, emails the account owner a `system.security_notice` through the existing auth-notification port (needs the default email templates seeded). The account screen asks for the password before setup. A stolen session can no longer enrol the thief's authenticator; someone who knows the password still can, but no longer silently. An enrolment grant minted by a tenant switch (or with no recorded origin) now re-authenticates like a session; only a grant minted by a login that verified the password keeps the exemption (`sql/262`). The wrong-code cap is race-safe (the pending row is locked and the cap is checked before a code is evaluated), and an unlinked identity fails closed for the SSO exemption.
+- a329fc0: Pin `search_path = pg_catalog, public, pg_temp` on the 30 trigger functions that lacked it (29 when written, plus the `sql/284` booking reminder guard from #943) (migration `sql/296`), and add the gate `db:function-search-path:check` to `bun run check` (Issue #1046). `awcms_app` and `awcms_worker` hold `TEMP`, and PostgreSQL resolves unqualified relation names through `pg_temp` before `public`, so a role could `CREATE TEMP TABLE` a same-named shadow and feed a guard trigger fake rows (the way #1032's triggers were bypassed). The gate folds `sql/` in order, judges the final definition of every `RETURNS trigger` / `SECURITY DEFINER` function, and requires `pg_temp` named last. No behaviour change for legitimate writes; bodies are untouched.
+- 6d53ac5: security(hr_commission): commission separation of duties no longer switches off while the beneficiary employment has no linked login (#1019). Each accrual now snapshots the beneficiary's login at creation (`sql/236`, set by trigger, backfilled from the current link); approve, release and pay are refused for both the snapshotted and the current login, and are refused outright (`409 BENEFICIARY_LOGIN_UNRESOLVED`, `sql/237`) while the employment has neither. Closes the unlink, self-approve, relink bypass. Re-linking an employment's login now also counts an unsettled commission accrual (not paid or voided) as history, so it needs the ADR-0141 step-up and stays critical. Commission for an employee without a login now needs a login linked before it can be approved, released or paid.
+- 4b2433e: fix(data-lifecycle): one failing descriptor no longer aborts the tenant's archive-purge pass (#1040).
+  
+  - `data-lifecycle:archive-purge`, run as `awcms_worker`, aborted each tenant at the first delegated dry-run snapshot it could not `SELECT` (29 inventory, procurement, HR and booking tables), so no generic retention purge, including the `awcms_idempotency_keys` one from #1034, ever took effect. A descriptor that throws is now logged (descriptor key and SQLSTATE only), recorded as a `failed` run with `errorCount: 1`, and the pass continues. Expected failures (a delegated snapshot of a baseline table failing with SQLSTATE `42501`) are counted as `knownUnreadableDelegated`, recorded as `failed` runs and do NOT make the job `partial`; any other failure, including any generic descriptor, makes it `partial` and exit non-zero.
+  - `awcms_worker` is deliberately NOT granted `SELECT` on those tables. `data-lifecycle:worker-grants:check` now also covers delegated descriptors with a shrink-only baseline; a new unreadable delegated descriptor or a stale entry fails the gate.
+  - No migration. Follow-up: a count-only SECURITY DEFINER snapshot per owning module.
+  
+  **Upgrade note.** `data-lifecycle:archive-purge` exits 0 while the only failures are the 29 known-unreadable delegated snapshots; the count is in the job output. A non-zero exit now means something unexpected.
+- 8669837: Harden the payroll guards from #978 (Issue #1014). The CSV-writer scan is now structural (comma-joined cells in a file that also joins lines; every cell must go through `csvCellForWrite`; arrow writers and an unused import no longer pass; exemptions are no longer whole-file). `edge-cache:surfaces:check` tests a surface pattern as a regex against concrete payroll paths and refuses HR URL namespaces, and a reporting projection with a `domain_event` source may not consume a payroll event type. `sensitive-reads:check` refuses a `recordSensitiveRead` call that is not awaited/returned, is chained with `.catch`, or sits in a `try` whose `catch` does not rethrow; `expectAuditFailureYieldsNoData` is the reusable route-test assertion for #957 and #961.
+- 22f85ec: chore(actions): bump github/codeql-action init and analyze from 4.38.2 to 4.38.3 together (#994, #996). CodeQL requires both steps of `.github/workflows/codeql.yml` on the same version, so the two Dependabot bumps land as one change; each one alone failed the Analyze jobs.
+- 9deae50: security(identity_access): changing your password now verifies the CURRENT credential, not a stale per-tenant copy (#1035). `password-change` used `awcms_identities.password_hash`, so after a password was changed in tenant A, a tenant-B session holding the OLD password could change it in B and take the account in every tenant. It now uses the shared login-rule verifier (principal credential once promoted, else the identity hash), checks the principal lockout first (`429`) and counts a wrong password toward it. The principal credential stays the single source of truth (no migration; a test fails the build if any other file reads an identity's `password_hash`). Other sessions in the tenant are revoked before the epoch bump, and the caller's own session now survives the change as documented. See ADR-0141 section 8. A password reset of an identity that was never linked to its person's record now replaces the person's credential and bumps the epoch (it used to write only the identity copy, leaving the old password working everywhere), and links the identity.
+- cdf06da: fix(identity-access): audit role revocation from a user group (`unassignRoleFromGroup`) and member removal from a user group (`removeUserGroupMember`) with action `revoke` instead of `assign`, and make `addUserGroupMember`'s already-a-member fallback check join `awcms_user_groups` with `deleted_at IS NULL`, so adding to a soft-deleted group with a stale membership row throws `GroupMembershipTargetNotFoundError` (404) instead of returning `{ added: false }`. Response shapes and error codes are unchanged.
+- bc5ec27: chore(actions): bump actions/download-artifact from 8.0.1 to 8.0.2 (#995). Every workflow step that downloads build artifacts moves to the same pinned SHA.
+- 5828872: fix(booking): a confirm racing the hold's expiry now returns the `HOLD_EXPIRED` refusal (409) instead of a 500 (#1025). The `held -> confirmed` guard trigger judges the hold by its own clock, a few milliseconds after the service's; when the hold elapsed in that window the trigger's 55000 `HOLD_EXPIRED` escaped as an exception. The UPDATE now runs in a savepoint and that error (matched on SQLSTATE plus the `HOLD_EXPIRED` tag) becomes the refusal, with nothing written. The route and the BookingPort confirm share the service, so both are covered. The `(T6 b)` race test no longer flakes, and a deterministic test forces the window.
+- 6220fc8: fix(identity-access): run the high-risk segregation-of-duties check in `authorizeInTransaction` before the access-decision log write and fold a block into the logged decision (as the MFA-enrolment refusal already is), so a request refused with 403 `SOD_CONFLICT` is recorded as a deny with the SoD reason (`matched_policy` `sod_conflict`) instead of a contradicting `allowed=true` row. The response contract is unchanged.
+- 0344d69: test(blog_content): the list-ordering plan is read from EXPLAIN JSON, so the integration assertion holds on PostgreSQL 16 as well as 18 (#1006). No behaviour change.
+- ead5989: fix(identity-access): `isIpInAnyCidr` now accepts a CIDR prefix only when it is all digits and in range, so a malformed machine-credential entry such as `10.0.0.0/` (previously read as `/0`, matching every address) matches nothing, as documented.
+- 4312eba: Claim queue rows through a `WITH due AS MATERIALIZED (...)` CTE in the email, push and WhatsApp dispatchers, so `LIMIT n` is honoured (Issue #1007). The previous `UPDATE ... WHERE id IN (SELECT ... LIMIT n FOR UPDATE SKIP LOCKED)` shape could claim more than `n` rows on stale statistics for a near-empty queue, because the planner re-ran the locked subquery per outer row. Claim predicates, ordering, RETURNING columns and tenant scoping are unchanged.
+- 62edec1: chore(deps-dev): bump @playwright/test from 1.63.0 to 1.64.0 (#993). Test tooling only; no runtime change.
+- 43bd98b: security(workflow_approval): `awcms_workflow_decisions` is now append-only, a final `awcms_workflow_tasks` row is frozen, and a terminal `awcms_workflow_instances` row is immutable for the runtime role (#999, audit F2 of #990, ADR-0144, `sql/252`). `awcms_app` loses `UPDATE`/`DELETE`/`TRUNCATE` on decisions and `DELETE`/`TRUNCATE` on instances, and triggers refuse the same for any role plus every update of an `approved`/`rejected`/`cancelled` instance. The separation-of-duties guarantee that HR attendance corrections rely on can no longer be undone by another module's bug. No behaviour change for the workflow engine's own writes.
+- 6b9e380: fix(identity-access): the flat ABAC policy update (`PATCH /api/v1/abac/policies/{id}`, and activate/deactivate via `setPolicyActive`) now only matches rows with `is_dsl_managed = false`, so it returns not-found for DSL-managed policies instead of flipping their effect or active flag without DSL validation.
+- 5a5918d: chore(deps): bump astro from 7.3.5 to 7.3.8 and @astrojs/node from 11.1.6 to 11.1.7 together (#991, #992)
+  
+  The two Dependabot PRs are applied as one change: they share `bun.lock` and the same four gates, so either alone left CI red.
+  
+  - **Stack manifest.** `awcms-family-compatibility.yaml` (`stack.astro` -> `^7.3.8`, `stack.astroNode` -> `^11.1.7`) and the version table in `docs/awcms/family-compatibility.md` / `.id.md` move with `package.json`; `family:conformance:check` compares the declared values with `package.json` and failed on both PRs.
+  - **Client asset budget.** The `astro` 7.3.8 build re-minifies the same source differently: the net across app assets is +208 B (320,435 B -> 320,643 B), with files moving both ways. `APP_BUDGET_BYTES` in `scripts/client-asset-budget.ts` is raised to 320,643 B (no margin added) with the measurement documented beside it. This is what failed `bun run build` in the Quality, E2E smoke and minimum-supported jobs.
+  - **Lockfile.** Regenerated with `bun install`, not edited by hand.
+- bf29911: ci: add `bun run ci:local` to run every CI job locally (#1001)
+  
+  `bun run check` only covers the `quality` job, so repo hygiene, the changeset policy, the DB-gated integration suites, the Bun 1.3.0 floor and the Playwright smoke could only be confirmed by pushing and waiting for GitHub Actions. `scripts/ci-local.ts` runs all of them on the developer's machine with the workflows' own commands in their order and prints one summary table.
+  
+  - **Jobs.** `hygiene`, `changesets`, `quality`, `integration`, `minimum-supported`, `e2e`; `--job <name>` (repeatable) selects, `--base <ref>` sets the changeset base (default `origin/main`), `--fail-fast` / `--keep-going` (default) and `--allow-skip` tune the run, `--list` and `--help` describe it. Shell steps carry the workflow `run:` text verbatim and run under `bash -e -c`; the few steps that rely on a GitHub feature are reimplemented and say why.
+  - **Skipped is not passed.** A job that cannot run here (no PostgreSQL admin URL, a missing Playwright Chromium, no Bun 1.3.0, no merge-base) is reported `SKIPPED (reason)`. Exit code: 0 all passed, 1 a job failed, 2 nothing failed but something was skipped (unverified), 64 usage error; `--allow-skip` turns 2 into 0 and the summary still says INCOMPLETE.
+  - **Throwaway database.** `integration` and `e2e` read a superuser connection string from `CI_LOCAL_DATABASE_URL` (falling back to `DATABASE_URL`), create a uniquely named database, point `DATABASE_URL` / `SETUP_DATABASE_URL` / `WORKER_DATABASE_URL` at it, and drop it afterwards, also on failure or Ctrl-C. The three URLs are pinned (blank for jobs without a database) so a value from the shell or `.env` can never point a test run at a real database. PostgreSQL 16 and newer is accepted with a note (CI uses 18); older is refused. Passwords are never printed.
+  - **Interrupts.** On Ctrl-C, SIGTERM or SIGHUP the runner stops starting anything, terminates the process trees of the children it spawned itself (found by walking parent links from its own PIDs, never by name or command line, never with `pkill`/`killall`, because `bun run` exits on SIGTERM and leaves its script running), drops the throwaway database and exits 130 / 143 / 129.
+  - **Bun 1.3.0.** `minimum-supported` uses the `bun` on `PATH` if it is exactly 1.3.0, else `bunx bun@1.3.0`, placed first on `PATH` for that job only; unavailable means skipped, never run on the wrong Bun.
+  - **E2E.** Verifies the Playwright Chromium instead of running `playwright install --with-deps`, picks a free port instead of the workflow's fixed 4321 (a running `bun run dev` would otherwise answer the readiness probe), seeds through `POST /api/v1/setup/initialize`, and always stops the server it started.
+  - **Kept in step with the workflows.** `tests/ci-local-parity.test.ts` parses `ci.yml` and `changesets.yml` and fails when a job has no local counterpart, a step is neither mirrored nor omitted with a reason, a mirrored `run:` text changes, or a pinned fact (Bun versions, PostgreSQL major, the e2e environment and seed body, the base ref) diverges; it also mutates a copy of the real workflow to prove it bites. `tests/ci-local.test.ts` covers argument parsing, the verdict and exit-code rule, the summary, job sequencing, the database helpers (including that `DROP`/`CREATE DATABASE` refuse any name the runner did not make), real jobs through bash, and the process-tree termination (including an end-to-end SIGTERM test that checks an unrelated process survives).
+  - **Docs.** New `docs/awcms/ci-local.md` (+ `.id.md`); `CONTRIBUTING.md`, `docs/awcms/alur-pengembangan.md`, `docs/awcms/07_sprint_testing_production_readiness.md` and `docs/awcms/branch-protection.md` (EN + ID) point at it and state that GitHub's required checks (ruleset `11653326`) still gate merging; the `awcms-testing`, `awcms-pr-review` and `awcms-implement-issue` skills mention it. `CI_LOCAL_DATABASE_URL`, `PLAYWRIGHT_BROWSERS_PATH` and `PLAYWRIGHT_CHROMIUM_EXECUTABLE` are recorded as tooling-only in `scripts/env-contract-coverage-check.ts`.
+- 7509a51: fix(identity-access): a session handoff code can no longer be redeemed after the session that issued it ended. `redeemHandoffCode` now claims the code only while the issuing session (`issued_by_session_id`) is unrevoked, unexpired and credential-current (`sessionCredentialCurrent`), so a code minted before logout or a password reset no longer mints a fresh session within its 60-second life; a refused redeem returns the existing invalid outcome. `session-handoff-directory.ts` is now a recorded live-session reader in `scripts/session-readers-check.ts`.
+- 7032fc8: test: give the whole-repo scan tests explicit 60 s per-test timeouts so `bun run check` is not load-flaky (#1022). The two api-docs generator determinism tests, the OpenAPI bundle tests that regenerate the full bundle, and the repo-wide legacy-class scan now declare `60_000` as their timeout, with no assertion changed and nothing skipped. No runtime behaviour changes.
+- 3fe7d39: fix(hr_workforce): the employment account link refuses a self-link to another person's employment (`403 SELF_LINK_FORBIDDEN`), requires the linked login's profile to match the employment's (`422 PROFILE_MISMATCH`), and treats a re-link as `critical` with before/after login ids and, when attendance history exists, the conditional step-up of ADR-0141 section 4 (`403 STEP_UP_REQUIRED`) (#979, finding PS-14). No schema change.
+  
+  Follow-up hardening (audit): the refusals leave an `account_link_refused` audit row; a repeat link re-validates the login (and requires an active identity); an employment that was ever linked stays a critical re-link; `sql/228` adds the `awcms_hr_employments_link_guard` trigger and `last_tenant_user_id`; and a `security:readiness` warning lists links made before the fix.
+- 0e27a50: chore(actions): bump actions/upload-artifact from 7.0.1 to 7.0.2 (#997). Every workflow step that uploads build artifacts moves to the same pinned SHA.
+- 66c90b0: docs: code comments and docs no longer cite "ADR-0058 §E" for rules it does not contain (#1002). The conditional step-up rule now cites ADR-0141 §4. The latent-authz trap (an action that nothing seeds denies everyone) cites the `awcms-abac-guard` skill, its only standing record. No behaviour change.
+- 937e37b: fix(identity-access): re-check `status = 'active'` under the MFA verify row lock (and in the TOTP replay-guard CAS and recovery-code consume) so a factor disabled between the unlocked read and `lockFactorForVerify` can no longer verify a valid TOTP or recovery code from the stale snapshot; such a factor is treated as a non-match without counting a lockout failure.
+- dd5b69e: fix(identity-access): assignment-create segregation-of-duties checks now consider the subject's active, not-yet-expired business-scope assignments whose effective period overlaps the new assignment's period, including ones that start in the future. Previously only assignments in force at the moment of creation were checked, so a conflicting assignment could be granted today alongside one starting tomorrow. Other callers of `resolveSoDAssignmentFacts` keep the current-only behaviour; error codes and response shapes are unchanged.
+
+## 10.7.0
+
+### Minor Changes
+
+- 78c1b3b: feat(domain-event-runtime): domain-event consumers are declared in the owning module's descriptor (`domainEventConsumers`, module contract 4.2.0) and the runtime builds its registry from the composed module list, so a module or a downstream template registers a consumer without editing `domain-event-runtime/infrastructure/consumer-registry.ts` and the `domain_event_runtime -> reporting` import and its boundary exception are gone (#918 items 1 and 4, ADR-0134). Behaviour change for module authors: `DOMAIN_EVENT_CONSUMERS` is replaced by `listDomainEventConsumers()`; the three shipped consumer names are unchanged (they key delivery rows and the effect ledger). `handle` is now the side effect and the registry wraps it in `applyConsumerEffectOnce` (`self_managed` needs a written rationale). New gate `domain-events:consumers:check` rejects duplicate names, subscriptions to events no module publishes, a missing `domain_event_runtime` dependency, renamed shipped consumers and any other caller of `applyConsumerEffectOnce`; the registry build throws on the same defects.
+
+### Patch Changes
+
+- 3329ebb: docs(contracts): a PROVISIONAL, machine-validated AsyncAPI document for the booking, hr_payroll and WhatsApp delivery events, plus `docs/awcms/cross-domain-contracts.md` (capability ports, per-consumer idempotency, provisional-to-live migration) (#918 items 2-3). New gate `asyncapi:provisional:check` in the `check` chain; no runtime code, no live contract change.
+
+## 10.6.0
+
+### Minor Changes
+
+- a0dabcd: feat(inventory): `InventoryLedgerPort.listBalances` — a keyset-paged, read-only list of the current balances of one location (`itemTypePrefix`, `nonZeroOnly`, `after`, `limit` up to 500), so a consumer can reconcile its catalogue against the ledger without reading the module's tables (#913, ADR-0126). Never returns movement history; runs under the caller's tenant RLS; a cursor is bound to its location.
+- 526b3bb: feat(db): `db:migrate` accepts three- or four-digit migration prefixes (`NNN_` or `NNNN_awcms_<area>_<description>.sql`) and applies them in numeric order of the prefix, with the full name as tie-break (#911, ADR-0130). Upstream keeps `001`–`899`; `1000`+ is for derived applications whose reserved band ran out. Every existing three-digit sequence keeps its byte-identical order, and the gate loader (`scripts/lib/migrations.ts`) folds in the same order the runner applies.
+
+### Patch Changes
+
+- 28c0897: fix(deps): close advisories in sharp 0.35.4 (GHSA-wq5f-xc86-pv6w, librsvg CVE-2026-96889), shell-quote 1.10.0 (GHSA-pqg4-j6r4-53mv, command injection), and source-map-js 1.2.1 (GHSA-68fv-2mgg-jv7q, event-loop DoS) by adding package.json overrides for sharp ^0.35.5, shell-quote ^1.11.0, and source-map-js ^1.2.2 (#920).
+- 38f9ae8: fix(idn-admin-regions): dataset rollback no longer refuses with `NO_PREVIOUS_DATASET` when two activations land close together (#914). `activated_at` is `now()`, the instant the activating transaction started, so the active dataset can carry an `activated_at` equal to, or earlier than, the dataset it superseded. The strict `activated_at < active.activated_at` filter then excluded the real target. Rollback now picks the most recently activated `superseded` dataset (`ORDER BY activated_at DESC, id DESC`), and `listDatasets` orders by `created_at DESC, id DESC` so equal timestamps no longer give an unspecified order.
+
+## 10.5.0
+
+### Minor Changes
+
+- 56fe61e: feat(inventory): admit a generic multi-location stock ledger module
+  
+  A domain module that sells goods had one way to track stock: a single counter on
+  a product or variant row. A counter cannot say where, why, who changed it, or
+  whether it is still the sum of what happened, and two concurrent sales of the
+  last unit are a read-modify-write race on one cell.
+  
+  `inventory` is a new module (ADR-0126, `sql/169` + `sql/170`, Issue #887) that
+  any commerce, POS or storefront module can use as its inventory authority, API
+  first (no admin screen or `navigation` entry yet — a recorded follow-up).
+  
+  ### What it guarantees, and how each is enforced
+  
+  - **Immutable ledger.** Finalised movements are append-only by a row trigger
+    **and** by `REVOKE UPDATE, DELETE, TRUNCATE` from `awcms_app`; a mistake is
+    corrected by a compensating movement. Only an adjustment is reversible, once.
+  - **A balance is never asserted.** `awcms_inventory_balances` is a read model that
+    is always the sum of its movements. No endpoint accepts a quantity on hand, and
+    a body naming `onHand`/`balanceAfter` is a `400`. `GET .../balances/reconciliation`
+    proves `balance == SUM(movements)`; `POST .../balances/rebuild` repairs a drifted
+    row FROM the ledger (lock first, then recompute — never a stale sum).
+  - **The last unit is safe.** Balance rows are locked in a fixed order and the
+    UPDATE is guarded; twelve concurrent sales of one unit sell exactly one. A
+    non-locking pre-read refuses an impossible withdrawal before any row is
+    created, so a refused sale commits nothing.
+  - **A transfer is a balanced pair**, validated whole before either leg is written
+    and independently enforced at COMMIT by a deferred constraint trigger.
+  - **Idempotent source identity** `(type, id, line, operation)`: replaying it
+    returns the ORIGINAL movement; the same identity with a different payload is
+    `409 SOURCE_CONFLICT`. It is separate from the `Idempotency-Key` header, which
+    the API also requires.
+  - **Negative stock** is a per-tenant default with a per-location override
+    (`forbid` unless configured). It never blocks a movement that only improves a
+    balance.
+  - **Opaque item references** `(item_type, item_ref)`, deliberately not a foreign
+    key to any catalogue. Quantities are exact decimal strings (`numeric(20,6)`),
+    and a unit mismatch is refused rather than converted.
+  
+  ### Surface
+  
+  14 route files under `/api/v1/inventory/*`, every one a `defineTenantRoute`
+  authorizing through the ADR-0063 chokepoint; twelve permissions seeded by
+  `sql/170` (nothing is granted to any role — existing tenants use
+  `identity-access:permissions:backfill`). `adjust` and `transfer` are new
+  HIGH-RISK `AccessAction` members. Two domain events
+  (`awcms.inventory.movement.posted`, `awcms.inventory.stock.low`) go through the
+  outbox in the same transaction. The `inventory.low_stock` projection is
+  registered on the reporting engine as two monotonic counters, because the engine
+  clamps a decrement at zero. Consumers adopt the ledger through
+  `InventoryLedgerPort`, documented with the expand, backfill, reconcile, contract
+  migration path in the module doc pack.
+  
+  ### Security-review hardening
+  
+  - **Openings need `movements.adjust`.** `opening` states a starting quantity with
+    no document behind it, so it is no longer postable through `POST /movements`;
+    it has `POST /openings`, guarded by `movements.adjust` and audited at warning.
+    `source.type` `reversal` is reserved for the server.
+  - **The ledger trusts the caller's source identity** — now said plainly in the
+    permission descriptions, the OpenAPI text and the port contract, with the
+    composition-root duty (authorize, audit, pass `correlationId`) spelled out.
+  - `awcms_worker` is granted `SELECT` on the low-stock signals table (the
+    projection refresh failed under `WORKER_DATABASE_URL` without it), and a test
+    now asks the same question of every registered projection source.
+  - A balance past `numeric(20,6)` is a `422`, not a 500. The location row is read
+    `FOR SHARE` in the posting path. The replay fingerprint includes the reason and
+    note. `occurredAt` is bounded (`INVENTORY_BACKDATE_WINDOW_DAYS`, default 7;
+    older needs `adjust`). No response returns `balanceAfter` or the on-hand
+    quantity of an `INSUFFICIENT_STOCK`. A trigger refuses a forged reversal.
+  
+  ### Not done, on the record
+  
+  Nothing purges the ledger (the `data_lifecycle` descriptors say so; partitioning
+  and archive-then-purge need their own ADR), no reservations/holds, no unit
+  conversion, no multi-line atomic posting, no admin screens.
+  
+  ### Operating note
+  
+  Existing tenants must be granted the new permissions
+  (`bun run identity-access:permissions:backfill`, dry-run by default) before they
+  can use the API; until then every route is a 403, which is the default-deny
+  posture rather than a fault.
+- 6184a57: feat(tax): a generic, jurisdiction-neutral tax calculation module (#889, ADR-0127)
+  
+  Consumers of this template carry one flat store-level tax percentage. That is
+  fine until a rate changes (and every document issued before must keep the tax it
+  was issued with), a price list mixes taxable, exempt and zero-rated items, a
+  jurisdiction stacks two levies, or one customer returns one item of three months
+  later — and it is wrong by construction when a storefront, a POS and an invoice
+  each compute the tax their own way. This adds the generic core underneath all of
+  that: one calculator, one rule model, one immutable snapshot, behind an API.
+  
+  API-first. No admin screen and no `navigation` entry ship here (an entry without a
+  page is a permanent 404); rule-authoring screens are a recorded follow-up.
+  
+  ### What it does
+  
+  - `POST /api/v1/tax/quote` — stateless calculation. `POST /api/v1/tax/snapshots` —
+    finalise a document's tax, idempotently. `POST /api/v1/tax/snapshots/{id}/reverse`
+    — refund or return all or part of it. Plus rule-version authoring and
+    publication, snapshot reads, and a reconciliation report.
+  - **Rule versions** carry an effective window (half-open, non-overlapping per
+    profile), a pricing mode (exclusive/inclusive), a rounding mode (seven), scale
+    and level (per line, or round-the-sum-once and apportion), any number of
+    components including stacked/compound ones, and exempt vs zero-rated treatments
+    kept distinct. Country profiles are configuration, authored after a verified
+    regulatory mapping; **none ships**.
+  - **Exact money.** Every amount is a decimal string (a JSON number is refused) and
+    every computation is `bigint` rational arithmetic. No floating point touches an
+    amount. The calculator is pure and deterministic.
+  - **Server-authoritative.** No endpoint accepts a tax amount; a payload that names
+    one is refused with `400 TAX_AMOUNT_NOT_ACCEPTED`, not ignored.
+  - **Historical documents cannot change.** A published version is immutable and
+    published windows cannot overlap (both enforced by database triggers, the second
+    under an advisory lock); a snapshot is append-only and carries a copy of the rule
+    it was computed under; a refund is computed from the original snapshot alone —
+    it has no parameter that could carry a current rate.
+  
+  ### Contract and operations
+  
+  - Migrations `sql/171` (rule versions), `sql/172` (snapshots), `sql/173`
+    (permissions). Two tables, both tenant-scoped with `ENABLE` + `FORCE` RLS.
+  - New permissions `tax.rules.{read,configure,publish}`,
+    `tax.calculations.analyze`, `tax.snapshots.{read,create,reverse,backdate}`,
+    `tax.reports.read`. New high-risk access actions `reverse` and `backdate`. Existing tenants'
+    `owner` roles receive them from the owner-permission backfill job.
+  - Domain events through the outbox, registered in the runtime registry and
+    AsyncAPI: `awcms.tax.rule_version.published`, `awcms.tax.snapshot.finalised`,
+    `awcms.tax.snapshot.reversed`.
+  - Reporting: a counting projection (`tax.snapshot_activity`) on the `reporting`
+    engine, and a live monetary reconciliation report with an integrity block.
+  - `awcms_tax_snapshots` has a `data_lifecycle` descriptor (`financial_tax`, floor
+    1826 days, also enforced by the database trigger) and `awcms_worker` gains
+    `SELECT, DELETE` on it. `BOUNDED_BY_DESIGN` grows by one entry (and its cap by
+    one).
+  - OpenAPI: new `Tax` tag and `openapi/modules/tax.openapi.yaml`.
+  
+  ### Hardening from the security audit
+  
+  - A rule version cannot be published before the server's date or on/before a tax
+    date already finalised under its profile (`409 TAX_VERSION_BACKDATED`); the
+    per-request `pricingMode` override is removed (the version decides); a document's
+    tax date is bounded against the server date (default 7 days back, 1 forward,
+    `TAX_TAXDATE_PAST_DAYS` / `TAX_TAXDATE_FORWARD_DAYS`) and outside that needs the
+    new high-risk permission `tax.snapshots.backdate`; amounts that cannot fit
+    `numeric(24,6)` are `422 TAX_INPUT_INVALID`; lists return summaries; the snapshot
+    detail no longer embeds the rule definition; malformed ids are 404; document ids
+    are opaque handles.
+  
+  ### Operators
+  
+  **Existing tenants need the permission backfill.** `sql/173` extends the catalogue
+  only, so a tenant created before it has an `owner` role without the nine `tax.*`
+  permissions and every tax route answers `403`. After migrating, run
+  `bun run identity-access:permissions:backfill --commit` (without `--commit` first
+  for a dry run). Tenants created afterwards need nothing.
+  
+  
+  A published rule version cannot be edited, back-dated or deleted. Correct a wrong
+  rate by publishing a successor with a later effective date, and a wrong document by
+  reversing it. Spec, worked examples, data dictionary and the migration adapter
+  contract for consumers leaving a flat percentage:
+  `docs/awcms/tax-calculation.md`.
+- e47b9d4: feat(admin): procurement admin screen; flip `procurement` to active
+  
+  `procurement` (ADR-0128) shipped API-first as `experimental` because ADR-0021
+  criterion 1 refuses an `active` module without an admin screen. The screen lands
+  here with its `navigation` entry in the same change, and the module becomes
+  `active`.
+  
+  `/admin/procurement` has five views, each gated on its own read permission and
+  every control on its own action permission:
+  
+  - suppliers: create and edit, soft-delete and restore, categories and tags, and
+    the identifiers and references of a supplier shown masked. Revealing one
+    (`suppliers.reveal`) is audited and the clear value is shown once in a single
+    live region that clears itself; it is never stored or cached. An add answers a
+    minimal acknowledgement, so the page reloads to re-list.
+  - documents: filter by kind and status, create a draft with lines for all four
+    modes, and on the detail page submit, finalise, cancel and reverse. Cancel and
+    reverse need a reason; every confirmed action carries an `Idempotency-Key`
+    that is reused for a retry of the same request.
+  - approval policy: read and change the threshold.
+  - reports: receiving summary and per-supplier activity (deleted suppliers are
+    flagged).
+  - reconciliation: the read-only proof that documents and the ledger agree.
+  
+  The screen never writes a balance: stock moves only when the endpoint posts
+  through the ledger. Editing a draft in place (`procurement.documents.update`)
+  is not on the screen and stays on the shrink-only coverage ledger; cancel and
+  re-enter instead.
+  
+  No migration: every key was seeded by `sql/175`. A tenant created before it needs
+  `bun run identity-access:permissions:backfill` for its roles to see the screen.
+  The client asset budget is raised by 8,604 B for the one screen script.
+- 45c334a: Admit a generic `procurement` module: suppliers, receiving, supplier returns, stock requisitions and location transfers over the inventory ledger (Issue #888, ADR-0128).
+  
+  - **Document layer, no stock.** A document (`receive`, `supplier_return`, `requisition`, `transfer`) moves draft -> submitted -> finalised | cancelled, finalised -> reversed. The state machine is a database trigger, so a finalised document is immutable and nothing is deleted. Finalising posts movements only through `InventoryLedgerPort` (all lines or none, one savepoint; replay posts nothing twice, with or without the same `Idempotency-Key`); reversal posts compensating movements. Requisitions and transfers are paired ledger movements.
+  - **Supplier identity stays in `profile_identity`.** A supplier is a business role with an optional composite-FK `profile_id`, vendor code, status, categories and tags. Tax, business, payment and contact identifiers are classified rows, masked in every response, log, audit row and event, and revealed only by one audited, separately permissioned, `no-store` endpoint.
+  - **Contract additions.** `InventoryLedgerPort` gains `postSupplierReturn` and `postTransfer`. `AccessAction` gains `submit` and the high-risk `finalise` and `reveal` (`reverse` is reused from the tax module). 17 permissions seeded by `sql/175` (granted to no role; run `identity-access:permissions:backfill` for existing tenants), 16 routes, 8 tables with FORCE RLS and composite tenant FKs, two `awcms.procurement.*` events, OpenAPI and AsyncAPI updated.
+  - **Approval and reporting.** Optional threshold approval through `workflow_approval` is soft and fails closed. A read-only reconciliation proves finalised documents and the ledger agree; `procurement.receiving` and `procurement.suppliers` projections ride the `reporting` engine.
+  - **Status.** The module is `experimental` and API-first; admin screens are a recorded follow-up (its permissions are in `NOT_YET_SCREENED`). Migrations are `sql/174` and `sql/175`; numbers 171-173 are reserved.
+  - **Hardening from the security audit.** `unitCost` is required on a supplier return (the approval threshold is cost-based and covers `receive` and `supplier_return`; `requisition` and `transfer` are not cost-gated); the idempotency hash binds the acting user; the lines trigger checks both the old and new parent on a re-pointing UPDATE; `includeDeleted=true` on the supplier list also needs `suppliers.restore`; the identifier hash is documented as unkeyed with `normalized_value` in plaintext under RLS (keyed hashing and at-rest encryption are follow-ups).
+  - **Second-round hardening.** Adding a supplier identifier is idempotent and answers a uniform minimal acknowledgement (type, label, masked value, classification; no id, no timestamp) for a fresh and an already-held value, so it is no equality oracle; the database refuses `finalised`/`reversed` unless approval is `not_required|approved`, fixes the approval instance after submit and requires the finalise/reverse actor and reverse reason; a reversed document frees its external reference; short payment/contact references are masked entirely; a soft-deleted supplier's identifiers are hidden; the supplier report includes soft-deleted suppliers flagged `deleted`; finalise/reverse refuse a principal without a tenant user id with a clean 403.
+- 766447e: feat(admin): inventory and tax admin screens; flip both modules to active
+  
+  `inventory` (ADR-0126) and `tax` (ADR-0127) shipped API-first as `experimental`
+  because ADR-0021 criterion 1 refuses an `active` module without an admin screen.
+  Both screens land here, each with its `navigation` entry in the same change, and
+  both modules become `active`.
+  
+  `/admin/inventory` has three views, each gated on its own read permission:
+  balances with a low-stock signal, filters, per-item thresholds and a read-only
+  reconciliation; the movement history with adjustments, reversal through the
+  reason panel, and transfers; and locations with the negative-stock policy per
+  location and per tenant. It never asserts a balance, so every change is a
+  movement.
+  
+  `/admin/tax` has rule profiles and versions (a draft, then publish with
+  confirmation), the snapshot list and detail, and the reconciliation report. The
+  rule definition is authored as JSON that the server validates.
+  
+  No new permission and no migration: every key the screens use was already seeded
+  by `sql/170` and `sql/173`. `inventory.balances.rebuild`, `inventory.movements.create`
+  and the four consumer-driven `tax.*` keys stay on the shrink-only coverage ledger.
+  The client asset budget is raised by 6,014 B for the two screen scripts.
+
+### Patch Changes
+
+- 62f275f: chore(actions): bump anchore/sbom-action from 0.24.2 to 0.24.3 (#909)
+  
+  Both SBOM steps in `.github/workflows/release.yml` (source tree and built image) move to
+  the same pinned SHA `66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c` together. The workflow
+  only runs on a `v*.*.*` tag, so PR CI cannot exercise this step; the next release run is
+  its first real execution.
+- 5a3dea6: Document the `Idempotency-Key` bound in the OpenAPI contract: the 93 inline header declarations become one shared `components.parameters.IdempotencyKey` (1 to 255 visible ASCII, `400 IDEMPOTENCY_KEY_INVALID`) that matches the middleware bound, with a test pinning it to the runtime constants and a gate against inline redeclaration (ADR-0129, amending ADR-0026). No runtime change.
+- b4c3b83: fix(security): validate the `Idempotency-Key` request header (1 to 255 visible ASCII characters, otherwise `400 IDEMPOTENCY_KEY_INVALID`) once in the middleware, and treat SQLSTATE class 54 as caller input rather than a database failure.
+- 6032ebc: fix(a11y): every admin `.data-table-scroll` table wrapper is now a keyboard-focusable, named region (`tabindex="0"`, `role="region"`, `aria-labelledby`/`aria-label`) with a visible focus ring, so keyboard users can scroll wide tables (WCAG 2.1.1, axe `scrollable-region-focusable`). A new contract test fails CI when a wrapper lacks any of them (#907).
+- 82890d7: test(e2e): the modules-toggle spec now disables `form_drafts`, a module nothing depends on, instead of `reporting`. Modules that register reporting projections declare `reporting` a dependency, so the old target's disable was refused. A new pure guard test fails in `quality` as soon as any module declares a dependency on the spec's target.
+- d978cae: feat(admin): structured tax editor, location rename/office link, balance rebuild screen
+  
+  `/admin/tax` gets a structured definition editor (categories, rules, stacked
+  components, pricing/rounding untouched) that serialises into the same JSON
+  textarea the form already submitted; the textarea remains the no-script
+  fallback and the source of truth, and the server stays authoritative. Rates are
+  exact decimal strings end to end.
+  
+  `/admin/inventory` gets a rename / office-link control per location over the
+  existing `PATCH /api/v1/inventory/locations/{id}` (`inventory.locations.update`;
+  the endpoint existence-checks the office inside the tenant transaction), and a
+  "Rebuild balances" action over `POST /api/v1/inventory/balances/rebuild`
+  (`inventory.balances.rebuild`, confirmed, idempotent, audited at critical
+  severity, no quantity accepted). `inventory.balances.rebuild` leaves the
+  shrink-only admin-screen coverage ledger. No API, schema or permission change.
+- f077f30: fix(tooling): make db:work-class:generate output prettier-stable
+  
+  The generator now uses prettier's API to format the JSON output before writing it, ensuring that both `bun run lint` and `bun run db:work-class:check` pass even when a route file declares multiple work classes. This fixes the issue where arrays of work classes were formatted multi-line by the generator but collapsed to a single line by prettier.
+- e397d5a: The inventory movements listing and detail now expose `reversedByMovementId` (the reversal that compensated an adjustment, or null), answered by one correlated index probe per row rather than a query per row. `/admin/inventory` hides Reverse once an adjustment has been reversed. The inventory and tax screens also share `blankToNull`, drop their English confirm fallbacks, and the idempotency-key helper records its two memory-only limitations.
+
+## 10.4.0
+
+### Minor Changes
+
+- 1fac308: feat(admin): add ConfirmDialog, SettingsSaveBar, and ReasonPanel admin v2 primitives
+  
+  Three accessible admin UX primitives, ported from `ahliweb/media-lenterakalteng`'s local build so every consumer of this template gets them (see ADR-0125): `ConfirmDialog` replaces `window.confirm()` with a themed `<dialog role="alertdialog">` rendered once by `AdminLayout` (43 call sites across 26 admin screens converted); `SettingsSaveBar` is a sticky save bar that works without JavaScript, adopted on `/admin/site-profile`, `/admin/blog-settings`, and `/admin/theming`; `ReasonPanel` replaces `window.prompt()` for actions whose endpoint records a reason (module disable, newsletter suppress, media delete, tenant domain delete, business-scope assignment/exception revoke, domain-event consumer pause and delivery replay — 9 sites converted, 12 left and catalogued in the ADR because they do not fit its one-endpoint/one-required-field/reload-on-success shape). No new endpoints, no API/schema changes; server-side authorization and validation are unchanged.
+- bd7f2db: design(cms): admin chrome restyle — dark sidebar rail, topbar polish, shared primitives (awcms-one#170)
+  
+  Extends the ADR-0120 admin redesign with a dedicated, always-dark sidebar surface (`--color-sidebar-*` tokens in `tokens.css`, independent of `data-theme`) carrying a compact brand + tenant header, a `.admin-sidebar-count` badge slot (fed by a new optional `ModuleNavigationEntry.badgeCount`, populated by nothing yet), and a `.admin-sidebar-status` card fed by the same `syncActive` boolean the topbar's `SyncIndicator` already reads — no new data source. Adds eight shared CSS primitives to `admin.css` for future screens to build on: `.admin-stat-card`, `.admin-status-pill[data-tone]`, `.admin-segmented`, `.admin-bulk-bar`, `.admin-two-pane`, `.admin-toggle` (a real `<input type="checkbox">` switch), `.admin-timeline`, and `.admin-media-grid`. `design:token-contrast:check`'s `PAIRS` registry gains the new sidebar foreground/background pairs; no existing admin screen changes.
+- 39510eb: ops(backup): complete production backup assurance with encryption, authenticated manifests, off-site copies, and automated restore drills (#812)
+  
+  `deploy/backup/` gains `manifest.sh`, `offsite-copy.sh` and `restore-drill.sh`, and `backup-postgres.sh`/`restore-postgres.sh` gain opt-in `age` encryption-at-rest plus an HMAC-SHA256-authenticated recovery manifest — closing the three controls the production-preflight docs had correctly said were not implemented since the 27 August correction. Setting `BACKUP_AGE_RECIPIENTS_FILE`/`BACKUP_HMAC_KEY_FILE` together at backup time (and `RESTORE_AGE_IDENTITY_FILE`/`BACKUP_HMAC_KEY_FILE` together at restore time) turns on encryption; setting only one of a pair fails closed. `restore-drill.sh` is a new unattended, cron/CI-capable orchestrator with no code path that can target production. Every existing safe default is unchanged: no credentials printed, no final-looking artifact left on failure, non-destructive restore drill by default, and the plain unencrypted mode (offline/LAN profile) is byte-for-byte unchanged. Decision analysis (age vs GnuPG vs OpenSSL enc; HMAC vs detached signature) recorded in ADR-0123.
+- 0a25581: feat(blog-content,media-library): institution logo — logoMediaId/logoAlt on awcms_blog_institutions, SVG upload safety (Issue #806)
+  
+  `awcms_blog_institutions` gains `logo_media_id uuid`/`logo_alt text` (`sql/153`) so a derived site can render one reusable institutional logo/emblem (a regency's coat of arms) beside every article filed under that institution, instead of retyping it onto each post. `logoMediaId` is shape-validated exactly like `awcms_blog_posts.featured_media_id` (a UUID or null, no FK) and is checked through `MediaLibraryPort.isMediaReferenceSafe` only when managed-media enforcement is active for the tenant (`institution-logo-reference-gate.ts`, the same posture the post/page paths already take). `POST`/`PATCH /api/v1/blog/institutions[/{id}]` accept both fields; `GET /api/v1/blog/institutions` and `GET .../{id}` expose them — a consumer resolves `logoMediaId` to a public URL via `GET /api/v1/media/objects?ids=`.
+  
+  `media_library`'s upload-session finalize flow previously could never actually accept an SVG: `image/svg+xml` was listed as a known, operator-opt-in MIME type (`NEWS_MEDIA_R2_ALLOWED_MIME_TYPES`) since Issue #635, but the magic-byte sniffer never recognized SVG's shape, so every SVG upload hard-rejected as `mime_not_recognized` regardless of the allow-list — a dead end for the very use case this issue needs (an institution logo is very often an SVG). `sniffNewsMediaMimeType` now recognizes the SVG shape (ReDoS-safe linear scan, not backtracking regex — see `media-mime-sniffer.ts`), and a new content-safety scan (`media-svg-safety.ts`) rejects an allow-listed SVG that carries a `<script>` element, an `on*=` event-handler attribute, a `javascript:`/`data:` URI, an external entity/DOCTYPE (XXE), or any `<!ENTITY` declaration at all — a new `svg_unsafe_content` finalize rejection reason, checked after the allow-list/claimed-mime-type checks and before the checksum claim.
+  
+  PR review (#807) reproduced and closed three ways to re-express those same vectors in a form the literal patterns alone missed: a `data:` URI in `href`/`xlink:href`/`src` carrying an entire nested SVG (closed by rejecting any `data:` scheme in those attributes outright); numeric/hex character-reference and TAB/LF/CR obfuscation of a `javascript:`/`data:` scheme (closed by decoding character references and stripping URL-parser-stripped control characters before the URI/handler checks run); and parameter-entity splitting of the `SYSTEM`/`PUBLIC` keyword across multiple `<!ENTITY>` declarations (closed by rejecting any `<!ENTITY` declaration unconditionally). See `media-svg-safety.ts`'s module header for the full reasoning behind each closure.
+- 431a543: feat(knowledge): harden Graphify baseline and add a safe, optional Obsidian knowledge workflow (Issue #805)
+  
+  Pins the tested Graphify CLI baseline (`graphify 0.9.35`, PyPI package `graphifyy`, Python 3.12) so automation never depends on a floating `latest`, and documents which commands (`--update`, `query`, `path`, `explain`, `--code-only`, `export obsidian --dir graphify-out/obsidian-staging`, …) are approved for this repo. `graphify install --project` was evaluated and rejected — it would duplicate `AGENTS.md`/`.claude/skills/` policy with no gate keeping the two in sync, so Graphify continues to run from the contributor's own global skill.
+  
+  Adds a dedicated, optional `knowledge/` Obsidian vault (ADR-0124), never the repository root: `knowledge/curated/` holds small human-authored index notes only (never a copy of canonical ADR/PRD/contract/doc content), and `knowledge/generated/graphify/` is populated exclusively by a new deterministic, fail-closed sync wrapper (`scripts/knowledge-obsidian-sync.ts`, `bun run knowledge:obsidian:export`) that copies an allow-listed subset (`.md`/`.canvas` only) from an isolated staging path (`graphify-out/obsidian-staging/`) — never directly from Graphify. The sync fails closed (non-zero exit, nothing written, `knowledge/curated/` never touched) on path traversal, an unexpected file type, a filename collision with curated content, or an entry whose real path escapes the staging root, and stamps every successful export with a `PROVENANCE.md` naming the pinned tool version, source commit, and export time. `tests/knowledge-obsidian-sync.test.ts` proves each fail-closed path against the real defect shape (an actual symlink, an actual `.obsidian/` byproduct, an actual basename collision), not merely a healthy tree. New `bun run knowledge:graph:update`/`knowledge:graph:check`/`knowledge:obsidian:pull`/`knowledge:obsidian:export`/`knowledge:check` commands; `knowledge:check` is wired into the main `bun run check` chain and needs neither Graphify nor Obsidian installed to run. `graphify-out/obsidian/`, `graphify-out/obsidian-staging/`, `knowledge/generated/`, and `knowledge/.obsidian/` are all git-ignored — no personal Obsidian workspace state and no generated one-file-per-node export ever enters history.
+- a82d8e6: feat(control-center): consume pinned OMES v1 contracts with fail-closed validation (ahliweb/omes#197)
+  
+  Vendors a pinned, byte-identical snapshot of `contracts/control-center/v1/**` from OMES commit `0824f9815bd8429781f70ed529787ce5399585c3` into `src/modules/omes-control/contracts/v1/` (schemas, `*.states.json` state machines, event schemas, and every fixture), with a `PIN.json` manifest recording the source repo/commit/version and a SHA-256 hash per vendored file. No network access is used at runtime or test time.
+  
+  Adds `scripts/sync-omes-contracts.ts` (`bun run contracts:omes:sync` to re-vendor from a local OMES checkout, `bun run contracts:omes:sync:check` for a read-only drift/pin-mismatch gate now wired into `bun run check` right after `api:consumer-contract:check`).
+  
+  Adds a dependency-free, fail-closed TypeScript validator under `src/modules/omes-control/domain/contracts/` (`schema.ts`) that is a line-for-line port of OMES's own `lib/omes/py/jobs/schema.py` supported-keyword subset and independent raw-secret scanner (issue #172) — no `ajv`/`zod`/other JSON Schema dependency was added. A data-driven state-machine transition checker (`state-machine.ts`) loads `subscription.states.json`/`invoice.states.json` as data rather than duplicating the transition rules as TypeScript. Unknown schema names and unsupported contract versions are rejected before any file is read.
+  
+  Exports a small public API from `src/modules/omes-control/domain/contracts/index.ts` for `#198`/`#199` to build on: `validateOmesContract`, `validateOmesContractText`, `assertOmesContract`, `scanForRawSecrets`, `getOmesStateMachine`, `OMES_CONTRACT_PIN`.
+  
+  Documented in ADR-0122's new addendum (and its Indonesian mirror), including the re-sync update procedure.
+- a43f726: feat(control-center): OMES worker enrollment, poll, result, and heartbeat ingestion (ahliweb/omes#199)
+  
+  Adds the AWCMS server-side counterpart the outbound OMES pull worker (ahliweb/omes#192) talks to: `POST /api/v1/omes/worker/{enroll,poll,result,heartbeat}`. These are the highest-risk surface `omes_control` ships — session-UNauthenticated by design (ADR-0027's outbound-pull architecture), authenticated instead by asymmetric Ed25519 worker identity with proof-of-possession enrollment, a canonical-envelope signature over every subsequent request, and a persisted, atomic nonce/replay store.
+  
+  - **Enroll** redeems a single-use, short-lived challenge (#198's `POST .../enrollment-challenges`) via a genuine DB-level compare-and-set (`SELECT ... FOR UPDATE` + same-transaction `UPDATE`), requiring a signature over the raw challenge under the presented public key before the row is touched.
+  - **Poll** promotes an `approved` operation request into a queued job (a bridge #198 left undone), leases it with `FOR UPDATE SKIP LOCKED`, and returns it conforming exactly to the pinned `operation-request` contract.
+  - **Result** ingestion is idempotent by `(tenant_id, server_id, idempotency_key)` — not the wire `job_id`, which turns out to be the worker's own opaque local identifier, not something AWCMS assigned. Every recorded row is stamped `source: "worker_reported"` / `reconciled: false`; a 2xx is never presented as confirmed success anywhere in this module.
+  - **Heartbeat** updates redacted, `omes-host`-attributed telemetry and never resurrects a decommissioned server's status; staleness stays a pure function of heartbeat age computed on read.
+  
+  `verifyWorkerEnvelope` is the single chokepoint poll/result/heartbeat call before any other side-effecting work. Adds `awcms_omes_worker_nonces` and `awcms_omes_worker_results` (sql/159, RLS enabled+forced, `awcms_worker`'s grant narrowed to SELECT+DELETE matching sql/156's existing pattern), an `idempotency_key` column + unique constraint on `awcms_omes_jobs`, and OpenAPI/threat-model/module README documentation (EN+ID).
+  
+  Flags a cross-repository gap rather than working around it silently: the OMES-side reference pull worker (ahliweb/omes#192) does not yet generate real Ed25519 keys or send signature/nonce/timestamp headers — this module does not relax verification to match that stub.
+- 6bb6d49: feat(control-center): admin screens for overview, servers, deployments, operations and jobs (ahliweb/omes#200)
+  
+  Adds the five primary OMES Control Center admin screens under `/admin/omes/*`, consuming the owner/operator API (`ahliweb/omes#198`) and built entirely from existing AWCMS admin-shell primitives — `AdminLayout`, `loadAdminScreen`, `admin-screens.css`, `status-badge`, `stat-grid`, keyset-paginated `data-table`, and `admin-form-client` — with no new UI framework or charting dependency:
+  
+  - **Overview** (`/admin/omes`) — server health distribution, job state summary, backup freshness, and drift summary, aggregated directly from `omes_control` state (never from the `reporting` module's projections). Structured so `ahliweb/omes#201`'s health/backup-recovery/audit screens add sections here without restructuring.
+  - **Servers** (`/admin/omes/servers`) — fleet inventory plus per-server enrollment/trust evidence (worker status and a SHA-256 public-key fingerprint only, never raw key material). No Hermes-baseline section, because the #198 servers API carries none yet — that belongs to `/api/v1/omes/health` and is `#201`'s to render.
+  - **Deployments** (`/admin/omes/deployments`) — read-only; desired and observed state render in separate labelled table columns (never merged), with last-reconciliation time, an explicit staleness badge, and error evidence. Changing a deployment routes through Operations.
+  - **Operations** (`/admin/omes/operations`) — submission limited to the OMES-owned safe-operation allowlist (`status`/`preflight`/`start`/`stop`/`restart`/`update`/`backup`/`rollback`); a destructive option is rendered disabled unless the actor holds its own endpoint permission, and a destructive request's approval decision links into the canonical `/admin/approvals` workflow surface by workflow instance — no second, OMES-specific approval inbox.
+  - **Jobs** (`/admin/omes/jobs`) — worker dispatch queue: state, correlation (`operationRequestId`), lease ownership, retry count, and sanitized evidence, with approve-for-retry (failed only) and cancel (queued only) actions.
+  
+  Every mutation is a `fetch` to an already-guarded `#198` endpoint with a fresh `Idempotency-Key`; no screen executes SQL directly, so server-side authorization (the 13 `omes_control` permissions seeded by `sql/155`) remains the sole enforcement point and these screens' visibility checks are UX only. Registers the five navigation entries the `omes_control` module descriptor was missing (closing the "module without navigation" gap `PROJECT_STATE.md` tracked), each gated on one of the already-seeded permissions — no new permission migration.
+  
+  Cross-tenant scoping decision: none of these five screens' actions cross a tenant boundary — every `omes_control` table carries `tenant_id` under FORCE ROW LEVEL SECURITY (`sql/154`) and every application-layer query scopes on the caller's own `tenantId`. Per ADR-0051 §Keputusan (the ADR-0048 lesson: a permission that is merely seeded to the `owner` role enforces nothing on its own), a platform-scoped gate is required only when an action's *effect* reaches another tenant's data; none here do, so the ordinary tenant-seeded permissions are sufficient and no platform-only permission was added.
+  
+  Adds `tests/admin-omes-control-page-contract.test.ts` (permission/endpoint/seed parity, no-direct-SQL, idempotency-key discipline, stale/offline rendering, safe-operation allowlist enforcement, approval delegation, static tenant-scoping) and updates `tests/omes-control-module.test.ts`'s navigation assertion now that the physical screens exist. Adds the EN/ID locale catalog entries these screens use.
+- 52e8f8b: feat(control-center): health, backup/recovery and audit admin screens (ahliweb/omes#201)
+  
+  Adds the three remaining OMES Control Center admin screens under `/admin/omes/*`, completing the eight-screen module `ahliweb/omes#200` started — same admin-shell primitives, no new UI framework or charting dependency:
+  
+  - **Health** (`/admin/omes/health`) — latest health snapshot per server, plus per-server keyset-paginated history, from `GET /api/v1/omes/health`. Every row is `omes-host`-attributed evidence (the OMES pull worker's own report); an individual `checks` entry's own declared `source` (e.g. `hermes`, an external provider) is rendered as its own badge when present. A newly computed `stale` flag (`health-directory.ts`, threaded via a `now` parameter) renders alongside `overallStatus`, never replacing it with a success variant — a stale snapshot's captured status is still shown exactly as captured.
+  - **Backups** (`/admin/omes/backups`) — artifact metadata: recovery class (from the manifest, when declared), sha256 checksum, size, age/`fresh` flag, and status, with the manifest itself rendered as escaped JSON, never raw backup contents. Restore is the one mutation this screen offers, always destructive, and routed through the SAME canonical `workflow-approval` engine every other destructive OMES action already uses (`POST /api/v1/omes/backups/{id}/restore`, shipped by `#198`) — this screen only submits and links the resulting `workflowInstanceId` into `/admin/approvals`, never a second approval surface. Submitted restore requests are listed by reusing `fetchOperationRequests` (extended with an optional `operation` filter) rather than a new query.
+  - **Audit** (`/admin/omes/audit`) — two separate, source-labelled sections, never merged: canonical control-plane actor/action events (`awcms_audit_events` via `listAuditEvents`, extended with an optional `moduleKey` filter, narrowed to `omes_control`) and the remote OMES execution/reconciliation projection (`awcms_omes_audit_projections` via `fetchAuditProjections`, `#198`). Links out to `/admin/audit-trail` for the full cross-module view.
+  
+  `module.ts` registers the three navigation entries (health reuses `servers.read`, matching its endpoint's own guard) and promotes `omes_control` from `experimental` to `active` now that all eight planned screens exist (ADR-0021 criterion 1; the `push_delivery` precedent shows a single screen is sufficient for the enforced gate, so this promotion reflects the module's actual completed screen surface rather than a gate requirement). `enrollments.manage` remains deliberately without a navigation entry — out of this issue's scope, tracked as a gap for a future enrollment-token-management screen.
+  
+  Cross-tenant scoping decision (this issue's own determination, not inherited from `#200`): `backups.restore`/`backups.rollback` are the most plausible cross-tenant actor in this module, since a restore changes host state. `submitBackupRestore` resolves the target `serverId` from a `SELECT ... WHERE tenant_id = ${tenantId} AND id = ${backupId}` lookup — a `backupId` belonging to another tenant resolves to `RESOURCE_NOT_FOUND`, never a foreign server — and every table touched carries `FORCE ROW LEVEL SECURITY` (`sql/154`). The action's effect therefore never reaches another tenant's data, so per ADR-0051 §Keputusan the ordinary tenant-seeded permissions remain sufficient; no platform-scoped gate is added.
+  
+  Overview gains a `readAudit` any-of gate and three quick-links (Health, Backups & recovery, Audit).
+  
+  Adds `tests/admin-omes-control-health-backup-audit-page-contract.test.ts` (guard/endpoint/seed parity, no-direct-SQL, restore's idempotency-key discipline, explicit stale rendering for both health and backups, restore's approval-gating and exclusion from the safe-operation allowlist, the two audit feeds' separation, static tenant-scoping including `submitBackupRestore`'s own-tenant-only lookup, `set:text`-only evidence) and updates `tests/admin-omes-control-page-contract.test.ts` / `tests/omes-control-module.test.ts` for the eight-screen/active-module shape. Adds the EN/ID locale catalog entries these screens use (id.po fully translated) and documents all eight screens in the module's README/README.id.
+- 37d4d81: feat(control-center): AI privacy posture and egress-approval consumption (ahliweb/omes#232)
+  
+  Adds `/admin/omes/ai-privacy`, the tenth `omes_control` admin screen, consuming the OMES-owned Control Center contracts `ai-privacy-posture-view`/`ai-egress-approval.request`/`.response` (`ahliweb/omes` issue #217, ADR-0029, `docs/control-center-contracts.md` §2.10). AWCMS now displays AI privacy posture evidence per server and governs owner-approval of `approval_required` AI egress decisions — read/approve permissions (`omes_control.ai_privacy.read`/`.approve`), two new tenant-scoped tables (`sql/160`, `sql/161`), and a fourth authenticated worker route.
+  
+  **Ingestion reuses the existing worker transport, never a new listener.** `POST /api/v1/omes/worker/ai-privacy-posture` is authenticated by the SAME `verifyWorkerEnvelope` Ed25519 chokepoint as `poll`/`result`/`heartbeat` (`domain/worker-identity.ts`'s `WorkerRoute` now includes `"ai-privacy-posture"`), and independently cross-checks the envelope's authenticated `tenant_id`/`server_id` against the posture projection's own `tenant_id`/`target.server_id` before persisting anything.
+  
+  **Freshness/status are recomputed at read time, never trusted off storage** (`domain/ai-privacy.ts`'s `projectAiPrivacyPosture`): stale or unknown evidence, or an unrecognized status/destination/classification value, always downgrades to `BLOCKED`, and an empty fleet reports as unhealthy, never healthy-by-default.
+  
+  **RESTRICTED classification resolving to a `cloud_sanitized` destination has no approval path, structurally, at three independent layers**: the pure `authorizeAiEgressApproval` gate refuses it by value before the workflow engine is ever touched; `awcms_omes_ai_egress_approvals`'s own CHECK constraint makes storing that combination impossible even bypassing the application layer; and the admin screen never renders an approve control for that pairing. Every other `approval_required` decision is recorded through the SAME `workflow-approval` engine every other destructive `omes_control` action uses (workflow key `omes_control.ai_egress_approval`) — never a second approval authority. A tenant with no published workflow gets `409 APPROVAL_WORKFLOW_NOT_CONFIGURED` and nothing is persisted as approved.
+  
+  **No raw prompt/transcript/credential field can reach this module, structurally**: the vendored schemas are `additionalProperties: false` throughout, and `findDisallowedEvidenceKeys` is a second, independent runtime scan at ingestion, belt-and-suspenders against a future schema relaxation.
+  
+  Adds `tests/omes-control-ai-privacy-domain.test.ts` (pure freshness/effective-status/authorization-gate/disallowed-key unit tests) and `tests/integration/omes-control-ai-privacy.integration.test.ts` (real PostgreSQL: cross-tenant denial under `awcms_app`/`FORCE ROW LEVEL SECURITY` for both new tables, the RESTRICTED->cloud_sanitized refusal proven at both the application gate and the database CHECK constraint, stale/unknown-evidence rendering, schema-rejection of a disallowed-field payload over the real worker-envelope HTTP route, and idempotent replay of an egress-approval submission). Documents the new screen in the module README/README.id, `docs/awcms/api-reference.md`, and updates the `sql/001`-`sql/161` migration-range claims in `docs/ARCHITECTURE.md`/`.id.md` and `.claude/skills/README.md`/`.id.md`. Adds full EN/ID locale entries for the new screen.
+- eff72e8: feat(control-center): OMES enrollment-token management screen (ahliweb/omes#233)
+  
+  Adds `/admin/omes/enrollments`, the ninth `omes_control` admin screen, gated on the existing `omes_control.enrollments.manage` permission. `ahliweb/omes#201` deliberately shipped without a navigation entry for this — the Servers screen has only ever rendered read-only enrollment/trust evidence; issuing and revoking a worker's one-time enrollment token was reachable only via the API. This closes that gap.
+  
+  No new write path is introduced: the screen's "Issue token" and "Revoke" buttons call the SAME two endpoints `ahliweb/omes#198` already shipped and guards — `POST /api/v1/omes/servers/{id}/enrollment-challenges` and its `/revoke` sibling — unmodified by this change. A new read-only query, `application/enrollment-directory.ts`'s `fetchEnrollments`, lists enrollment tokens across the whole tenant fleet (the existing `fetchServerDetail` only ever looked at one server's enrollments at a time).
+  
+  Security-sensitive token handling:
+  
+  - The issued token is shown exactly once, immediately after issuance, and can never be fetched again — only its SHA-256 hash is ever persisted (`sql/158`'s existing discipline, unchanged).
+  - Rendered via the shared `messageBox` helper's `textContent`-only `show()` (never `innerHTML`/`set:html`), never written to `localStorage`/`sessionStorage`, never logged, and gone the moment the page is left or reloaded. No auto-download and no modal dialog — a plain in-page reveal, matching this repo's own established `machine-credentials.astro` precedent. A copy-to-clipboard button was drafted and then removed after it pushed this one screen's compiled client bundle over the repo's asset-budget gate; see the screen's own header comment for the full modal-vs-clipboard-button-vs-download trade-off analysis.
+  - Every mutation remains permission-gated SERVER-SIDE by the endpoints' own `authorize: OMES_GUARDS.enrollments.manage` (unchanged) — this screen hiding a button is UX only, never the enforcement boundary.
+  - Cross-tenant isolation is proven at runtime against a real PostgreSQL with `FORCE ROW LEVEL SECURITY` (`tests/integration/omes-control.integration.test.ts`'s new "enrollment directory & cross-tenant enrollment isolation" suite): a foreign tenant's `serverRowId` resolves to a fail-closed `not_found`/empty list, never a leaked row or a mutated foreign entry. A separate test reads the raw database row after issuance and asserts the plaintext challenge is not a substring anywhere in it — only its hash is stored.
+  
+  Adds `tests/admin-omes-control-enrollments-page-contract.test.ts` (guard/endpoint parity, no-direct-SQL, Idempotency-Key discipline, output-encoding, never-re-displayable/never-persisted-in-plaintext static checks, tenant scoping) and updates `tests/omes-control-module.test.ts`/`tests/admin-omes-control-page-contract.test.ts` for the nine-screen shape. Adds EN/ID locale entries (id.po fully translated) and documents the new screen in the module's README/README.id and the overview's quick-links.
+- d9e1ef4: feat(control-center): OMES Architecture Control Center screen (ahliweb/omes#246 part 3)
+  
+  Adds `/admin/omes/arsitektur`, the fourteenth and final `omes_control` admin screen for issue ahliweb/omes#246: a read-only projection of the ADR-0017 layered reference architecture, rendered as planes (lanes) of capability cards with an implementation-status badge per card, following the redesign reference's "Arsitektur" view binding.
+  
+  **This is a PINNED RELEASE SNAPSHOT, not live host state.** Unlike every other `/admin/omes/*` screen, this one has no database table and no tenant-scoped query behind it — every tenant sees the identical vendored payload. The data is `contracts/v1/fixtures/architecture-capabilities-view/valid-01-generated.json`, re-vendored byte-for-byte from OMES commit `339f2f371aa20b2e9ec6b839488804160ab4e08a` via `bun run contracts:omes:sync` and pinned by SHA-256 in `contracts/v1/PIN.json`. The screen renders the snapshot's own `omes_version`/`omes_commit`/`generated_at` and states explicitly, in both `id` and `en`, that this is a pinned snapshot rather than a live projection from an enrolled host.
+  
+  **A NEW permission, `architecture.read` (`sql/165`), guards this screen — deliberately not a reuse of `hermes_orchestration.read`.** This screen's subject (the cross-cutting OMES/Hermes/Omarchy/AWCMS/provider layered-architecture registry) has no audience overlap with the Hermes delegated-task/subagent orchestration family the other three #246 screens share one permission for.
+  
+  `application/architecture-directory.ts` loads and validates the vendored fixture against the vendored schema (`assertOmesContract`, the same fail-closed validator every other OMES contract consumer in this module uses) before `domain/architecture.ts`'s pure `projectArchitectureSnapshot` groups capabilities into their declared planes. Adds `tests/admin-omes-control-architecture-page-contract.test.ts` (permission-guard contract, pinned-snapshot wording, and a schema round-trip test proving the projection drops no required field). `APP_BUDGET_BYTES` raised from 234,992 to 236,936 B (measured delta, re-measured after rebasing onto PR #835's orchestration-indent fix) for the new screen's compiled markup/script/style chunk.
+- 2d40f5c: feat(control-center): OMES Control Panel design system for /admin/omes (ahliweb/omes#246, part 1/3)
+  
+  Applies the OMES Control Panel redesign's visual language to the 9 existing `/admin/omes/*` screens (Overview, Servers, Deployments, Operations, Jobs, Health, Backups, Audit, Enrollments): the dark palette, KPI tiles with monospace numbers and status dots, and the Bootstrap → Check → Diff → Apply → Verify → Rollback lifecycle strip on the Overview screen.
+  
+  Purely presentational and scoped to these 9 screens via a `.omes-cc` wrapper class — no behavioural change, no new endpoint, no schema/contract change, and the rest of the AWCMS admin is untouched. Reuses existing admin components (`.stat-card`, `.status-badge`, `.data-table`, `.admin-panel`, `.quick-link`) by overriding the same design tokens they already consume; no new CSS/JS framework. Public Sans and JetBrains Mono are already self-hosted admin-wide (ADR-0120) — this ships no new font.
+  
+  `APP_BUDGET_BYTES` in `scripts/client-asset-budget.ts` rises 226,000 → 229,500 B (measured +3,171 B for the one new stylesheet). Every text/background and accent/background pair introduced is measured against WCAG 2.1 AA; the table is in `src/modules/omes-control/README.md`/`.id.md`.
+  
+  The 4 missing views (Hermes, Orkestrasi langsung, Arsitektur, Progres Hermes) are later PRs (part 2/3 and 3/3 of ahliweb/omes#246).
+- 1dde802: feat(control-center): Hermes orchestration observability screens (ahliweb/omes#246 part 2)
+  
+  Adds the last three redesign-parity `omes_control` admin screens: `/admin/omes/orkestrasi-langsung` (the live Hermes manager → agent → subagent tree with a depth filter and a polling activity stream), `/admin/omes/hermes` (a summary of the tenant's currently active Hermes delegated task), and `/admin/omes/progres-hermes` (an explicit, permission-gated "not implemented yet" empty state). Consumes the OMES-owned `hermes-orchestration-tree`/`hermes-orchestration-event` v1 contracts (OMES issue #183, ADR-0028) — already vendored by `ahliweb/omes#232`'s re-vendor, no re-vendor needed here. ADR-0017 boundary, unchanged: Hermes owns orchestration; this is a READ-ONLY projection of state an enrolled OMES pull worker reports, never a second orchestration engine and never a control action reaching a Hermes agent.
+  
+  **One current tree snapshot per session (upsert), an append-only deduplicated event log.** Two new tenant-scoped tables (`sql/163`, both `FORCE ROW LEVEL SECURITY`): `awcms_omes_hermes_orchestration_trees` keeps one row per `(tenant_id, server_id, session_id)`, and `awcms_omes_hermes_orchestration_events` is deduplicated on `(tenant_id, server_id, session_id, subagent_id, event_type, step_number)` so a redelivered event from the pull worker's at-least-once outbox is a no-op. A single new permission, `hermes_orchestration.read` (`sql/164`), guards all three screens and both new `GET` routes — none of the three accepts a write/control action.
+  
+  **Ingestion reuses the existing worker transport.** `POST /api/v1/omes/worker/hermes-orchestration-{tree,event}` are authenticated by the SAME `verifyWorkerEnvelope` Ed25519 chokepoint as `poll`/`result`/`heartbeat`/`ai-privacy-posture` (`domain/worker-identity.ts`'s `WorkerRoute` now includes both), and independently cross-check the envelope's authenticated `tenant_id`/`server_id` against the projection's own fields before persisting anything.
+  
+  **Freshness and node-state rollups are recomputed at read time, never trusted off storage** (`domain/hermes-orchestration.ts`'s `projectOrchestrationTree`, mirroring `domain/ai-privacy.ts`'s established discipline): a snapshot older than a 120-second liveness window is always stale, and `activeCount`/`completedCount`/`failedCount`/node depth are recomputed from the actual node states, never the stored counts a producer sent — a stalled connection or missing terminal event reconciles to stale, never invented completion.
+  
+  **Two contract-boundary decisions made explicit rather than silently worked around** (recorded on ahliweb/omes#246 before this PR): the Hermes screen renders `planner`/step-`budget` as an explicit "not reported" state because neither field exists in either vendored v1 contract; the Progres Hermes screen ships neither a GitHub integration nor a static milestone/issue list, because the redesign's `progress` view is a GitHub-repository tracker (unimplemented staged backlog, OMES issues #98-#102), not a Hermes/OMES runtime projection — it links the tracking issue, `ahliweb/omes#249`, in `id`/`en` instead.
+  
+  **No raw prompt/transcript/tool-argument field can reach this module, structurally**: both vendored schemas are `additionalProperties: false` throughout, and `findDisallowedEvidenceKeys` (reused as-is from `domain/ai-privacy.ts`) is a second, independent runtime scan at ingestion.
+  
+  Adds `tests/omes-control-hermes-orchestration-domain.test.ts` (pure freshness/rollup/depth/disallowed-key unit tests), `tests/integration/omes-control-hermes-orchestration.integration.test.ts` (real PostgreSQL: cross-tenant denial under `awcms_app`/`FORCE ROW LEVEL SECURITY` for both new tables, stale-snapshot rendering, upsert-not-append semantics, idempotent event replay at both the application and database-index layers, disallowed-key rejection, and schema/envelope-binding rejection over the real worker HTTP routes), and `tests/admin-omes-control-hermes-orchestration-page-contract.test.ts` (permission-guard contract for all three screens and both read routes). Documents the new tables/routes/screens in the module README/README.id, `docs/awcms/api-reference.md`, and updates the `sql/001`-`sql/164` migration-range claims across `docs/ARCHITECTURE.md`/`.id.md` and `.claude/skills/README.md`/`.id.md`. Adds full EN/ID locale entries for all three new screens.
+- 953414f: feat(omes-control): 3D Mission Control workspace at /admin/omes/mission-control (ahliweb/omes#265)
+  
+  New read-only 3D Mission Control screen at `/admin/omes/mission-control` renders the fleet's live state as a decorative WebGL2 scene, backed by an accessible, JavaScript-free object list (the canonical view). Every object is a reference linking back to its existing canonical screen — it is a derived projection, not a new authority. Guarded by `omes_control.servers.read` (no new permission); each source is included only when the viewer can read it. The scene polls every 15 seconds while visible; stale/unknown objects are never rendered as healthy. This change itself is read-only; historical replay is added by ahliweb/omes#266 and contextual actions by ahliweb/omes#267, each in its own change.
+- 3c239ca: feat(omes-control): evidence-based historical replay for Mission Control at /admin/omes/mission-control (ahliweb/omes#266)
+  
+  The Mission Control workspace gains a Live / History switch on the same page. History replays only evidence that existing tables already retain (Hermes orchestration events, health and backup snapshots, job and worker-result records, workflow decisions) — no new event store, table, permission or retention. New read-only `GET /api/v1/omes/mission-control/replay?from=&to=&cursor=` returns one keyset page (at most 500 events, window at most 24 hours, unknown query parameters rejected with 400) of de-duplicated, deterministically ordered events, with out-of-order evidence labelled `late_arrival`; `GET /api/v1/omes/mission-control/scene?as_of=` returns the historical scene that instant's evidence proves. Objects whose source keeps only current state (servers, deployments, architecture, repository progress, AI privacy) are never back-dated: they appear as unknown with an explicit `not_retained` gap, and purged or never-observed intervals are explicit gaps, never interpolated. Access is never broader than the live view: each source is gated by its own read permission and tenant-scoped under RLS. The page shows a persistent "Historical" banner with an `aria-live` announcement, a bounded range, play/pause/speed/scrubber/step controls, an evidence-gap list and a synchronized accessible event list; the range is URL-addressable (`?mode=history&from=&to=&at=`). The replay code is a separate chunk loaded only when History is first entered. Adds index-only migration `sql/168`.
+- 27e62b3: feat(omes-control): contextual actions and command-palette entries for Mission Control, over existing endpoints only (ahliweb/omes#267)
+  
+  Selecting an object in the Live Mission Control view now shows its actions in the HUD. Every action is a shortcut to an endpoint that already exists — `POST /api/v1/omes/operations`, `POST /api/v1/omes/jobs/{id}/cancel`, `POST /api/v1/omes/jobs/{id}/approve`, `POST /api/v1/omes/backups/{id}/restore`, or a link to the `/admin/approvals` inbox — sent with the exact body and a fresh `Idempotency-Key` the canonical screens use, so permission, rate limiting, the destructive-operation workflow, audit and idempotency are all still enforced by those endpoints. No new executor, scheduler, approval authority, command language, operation name, permission or migration. New read-only `GET /api/v1/omes/mission-control/actions?kind=&id=` reports, per object, which of the kind's existing actions are available and why an unavailable one is not (`permission_denied`, `state_not_eligible`, `not_found`); it is advisory only (a forged direct POST is still refused by the real endpoint), mirrors exactly what those endpoints enforce, shows stale target / decommissioned target / unverified backup as non-blocking warnings, treats an unknown id, another tenant's id and an unreadable source identically, and rejects any query parameter other than `kind` and `id` with a 400. A preflight panel shows the operation, target, permission result, approval requirement, advisories and the idempotency key before sending; destructive actions also use the shared confirm dialog; results are shown as accepted (pending verification), approval required (linking to the approval inbox), rejected, or outcome unknown (never success), and the scene is only updated by the next poll. History mode shows no actions and never fetches them. The Ctrl/Cmd+K command palette gains one opt-in hook (`data-command-palette-item`) so Mission Control's objects and Open-details links can be reached from it, with no new syntax; pages without marked elements are unchanged. The module README (en/id) carries the source-action matrix.
+- 64506d6: feat(control-center): owner/operator API for OMES projections and safe operations (ahliweb/omes#198)
+  
+  Implements the authenticated owner/operator REST API the OMES Control Center uses against the `omes_control` module (ADR-0122, schema/permissions from ahliweb/omes#196): tenant-wide fleet overview; server registration/decommission; enrollment-challenge issuance/revocation (one-time raw challenge, only its sha256 hash persisted — `sql/158`); desired-vs-observed deployment views (rendered as separate fields, never merged); allowlisted safe-operation submission (`status`/`preflight`/`start`/`stop`/`restart`/`update`/`backup`/`rollback`, copied byte-for-byte from the OMES contract's `operation-request.schema.json` enum); worker job listing, cancel, and retry-approval; and health/backup/audit projections.
+  
+  Every endpoint reuses the existing `defineTenantRoute` (`withTenant` + `authorizeInTransaction` + canonical response envelope) chokepoint and default-deny RBAC against the permissions sql/155 already seeded. Destructive operations (`stop`, `rollback`, and the new `POST /api/v1/omes/backups/{id}/restore`) route through the existing `workflow-approval` engine (module key `workflow`, workflow key `omes_control.destructive_operation`) rather than a second approval authority — refused with `409 APPROVAL_WORKFLOW_NOT_CONFIGURED` and nothing persisted when no active definition is published. Mutations require `Idempotency-Key` and replay the shared `awcms_idempotency_keys` store; registration, enrollment-challenge issuance, operation submission, and backup restore are additionally rate-limited per actor. Every jsonb evidence field is redacted defense-in-depth; every mutation and authorization decision is recorded to `awcms_audit_events`.
+  
+  AWCMS never executes anything on a host — every mutating endpoint only records intent as an `awcms_omes_operation_requests` row; OMES's own pull worker (`ahliweb/omes#199`) is the only future reader that turns an approved row into real host work.
+  
+  `identity-access`'s `AccessAction` union grows three literals (`register`, `operate`, `rollback`) that the new `omes_control` guards needed, added to `HIGH_RISK_ACTIONS`.
+  
+  Contract-shape validation against the vendored OMES contracts (`ahliweb/omes#197`, run in parallel) is intentionally not duplicated here — see `src/modules/omes-control/README.md`'s "omes#197 integration seam" section for exactly where its validator plugs in.
+- 8de1782: feat(omes-control): add GitHub repository-progress projection for Progres Hermes (ahliweb/omes#249)
+  
+  Replaces `/admin/omes/progres-hermes`'s former "not implemented yet" empty state with a
+  real, polled GitHub milestone/issue progress projection, per ADR-0030 in `ahliweb/omes`
+  (re-vendored at commit `7ce1e40937dae990f59a35f0e2a00401f1a19a71`: the new
+  `repository-progress-view` v1 contract, plus the regenerated `architecture-capabilities-view`
+  fixture).
+  
+  - Per-tenant configuration (owner/name of the GitHub repository to observe, plus an
+    OPTIONAL token opt-in) via a new admin form on the Progres Hermes screen and
+    `GET/PUT/DELETE /api/v1/omes/repository-progress/config`, gated by a NEW permission,
+    `omes_control.repository_progress.configure` (sql/167). A `secret_ref` never holds a
+    raw token — the only supported v1 shape resolves to one fixed env var,
+    `OMES_REPOSITORY_PROGRESS_GITHUB_TOKEN`.
+  - A scheduled poller (`bun run omes:repository-progress:poll`, every 15 minutes by
+    default) polls the GitHub REST API (milestones + issues, excluding pull requests),
+    using conditional requests (ETag), respects GitHub's rate-limit headers, validates
+    every assembled payload against the vendored contract (fail closed), and upserts a
+    tenant-scoped, `FORCE ROW LEVEL SECURITY` projection (sql/166) — never discarding the
+    last successful observation on a later poll failure.
+  - `GET /api/v1/omes/repository-progress` (reusing `omes_control.hermes_orchestration.read`)
+    serves the projection to the screen, which renders four explicit states — unconfigured,
+    awaiting-first-poll, fresh, and stale/error — with accessible milestone progress bars
+    and an issues table linking out to GitHub.
+  - No issue body, comments, or assignee/author PII is ever stored — only number, title,
+    state, label names, a derived `kind`, `html_url`, and `updated_at`.
+
+### Patch Changes
+
+- 9ca28de: fix(control-center): Progres Hermes UX polish — danger button, milestone titles, checkbox sizing (ahliweb/omes#249)
+  
+  Three fixes to `/admin/omes/progres-hermes`, shipped as read-side/markup/CSS-only changes with no contract change: "Clear configuration" now renders with the existing `.btn-danger` outlined vocabulary instead of the same filled style as "Save" (an `.admin-create-form button.btn-danger` override at matching specificity, since `.admin-create-form button` otherwise wins over the plain `.btn-danger` class), and it already required a `window.confirm` before sending the `DELETE`, unchanged. The issues table's Milestone column now resolves the stored `milestoneNumber` to that milestone's current title (linked to its `htmlUrl` when available) from the same poll's milestones list, falling back to `#<n>` when the number isn't in that list, instead of showing the bare number. "Use a GitHub token" no longer renders as an oversized grey square — `.admin-create-form input`'s blanket text-input box model is reset for `input[type="checkbox"]` to a normal 18px checkbox with its own focus ring and `accent-color`, inline with its label text.
+  
+  Also fixes a latent bug in `repository-progress-poller.ts`'s `classifyHttpFailure` found while verifying this change: it computed a rate-limit `retryAfterSeconds` from the real wall clock (`Date.now()`) instead of the poller's own injected `now`, unlike every other timestamp in this module — harmless until real time passed the fixture's assumed baseline, at which point `tests/omes-control-repository-progress-poller.test.ts`'s rate-limit test starts failing non-deterministically. `now` is now threaded through `fetchAllPages` the same way the rest of the module already receives it.
+- 1688863: fix(docker): apply Debian security upgrades in the `base` stage of `Dockerfile.production`
+  
+  `oven/bun:1.4.2`'s Debian (trixie) base shipped `perl-base 5.40.1-6`, carrying three
+  CRITICAL, fixed-upstream CVEs (CVE-2026-13221, CVE-2026-42496, CVE-2026-8376 — fixed in
+  `5.40.1-6+deb13u1`). As of 2026-09-27 there is no newer `oven/bun` tag whose base already
+  carries the fix — `1.4.2`/`1`/`1.4`/`latest` share one digest published 2026-09-05, before
+  the fix existed, and `1.4.2-slim` carries the same three CVEs. `base` now runs
+  `apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*` before any other
+  layer, so every derived stage (`deps`, `build`, `prod-deps`, `jobs`, `runtime`) inherits
+  the fix, and any future fixable Debian CVE on this base is closed on the next rebuild
+  without waiting for `oven/bun` to republish the tag.
+  
+  Release-pipeline / deployment-image concern only (`Dockerfile.production`, ADR-0001) — no
+  application code, API, or contract changed.
+- f47a88c: design(admin): migrate dashboard/reporting/analytics/omes stat cards onto `.admin-stat-card` (#860)
+  
+  Extends `.admin-stat-card` (`src/styles/admin.css`, PR #813) with three optional modifiers — `.admin-stat-card-grid` (folded into the existing `.kpi-grid`/`.dashboard-grid` responsive breakpoint), `.admin-stat-card-value--mono`, and an icon-head/signed-delta pair (`.admin-stat-card-head` + `.admin-stat-card-delta[data-tone="positive"|"negative"]`, ported from the legacy `.stat-head`/`.stat-delta`) — then migrates `/admin`, `/admin/analytics`, `/admin/reporting` (stat-card section only) and `/admin/omes` off the legacy `.stat-card`/`.stat-grid` family (`src/styles/admin-screens.css`, left in place for the ~14 screens not yet migrated). `src/styles/omes-control-center.css` gained a selector-list extension covering `.admin-stat-card` alongside its existing `.stat-card` rules, so the other 8 OMES screens keep their styling untouched. The delta modifier ships colour only; its own doc comment requires the consumer to write the leading sign character into the value text and pair a visually-hidden word, so the sign is never conveyed by colour alone. Real data only — no screen fabricates a trend or icon it does not already compute. `build:asset-budget:check`'s `APP_BUDGET_BYTES` raised from 239,956 to 240,975 (measured actual total, ledger comment in `scripts/client-asset-budget.ts`). No API/schema/event change.
+- 5b8d2a3: fix(admin): translate closed-enum/status labels and stacked-table `data-label` across `src/pages/admin/**` (item 4 of #854)
+  
+  Closed-enum/status values (`request.status`, `post.visibility`, GitHub issue
+  `state`, and roughly 60 other columns across ~40 admin screens) were
+  rendered as raw untranslated text — a fallback that never reads in Indonesian
+  because the stored value (e.g. `pending_approval`) is not English prose `t()`
+  can translate. Every such render now goes through a translated
+  `Record<Enum, string>` label map — a small set of shared helpers under
+  `src/lib/i18n/labels/` (`blog-content.ts`, `audit-severity.ts`,
+  `omes-enrollment.ts`, `omes-operation.ts`) where the same enum is rendered on
+  2+ screens, otherwise a local map at the render site — with the raw value
+  kept in a new `data-*` attribute so tests/CSS/JS keep a stable, locale-independent
+  hook. An unrecognised value falls back to the raw string rather than
+  crashing or rendering blank.
+  
+  Separately, `admin.css`'s stacked-table mechanism
+  (`.data-table--stack td::before { content: attr(data-label); }`, which shows
+  column names on phones) had ~500 literal English `data-label="…"` attributes
+  across 49 admin screens; all now read `data-label={t("…")}`, reusing the
+  exact msgid of that column's `<th>`.
+  
+  81 new msgids added to `locales/en.po`/`locales/id.po` with real Indonesian
+  translations; `bun run i18n:compile` regenerated the catalogs.
+  `tests/admin-i18n-labels.test.ts` is a new regression gate: it fails on any
+  literal `data-label="…"` on a `<td`/`<th` in `src/pages/admin/**`, and pins
+  the shared label helpers' exhaustiveness over their known enum values.
+  
+  Read-side/markup/i18n-catalog changes only — no API/schema/permission
+  contract changed. See ADR-0125.
+- bbab875: design(admin): adopt `.admin-timeline`/`.admin-status-pill` on the detail/history admin screens (#863)
+  
+  Consumes `.admin-timeline` (`src/styles/admin.css`, PR #813) for the first time: approvals'
+  instance history, business-scope's conflict history, data-lifecycle's legal-hold history and
+  run history, OMES health's per-server snapshot history (`?serverId=…` mode — the tenant-wide
+  "latest per server" table stays a `.data-table`, it is one row per server, not a history), and
+  reporting's projection rebuild history now render as a real `<ol class="admin-timeline">` of
+  `<li class="admin-timeline-item">`, each with a genuine `<time datetime>` (never colour/position
+  alone). `admin.css` gains a small `.admin-timeline { list-style: none; margin: 0; padding: 0; }`
+  reset for the `<ol>` wrapper itself — the existing primitive only styled `-item`/`-label`/`-meta`.
+  
+  Every status this issue touched on these five screens (task/delegation status, business-scope
+  assignment/exception status, SoD conflict flag, legal-hold/run status, OMES overall/stale/
+  check-source status, rebuild status) moves from the legacy `.status-badge` onto
+  `.admin-status-pill`, keeping each cell's raw-value `data-*` hook. `reporting.astro`'s other
+  sections (email queue health, projection freshness, scheduled-export runs) are untouched — out
+  of this issue's file-ownership scope. `approvals.astro` keeps its query-param drill-in for
+  instance history (`?instance=<id>`) — no `.admin-two-pane` routing change, per the issue's own
+  decision (`docs/awcms/admin-ui-parity-matrix.md` §6.4/§7 wave 4).
+  
+  `build:asset-budget:check`'s `APP_BUDGET_BYTES` raised from 248,045 to 248,096 (measured actual
+  total, ledger comment in `scripts/client-asset-budget.ts`). Real data only — no screen fabricates
+  a history entry it does not already compute. No API/schema/event change.
+- e22758b: design(admin): migrate the 12 remaining OMES admin screens onto `.admin-status-pill`/`.admin-stat-card` (#865)
+  
+  Migrates `src/pages/admin/omes/{ai-privacy,arsitektur,audit,backups,deployments,enrollments,hermes,jobs,operations,orkestrasi-langsung,progres-hermes,servers}.astro` off the legacy `.status-badge`/`.status-dot` (`data-variant`) markup onto the shared `.admin-status-pill`/`.admin-status-pill-dot` primitive (`data-tone`), and the five of those screens with a KPI tile (`backups`, `deployments`, `jobs`, `servers`, plus the already-shared `.stat-hint` -> `.admin-stat-card-caption`) onto `.admin-stat-card`/`.admin-stat-card-grid`. `orkestrasi-langsung.astro`'s polling client script (activity-stream re-render) is migrated in lockstep so its client-rendered badge markup matches the SSR rows byte-for-byte, preserving the translated `data-state-labels` lookup and the never-render-stale-as-healthy behaviour. `omes/health.astro` (wave 4, not in scope) and `omes/index.astro` (wave 2, already done) are untouched.
+  
+  Fixes a latent styling bug along the way: `.status-badge` only ever defined `data-variant="success"|"neutral"|"warning"`, so every OMES site that passed `"danger"`/`"info"` (AI-privacy posture/egress decisions, backup/deployment staleness, repository-progress freshness, Hermes orchestration/session state) silently fell back to the undifferentiated default fill. `.admin-status-pill` defines all five tones, so these now render with the tone they always asked for — no markup logic changed, only the class/attribute names.
+  
+  `src/styles/omes-control-center.css` needed no new CSS: it already carried the dual `.stat-card`/`.admin-stat-card` selector list from #860 (wave 2) and never redeclared `.status-badge`/`.admin-status-pill` itself — both classes consume the same `--color-*-soft`/`-on-soft` custom properties the file already overrides for the OMES dark palette, so the tone/token cascade carried over automatically. Its docblock and the `.stat-card` dual-selector comment are updated to reflect that only `omes/health.astro` still needs the legacy half now.
+  
+  `build:asset-budget:check`'s `APP_BUDGET_BYTES` raised from 248,045 to 248,058 (measured actual total, ledger comment in `scripts/client-asset-budget.ts`) — the only growth is `orkestrasi-langsung.astro`'s client script template literal, whose class names got longer.
+  
+  Two page-contract tests (`tests/admin-omes-control-page-contract.test.ts`, `tests/admin-omes-control-health-backup-audit-page-contract.test.ts`) updated their `data-variant="warning"` assertions to `data-tone="warning"` for `servers.astro`/`deployments.astro`/`backups.astro`; the `omes/health.astro` assertion in the latter file is untouched since that screen is out of scope. No API/schema/event/permission change.
+- 49183c4: test(a11y): add an `@axe-core/playwright` accessibility smoke to the E2E harness, fix the real WCAG violations it found (ahliweb/awcms#877, epic #858)
+  
+  `@axe-core/playwright` is a new devDependency (`bun add -d`, no runtime/client bundle impact — verified by `bun run build:asset-budget:check`, which measures only shipped client assets). A new READ_WAVE spec, `tests/e2e/a11y-axe.e2e.ts`, runs `AxeBuilder` (WCAG 2.0/2.1 A+AA tags) against eight representative admin routes changed by epic #858 (`/admin`, `/admin/comments`, `/admin/users`, `/admin/approvals`, `/admin/media`, `/admin/omes`, `/admin/omes/jobs`, `/admin/site-profile`), in light AND dark theme (the app's real `localStorage["awcms_theme"]` mechanism), at 360px and desktop, plus the ADR-0125 `ConfirmDialog`/`ReasonPanel` opened then cancelled. It fails on any `critical`/`serious` violation and runs in CI's `e2e-smoke` job alongside the existing suite (no workflow change needed — `playwright.config.ts` already picks up every `*.e2e.ts`).
+  
+  Run for real against a fresh Postgres 18.4 + full migration + seeded tenant, it found and this PR fixes five shipped `critical`/`serious` violations that `design:token-contrast:check` (a pure-CSS registry, necessary but not sufficient) could not see:
+  
+  - `.admin-brand`'s wordmark losing its accessible name below 768px (`display: none` removes an element from accessible-name computation, not only layout) — fixed with `aria-label="AWCMS"` on the link.
+  - `ReasonPanel`'s reason label being a bare `<span>` with no programmatic association to its textarea (`label`, critical) — fixed with a real `<label for>`.
+  - `.reason-panel { display: flex }` applying unconditionally instead of scoped to `[open]` — author-origin CSS overrides the user-agent's `dialog:not([open]) { display: none }` regardless of `!important`, so a cancelled `ReasonPanel` stayed visually on-screen after `.close()`.
+  - `.admin-logout` using the theme-aware `--color-text-muted` on the always-dark sidebar background instead of `--color-sidebar-text` (`color-contrast`, serious, 3.07:1 measured against the 4.5:1 floor).
+  - The dashboard's `.dd-alert` (`/admin`, deny-count and sync-health alerts) using `--color-danger-strong` as TEXT on `--color-surface` (`color-contrast`, serious, dark theme only: 3.81:1 against 4.5:1). `-strong` is the solid-fill-under-white-text role; text on a plain surface is the job of plain `--color-danger` (5.81:1 dark; light unchanged at 4.83:1 since both tokens are `#dc2626` there). Fixed by the token swap, and `design-token-contrast-check.ts`'s existing `color-danger`/`color-surface` pair now lists `.dd-alert` as a consumer.
+  
+  `APP_BUDGET_BYTES` raised 295,244 -> 295,259 (measured actual after merging `main`, ledgered in `scripts/client-asset-budget.ts`) for the CSS/markup these fixes added. `design-token-contrast-check.ts`'s sidebar registry entry gained `.admin-logout` as a second consumer. The spec runs under `reducedMotion: "reduce"` — `.fade-in-up`'s 240ms entrance animation genuinely lowers rendered contrast mid-transition (axe samples pixel colour, not computed style), which is not this smoke's subject.
+  
+  Docs: doc 07 and doc 14 (+ .id mirrors) now describe the automated a11y check; `docs/awcms/admin-ui-parity-matrix.md` (+ .id) marks the axe acceptance criterion closed; the `awcms-browser-test` and `awcms-testing` skills (+ .id) are corrected — `awcms-browser-test` previously stated `@axe-core/playwright` was not a dependency of this repo, which was true when written and is no longer true.
+- e7a73b6: test(responsive): cover tablet portrait (768px) and 200% desktop zoom (640×360) in the admin overflow sweep (#884)
+  
+  `tests/e2e/responsive-360.e2e.ts` now asserts that no static admin screen
+  scrolls sideways at 360, 640×360 (a 1280×720 desktop at 200% browser zoom —
+  WCAG 2.1 SC 1.4.10 measures reflow in CSS pixels), 768 (tablet portrait) and
+  1024px, closing epic #858's "phone, tablet, desktop and 200% zoom" criterion.
+  All 63 static admin routes already fit at the two new widths, so no product
+  CSS changed; the change is verification coverage only.
+- c88d310: design(admin): adopt admin-stat-card/admin-status-pill on media, account and access-policies (#864)
+  
+  Wave 5 of the AWCMS ↔ awcms-one admin UI/UX parity work (epic #858, `docs/awcms/admin-ui-parity-matrix.md` §7): `/admin/media`'s three summary counters and two status columns (object status, rights-verification status) move from the legacy `.stat-card`/`.status-badge` family onto `.admin-stat-card`/`.admin-status-pill`; `/admin/account` gains status pills for the SSO-connected badge, the current-session badge and a new two-factor-authentication state pill; `/admin/access-policies` moves its DSL simulator's Allow/Deny verdict from plain text to a toned status pill, built client-side (the verdict script now reads translated `data-verdict-allow`/`-deny`/`-no-policy` attributes rather than shipping hardcoded English). No API, permission, auth, or data-model change — a markup/class swap only, preserving every screen's read path, mutation endpoints, keyboard operation and accessible names. The legacy `.stat-card`/`.status-badge` CSS stays defined (retired separately by #866).
+  
+  `media.astro` does **not** adopt `.admin-media-grid`: its object table deliberately renders no `<img>` (a documented security decision — a row can be `pending_upload`/`failed`, and re-showing a policy-violating image to the person removing it is the wrong outcome), so there is no thumbnail-grid markup in this screen to convert. The one real `.admin-media-grid`-shaped markup in the repo is the shared media picker (`src/lib/ui/media-picker-client.ts`), consumed by four other screens outside this issue's file ownership; migrating it is a follow-up scoped to that script and its consumers together. Documents the decision in doc 14's new `MediaGrid` row and marks Wave 5 done in the parity matrix.
+  
+  `APP_BUDGET_BYTES` raised from 248,045 to 248,333 (measured, no added margin) for the access-policies verdict-pill script; `media.astro`/`account.astro` add no bytes since both classes already existed in `admin.css`.
+- dc21c7a: fix(admin): contain long unbreakable text in the main column instead of letting it widen the page (#831)
+  
+  `.cell-muted` (admin.css) is now a bare, universal `overflow-wrap: anywhere` rule, mirroring the `word-break: break-all` its sibling `.cell-code` already had — previously `.cell-muted`'s only wrap protection was scoped to `.data-table td`, which does nothing for a screen that uses it outside a table. The Hermes orchestration tree/activity list (`/admin/omes/orkestrasi-langsung`, ahliweb/omes#246 part 2) renders Hermes-supplied free text (`goal`/`summary`) in `.cell-muted` spans inside a `display: flex; flex-wrap: wrap` list, not a table, so a long, space-free value had nothing stopping it from overflowing `.admin-main` and widening the whole document past the viewport. `/admin/omes/hermes`'s task summary had the identical defect through a different markup path (a plain `<dd>` with no `.cell-muted` class inside a `display: grid` row) and gets the same `overflow-wrap: anywhere` fix directly.
+  
+  `.admin-sidebar` (`flex-shrink: 0`) and `.admin-main` (`min-width: 0`) already kept their own flex-track widths fixed while this happened, but the resulting page-wide horizontal overflow is what produced the "sidebar rendered ~143px wide, labels clipped" appearance reported on ahliweb/awcms#831 — a full-page screenshot captures the actual (wider-than-viewport) scrollable canvas, so the fixed-width sidebar occupies a shrunken sliver of the image even though its own box never moved.
+- b224fa5: design(admin): comments moderation adopts segmented filter + bulk bar, 31 list screens migrate to `.admin-status-pill` (wave 3 of #858)
+  
+  `docs/awcms/admin-ui-parity-matrix.md` §7 wave 3, per ADR-0125's admin v2 primitive rollout:
+  
+  - `src/pages/admin/comments.astro` (flagship): the `.filter-bar` status-tab nav becomes
+    `.admin-segmented`/`.admin-segmented-option` — still plain `<a href>` links, so the
+    filter works with no JavaScript and the `?status=` query semantics are unchanged. Rows
+    gain a `.admin-status-pill` status column, and row checkboxes wire an
+    `.admin-bulk-bar` (select-all, live `aria-live` count, Approve/Reject/Spam) to the
+    EXISTING `bulk-moderate` endpoint — no new endpoint added. Bulk logic is factored into
+    a pure, unit-tested module, `src/lib/ui/admin-bulk-bar-client.ts`.
+  - 31 other list-management screens migrate their `.status-badge`/`.status-dot` markup to
+    `.admin-status-pill`/`.admin-status-pill-dot` (`data-variant` -> `data-tone`), which also
+    fixes several sites whose `data-variant="danger"`/`status-badge--${variant}` values had
+    no matching CSS rule under the legacy class. Translated status labels and `data-*`
+    raw-value hooks are preserved throughout.
+  - The legacy `.status-badge`/`.status-dot` declarations stay defined in `src/styles/admin.css`
+    for the screens waves 4/6 have not migrated yet.
+  - `email-suppression.astro`, `registrations.astro` and `user-groups.astro` were read and
+    confirmed to have no per-row lifecycle status concept — left unchanged rather than
+    forcing a primitive that does not fit.
+- b94b830: fix(admin): contain topbar and legal-hold-form overflow on every admin screen (#843)
+  
+  Two independent horizontal-overflow defects, both pre-existing and unrelated to `.cell-muted`/`.admin-sidebar` (ahliweb/awcms#831/#842):
+  
+  1. **`.admin-account-link` overflowed the topbar by ~55–66px at exactly 1024px, on every admin screen.** `.admin-user-menu` had `min-width: 0`, which let the outer topbar's flex-shrink algorithm squeeze it far below `.admin-account-link`'s real content width (avatar + truncated name); the link then rendered at its natural size regardless and spilled out of its own shrunken parent. Fixed with `.admin-user-menu { flex: none; }` (it never drops, per ADR-0120's own stated intent) plus widening the `@media (max-width: 1023.98px)` breakpoint that hides `.admin-palette-open`/`.admin-tenant-switch` to `1024px`, so they also step aside at the exact width where the topbar previously ran out of room simultaneously with `.admin-brand-cluster` widening to line up with the sidebar.
+  2. **`/admin/data-lifecycle` overflowed at 360px** — not from `<th>` content (the `.data-table--stack` responsive pattern already visually hides and correctly self-clips headers below 768px) but from the "Place a legal hold" form's `<select id="hold-descriptor-key">`: its wrapping `<label>` is a nested column-direction flex container with no `min-width` of its own, so it inherited the select's full intrinsic content width as its own automatic minimum instead of respecting the flex layout's available space. Fixed with `.admin-create-form label { min-width: 0; }` — the same class of bug the existing `/admin/seo` select fix (`.admin-create-form select { min-width: 0; max-width: 100%; }`) addressed one level down.
+  
+  `responsive-360.e2e.ts` now sweeps every static admin screen at 1024px too (previously only 360px), and its doc comments/`APP_BUDGET_BYTES` record the root causes and measurements.
+- 1ce119c: chore(deps): bump astro to 7.3.2, with the family manifest and its doc table moved in step
+  
+  `astro@7.3.2` is a patch release. Its four fixes were each checked against what this
+  repo actually uses, and none of them reach it:
+  
+  - **MDX `<script>`/`<style>` dynamic children are now escaped** unless explicitly
+    opted back in with `set:html`. This is the only security-relevant change in the
+    release, and it does not apply here: the repo ships no `.mdx` files and does not
+    install `@astrojs/mdx`, so there is no MDX rendering path to harden. The escaping
+    posture of this repo's own `.astro` templates is unchanged by the bump.
+  - **i18n fallback routing no longer replaces the first substring match** instead of
+    the real locale segment. This repo does not use Astro's native `i18n` routing at
+    all — locale resolution runs through middleware over the gettext `.po` catalogues
+    (ADR-0095), and `astro.config.mjs` declares no `i18n` block — so the mangled-path
+    bug was never reachable here.
+  - **Dev-toolbar 504 "Outdated Optimize Dep"** on workspace-linked packages, and
+    **sessions breaking in dev mode with the Cloudflare adapter**. Both are dev-mode
+    paths; this repo builds `output: "server"` on `@astrojs/node`, not Cloudflare.
+  
+  No code change was needed beyond the bump itself and the manifest/doc housekeeping
+  below.
+  
+  `awcms-family-compatibility.yaml` pins `stack.astro.declared` as a SOURCE CONSTANT
+  that must equal `package.json` exactly, so `family:conformance:check` goes red on any
+  bump until the manifest moves with it (`[FAIL] stack: Astro (declared ^7.3.1 vs
+  actual ^7.3.2)`, which is exactly how this PR's CI caught it). The stack table in
+  `docs/awcms/family-compatibility.md` and its Indonesian twin are held to the manifest
+  by `tests/family-compatibility-doc-parity.test.ts`, so they move too.
+- 82de7eb: chore(deps): bump astro to 7.3.5, with the family manifest and its doc table moved in step
+  
+  `astro@7.3.5` covers three patch releases (7.3.3–7.3.5). Each fix was checked against
+  what this repo actually uses, and none of them reach it:
+  
+  - **7.3.5** adds an opt-in `?container` import for `experimental_AstroContainer`. This
+    repo does not use the experimental container API.
+  - **7.3.4** fixes an incremental-build re-render bug, a `TypeScript 7` `astro check`
+    message, double-escaped `&` in Markdown image `alt`/`title` (a bugfix, not a
+    behaviour this repo's own escaping relies on), three dev-overlay error names,
+    a Vite dev-server re-evaluation loop that only affects adapters running requests
+    outside Vite's module runner (this repo uses `@astrojs/node`, not
+    `@astrojs/cloudflare`), domain-based i18n routing respecting
+    `security.allowedDomains` (this repo does not use Astro's native `i18n` routing —
+    locale resolution runs through middleware over gettext `.po` catalogues, ADR-0095),
+    an `object-position` CSS bug in `image.responsiveStyles` (not used here), and
+    AI-agent process-backgrounding behaviour on `astro dev`/`astro preview` (dev-only,
+    Windows-specific).
+  - **7.3.3** refactors an internal version-handling dependency, fixes 400/404 image
+    endpoint responses for invalid/missing local images, a locale-casing bug in
+    `Astro.preferredLocaleList` (native i18n again, not used here), an agent-detection
+    regression in `--ignore-lock`, and `getImage()` TypeScript autocompletion.
+  
+  No code change was needed beyond the bump itself and the manifest/doc housekeeping
+  below.
+  
+  `awcms-family-compatibility.yaml` pins `stack.astro.declared` as a source constant
+  that must equal `package.json` exactly, so `family:conformance:check` goes red on any
+  bump until the manifest moves with it (`[FAIL] stack: Astro (declared ^7.3.2 vs
+  actual ^7.3.5)`, which is exactly how this PR's CI caught it — same shape as the
+  astro 7.3.2 bump, `.changeset/astro-7-3-2.md`). The stack table in
+  `docs/awcms/family-compatibility.md` and its Indonesian twin are held to the manifest
+  by `tests/family-compatibility-doc-parity.test.ts`, so they move too.
+- 06e45bd: chore(deps): bump @astrojs/node to 11.1.6, with the family manifest and its doc table moved in step
+  
+  The Node/Bun standalone-server adapter this repo builds against
+  (`output: "server"`, `standalone-entry.ts`). `11.1.6` is a patch release with no
+  breaking changes to the adapter's public config or the request-handler entry point
+  this repo wires up in `astro.config.mjs`.
+  
+  `awcms-family-compatibility.yaml` pins `stack.astroNode.declared` as a SOURCE
+  CONSTANT that must equal `package.json` exactly, so `family:conformance:check` goes
+  red on any bump until the manifest moves with it (`[FAIL] stack: @astrojs/node
+  (declared ^11.1.5 vs actual ^11.1.6)`, which is exactly how this PR's CI caught it —
+  same shape as the astro 7.3.2 bump, `.changeset/astro-7-3-2.md`). The stack table in
+  `docs/awcms/family-compatibility.md` and its Indonesian twin are held to the manifest
+  by `tests/family-compatibility-doc-parity.test.ts`, so they move too.
+- 7857332: chore(deps-dev): bump @changesets/cli from 3.0.1 to 3.0.3
+  
+  Dev-only tooling: this is the CLI behind `bun run changeset` and the release-time
+  `changeset version` step. It does not ship in the built application.
+  
+  Worth stating because it is the one dev dependency that can bite the release process
+  rather than the build: `changeset version` consumes every `.changeset/*.md` and bumps
+  `package.json`, and the changeset policy gate only lets that through a narrow
+  carve-out where the version-only `package.json` edit is the sole non-exempt file. A
+  release PR must therefore stay pure.
+- 6bbf553: chore(actions): bump github/codeql-action to v4.38.1 in ONE change, because its two halves cannot land separately
+  
+  `.github/workflows/codeql.yml` pins `github/codeql-action/init` and
+  `github/codeql-action/analyze` to the same commit SHA. Dependabot treats those as two
+  independent dependencies and opened two PRs for them (#811 for `init`, #809 for
+  `analyze`), each moving one line.
+  
+  Either one merged ALONE breaks CodeQL on `main`, and does so in a way that is easy to
+  misread as a flaky scanner rather than a half-applied bump:
+  
+  ```
+  ##[error]Loaded a configuration file for version '4.38.1', but running version '4.37.9'
+  ##[error]analyze post-action step failed: Loaded a configuration file for version '4.38.1', but running version '4.37.9'
+  ```
+  
+  `init` writes a config file stamped with its own version and `analyze` refuses a config
+  from a version it is not. They are two halves of one atomic change, so this changeset
+  moves both lines to `1c5b675653bb5c22dbe9b12b556ec555138e09fd` (v4.38.1) together, and
+  #811/#809 are closed in favour of it.
+  
+  The rule this leaves behind: any future `codeql-action` bump must move BOTH pinned
+  SHAs in the same commit. A dependabot PR that touches only one of them is not
+  independently mergeable no matter how green the rest of its checks look — the CodeQL
+  jobs are `skipping` on the PR itself and only turn red after the merge lands on `main`.
+- 8f2675e: chore(actions): bump github/codeql-action to v4.38.2 in ONE change, because its two halves cannot land separately
+  
+  `.github/workflows/codeql.yml` pins `github/codeql-action/init` and
+  `github/codeql-action/analyze` to the same commit SHA. Dependabot treats those as two
+  independent dependencies and opened two PRs for them (#852 for `init`, #853 for
+  `analyze`), each moving one line.
+  
+  Either one merged ALONE breaks CodeQL on `main` (`init` writes a config file stamped
+  with its own version and `analyze` refuses a config from a version it is not — see
+  the precedent in `.changeset/codeql-action-4-38-1.md` / #817), so this changeset moves
+  both lines to `2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2` (v4.38.2) together, and
+  #852/#853 are closed in favour of it.
+  
+  v4.38.2 only updates the default CodeQL bundle version (2.27.1); no workflow-level
+  behaviour change beyond that.
+- fb9790e: fix(deps): close three high-severity transitive advisories flagged by `bun run deps:audit:check`
+  
+  Bumped `overrides` (package.json) — pre-existing drift unrelated to any feature in this release, caught only because `bun run check`'s `deps:audit:check` gate is run on every PR:
+  
+  - `js-yaml` `^4.3.1` → `^4.3.2` — [GHSA-2883-xcg3-v3hh](https://github.com/advisories/GHSA-2883-xcg3-v3hh) (`maxTotalMergeKeys` does not limit CPU use for empty merge sources).
+  - `smol-toml` (new override) `^1.7.1` — [GHSA-7w5x-hrqm-74c2](https://github.com/advisories/GHSA-7w5x-hrqm-74c2) (denial of service via malformed TOML documents, `<=1.7.0`).
+  - `svgo` (new override) `^4.1.0` — [GHSA-w27v-7q3p-w38r](https://github.com/advisories/GHSA-w27v-7q3p-w38r) (`removeScripts` allows executable links through namespace and control-character bypasses, `>=4.0.0 <4.1.0`).
+  
+  The `svgo` bump pulls `css-select` (`5.2.2` → `6.0.0`) and `css-what` (`6.2.2` → `7.0.0`) transitively across a MAJOR version each — both are build-time-only dependencies of `astro`'s asset pipeline, not runtime dependencies of this application, and `bun run build` passed unchanged after the bump (verified locally and in CI on this PR).
+- c525749: fix(deps): override transitive devalue (5.9.4) and undici (^8.10.2) to clear high-severity advisories
+  
+  `deps:audit:check` started failing on `main` without any dependency change once
+  new high-severity advisories were published against the locked transitive
+  versions: `devalue@5.8.1` (via `astro`, GHSA-j22f-vq7h-c4qm, GHSA-mcm9-63f2-9j32,
+  GHSA-x5rw-q4pp-hg5g, fixed after 5.9.2) and `undici@8.10.0` (via `unifont`,
+  GHSA-rfgv-xxqx-mfg5, GHSA-w293-vg96-wgc3, GHSA-vp8m-p9jh-q5pm, fixed in 8.10.2).
+  Both are closed through `overrides`, as the audit gate prescribes, staying
+  inside the ranges their dependents already declare (`astro` wants
+  `devalue@^5.8.1`, `unifont` wants `undici@^8.0.0`), so no major version moves.
+- 412524a: fix(deps): accept http-cache-semantics GHSA-ch52-4w7c-c8xp with a time-boxed audit exception (no patched release)
+  
+  `deps:audit:check` started failing on `main` without any dependency change once
+  GHSA-ch52-4w7c-c8xp (high, `http-cache-semantics` <=4.2.0, `max-stale` handling
+  can disclose cross-user cached responses) was published. Unlike #879 it cannot
+  be closed through `overrides`: the advisory lists no patched version, the
+  registry's latest release is still 4.2.0, and `astro@7.3.5` (latest) and
+  `astro@7.4.0-beta.1` both declare `^4.2.0`.
+  
+  It is accepted as the single entry in `scripts/dependency-audit-exceptions.ts`
+  (owner: ahliweb/awcms maintainers, review by 2026-11-03) because it is not
+  reachable here: Astro is the only consumer and only calls `CachePolicy`'s
+  `storable()`/`timeToLive()` at build time on a request it synthesises itself —
+  never `evaluateRequest()`/`satisfiesWithoutRevalidation()`, which is where the
+  client `max-stale` header is evaluated — and this repo has no remote images and
+  no shared cache keyed by the package. `tests/dependency-audit-check.test.ts` now
+  pins the exact exception set instead of requiring it to be empty, so a second
+  entry still cannot be added without a visible test edit. When upstream ships a
+  fix, the entry is replaced by an `overrides` pin (the gate fails on a stale
+  entry, so it cannot linger).
+- b8ad23f: chore(actions): bump docker/build-push-action to v7.4.0
+  
+  Release-pipeline only: `.github/workflows/release.yml` uses this action to build and
+  publish the container images. It is not on any path that runs for a pull request, so
+  the bump cannot affect application behaviour.
+  
+  The action is pinned in TWO places in that workflow (the app image and the
+  `awcms-jobs` image). Dependabot moved both to
+  `c3c9e263c25d99ce0380d002d59b67737d91b0dc` in one commit, which is what makes this
+  bump independently mergeable — unlike a `codeql-action` bump, where dependabot splits
+  the two pinned SHAs across separate PRs and neither half is safe alone (see #817).
+- 1cf7da6: chore(actions): bump docker/setup-buildx-action to v4.4.1
+  
+  Release-pipeline only: `.github/workflows/release.yml` uses this action to prepare the
+  buildx builder before the image build steps. It has a single pinned usage, moved to
+  `f87e5991a6d7451dcb8d9637bfbc97413f497069`, and does not run on pull-request paths, so
+  it cannot affect application behaviour.
+- a9abb94: design(admin): shared media picker adopts admin-media-grid (#872)
+  
+  Follow-up to wave 5 of the AWCMS ↔ awcms-one admin UI/UX parity work (epic #858): the shared media picker (`src/lib/ui/media-picker-client.ts`), consumed by `/admin/blog`, `/admin/blog-ads` and `/admin/site-profile`, moves its thumbnail grid from bespoke `.media-picker-panel`/`.media-option` CSS onto the shared `.admin-media-grid`/`.admin-media-grid-tile` primitive — the one real consumer that primitive has, since `/admin/media` itself deliberately does not render thumbnails. `/admin/blog-homepage` was named as a fourth consumer in the issue but has no picker markup to migrate (verified by grep): it references the picker only in a doc comment explaining why its ordered `gallery_block` field does not use it.
+  
+  The picker's public contract, keyboard operability and accessible names are unchanged. Because the tile's `<img>` now fills it edge-to-edge (the primitive's own contract), the picker's per-thumbnail label moves from a below-image line to a `.media-option-caption` overlay, which doubles as the tile button's accessible name. Each tile's selected state is now exposed to assistive technology via `aria-pressed`/`data-selected` — never by tile colour/outline alone — marking the option matching the field's current value when the panel reopens; this is additive, not a change to any previously existing selection behaviour. `src/styles/admin-screens.css`'s duplicate grid/box CSS the picker used to carry (`display: grid`/`grid-template-columns` on `.media-picker-panel`, the border/background/radius `.media-option` repeated) is removed now that the primitive supplies it, leaving only the panel's own bordered/scrollable chrome and the new caption overlay there.
+  
+  `APP_BUDGET_BYTES` raised from 250,423 to 250,480 (measured actual total, no added margin — see `scripts/client-asset-budget.ts`'s own ledger comment) since the new caption overlay and selection tracking outweigh the CSS removed.
+- 0941ebd: fix(control-center): show real vendoring provenance on the OMES Architecture screen, not the fixture's placeholder commit/timestamp
+  
+  `/admin/omes/arsitektur` (ahliweb/omes#246 part 3) was rendering the vendored `architecture-capabilities-view` fixture's own `omes_commit` (`0000000000000000000000000000000000000000`) and `generated_at` (`2026-01-01T00:00:00Z`) as if they were real provenance. Those are DELIBERATE deterministic placeholders OMES's generator (`scripts/generate-architecture-capabilities-view.py`) writes so the checked-in fixture reproduces byte-for-byte — never a record of when or from which commit this snapshot was actually vendored.
+  
+  The screen now shows the real answer instead: the OMES version (`snapshot.omesVersion`, taken from the fixture's `omes_version`, which IS real), the source commit (`contracts/v1/PIN.json`'s `sourceCommit` — a short prefix inline, with the full 40-character SHA in a title/tooltip), and vendored-at (`PIN.json`'s `syncedAt`). The "pinned release snapshot, not live host state" banner is unchanged.
+  
+  `domain/architecture.ts` renames the fixture's own fields to `fixtureOmesCommit`/`fixtureGeneratedAt` and documents them as internal-only (used solely to round-trip the projection back through schema validation in tests) — never to be rendered. `application/architecture-directory.ts` now attaches a `provenance` object (`sourceCommit`/`sourceCommitShort`/`vendoredAt`) sourced from the already-exported `OMES_CONTRACT_PIN`. `tests/admin-omes-control-architecture-page-contract.test.ts` asserts the page renders `snapshot.provenance.*`, never `snapshot.omesCommit`/`generatedAt`/`fixtureOmesCommit`/`fixtureGeneratedAt`, and that the displayed commit is never the all-zero placeholder. New `id`/`en` labels "Source commit" / "Vendored at" replace "OMES commit" / "Generated at".
+  
+  Refs ahliweb/omes#246.
+- 6d3bf18: fix(control-center): polish the OMES design system — forms, multi-value tiles, lifecycle strip, panel edges (ahliweb/omes#246, part 1b)
+  
+  Fixes 5 defects a screenshot review of part 1 (`ahliweb/omes#246` part 1/3, PR #829) found across the same 9 `/admin/omes/*` screens:
+  
+  1. **Multi-value tiles** (server health distribution, job state summary, backup freshness, deployment drift on the overview screen) rendered every part through the 32px mono `.stat-value` style meant for a single number, wrapping onto 2-3 lines at 1440px and worse below it. They now render as `.omes-stat-breakdown`, a compact wrapping list of value+label chips.
+  2. **Form controls** on all 8 filter/create forms used a bare `.admin-toolbar` with unstyled sibling `<label>`/`<input>` markup — flat grey inputs, the native light `<select>` popup, labels detached from their controls. They now use `.admin-create-form`, the same vocabulary ~18 other admin list screens already use, which already consumes the tokens `.omes-cc` overrides — no new color pairing.
+  3. **Lifecycle strip** `→` separators orphaned at the start of a wrapped line below 1440px. Each pill + its trailing arrow is now one atomic flex item, so the pair always wraps together.
+  4. **Panel edge/gutter at 1440px** — a `clamp()` sign error and a percentage-height/padding miscalculation in `.omes-cc`'s negative-margin bleed left a light-canvas strip on the panel's right edge and bottom on wide/short screens. Both fixed.
+  5. **Sidebar clipping at 1440px**, raised by the same review, is architecturally unrelated to `.omes-cc` (a sibling subtree; CSS custom properties don't cascade to it) and could not be reproduced through normal interaction against either this branch or the commit before part 1 — filed as its own `ahliweb/awcms` issue rather than fixed or guessed at here.
+  
+  `APP_BUDGET_BYTES` rises 229,500 → 230,400 B (measured +1,109 B after trimming). New contrast pairs: none — every color used is already in the table in `src/modules/omes-control/README.md`/`.id.md`, which now also documents this fix.
+- 221cf59: fix(control-center): CSP-safe depth indentation for the live orchestration tree (ahliweb/omes#246)
+  
+  Post-merge visual verification of `/admin/omes/orkestrasi-langsung` (ahliweb/omes#246 part 2, PR #834) — logging in as a seeded owner and looking at a populated screen for the first time — found the tree's depth indentation never rendered in any real browser: it was expressed as a per-node inline `style="padding-left: ${depth * 20}px"`, and this repo's CSP (`default-src 'self'`, no `style-src`, no `'unsafe-inline'`; `lib/security/security-headers.ts`) silently drops a dynamic inline `style` attribute. Every manager/agent/subagent row rendered at the same left edge regardless of depth, and the browser console logged a CSP violation per node.
+  
+  The fix drops the inline style entirely and expresses indentation as a bounded `data-indent-level` attribute (the real depth clamped to 6) plus seven fixed attribute-selector rules in `omes-control-center.css` — CSP-safe by construction, since nothing depends on an inline `style=""` value. The depth *filter* is unaffected: it still reads the unclamped `data-depth` attribute exactly as before.
+  
+  Verified by seeding a realistic depth-3 manager → 2 agents → 4 subagents → 2 leaves tree (mixed `RUNNING`/`SUCCEEDED`/`FAILED`/`PENDING`/`INTERRUPTED` states) plus a second, deliberately stale session, through the real `ingestOrchestrationTree`/`ingestOrchestrationEvent` functions against a real PostgreSQL, and screenshotting both `/admin/omes/orkestrasi-langsung` and `/admin/omes/hermes` at 1440px and 390px as the seeded owner. No other defect was found in either screen: no horizontal overflow at 390px, the stale session never renders as live, the depth filter correctly hides/shows rows at every tested level, and the Hermes screen's `planner`/step-budget fields render as the documented "not reported" state.
+  
+  Raises `APP_BUDGET_BYTES` (`scripts/client-asset-budget.ts`) from 234,443 to 234,992 — the measured cost of the fix itself (seven small CSS rules cost slightly more than the removed dynamic inline expression), not headroom for unrelated growth.
+- e48bd84: fix(control-center): vendor the OMES contracts and health-check directories into the production runtime image
+  
+  `Dockerfile.production`'s `runtime` stage copied only `node_modules`, `dist`, and
+  `package.json`, but `src/modules/omes-control/domain/contracts/loader.ts` reads the
+  vendored OMES contract snapshot (`PIN.json`, schemas, state tables, fixtures) from
+  disk at request time via `path.resolve(process.cwd(), VENDORED_CONTRACTS_DIR)` —
+  never bundled into `dist/`. Every production container built from this Dockerfile
+  therefore ENOENT'd on that read: `/admin/omes/arsitektur` rendered but its data never
+  loaded, and every worker route that validates against a vendored schema
+  (enroll/poll/result/heartbeat/ai-privacy-posture/hermes-orchestration-*) would have
+  rejected every real request — unnoticed only because no worker was enrolled yet on
+  `omes-cms.ahlikoding.com`.
+  
+  The `runtime` stage now also copies `src/modules/omes-control/contracts` (the fix),
+  plus `sql`, `openapi`, and `asyncapi` — the same class of defect in
+  `src/modules/module-management/application/health-registry.ts`, whose
+  `migrations_applied`, `openapi_documented`, and `asyncapi_documented` module health
+  signals (`/api/v1/modules/[moduleKey]/health`) read those directories the same way.
+  Those reads are try/caught rather than throwing, so the symptom there is every
+  module's health check silently reporting `fail` in production rather than an ENOENT.
+  
+  Adds `tests/dockerfile-runtime-disk-reads.test.ts`, which asserts every directory the
+  runtime code reads from disk is copied into the `runtime` stage — deriving the
+  contracts path from the loader's own exported `VENDORED_CONTRACTS_DIR` constant so a
+  path change there can't silently desync the Dockerfile again.
+  
+  Refs ahliweb/omes#246.
+- bf6f5fc: fix(security): narrow `awcms_worker`'s grant on the eight `omes_control` tables to what it actually executes
+  
+  `sql/154` granted `awcms_worker` the same `SELECT, INSERT, UPDATE, DELETE` it gave
+  `awcms_app` on all eight `omes_control` tables. `omes_control` registers no scheduled
+  worker entrypoint at all — the control API's mutations run as `awcms_app`,
+  per-request. The only worker-run code that touches these tables is the generic
+  `data-lifecycle:archive-purge` engine, driven by each table's `dataLifecycle`
+  descriptor: every one of the eight is `mode: "hard_delete"`, `executionMode:
+  "generic"`, which is a bounded cursor `SELECT` plus an aged-row `DELETE`.
+  
+  `INSERT` and `UPDATE` were therefore never used by any worker-run statement, and
+  holding them was a live least-privilege breach from the moment `sql/154` landed.
+  `security:readiness worker/setup grant check` (Issue #163) caught it correctly and
+  went red on `main` — the check fails in BOTH directions, and this was the
+  over-grant direction, not a missing matrix entry.
+  
+  The fix removes the privileges rather than widening the matrix to accommodate them.
+  A readiness gate that is made green by relaxing what it measures is worse than no
+  gate, so `WORKER_ROLE_GRANTS` now claims exactly `["SELECT", "DELETE"]` for each of
+  the eight tables and the database is brought into line with it.
+  
+  Two implementation notes worth keeping:
+  
+  - This is a new migration, not an edit to `sql/154`. An applied migration is
+    immutable here — editing one in place blocks `bun run db:migrate` on every
+    deployment that has already run it — so the correction is additive: revoke
+    exactly the two excess verbs.
+  - The `REVOKE`s are written one role per statement, paired with a no-op
+    single-role `GRANT SELECT, DELETE`. `sql/154`'s combined-role
+    `GRANT ... TO awcms_app, awcms_worker` form is not recognised by the replay
+    parser in `tests/db-role-separation-worker-setup-migration.test.ts`, which reads
+    only one-role-per-statement lines. The paired grant is redundant against a real
+    database and exists so the static replay's picture of the final grant matches
+    what `checkWorkerSetupRoleGrants` observes on a live Postgres.
+  
+  `awcms_app` is untouched — the control API needs full CRUD there.
+- 2d29a44: chore(deps-dev): bump @playwright/test from 1.62.1 to 1.63.0
+  
+  Dev/CI-only: the runner behind the E2E smoke job and the browser tests. It does not
+  ship in the built application.
+  
+  The E2E smoke job passing on this PR is the meaningful signal here — it exercises the
+  bumped runner against the real suite, including the 360px viewport gate, rather than
+  merely proving the package installs.
+- 74916c2: chore(deps-dev): bump prettier from 3.9.6 to 3.9.9
+  
+  Dev-only formatter behind `bun run lint`'s `prettier --check` gate and
+  `prettier-plugin-astro`. Verified locally with `bun install --frozen-lockfile && bun
+  run check`: `prettier --check` on the full `**/*.md`, `**/*.{json,yml,yaml}`, and
+  `**/*.{ts,mjs,astro}` glob stays clean, so `3.9.9` reformats nothing this repo already
+  has checked in.
+- ae71bc7: chore(deps-dev): bump prettier-plugin-astro from 0.14.1 to 1.1.0, with a full deliberate reformat
+  
+  Dev-only formatter plugin behind `bun run lint`/`bun run format`'s `.astro` handling. `1.0.0`
+  is a full rewrite of the plugin on top of Astro 7's Rust compiler (new whitespace-handling
+  engine, `astroCompressHTML`/`astroAllowShorthand` options added); this repo sets neither
+  option, so attributes are left exactly as written and no shorthand rewriting occurred.
+  
+  This PR was left open deliberately (see the earlier close-out of #850) until the reformat
+  could be reviewed rather than blindly accepted, because a formatter rewrite CAN change
+  rendered HTML (trailing/leading whitespace around inline elements, `set:html`/script/style
+  block handling). The review method used here is the strongest available: build the SSR
+  server bundle before and after running `bun run format` with the new plugin, from the exact
+  same working directory, and diff the compiled output.
+  
+  Of 743 compiled server chunks, exactly 5 changed content (out of 76 reformatted `.astro`
+  source files) — every other page/component compiled to byte-identical output despite its
+  source being reformatted, and `dist/client` was untouched. The 5 real differences:
+  
+  - 4 pages (`blog-pages`, `blog-presentation`, `form-drafts`, `reporting`) gained a trailing
+    `"\n  "` text node inside a `<Fragment slot="page-description">`, immediately before the
+    slot's closing tag, because the old plugin split the closing tag itself across the line
+    break (`</a>.</Fragment\n  >`, invisible to the parser) while the new plugin puts the
+    closing tag on its own line (`</a>.\n  </Fragment>`, a real trailing text node). Verified
+    safe: every `page-description` slot is consumed by `AdminLayout.astro` inside
+    `<p class="admin-page-description">`, whose CSS (`admin.css`) uses default
+    `white-space: normal` — trailing whitespace at the end of inline content in a block box is
+    collapsed away by the browser, so nothing renders differently.
+  - 1 page (`src/pages/index.astro`, the public homepage) replaced a literal space character
+    that survived an old-style tag-splitting line break (`tersedia dari <a\n  href=...`) with
+    an explicit `{" "}` expression (`tersedia dari{" "}\n<a href=...`) — both render as exactly
+    one space between "dari" and the link text; confirmed byte-for-byte identical rendered
+    spacing.
+  
+  No `prettier-ignore` or plugin-option override was needed: neither difference changes
+  rendered output, so the reformat is accepted as-is. See PR body for the full diff evidence.
+- 76f5ded: design(admin): retire the legacy .stat-card/.status-badge classes (#866)
+  
+  Final wave (7) of the AWCMS ↔ awcms-one admin UI/UX parity work (epic #858): migrates the last consumers of the legacy `.stat-card`/`.stat-grid`/`.stat-label`/`.stat-value`/`.stat-hint`/`.stat-head`/`.stat-delta` family and the legacy `.status-badge`/`.status-dot` pair — `data-lifecycle.astro`, `site-search.astro`, `idn-regions.astro`, `tenants.astro`, `sync.astro`, `push-notifications.astro`, `domain-events.astro`, `omes/health.astro` (all onto `.admin-stat-card`), and the four remaining sections of `reporting.astro` (onto `.admin-status-pill`) — onto the shared `admin.css` primitives every other admin screen already uses.
+  
+  With zero consumers left, the legacy rule blocks are deleted from `src/styles/admin.css` and `src/styles/admin-screens.css`, and the `.stat-card` half of the dual selector lists in `src/styles/omes-control-center.css` (kept there since wave 2 to serve both class families at once) is dropped. A new repo-wide regression test, `tests/admin-legacy-classes-retired.test.ts`, walks every `.astro`/`.ts`/`.tsx`/`.css` file under `src/` and fails the build if any of the nine retired class tokens reappears as a real consumer (comments are stripped first, so historical/provenance prose is never mistaken for one).
+  
+  This is the first wave of the epic to shrink the client asset budget rather than grow it: `APP_BUDGET_BYTES` (`scripts/client-asset-budget.ts`) is lowered from 250,566 to 248,033 and `PER_FILE_CSS_BUDGET_BYTES` from 57,300 to 56,800 (both measured actual values, no added margin).
+  
+  `docs/awcms/admin-ui-parity-matrix.md` (+ `.id.md`) now describes every wave (2–7) as DONE and reclassifies `media.astro` as partially-adopt with a pointer to the shared media picker's own adoption (#872). `docs/awcms/14_ui_ux_design_system.md` (+ `.id.md`) and the `awcms-ui-screen` skill (+ `.id`) state `.admin-status-pill`/`.admin-stat-card` as the only classes for these two shapes, rather than describing the legacy pair as still defined.
+- 8e9bce0: fix(auth): stop misclassifying 304 Not Modified as a broken redirect in ssrfSafeFetch (ahliweb/omes#249)
+  
+  `ssrfSafeFetch`'s manual redirect-following loop in `src/lib/auth/ssrf-guard.ts` treated every response with a status in `[300, 400)` as a redirect that required a `Location` header, failing with `request_failed` when one was missing. `304 Not Modified` legitimately has no `Location` — it is not a redirect at all — so a conditional GET (`If-None-Match`) answered with `304` was always misclassified as a broken redirect.
+  
+  In production this hit `src/modules/omes-control/application/repository-progress-poller.ts`, which sends `If-None-Match` on its second-and-later poll of GitHub's milestones/issues endpoints: every unchanged-repository poll failed with `network_error` instead of the intended `not_modified` outcome, permanently marking the projection's `pollStatus` as `error` even though nothing was wrong.
+  
+  Only `301`, `302`, `303`, `307`, and `308` are now treated as followable redirects requiring re-validated `Location` handling (unchanged SSRF re-validation logic for those). Every other 3xx status — `304`, plus `300`/`305`/`306` for completeness — is now returned to the caller as an ordinary completed response, without requiring or looking for `Location`.
+  
+  `src/modules/omes-control/application/repository-progress-poller.ts` already had correct `not_modified` handling for a real `304`; no change was needed there once the guard was fixed.
+- 4a7416a: fix(control-center): stale Hermes orchestration sessions never render node/event state as live (ahliweb/omes#246 part 2 follow-up)
+  
+  `/admin/omes/orkestrasi-langsung` already showed a `stale`/`unknown` badge on a session header, but the nodes and activity-stream rows inside it kept their last-reported state's live color (e.g. a green `● RUNNING`), which reads as currently running even though the whole snapshot has gone stale. `domain/hermes-orchestration.ts`'s `projectOrchestrationTree`/`projectOrchestrationEvent` now stamp every node and event with a recomputed `isHistorical` flag (`freshness !== "live"` for nodes; the OWN session's current tree freshness, recomputed via a new `sessionFreshness` parameter, for events — `application/hermes-orchestration-directory.ts` joins each event to its session's current snapshot rather than trusting a stored flag, defaulting fail-closed to `"unknown"`/historical when no snapshot exists at all). Both `orkestrasi-langsung.astro` and `hermes.astro` render a historical node/event with a neutral status-badge variant, a new "last reported: {state}" ("terakhir dilaporkan: {state}") label instead of the bare state, and a muted row (`data-historical="true"`, styled in `omes-control-center.css`) — never the live success/danger color. The activity stream's client-side poll refresh applies the same treatment on every periodic re-render, not just the initial SSR paint.
+- 4fd59f2: chore(deps-dev): bump @types/bun from 1.4.0 to 1.4.2
+  
+  Type definitions only — dev-time, erased at build, nothing shipped. The bump lines the
+  types up with the Bun version the CI pins (`1.4.2`), which is where a drift between the
+  two would otherwise show up as typecheck errors against APIs the running Bun already
+  has.
+- 3aee1a4: chore(deps-dev): bump yaml from 2.9.0 to 2.9.1
+  
+  Patch release of the YAML parser/stringifier used by `scripts/family-conformance-check.ts`,
+  the OpenAPI/AsyncAPI bundling and contract-check scripts, and
+  `src/modules/module-management/application/health-registry.ts`. `2.9.1` is a bugfix-only
+  release with no breaking changes to the parse/stringify API this repo calls, so no source
+  change is needed beyond the bump.
+
 ## 10.3.0
 
 ### Minor Changes

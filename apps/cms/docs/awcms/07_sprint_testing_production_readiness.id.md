@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](07_sprint_testing_production_readiness.md)
 
-<!-- i18n-source-hash: sha256:fec508eb11b30c088c1368e5513e291938625b3f977f9e19207767d8820a7d57 -->
+<!-- i18n-source-hash: sha256:c8fd997ee886149ffc969d6339e4a8a0157df019c6c275a155dfb3a948abd933 -->
 
 # Bagian 7 — Sprint Plan, Testing Checklist, dan Production Readiness
 
@@ -191,6 +191,23 @@ flowchart TB
 
 Piramida: banyak unit test di dasar, sedikit end-to-end di puncak; security & performance test mengawal.
 
+> **Menjalankan setiap lapisan seperti CI: `bun run ci:local` (Issue #1001).**
+> `bun run check` menjalankan lapisan unit/kontrak dengan `DATABASE_URL`
+> dikosongkan, sehingga lapisan integrasi DB-gated dan lapisan browser selama ini
+> hanya berjalan di GitHub. Runner `ci:local` (`scripts/ci-local.ts`, rujukan di
+> [`ci-local.md`](ci-local.md)) menjalankannya di mesin Anda dengan perintah
+> workflow sendiri: `integration` = `bun run db:migrate` + `bun test
+tests/integration/` (suite harness) + daftar berkas legacy ad-hoc, masing-masing
+> terhadap database sementara yang dibuat dan dihapusnya; `e2e` = build,
+> menyalakan server, seed lewat `POST /api/v1/setup/initialize`, `bun run
+test:e2e`; `minimum-supported` = lantai Bun 1.3.0; ditambah `hygiene`,
+> `changesets`, dan `quality`. Job yang tidak bisa dijalankan di mesin itu
+> berstatus `SKIPPED (alasan)` dan exit code-nya bukan nol, sehingga "tes
+> integrasi di-skip" tidak pernah terbaca sebagai "lulus". Ini verifikasi sebelum
+> push; required checks GitHub (ruleset
+> `11653326`, [`branch-protection.md`](branch-protection.md)) tetap yang
+> menentukan merge.
+
 > **E2E browser sungguhan (Playwright + Bun).** Harness-nya kini **sudah ada**
 > di repo ini (Issue #166, port dari awcms-mini): `playwright.config.ts` +
 > `tests/e2e/*.e2e.ts`, dijalankan lewat `bun run test:e2e` (→ `bun --bun
@@ -215,6 +232,34 @@ playwright test`, Bun-only), terpisah dari `bun test`
 > `postgres:18.4`, `db:migrate`, lalu men-seed satu tenant+owner lewat
 > `POST /api/v1/setup/initialize` (bootstrap sungguhan) dan mengoperkan
 > kredensialnya ke spec via env.
+
+> **Smoke aksesibilitas otomatis (`@axe-core/playwright`, Issue #877).**
+> `tests/e2e/a11y-axe.e2e.ts` menjalankan `AxeBuilder` (tag WCAG 2.0/2.1
+> A+AA) terhadap rute admin representatif — `/admin`, `/admin/comments`,
+> `/admin/users`, `/admin/approvals`, `/admin/media`, `/admin/omes`,
+> `/admin/omes/jobs`, `/admin/site-profile` — dalam tema terang MAUPUN gelap
+> (mekanisme sungguhan aplikasi `localStorage["awcms_theme"]`, bukan override
+> CSS), pada 360px dan desktop, plus `ConfirmDialog`/`ReasonPanel` ADR-0125
+> dibuka lalu dibatalkan. Ia gagal pada pelanggaran `critical`/`serious` apa
+> pun dan diklasifikasikan READ_WAVE (`tests/e2e/support/e2e-waves.ts`) —
+> setiap dialog yang dibukanya dibatalkan, tidak pernah dikirim, sehingga
+> tidak memutasi apa pun lewat aplikasi. Dijalankan sungguhan saat
+> menambahkannya, ia menemukan dan repo ini memperbaiki lima cacat yang
+> sudah terlanjur dikirim (lihat skill `awcms-browser-test` dan
+> `docs/awcms/admin-ui-parity-matrix.md` §7 untuk daftarnya). Lihat komentar
+> header spec itu sendiri untuk alasan ia berjalan di bawah `reducedMotion:
+"reduce"` — animasi masuk `.fade-in-up` benar-benar menurunkan kontras
+> terender di tengah transisi, yang bukan yang ingin diukur smoke ini.
+
+> **Sapuan overflow responsif (Issue #884).** `tests/e2e/responsive-360.e2e.ts`
+> memuat setiap layar `/admin/*` statis dan menegaskan
+> `document.documentElement.scrollWidth <= innerWidth` (+1px) pada empat
+> viewport: **360px** (ponsel tersempit), **640×360** (desktop 1280×720 pada
+> zoom browser 200% — WCAG 2.1 SC 1.4.10 mengukur reflow dalam piksel CSS dan
+> Playwright tak punya API zoom, jadi viewport CSS yang setara dipakai),
+> **768px** (tablet potret) dan **1024px** (tumpang-tindih topbar #843). Tiap
+> viewport adalah satu `test()` di berkas yang sama dengan asersi yang sama;
+> tak ada layar atau lebar yang dikecualikan.
 
 > **Runner test.** Runner = **`bun test`** (`bun:test`), berkas di
 > `tests/`. Daftar target di bawah bersifat **target rencana modul ERP**,

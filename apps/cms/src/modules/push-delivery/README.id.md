@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](README.md)
 
-<!-- i18n-source-hash: sha256:bfa1e16ac092cb6fb5287aa4a217691c4f5ce4603cb64e39c23b213d76de6c4e -->
+<!-- i18n-source-hash: sha256:d0faf854c0a2069c79ff88a179d9fdf3a5d7a5822c78ff0d38e4801cb413f27f -->
 
 # `push_delivery`
 
@@ -82,6 +82,10 @@ Token VAPID di-cache per **origin**, jadi satu batch 500 pelanggan Firefox berha
 
 `bun run push:vapid:generate` mencetak satu pasangan kunci dalam bentuk persis yang `.env` inginkan — beserta peringatan bahwa **merotasinya tidak me-re-key langganan yang ada**, melainkan membuat semuanya permanen tak-terkirimi sampai penggunanya berlangganan ulang.
 
+## Rahasia auth Web Push dienkripsi saat disimpan
+
+`auth_secret` RFC 8291 disimpan sebagai `auth_secret_ciphertext` (AES-256-GCM, helper ADR-0137, cincin `PUSH_AUTH_SECRET_ENCRYPTION_KEYS`, AAD = tenant + `endpoint_hash`; Issue #1089, `sql/314`). Pendaftaran gagal-tertutup (`503 PUSH_MISCONFIGURED`) tanpa cincin; dispatcher mendekripsi dan fallback ke kolom plaintext lama hanya untuk baris tanpa ciphertext; `bun run push:auth-secret:backfill` mengonversi sisanya; `bun run push:auth-secret:rekey` memindahkan baris ke kunci aktif setelah rotasi (Issue #1098). Mendaftar ulang endpoint yang dipegang pengguna lain memindahkannya dengan event audit (`subscription.transfer`, hanya id) dan membatalkan notifikasi antre pengguna sebelumnya. Desain lengkap, trade-off, dan urutan rollout: [`docs/awcms/push-notifications.id.md`](../../../docs/awcms/push-notifications.id.md).
+
 ## Permukaan HTTP
 
 Dua kelas endpoint, dan pembelahannya adalah keputusan otorisasi — bukan penataan berkas.
@@ -128,3 +132,7 @@ Ikon **tidak** diambil dari payload — ia akan di-fetch saat ditampilkan, menye
 ## Yang BELUM ada
 
 - **FCM Web (SDK browser).** Ditolak, dengan angkanya, di ADR-0074 §Yang DITOLAK.
+
+## Pengiriman push Bun vs WebSocket browser
+
+`bun run push:dispatch` yang ada menggunakan Bun dan API HTTP push/FCM, sementara Service Worker browser menampilkan notifikasi. SSE/WS Bun mendatang **tidak** menggantikan Web Push saat browser ditutup. Tidak ada microservice push Node.js. [Standar runtime](../../../docs/awcms/bun-delivery-realtime-runtime.id.md).

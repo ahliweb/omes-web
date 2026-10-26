@@ -112,7 +112,12 @@ const statusOptions: WhatsappMessageStatus[] = [
           </p>
         </div>
       ) : (
-        <div class="data-table-scroll">
+        <div
+          class="data-table-scroll"
+          role="region"
+          tabindex="0"
+          aria-label={t("WhatsApp queue")}
+        >
           <table class="data-table data-table--stack">
             <thead>
               <tr>
@@ -127,14 +132,16 @@ const statusOptions: WhatsappMessageStatus[] = [
             <tbody>
               {entries.map((entry) => (
                 <tr>
-                  <th scope="row" data-label="Phone">
+                  <th scope="row" data-label={t("Phone")}>
                     {entry.toPhoneMasked}
                   </th>
-                  <td data-label="Template">{entry.templateKey}</td>
-                  <td data-label="Status">{entry.status}</td>
-                  <td data-label="Attempts">{entry.attempts}</td>
-                  <td data-label="Last error">{entry.lastError ?? ""}</td>
-                  <td data-label="Created">{entry.createdAt.slice(0, 16)}</td>
+                  <td data-label={t("Template")}>{entry.templateKey}</td>
+                  <td data-label={t("Status")}>{entry.status}</td>
+                  <td data-label={t("Attempts")}>{entry.attempts}</td>
+                  <td data-label={t("Last error")}>{entry.lastError ?? ""}</td>
+                  <td data-label={t("Created")}>
+                    {entry.createdAt.slice(0, 16)}
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -46,7 +46,7 @@ import {
 import { POS_WALK_IN_CUSTOMER_NAME } from "../../modules/commerce/domain/pos-order-validation";
 
 const ssr = Astro.locals.ssrContext!;
-const { t, tn } = getTranslatorFor(Astro.locals.locale);
+const { t, tn, tx: tc } = getTranslatorFor(Astro.locals.locale);
 
 const tab =
   Astro.url.searchParams.get("tab") === "history" ? "history" : "sale";
@@ -244,7 +244,12 @@ const paymentLabels: Record<string, string> = {
             aria-label={t("Search results")}
           />
 
-          <div class="data-table-scroll">
+          <div
+            class="data-table-scroll"
+            role="region"
+            tabindex="0"
+            aria-label={t("Cart lines")}
+          >
             <table class="data-table" id="pos-cart-table">
               <caption>{t("Cart")}</caption>
               <thead>
@@ -340,7 +345,7 @@ const paymentLabels: Record<string, string> = {
               />
             </label>
             <p class="pos-change-line" id="pos-change-line">
-              <span>{t("Change")}</span>
+              <span>{tc("pos", "Change")}</span>
               <output
                 class="admin-status-pill pos-money"
                 data-tone="neutral"
@@ -374,7 +379,7 @@ const paymentLabels: Record<string, string> = {
         hidden
       >
         <div class="row-actions pos-receipt-actions">
-          <h2 id="pos-receipt-heading">{t("Receipt")}</h2>
+          <h2 id="pos-receipt-heading">{tc("pos", "Receipt")}</h2>
           <button type="button" class="module-toggle" id="pos-print">
             {t("Print receipt")}
           </button>
@@ -416,7 +421,7 @@ const paymentLabels: Record<string, string> = {
             <dd data-receipt="method" />
             <dt>{t("Amount tendered")}</dt>
             <dd data-receipt="amountTendered" />
-            <dt>{t("Change")}</dt>
+            <dt>{tc("pos", "Change")}</dt>
             <dd data-receipt="change" />
           </dl>
           <p class="pos-receipt-footer">{t("Thank you for your purchase.")}</p>
@@ -484,7 +489,12 @@ const paymentLabels: Record<string, string> = {
         </button>
       </form>
 
-      <div class="data-table-scroll">
+      <div
+        class="data-table-scroll"
+        role="region"
+        tabindex="0"
+        aria-label={t("POS orders")}
+      >
         <table class="data-table data-table--stack" id="pos-history-table">
           <caption>
             {tn("{count} POS sale", "{count} POS sales", history.items.length, {
@@ -535,7 +545,9 @@ const paymentLabels: Record<string, string> = {
                     {paymentLabels[order.paymentMethod] ?? order.paymentMethod}
                   </td>
                   <td data-label={t("Status")}>
-                    <span class="status-badge">{order.status}</span>
+                    <span class="admin-status-pill" data-tone="neutral">
+                      {order.status}
+                    </span>
                   </td>
                   <td data-label={t("Total")} class="pos-money">
                     {order.total}

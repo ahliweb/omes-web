@@ -1,4 +1,8 @@
 import { defineModule } from "../_shared/module-contract";
+import {
+  SAMPLE_RECORDED_EVENT_TYPE,
+  SAMPLE_RECORDED_EVENT_VERSION
+} from "./domain/event-type-registry";
 
 /**
  * Lifecycle descriptor key (Issue #468). Exported so
@@ -9,13 +13,36 @@ import { defineModule } from "../_shared/module-contract";
 export const DOMAIN_EVENT_DELIVERIES_LIFECYCLE_KEY =
   "domain_event_runtime.deliveries";
 
+/**
+ * Lifecycle descriptor key for `awcms_idempotency_keys` (Issue #1034, ADR-0145).
+ *
+ * The table was created by this module's `sql/009` as the shared store for the
+ * standard `Idempotency-Key` wrapper, so the descriptor lives here. The purge
+ * itself is the generic engine's (`data-lifecycle:archive-purge`).
+ */
+export const IDEMPOTENCY_KEYS_LIFECYCLE_KEY =
+  "domain_event_runtime.idempotency_keys";
+
+/**
+ * Default horizon for an idempotency record, in days.
+ *
+ * Two floors drive the minimum. The deploy-straddle guard in
+ * `findIdempotencyRecord` (ADR-0145) refuses a `legacy:unscoped` row younger
+ * than 24 hours, so a purge shorter than that would silently remove the guard.
+ * And a client retries a mutation in minutes to hours, not weeks, so 30 days
+ * is the longest retry window that is still sensible. A record past it is a
+ * replay cache nobody can use, kept only at the cost of table size and of a
+ * cached response body that may echo personal data.
+ */
+export const IDEMPOTENCY_KEYS_DEFAULT_RETENTION_DAYS = 30;
+
 export const domainEventRuntimeModule = defineModule({
   key: "domain_event_runtime",
   name: "Domain Event Runtime",
   version: "0.1.0",
   status: "active",
   description:
-    "Transactional, versioned domain-event outbox and dispatcher. Provider-neutral, generic multi-consumer infrastructure — one event can fan out to MANY registered consumers, with explicit per-aggregate/order-key ordering (never a global total order). Producers call `application/append-domain-event.ts`'s `appendDomainEvent` inside their OWN business transaction (same-commit outbox write, ADR-0006 compliant: no external call happens there). A static, reviewed-source-code consumer registry (`infrastructure/consumer-registry.ts`) decides fan-out at publish time; `application/dispatch-domain-events.ts` (`bun run domain-events:dispatch`, built on the shared worker runner `src/lib/jobs/job-runner.ts`) claims/executes/finalizes deliveries with per-order-key ordering, exponential backoff, and dead-letter handling. Dead-lettered deliveries can be replayed by a permission-gated, reason-required, audited, idempotent admin action (`application/delivery-replay.ts`). Ships exactly one self-contained reference event type (`sample.recorded`, `domain/event-type-registry.ts`) and two representative consumers (a same-process cross-module audit projector, and a self-contained reporting/read-model activity-rollup projection) to exercise the full mechanism end-to-end — real producer/consumer wiring for domain modules is intentionally deferred to follow-up work. An optional broker adapter port (`infrastructure/broker-adapter-port.ts`) is defined for future out-of-process delivery; no external broker is required or registered by default — PostgreSQL/in-process dispatch is the only implemented path, so offline/LAN deployments are unaffected. Ported from awcms-mini's proven `domain-event-runtime` module. See `README.md` for full design rationale.",
+    "Transactional, versioned domain-event outbox and dispatcher. Provider-neutral, generic multi-consumer infrastructure — one event can fan out to MANY registered consumers, with explicit per-aggregate/order-key ordering (never a global total order). Producers call `application/append-domain-event.ts`'s `appendDomainEvent` inside their OWN business transaction (same-commit outbox write, ADR-0006 compliant: no external call happens there). The consumer registry (`infrastructure/consumer-registry.ts`) is BUILT from every module's descriptor-declared `domainEventConsumers` (ADR-0134) — reviewed source code, never database state — and decides fan-out at publish time; `application/dispatch-domain-events.ts` (`bun run domain-events:dispatch`, built on the shared worker runner `src/lib/jobs/job-runner.ts`) claims/executes/finalizes deliveries with per-order-key ordering, exponential backoff, and dead-letter handling. Dead-lettered deliveries can be replayed by a permission-gated, reason-required, audited, idempotent admin action (`application/delivery-replay.ts`). Ships exactly one self-contained reference event type (`sample.recorded`, `domain/event-type-registry.ts`) and two representative consumers (a same-process cross-module audit projector, and a self-contained reporting/read-model activity-rollup projection) to exercise the full mechanism end-to-end — real producer/consumer wiring for domain modules is intentionally deferred to follow-up work. An optional broker adapter port (`infrastructure/broker-adapter-port.ts`) is defined for future out-of-process delivery; no external broker is required or registered by default — PostgreSQL/in-process dispatch is the only implemented path, so offline/LAN deployments are unaffected. Ported from awcms-mini's proven `domain-event-runtime` module. See `README.md` for full design rationale.",
   dependencies: ["tenant_admin", "identity_access", "logging"],
   type: "system",
   events: {
@@ -23,6 +50,44 @@ export const domainEventRuntimeModule = defineModule({
     publishes: ["awcms.domain-event-runtime.sample.recorded"],
     subscribes: ["awcms.domain-event-runtime.sample.recorded"]
   },
+  /**
+   * The two reference consumers (ADR-0134). Names are byte-identical to the
+   * ones the static registry used: they key delivery rows and the effect
+   * ledger, so a rename would re-run every effect. The audit projector keeps its
+   * `logging.` prefix although it is declared here — it predates the
+   * `<owning module>.<role>` convention, and the effect it performs is this
+   * module's own sample event projected into `logging`'s public
+   * `recordAuditEvent`.
+   *
+   * Both rely on `runtime_effect_once` (the default): the registry wraps
+   * `handle` in `applyConsumerEffectOnce`.
+   */
+  domainEventConsumers: [
+    {
+      name: "logging.sample_event_audit_projector",
+      description:
+        "Reference same-process cross-module consumer — projects a sample.recorded domain event into the logging module's audit trail via recordAuditEvent.",
+      eventTypes: [SAMPLE_RECORDED_EVENT_TYPE],
+      eventVersions: [SAMPLE_RECORDED_EVENT_VERSION],
+      handle: async (tx, event, ctx) => {
+        const { projectSampleEventToAuditTrail } =
+          await import("./application/sample-consumers");
+        await projectSampleEventToAuditTrail(tx, event, ctx);
+      }
+    },
+    {
+      name: "domain_event_runtime.activity_rollup_projector",
+      description:
+        "Reference reporting/read-model projection consumer — maintains a per-tenant/day/event-type activity rollup (awcms_domain_event_activity_daily) for operational dashboards.",
+      eventTypes: [SAMPLE_RECORDED_EVENT_TYPE],
+      eventVersions: [SAMPLE_RECORDED_EVENT_VERSION],
+      handle: async (tx, event, ctx) => {
+        const { applyActivityRollupIncrement } =
+          await import("./application/sample-consumers");
+        await applyActivityRollupIncrement(tx, event, ctx);
+      }
+    }
+  ],
   permissions: [
     {
       activityCode: "events",
@@ -189,6 +254,22 @@ export const domainEventRuntimeModule = defineModule({
         "The idempotency record proving a consumer already applied an event. Three keys and a timestamp; removing a row would let the same effect be applied twice."
     },
     {
+      key: IDEMPOTENCY_KEYS_LIFECYCLE_KEY,
+      tableName: "awcms_idempotency_keys",
+      ownerModuleKey: "domain_event_runtime",
+      // `actor_key` is `user:<tenant_user_id>` (a prefixed TEXT value, not a
+      // uuid column), so the planner's `equals` match cannot reach it. That is
+      // stated rather than hidden: the rows are personal-data-bearing and
+      // unreachable by subject, and the retention below is what bounds them.
+      subjectColumns: [],
+      unreachableBySubject: true,
+      exportable: false,
+      erasure: "retain_under_obligation",
+      rationale:
+        "Issue #1034 / ADR-0145. Replay cache for high-risk mutations: scope, caller-chosen key, a keyed request hash, the response status and the response body. The only identity on a row is `actor_key`, a pseudonymous `user:<tenant_user_id>` (or `machine:`/`anonymous`), and the cached `response_body` can echo personal data from the mutation it replays. A subject request cannot be matched to a row by content (the key is chosen by the caller, the hash is an HMAC) and `actor_key` is a prefixed text value the uuid-equality planner does not read. Not erased on request because the row is the proof that a mutation already ran: deleting it would let a retry execute the mutation a second time. The exposure is bounded by time instead: the generic purge (`data-lifecycle:archive-purge`, default 30 days, `domain_event_runtime.idempotency_keys`) hard-deletes every row older than the window, and a held tenant is skipped. The data a response echoes is the subject's record in its own table, which has its own descriptor and is exported and erased there. `actor_key` and `response_body` are never part of an export. The subject-access export route stores its own report here, but never the rows of a payroll-boundary table (Issue #1018): those are kept as ids and a marker, and a replay re-reads them under a fresh permission check, so a person's earnings never sit in this table for the retention window.",
+      redactedColumns: ["request_hash", "response_body"]
+    },
+    {
       key: "domain_event_runtime.domain_event_activity_daily",
       tableName: "awcms_domain_event_activity_daily",
       ownerModuleKey: "domain_event_runtime",
@@ -253,6 +334,49 @@ export const domainEventRuntimeModule = defineModule({
         description:
           "Deletes `delivered`/`skipped` rows older than the cutoff in bounded batches, skipping any row a replay record or another delivery still references. Never touches `dead_letter`. Skips the whole step when a legal hold covers domain_event_runtime.deliveries."
       }
+    },
+    {
+      key: IDEMPOTENCY_KEYS_LIFECYCLE_KEY,
+      tableName: "awcms_idempotency_keys",
+      ownerModuleKey: "domain_event_runtime",
+      scope: "tenant",
+      cursorColumn: "created_at",
+      retentionClass: "operational_queue",
+      // The floor is a week, not the 24 hours of the deploy-straddle guard, so
+      // an operator who lowers the tenant window cannot get near the guard.
+      retentionMinDays: 7,
+      retentionMaxDays: 90,
+      defaultRetentionDays: IDEMPOTENCY_KEYS_DEFAULT_RETENTION_DAYS,
+      partition: {
+        eligible: false,
+        rationale:
+          "One row per idempotent mutation, bounded by the retention window rather than by history. Rows are written on the request path and only ever deleted whole by age, so a batched DELETE on the (tenant_id, created_at) index is cheap. A partition would add planning cost to every idempotent write for no gain."
+      },
+      archive: {
+        archivable: false,
+        rationale:
+          "A replay cache has no value after the window: the mutation it guards is recorded in its own table and in the audit trail. Archiving would also preserve cached response bodies that can echo personal data, which is exactly what the purge exists to stop keeping."
+      },
+      deletion: {
+        mode: "hard_delete",
+        rationale:
+          "The row is a cache entry, not a record, and nothing references it. Anonymizing would leave a key that can no longer be replayed to anyone while still costing an index entry; the response body may echo personal data, so hard deletion is the only deletion that actually removes it."
+      },
+      legalHold: {
+        applicable: false,
+        precedence: "not_applicable"
+      },
+      requiredIndexes: [
+        {
+          columns: ["tenant_id", "created_at"],
+          purpose:
+            "awcms_idempotency_keys_tenant_created_idx (sql/009) - the (tenant, cursor) composite the generic purge engine filters and orders by. No migration of its own is needed for the index."
+        }
+      ],
+      batchLimit: 5000,
+      backupRestoreNotes:
+        "Safe to restore empty or stale. A restore missing this table only means a retry of a recent mutation is no longer recognised as a replay for the window; a restored backup older than the retention window brings back expired rows, which the next purge removes again.",
+      executionMode: "generic"
     }
   ]
 });

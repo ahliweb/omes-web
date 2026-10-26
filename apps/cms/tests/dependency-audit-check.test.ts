@@ -151,11 +151,15 @@ describe("parseAuditOutput", () => {
 });
 
 describe("the shipped exception list", () => {
-  test("is empty — every advisory is closed by an override instead", () => {
-    // Not style: an empty list makes the next exception the only entry, so it
-    // cannot be added without a reviewer seeing it. Same reasoning ADR-0058
-    // settled for the permission-enforcement gate.
-    expect(EXCEPTIONS).toHaveLength(0);
+  test("is empty", () => {
+    // Not style: pinning the exact set makes the next exception a visible edit
+    // here, so it cannot be added without a reviewer seeing it. Same reasoning
+    // ADR-0058 settled for the permission-enforcement gate. The last entry
+    // (http-cache-semantics GHSA-ch52-4w7c-c8xp) was removed once astro@7.4.0
+    // brought the patched http-cache-semantics@4.3.0.
+    expect(EXCEPTIONS.map((e) => `${e.packageName} ${e.advisoryUrl}`)).toEqual(
+      []
+    );
   });
 
   test("any future entry must carry reason, owner, and reviewDate", () => {

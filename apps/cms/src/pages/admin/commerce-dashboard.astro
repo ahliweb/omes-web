@@ -216,7 +216,12 @@ const STATUS_TONE: Record<string, string> = {
 
       <section aria-label={t("Recent orders")}>
         <h2 class="admin-dashboard-panel-title">{t("Recent orders")}</h2>
-        <div class="data-table-scroll">
+        <div
+          class="data-table-scroll"
+          role="region"
+          tabindex="0"
+          aria-label={t("Recent orders")}
+        >
           <table class="data-table data-table--stack">
             <caption class="sr-only">{t("Recent orders")}</caption>
             <thead>
@@ -238,13 +243,13 @@ const STATUS_TONE: Record<string, string> = {
               ) : (
                 summary.recentOrders.map((order) => (
                   <tr>
-                    <td data-label="Order code">
+                    <td data-label={t("Order code")}>
                       <span class="cell-code">{order.orderCode}</span>
                     </td>
-                    <td data-label="Customer">
+                    <td data-label={t("Customer")}>
                       {order.customerName} ({order.customerPhoneMasked})
                     </td>
-                    <td data-label="Status">
+                    <td data-label={t("Status")}>
                       <span
                         class="admin-status-pill"
                         data-tone={STATUS_TONE[order.status] ?? "neutral"}
@@ -256,8 +261,8 @@ const STATUS_TONE: Record<string, string> = {
                         {order.status}
                       </span>
                     </td>
-                    <td data-label="Total">{money(order.total)}</td>
-                    <td data-label="Placed">{order.createdAt}</td>
+                    <td data-label={t("Total")}>{money(order.total)}</td>
+                    <td data-label={t("Placed")}>{order.createdAt}</td>
                   </tr>
                 ))
               )}

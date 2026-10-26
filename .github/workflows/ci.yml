@@ -183,7 +183,11 @@ jobs:
     name: check-cms
     needs: check
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # 45, not 20: the 8ceb80ea subtree sync (issue #17) grew apps/cms's
+    # DB-gated integration suite (63 upstream migrations, eight new modules)
+    # from ~9 min to ~20 min of wall time on a hosted runner, so a 20-minute
+    # ceiling cancelled a healthy run. Still a ceiling, not a target.
+    timeout-minutes: 45
 
     services:
       postgres:

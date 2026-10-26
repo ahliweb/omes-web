@@ -87,6 +87,10 @@ export const PATCH = defineTenantRoute({
         return fail(404, "RESOURCE_NOT_FOUND", "Flash sale not found.");
       return ok(flashSale);
     } catch (error) {
+      // tx-swallow-ok: healthy transaction: `DuplicateFlashSaleSlugError` is
+      // raised by the directory's own pre-checks or after its fallible
+      // statement ran inside a savepoint, so the transaction is still valid
+      // when this catch returns.
       if (error instanceof DuplicateFlashSaleSlugError) {
         return fail(409, "FLASH_SALE_SLUG_ALREADY_EXISTS", error.message);
       }

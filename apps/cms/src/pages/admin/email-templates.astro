@@ -132,9 +132,14 @@ const canCreate = screen.state === "allowed" && screen.data.canCreate;
   )}
 
   {canRead && !loadError && (
-    <div class="data-table-scroll fade-in-up">
+    <div
+      class="data-table-scroll fade-in-up"
+      role="region"
+      tabindex="0"
+      aria-labelledby="email-templates-table-caption"
+    >
       <table class="data-table data-table--stack" id="email-templates-table">
-        <caption>
+        <caption id="email-templates-table-caption">
           {tn("{count} template", "{count} templates", templates.length, {
             count: templates.length
           })}
@@ -166,16 +171,16 @@ const canCreate = screen.state === "allowed" && screen.data.canCreate;
           ) : (
             templates.map((template) => (
               <tr>
-                <td data-label="Key">
+                <td data-label={t("Key")}>
                   <span class="cell-code">{template.templateKey}</span>
                 </td>
-                <td data-label="Name">{template.name}</td>
-                <td data-label="Active">
+                <td data-label={t("Name")}>{template.name}</td>
+                <td data-label={t("Active")}>
                   <span
-                    class="status-badge"
-                    data-variant={template.isActive ? "success" : "neutral"}
+                    class="admin-status-pill"
+                    data-tone={template.isActive ? "success" : "neutral"}
                   >
-                    <span class="status-dot" aria-hidden="true" />
+                    <span class="admin-status-pill-dot" aria-hidden="true" />
                     {template.isActive ? "active" : "inactive"}
                   </span>
                 </td>

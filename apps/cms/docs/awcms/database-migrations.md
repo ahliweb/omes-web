@@ -68,8 +68,8 @@ DATABASE_URL=postgres://awcms:awcms_password@localhost:5432/awcms bun run db:mig
 
 - The runtime is Bun, via `bun scripts/db-migrate.ts`.
 - The driver is `Bun.SQL`, not `pg` or a Node.js adapter.
-- Migration files are read from `sql/` and ordered by file name.
-- File names must follow `NNN_awcms_<area>_<description>.sql`.
+- Migration files are read from `sql/` and ordered by the numeric value of their prefix, with full file name as tie-break (see ADR-0130, Issue #911).
+- File names must follow `NNN_awcms_<area>_<description>.sql` (upstream norm) or `NNNN_awcms_<area>_<description>.sql` (derived applications with reserved band ≥ 1000). Exactly three or four digits; five-digit and two-digit prefixes are rejected, and so is one number written at two widths (`0100_` next to `100_`).
 - The runner ensures the `awcms_schema_migrations` table exists.
 - Migrations already recorded are skipped.
 - A SHA-256 checksum is stored for every applied migration.
@@ -104,3 +104,4 @@ flowchart TD
 4. Tenant-scoped schema (including ERP entities: ledger, inventory, procurement, manufacturing, HR/payroll) must follow the PostgreSQL + RLS standard in the relevant governance/ADR documents (see ADR-0001 and the other foundation ADRs still to come for RLS/RBAC-ABAC).
 5. Deletable resources must use soft delete columns per the soft-delete/immutability ADR standard inherited from the base.
 </content>
+6. Every trigger function (`RETURNS trigger`) and every `SECURITY DEFINER` function must end with `SET search_path = pg_catalog, public, pg_temp` (Issue #1046). `awcms_app` and `awcms_worker` hold `TEMP`, and PostgreSQL searches the temp schema _before_ `public` for unqualified relation names, so a role can `CREATE TEMP TABLE` a same-named shadow and feed a guard fake rows. `pg_temp` must be named, and last: `SET search_path = public` alone does not help. Put the clause on the `CREATE`, and repeat it on every `CREATE OR REPLACE` (which replaces the whole definition, `SET` included); or add `ALTER FUNCTION … SET search_path = …` in a later migration. `bun run db:function-search-path:check` folds `sql/` in order, judges each function's FINAL definition, and is part of `bun run check`; `tests/integration/function-search-path.integration.test.ts` checks `pg_proc.proconfig` on a migrated database.

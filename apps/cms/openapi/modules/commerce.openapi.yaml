@@ -4811,14 +4811,13 @@ paths:
         `change` is computed server-side, also as a string (ADR-0003 — never
         a float). The idempotency key is the HEADER only — a body field of the
         same name is ignored. Same key + same body replays the stored 201;
-        same key + different body (or a different cashier) is
-        `409 IDEMPOTENCY_CONFLICT`.
+        same key + different body from the same cashier is
+        `409 IDEMPOTENCY_CONFLICT`. Keys are scoped per cashier (ADR-0129
+        amendment 1): a different cashier presenting the same key value is a
+        separate, independent request — it never replays, and never reads, the
+        first cashier's stored sale.
       parameters:
-        - name: Idempotency-Key
-          in: header
-          required: true
-          schema:
-            type: string
+        - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
         required: true
         content:
@@ -5080,11 +5079,7 @@ paths:
           schema:
             type: string
             format: uuid
-        - name: Idempotency-Key
-          in: header
-          required: true
-          schema:
-            type: string
+        - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
         required: true
         content:

@@ -25,7 +25,34 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #. Admin shell — skip link, drawer, topbar
+msgid "A Safari tab cannot receive background push notifications on iOS or iPadOS, so no button is offered here. This works on iOS or iPadOS 16.4 or later:"
+msgstr ""
+
+msgid "Close the tab and open AWCMS from the new Home Screen icon, then sign in."
+msgstr ""
+
+msgid "Come back to this page in the installed app and choose Enable on this device. iOS asks for permission only at that moment."
+msgstr ""
+
+msgid "Notifications are blocked for this site. This page cannot ask again — allow them in the browser or iOS Settings for this site or app, then reload. No notification will be sent until you do."
+msgstr ""
+
+msgid "Notifications on iPhone and iPad need the installed app."
+msgstr ""
+
+msgid "Open this page in Safari and tap Share, then Add to Home Screen, then Add."
+msgstr ""
+
+msgid "Push needs the device to reach its push service over the internet. It is not available on an offline or LAN-only deployment, and a notification can be delayed or dropped by the operating system."
+msgstr ""
+
 msgid "Skip to main content"
+msgstr ""
+
+msgid "This browser does not support push notifications, so nothing can be enabled here. Use a current Chrome, Edge, Firefox or Safari over HTTPS."
+msgstr ""
+
+msgid "This installed app cannot receive push notifications. Web Push on iPhone and iPad needs iOS or iPadOS 16.4 or later — update the device, then open the app again."
 msgstr ""
 
 msgid "Toggle navigation menu"
@@ -496,6 +523,15 @@ msgid "Two-factor authentication is already switched on for your account."
 msgstr ""
 
 msgid "Could not start setup. Please try again."
+msgstr ""
+
+msgid "Enter your current password to set up two-factor authentication."
+msgstr ""
+
+msgid "Sign in again through your identity provider, then set up two-factor authentication."
+msgstr ""
+
+msgid "For your security, confirm your current password before setting up two-factor authentication. You will get an email telling you it was added."
 msgstr ""
 
 msgid "That code is not right. Try the next one."
@@ -2274,7 +2310,13 @@ msgstr ""
 msgid "not applicable"
 msgstr ""
 
-msgid ", not a read: it is audited as one, and the reason you give is part of that record. The result appears below and is never stored or downloadable."
+msgid ", not a read: it is audited as one, and the reason you give is part of that record. The result appears below and is not offered for download. A retried request is answered from a short-lived record (up to 30 days) that holds no pay data."
+msgstr ""
+
+msgid "{rows} row(s) across {tables} table(s). {unanswered} table(s) are not covered, {withheld} withheld for lack of permission, {truncated} cut short by the row cap. See below."
+msgstr ""
+
+msgid "Withheld columns:"
 msgstr ""
 
 msgid "Not covered by this answer"
@@ -2646,6 +2688,9 @@ msgstr ""
 msgid "Push delivery is switched off on this deployment ({setting} is not {value}), so the dispatcher claims nothing and no notification will be sent. This is the expected state on an offline/LAN deployment."
 msgstr ""
 
+msgid "Push is enabled but no valid auth-secret key ring ({setting}) is configured, so a browser cannot subscribe: its subscription secret could not be stored."
+msgstr ""
+
 msgid "push:dispatch"
 msgstr ""
 
@@ -2827,6 +2872,9 @@ msgid "Release reason"
 msgstr ""
 
 msgid "Remove"
+msgstr ""
+
+msgid "Remove role {code}"
 msgstr ""
 
 msgid "Removed"
@@ -4103,6 +4151,21 @@ msgid "Loading institutions…"
 msgstr ""
 
 msgid "Site profile"
+msgstr ""
+
+msgid "Inventory"
+msgstr ""
+
+msgid "Procurement"
+msgstr ""
+
+msgid "HR Workforce"
+msgstr ""
+
+msgid "Booking"
+msgstr ""
+
+msgid "HR Commission"
 msgstr ""
 
 msgid "Who this site is, as a reader sees it: masthead, footer, editorial address and contact details."
@@ -5396,7 +5459,6 @@ msgstr ""
 msgid "Mint a token, paste the resulting URL into Midtrans's own webhook settings. The token is shown exactly once — it is never retrievable again after this."
 msgstr ""
 
-msgid "Label"
 msgid "Architecture"
 msgstr ""
 
@@ -5827,6 +5889,7 @@ msgstr ""
 msgid "Amount tendered"
 msgstr ""
 
+msgctxt "pos"
 msgid "Change"
 msgstr ""
 
@@ -5912,6 +5975,7 @@ msgstr ""
 msgid "Qty"
 msgstr ""
 
+msgctxt "pos"
 msgid "Receipt"
 msgstr ""
 
@@ -6907,4 +6971,3118 @@ msgid "Docs"
 msgstr ""
 
 msgid "Other"
+msgstr ""
+
+#. Admin v2 primitives (Issue #854 part 1) — ConfirmDialog / SettingsSaveBar / ReasonPanel
+msgid "Confirm"
+msgstr ""
+
+msgid "Delete {host}?"
+msgstr ""
+
+msgid "The hostname becomes reusable by any tenant once deleted."
+msgstr ""
+
+msgid "Recorded on the domain's audit row."
+msgstr ""
+
+msgid "Could not delete the domain. Please try again."
+msgstr ""
+
+msgid "Delete {label}?"
+msgstr ""
+
+msgid "Every reference to it stops resolving immediately — a published page pointing at it loses its image. Restore undoes this."
+msgstr ""
+
+msgid "Recorded on the media object's audit row."
+msgstr ""
+
+msgid "Could not delete the media object. Please try again."
+msgstr ""
+
+msgid "Pause {name}?"
+msgstr ""
+
+msgid "Its events keep being recorded and keep accruing as backlog — pausing stops delivery, not production."
+msgstr ""
+
+msgid "Replay this delivery?"
+msgstr ""
+
+msgid "Recorded in the audit trail."
+msgstr ""
+
+msgid "Could not complete this action. Please try again."
+msgstr ""
+
+msgid "Revoke this assignment?"
+msgstr ""
+
+msgid "Revoke this exception?"
+msgstr ""
+
+msgid "The override stops applying at the next decision."
+msgstr ""
+
+msgid "Suppress {email}?"
+msgstr ""
+
+msgid "Why is this address being suppressed? A suppressed address cannot be re-subscribed, including by the person who owns it."
+msgstr ""
+
+msgid "Recorded on the subscriber's audit row."
+msgstr ""
+
+msgid "Could not suppress the subscriber. Please try again."
+msgstr ""
+
+msgid "Disable module \"{name}\"?"
+msgstr ""
+
+msgid "This feature stops working for every user and visitor of this tenant until it is re-enabled. Its data is kept, not deleted."
+msgstr ""
+
+msgid "Recorded in the audit log."
+msgstr ""
+
+msgid "Could not disable the module. It may have dependencies that block this change."
+msgstr ""
+
+#. Admin enum/status labels (Issue #861, item 4 of #854)
+msgid "#"
+msgstr ""
+
+msgid "Abandoned"
+msgstr ""
+
+msgid "Accepted"
+msgstr ""
+
+msgid "active"
+msgstr ""
+
+msgid "Attached"
+msgstr ""
+
+msgid "Bounced"
+msgstr ""
+
+msgid "Cancelled"
+msgstr ""
+
+msgid "Complained"
+msgstr ""
+
+msgid "Critical"
+msgstr ""
+
+msgid "Current"
+msgstr ""
+
+msgid "Dark"
+msgstr ""
+
+msgid "Dead letter"
+msgstr ""
+
+msgid "Decommissioned"
+msgstr ""
+
+msgid "Degraded"
+msgstr ""
+
+msgid "Delayed"
+msgstr ""
+
+msgid "Delivered"
+msgstr ""
+
+msgid "Denied"
+msgstr ""
+
+msgid "Disclosed"
+msgstr ""
+
+msgid "Dispatched"
+msgstr ""
+
+msgid "Erasure"
+msgstr ""
+
+msgid "Expired"
+msgstr ""
+
+msgid "Export"
+msgstr ""
+
+msgid "Failure"
+msgstr ""
+
+msgid "FCM"
+msgstr ""
+
+msgid "Head office"
+msgstr ""
+
+msgid "High"
+msgstr ""
+
+msgid "inactive"
+msgstr ""
+
+msgid "Info"
+msgstr ""
+
+msgid "In progress"
+msgstr ""
+
+msgid "In review"
+msgstr ""
+
+msgid "Interrupted"
+msgstr ""
+
+msgid "IP"
+msgstr ""
+
+msgid "Leased"
+msgstr ""
+
+msgid "Light"
+msgstr ""
+
+msgid "Low"
+msgstr ""
+
+msgid "Maintenance"
+msgstr ""
+
+msgid "Manual"
+msgstr ""
+
+msgid "Medium"
+msgstr ""
+
+msgid "Merged"
+msgstr ""
+
+msgid "Offline"
+msgstr ""
+
+msgid "Online"
+msgstr ""
+
+msgid "Organization"
+msgstr ""
+
+msgid "Orphaned"
+msgstr ""
+
+msgid "Partial"
+msgstr ""
+
+msgid "Pending approval"
+msgstr ""
+
+msgid "Pending upload"
+msgstr ""
+
+msgid "Pending verification"
+msgstr ""
+
+msgid "Person"
+msgstr ""
+
+msgid "Private"
+msgstr ""
+
+msgid "Rebuilding"
+msgstr ""
+
+msgid "Reindex"
+msgstr ""
+
+msgid "Rejected"
+msgstr ""
+
+msgid "Released"
+msgstr ""
+
+msgid "Resolved"
+msgstr ""
+
+msgid "Retry wait"
+msgstr ""
+
+msgid "Running"
+msgstr ""
+
+msgid "Sending"
+msgstr ""
+
+msgid "Skipped"
+msgstr ""
+
+msgid "Starting"
+msgstr ""
+
+msgid "Succeeded"
+msgstr ""
+
+msgid "Success"
+msgstr ""
+
+msgid "Superseded"
+msgstr ""
+
+msgid "Suspended"
+msgstr ""
+
+msgid "Unknown"
+msgstr ""
+
+msgid "Unlisted"
+msgstr ""
+
+msgid "Unsubscribed"
+msgstr ""
+
+msgid "Unverified"
+msgstr ""
+
+msgid "Uploaded"
+msgstr ""
+
+msgid "Validated"
+msgstr ""
+
+msgid "Verified"
+msgstr ""
+
+msgid "Warehouse"
+msgstr ""
+
+msgid "Warning"
+msgstr ""
+
+msgid "Web Push"
+msgstr ""
+
+#. Access-policy simulator verdict pill (Issue #864) — fallback when the
+#. decision had no matched policy to name.
+msgid "no policy matched"
+msgstr ""
+
+
+msgid "Legal holds, newest first"
+msgstr ""
+
+msgid "open-ended"
+msgstr ""
+
+msgid "No conflict"
+msgstr ""
+
+msgid "Subject:"
+msgstr ""
+
+msgid "Trigger:"
+msgstr ""
+
+msgid "Resolved via:"
+msgstr ""
+msgid "Awaiting redemption"
+msgstr ""
+
+msgid "{count} selected"
+msgstr ""
+
+msgid "Approve {count} selected comments?"
+msgstr ""
+
+msgid "Select all comments"
+msgstr ""
+
+msgid "Select comment from {author}"
+msgstr ""
+
+msgid "The bulk action failed."
+msgstr ""
+
+msgid "Bulk decision applied."
+msgstr ""
+
+msgid "Reason code for this decision:"
+msgstr ""
+
+msgid "A reason code is required to reject or mark spam."
+msgstr ""
+
+msgid "Anonymous"
+msgstr ""
+
+
+#. Mission Control 3D workspace (ahliweb/omes#265, ADR-0031)
+msgid "OMES Mission Control"
+msgstr ""
+
+msgid "Health report"
+msgstr ""
+
+msgid "Hermes subagent"
+msgstr ""
+
+msgid "Architecture plane"
+msgstr ""
+
+msgid "Capability"
+msgstr ""
+
+msgid "Repository milestone"
+msgstr ""
+
+msgid "Approval item"
+msgstr ""
+
+msgid "Agents"
+msgstr ""
+
+msgid "Infrastructure"
+msgstr ""
+
+msgid "Governance"
+msgstr ""
+
+msgid "AI privacy"
+msgstr ""
+
+msgid "OK"
+msgstr ""
+
+msgid "Informational"
+msgstr ""
+
+msgid "Live"
+msgstr ""
+
+msgid "Server inventory"
+msgstr ""
+
+msgid "Deployment view"
+msgstr ""
+
+msgid "Job status"
+msgstr ""
+
+msgid "Health readiness"
+msgstr ""
+
+msgid "Backup status"
+msgstr ""
+
+msgid "Hermes orchestration"
+msgstr ""
+
+msgid "Architecture view"
+msgstr ""
+
+msgid "Repository progress"
+msgstr ""
+
+msgid "Workflow approvals"
+msgstr ""
+
+msgid "Available"
+msgstr ""
+
+msgid "Unavailable"
+msgstr ""
+
+msgid "OMES"
+msgstr ""
+
+msgid "AWCMS"
+msgstr ""
+
+msgid "Open details"
+msgstr ""
+
+msgid "Open details for {name}"
+msgstr ""
+
+msgid "Observed {time}"
+msgstr ""
+
+msgid "Not observed"
+msgstr ""
+
+msgid "As of {time}"
+msgstr ""
+
+msgid "{shown} of {total} objects shown"
+msgstr ""
+
+msgid "{count} objects were left out to keep this view bounded. Use the canonical screens for the full list."
+msgstr ""
+
+msgid "Could not refresh the scene — showing the last known state, which may be out of date."
+msgstr ""
+
+msgid "The 3D view is unavailable in this browser. The object list below shows the same information."
+msgstr ""
+
+msgid "Mission Control"
+msgstr ""
+
+msgid "A read-only 3D view of OMES, Hermes and approval state, composed from the existing screens. The object list is the full, accessible equivalent."
+msgstr ""
+
+msgid "You do not have permission to view Mission Control."
+msgstr ""
+
+msgid "Mission Control could not be loaded right now. This is a problem reading it, not a healthy silence — please try again later."
+msgstr ""
+
+msgid "Additional workspace — the canonical details stay on the existing OMES screens. Every object links back to its screen."
+msgstr ""
+
+msgid "Live view"
+msgstr ""
+
+msgid "Historical view"
+msgstr ""
+
+msgid "Sources"
+msgstr ""
+
+msgid "Mission Control filters"
+msgstr ""
+
+msgid "Zone"
+msgstr ""
+
+msgid "All zones"
+msgstr ""
+
+msgid "All states"
+msgstr ""
+
+msgid "Reset view"
+msgstr ""
+
+msgid "Objects by zone"
+msgstr ""
+
+msgid "No objects to show"
+msgstr ""
+
+msgid "An empty scene is not a healthy scene — check the source status above. Sources you cannot read are omitted."
+msgstr ""
+
+msgid "Selected object"
+msgstr ""
+
+msgid "Select an object from the list or the scene to see its details."
+msgstr ""
+
+msgid "Source status"
+msgstr ""
+
+msgid "Source id"
+msgstr ""
+
+msgid "Source state"
+msgstr ""
+
+msgid "Visual state"
+msgstr ""
+
+msgid "Freshness"
+msgstr ""
+
+msgid "Observed at"
+msgstr ""
+
+msgid "Drag to orbit and scroll to zoom the 3D view. Keyboard: arrow keys move through the list, Enter selects an object, Escape clears the selection, 0 resets the view."
+msgstr ""
+
+#. Mission Control historical replay (ahliweb/omes#266, ADR-0031)
+msgid "Choose a start before the end, no more than 24 hours apart, and not in the future."
+msgstr ""
+
+msgid "Could not load the history for this range."
+msgstr ""
+
+msgid "Could not load the scene for this time. Still showing the scene as of {time}."
+msgstr ""
+
+msgid "Event {n} of {total} — {time}"
+msgstr ""
+
+msgid "Evidence gaps"
+msgstr ""
+
+msgid "Historical view. Showing recorded evidence as of {time}, not live state."
+msgstr ""
+
+msgid "Historical — {time}"
+msgstr ""
+
+msgid "History is unavailable right now. Showing the live view."
+msgstr ""
+
+msgid "History replay"
+msgstr ""
+
+msgid "Late arrival"
+msgstr ""
+
+msgid "Live view resumed. Showing current state."
+msgstr ""
+
+msgid "Load range"
+msgstr ""
+
+msgid "No evidence gaps were reported for this range."
+msgstr ""
+
+msgid "No evidence was retained in this range."
+msgstr ""
+
+msgid "Observed events"
+msgstr ""
+
+msgid "Play"
+msgstr ""
+
+msgid "Replay controls"
+msgstr ""
+
+msgid "Replay range"
+msgstr ""
+
+msgid "Replays recorded evidence only, at most 24 hours at a time. Objects whose source kept no history are shown as unknown, and gaps are listed rather than filled in. No actions are available in History."
+msgstr ""
+
+msgid "Return to live"
+msgstr ""
+
+msgid "Showing the first {count} events. Narrow the range to see the rest."
+msgstr ""
+
+msgid "Speed"
+msgstr ""
+
+msgid "Step back"
+msgstr ""
+
+msgid "Step forward"
+msgstr ""
+
+msgid "View mode"
+msgstr ""
+
+msgid "Window start"
+msgstr ""
+
+msgid "before the first retained observation"
+msgstr ""
+
+msgid "not retained: only current state exists"
+msgstr ""
+
+msgid "retention expired: older evidence was purged"
+msgstr ""
+
+msgid "source unavailable to you or unreadable"
+msgstr ""
+
+msgid "{source} — {reason} ({from} to {to})"
+msgstr ""
+
+#. Mission Control contextual actions and command palette items (ahliweb/omes#267, ADR-0031)
+msgid "Request status check"
+msgstr ""
+
+msgid "Request preflight check"
+msgstr ""
+
+msgid "Request start"
+msgstr ""
+
+msgid "Request stop"
+msgstr ""
+
+msgid "Request restart"
+msgstr ""
+
+msgid "Request update"
+msgstr ""
+
+msgid "Request backup"
+msgstr ""
+
+msgid "Request rollback"
+msgstr ""
+
+msgid "Cancel queued job"
+msgstr ""
+
+msgid "Approve failed job for retry"
+msgstr ""
+
+msgid "Request restore from this backup"
+msgstr ""
+
+msgid "Open in approval inbox"
+msgstr ""
+
+msgid "You do not hold the permission this action needs."
+msgstr ""
+
+msgid "The object's current state does not allow this action."
+msgstr ""
+
+msgid "The object could not be found."
+msgstr ""
+
+msgid "Not available in History."
+msgstr ""
+
+msgid "The target's last report is stale, so its current state is not confirmed. The request is still allowed."
+msgstr ""
+
+msgid "The target server is decommissioned. The request is still allowed."
+msgstr ""
+
+msgid "This backup is not marked completed or verified. The request is still allowed."
+msgstr ""
+
+msgid "Checking available actions…"
+msgstr ""
+
+msgid "Actions are unavailable right now. Use the canonical screen instead."
+msgstr ""
+
+msgid "No actions for this object."
+msgstr ""
+
+msgid "Approval required"
+msgstr ""
+
+msgid "Review before sending"
+msgstr ""
+
+msgid "Permission"
+msgstr ""
+
+msgid "Allowed for you (the server checks again when you send)"
+msgstr ""
+
+msgid "Required — nothing runs until a workflow decision is approved in the approval inbox"
+msgstr ""
+
+msgid "Not required"
+msgstr ""
+
+msgid "Existing endpoint"
+msgstr ""
+
+msgid "Idempotency-Key"
+msgstr ""
+
+msgid "Send request"
+msgstr ""
+
+msgid "Sending…"
+msgstr ""
+
+msgid "Send “{action}” for {target}? The server checks permission and approval again, and the outcome is not verified until the next refresh."
+msgstr ""
+
+msgid "Accepted — pending verification."
+msgstr ""
+
+msgid "Approval required — a workflow decision is pending in the approval inbox."
+msgstr ""
+
+msgid "Approval required, but this tenant has no active destructive-operation approval workflow. Nothing was recorded."
+msgstr ""
+
+msgid "Rejected by the server (HTTP {status}, {code}). Nothing was changed."
+msgstr ""
+
+msgid "Outcome unknown — check Operations (or Jobs, Backups) before retrying. A retry reuses the same Idempotency-Key, so it cannot duplicate a request the server already recorded."
+msgstr ""
+
+msgid "Open the record"
+msgstr ""
+
+msgid "Open approval inbox"
+msgstr ""
+
+msgid "Availability is advisory: the existing endpoints check permission, approval and state again when you send. Approval decisions are made only in the approval inbox."
+msgstr ""
+
+# ADR-0127 — the `tax` module display name (module registry; the admin screens are a follow-up).
+
+# Issue #894 — the /admin/inventory and /admin/tax screens.
+
+msgid "A balance at or below its threshold is flagged and published as a low-stock signal. Leave the threshold empty to remove it."
+msgstr ""
+
+msgid "Adjustment"
+msgstr ""
+
+msgid "A draft changes nothing until it is published. Using an existing profile code adds the next version of that profile; a new code starts a new profile. This product ships no country profile: the rates and categories are yours to supply and verify."
+msgstr ""
+
+msgid "All kinds"
+msgstr ""
+
+msgid "All locations"
+msgstr ""
+
+msgid "Allow negative stock"
+msgstr ""
+
+msgid "All types"
+msgstr ""
+
+msgid "An adjustment changes stock without a business document behind it, so its reason is the audit trail. Use a negative quantity to remove stock."
+msgstr ""
+
+msgid "A new version must take effect after the latest published version of its profile."
+msgstr ""
+
+msgid "A version cannot take effect in the past, or on a day that already has finalised documents."
+msgstr ""
+
+msgid "Away from zero"
+msgstr ""
+
+msgid "Back to the snapshot list"
+msgstr ""
+
+msgid "Balance after"
+msgstr ""
+
+msgid "Balances"
+msgstr ""
+
+msgid "By component"
+msgstr ""
+
+msgid "By rule version"
+msgstr ""
+
+msgid "By treatment"
+msgstr ""
+
+msgid "Ceiling"
+msgstr ""
+
+msgid "Change"
+msgstr ""
+
+msgid "Check the fields and the definition. The server rejected something in them."
+msgstr ""
+
+msgid "Check the values you entered and try again."
+msgstr ""
+
+msgid "Choose a period and run the report."
+msgstr ""
+
+msgid "Component"
+msgstr ""
+
+msgid "Consistent: {count} balance rows were checked and none drifted."
+msgstr ""
+
+msgid "Could not load inventory. Please try again."
+msgstr ""
+
+msgid "Could not load tax. Please try again."
+msgstr ""
+
+msgid "Could not save that. Please try again."
+msgstr ""
+
+msgid "{count} balances are negative although their policy forbids it."
+msgstr ""
+
+msgid "Country (ISO 3166-1 alpha-2, optional)"
+msgstr ""
+
+msgid "Create a draft version"
+msgstr ""
+
+msgid "Currency"
+msgstr ""
+
+msgid "Currency (ISO 4217)"
+msgstr ""
+
+msgid "Current published version"
+msgstr ""
+
+msgid "Damaged goods"
+msgstr ""
+
+msgid "Deactivate {code}? Nothing can be posted to it until it is reactivated. Its history and balances stay."
+msgstr ""
+
+msgid "Default policy"
+msgstr ""
+
+msgid "Definition"
+msgstr ""
+
+msgid "Definition (JSON)"
+msgstr ""
+
+msgid "Document"
+msgstr ""
+
+msgid "Document id"
+msgstr ""
+
+msgid "Document type"
+msgstr ""
+
+msgid "Effective"
+msgstr ""
+
+msgid "Effective from"
+msgstr ""
+
+msgid "Exempt"
+msgstr ""
+
+msgid "Floor"
+msgstr ""
+
+msgid "Forbid negative stock"
+msgstr ""
+
+msgid "From location"
+msgstr ""
+
+msgid "From location id"
+msgstr ""
+
+msgid "Gross total"
+msgstr ""
+
+msgid "Half down"
+msgstr ""
+
+msgid "Half even (banker's)"
+msgstr ""
+
+msgid "Half up"
+msgstr ""
+
+msgid "Inherit the tenant default"
+msgstr ""
+
+msgid "In stock"
+msgstr ""
+
+msgid "Integrity: {count} documents were re-added and all agree."
+msgstr ""
+
+msgid "Integrity: {lines} documents disagree on their line sums and {components} on their component sums, out of {count} checked."
+msgstr ""
+
+msgid "Inventory sections"
+msgstr ""
+
+msgid "Item reference"
+msgstr ""
+
+msgid "Item type"
+msgstr ""
+
+msgid "Jurisdiction"
+msgstr ""
+
+msgid "Jurisdiction code"
+msgstr ""
+
+msgid "Latest version"
+msgstr ""
+
+msgid "Ledger sum"
+msgstr ""
+
+msgid "Line"
+msgstr ""
+
+msgid "Location"
+msgstr ""
+
+msgid "Location id"
+msgstr ""
+
+msgid "Locations"
+msgstr ""
+
+msgid "Loss or theft"
+msgstr ""
+
+msgid "Lower-case letters, digits, dots, underscores and hyphens. The code is unique per tenant and cannot be changed."
+msgstr ""
+
+msgid "Low stock"
+msgstr ""
+
+msgid "Low stock only"
+msgstr ""
+
+msgid "Low-stock threshold"
+msgstr ""
+
+msgid "Movement history"
+msgstr ""
+
+msgid "Movements"
+msgstr ""
+
+msgid "Movement type"
+msgstr ""
+
+msgid "Moves stock between two locations as a balanced pair: one movement out and one in, posted together or not at all."
+msgstr ""
+
+msgid "Negative-stock policy"
+msgstr ""
+
+msgid "Net of reversals"
+msgstr ""
+
+msgid "Net total"
+msgstr ""
+
+msgid "No balance is at or below its low-stock threshold."
+msgstr ""
+
+msgid "No default has been set, so the safe default (forbid) applies."
+msgstr ""
+
+msgid "No movements match. The ledger is empty or the filter excludes everything."
+msgstr ""
+
+msgid "No rule profile exists yet. A profile comes into being with its first draft version."
+msgstr ""
+
+msgid "No rule version matches."
+msgstr ""
+
+msgid "No snapshot falls in this period."
+msgstr ""
+
+msgid "No snapshot matches. A snapshot is written when a consumer finalises a document."
+msgstr ""
+
+msgid "No stock has been posted yet. Post an opening balance or an adjustment to start the ledger."
+msgstr ""
+
+msgid "No stock location is registered yet."
+msgstr ""
+
+msgid "Not enough stock, and the negative-stock policy forbids going below zero."
+msgstr ""
+
+msgid "Notes (optional)"
+msgstr ""
+
+msgid "Not found. Reload the page."
+msgstr ""
+
+msgid "Older movements"
+msgstr ""
+
+msgid "Older snapshots"
+msgstr ""
+
+msgid "Older versions"
+msgstr ""
+
+msgid "On hand"
+msgstr ""
+
+msgid "Opening balance"
+msgstr ""
+
+msgid "Per document"
+msgstr ""
+
+msgid "Per line"
+msgstr ""
+
+msgid "Post adjustment"
+msgstr ""
+
+msgid "Post an adjustment"
+msgstr ""
+
+msgid "Posts an equal and opposite adjustment. The original row stays in the ledger, and an adjustment can be reversed only once."
+msgstr ""
+
+msgid "Pricing"
+msgstr ""
+
+msgid "Profile code"
+msgstr ""
+
+msgid "Profile (optional)"
+msgstr ""
+
+msgid "{profile} v{version}"
+msgstr ""
+
+msgid "Publish {profile} v{version}? It becomes the rule that documents are computed under from {date}, closes the previous version at that date, and can never be edited or unpublished."
+msgstr ""
+
+msgid "Quantity change"
+msgstr ""
+
+msgid "Reactivate"
+msgstr ""
+
+msgid "Read-only proof that every stored balance equals the sum of its movements. It changes nothing."
+msgstr ""
+
+msgid "Receive"
+msgstr ""
+
+msgid "Reconciliation report"
+msgstr ""
+
+msgid "Recorded on the compensating movement and the audit log."
+msgstr ""
+
+msgid "Region (optional)"
+msgstr ""
+
+msgid "Register a location"
+msgstr ""
+
+msgid "Register location"
+msgstr ""
+
+msgid "Reversal"
+msgstr ""
+
+msgid "Reversals"
+msgstr ""
+
+msgid "Reverse"
+msgstr ""
+
+msgid "Reverse adjustment"
+msgstr ""
+
+msgid "Reverses"
+msgstr ""
+
+msgid "(reverses {id})"
+msgstr ""
+
+msgid "Reverse this adjustment"
+msgstr ""
+
+msgid "Rounding"
+msgstr ""
+
+msgid "Rounding decimal places (0 to 6)"
+msgstr ""
+
+msgid "Rounding level"
+msgstr ""
+
+msgid "Rounding mode"
+msgstr ""
+
+msgid "Rule profiles"
+msgstr ""
+
+msgid "Rules"
+msgstr ""
+
+msgid "Rule version"
+msgstr ""
+
+msgid "Rule versions"
+msgstr ""
+
+msgid "Run reconciliation"
+msgstr ""
+
+msgid "Run report"
+msgstr ""
+
+msgid "Sale"
+msgstr ""
+
+msgid "Sale return"
+msgstr ""
+
+msgid "Sales"
+msgstr ""
+
+msgid "Save default"
+msgstr ""
+
+msgid "Save threshold"
+msgstr ""
+
+msgid "{scale} decimal places"
+msgstr ""
+
+msgid "Set a low-stock threshold"
+msgstr ""
+
+msgid "Signal"
+msgstr ""
+
+msgid "Snapshots"
+msgstr ""
+
+msgid "Stock balances"
+msgstr ""
+
+msgid "Stock count correction"
+msgstr ""
+
+msgid "Stock found"
+msgstr ""
+
+msgid "Stock locations"
+msgstr ""
+
+msgid "Stock locations, balances and the append-only movement ledger. A balance is always the sum of its movements, so nothing here edits one: stock changes by posting an adjustment or a transfer, and a mistake is corrected by a compensating movement."
+msgstr ""
+
+msgid "Stored balance"
+msgstr ""
+
+msgid "Supplier return"
+msgstr ""
+
+msgid "Taxable"
+msgstr ""
+
+msgid "Tax added on top (exclusive)"
+msgstr ""
+
+msgid "Tax by component"
+msgstr ""
+
+msgid "Tax date"
+msgstr ""
+
+msgid "Tax included in price (inclusive)"
+msgstr ""
+
+msgid "Tax sections"
+msgstr ""
+
+msgid "Tax snapshots"
+msgstr ""
+
+msgid "Tax total"
+msgstr ""
+
+msgid "Tenant default negative-stock policy"
+msgstr ""
+
+msgid "That conflicts with the current state. Reload the page and try again."
+msgstr ""
+
+msgid "That item is stocked in a different unit at this location."
+msgstr ""
+
+msgid "That location is inactive. Reactivate it before posting."
+msgstr ""
+
+msgid "That movement cannot be reversed. It may already have been."
+msgstr ""
+
+msgid "That rule version was not found."
+msgstr ""
+
+msgid "That snapshot was not found."
+msgstr ""
+
+msgid "That version is already published."
+msgstr ""
+
+msgid "The definition is not valid JSON."
+msgstr ""
+
+msgid "The list is truncated; more drift may exist."
+msgstr ""
+
+msgid "The period is not valid. The end must not be before the start, and it may span at most {days} days."
+msgstr ""
+
+msgid "To location"
+msgstr ""
+
+msgid "To location id"
+msgstr ""
+
+msgid "Totals of the finalised snapshots for a tax-date period, by rule version, component and treatment, net of reversals. The integrity block re-adds every stored document from its own lines and reports any that disagree. The period may span at most {days} days."
+msgstr ""
+
+msgid "Toward zero"
+msgstr ""
+
+msgid "Transfer in"
+msgstr ""
+
+msgid "Transfer out"
+msgstr ""
+
+msgid "Transfer stock"
+msgstr ""
+
+msgid "Treatment"
+msgstr ""
+
+msgid "Treatment is one of {treatments}; a component basis is one of {bases}. The server validates every field and refuses an unknown one."
+msgstr ""
+
+msgid "Unit"
+msgstr ""
+
+msgid "Versioned tax rule profiles, the finalised tax snapshots they produced, and a reconciliation of the two. Tax is always computed by the server from a published rule version; nothing here lets anyone type an amount."
+msgstr ""
+
+msgid "Versions"
+msgstr ""
+
+msgid "Whether stock may silently go below zero. A location can override this; one that does not follows the default below."
+msgstr ""
+
+msgid "You do not have permission to do that."
+msgstr ""
+
+msgid "You do not have permission to view inventory."
+msgstr ""
+
+msgid "You do not have permission to view tax."
+msgstr ""
+
+msgid "Zero-rated"
+msgstr ""
+
+msgid "Add category"
+msgstr ""
+
+msgid "Add component"
+msgstr ""
+
+msgid "Add rule"
+msgstr ""
+
+msgid "Applies to category"
+msgstr ""
+
+msgid "A taxable rule needs at least one component."
+msgstr ""
+
+msgid "Basis"
+msgstr ""
+
+msgid "{code} (not declared above)"
+msgstr ""
+
+msgid "{count} balance rows were repaired. Reload the page to see them."
+msgstr ""
+
+msgid "Definition (JSON), advanced"
+msgstr ""
+
+msgid "Drift found in {count} balance rows. Repair them with a balance rebuild."
+msgstr ""
+
+msgid "e.g. 7.5"
+msgstr ""
+
+msgid "Fallback (any other category)"
+msgstr ""
+
+msgid "Location id (optional)"
+msgstr ""
+
+msgid "More drifted balances remain than one run repairs. Run the rebuild again."
+msgstr ""
+
+msgid "Name of {code}"
+msgstr ""
+
+msgid "Net amount"
+msgstr ""
+
+msgid "Net plus earlier components (stacked)"
+msgstr ""
+
+msgid "No office"
+msgstr ""
+
+msgid "Nothing to repair: no balance had drifted."
+msgstr ""
+
+msgid "Office"
+msgstr ""
+
+msgid "Office id"
+msgstr ""
+
+msgid "Office of {code}"
+msgstr ""
+
+msgid "Rate (percent, exact decimal)"
+msgstr ""
+
+msgid "Rebuild balances"
+msgstr ""
+
+msgid "Rebuild the stored balances from the ledger? Every drifted balance is overwritten with the ledger sum. This is audited and cannot be undone, but the ledger itself is never changed."
+msgstr ""
+
+msgid "Repairs drifted balances from the movement ledger: each stored balance is reset to the sum of its movements. It never accepts a quantity, so it cannot assert a balance. Run the reconciliation first; the repair is audited."
+msgstr ""
+
+msgid "Save details"
+msgstr ""
+
+msgid "Tax components"
+msgstr ""
+
+msgid "That office does not exist in this organisation. Pick another."
+msgstr ""
+
+msgid "The JSON cannot be shown as rows. Edit it below; the server validates it."
+msgstr ""
+
+msgid "Discard the JSON and start the structured editor"
+msgstr ""
+
+# Issue #905 — the /admin/procurement screen.
+
+msgid "Receipt"
+msgstr ""
+
+msgid "Requisition"
+msgstr ""
+
+msgid "Location transfer"
+msgstr ""
+
+msgid "Finalised"
+msgstr ""
+
+msgid "Reversed"
+msgstr ""
+
+msgid "Waiting for approval"
+msgstr ""
+
+msgid "Tax ID"
+msgstr ""
+
+msgid "Business ID"
+msgstr ""
+
+msgid "Payment reference"
+msgstr ""
+
+msgid "Contact reference"
+msgstr ""
+
+msgid "Suppliers"
+msgstr ""
+
+msgid "Approval policy"
+msgstr ""
+
+msgid "Suppliers, receiving, supplier returns, requisitions and location transfers over the stock ledger. A document moves no stock until it is finalised, and finalising posts its movements through the ledger: nothing here edits a balance, and a mistake is corrected by reversing the document."
+msgstr ""
+
+msgid "You do not have permission to view procurement."
+msgstr ""
+
+msgid "Could not load procurement. Please try again."
+msgstr ""
+
+msgid "A supplier with that vendor code already exists."
+msgstr ""
+
+msgid "That supplier still has draft or submitted documents. Finalise or cancel them first."
+msgstr ""
+
+msgid "That supplier is deleted. Restore it before editing."
+msgstr ""
+
+msgid "That supplier is inactive, blocked or deleted and cannot take part in a document."
+msgstr ""
+
+msgid "That supplier does not exist."
+msgstr ""
+
+msgid "That stock location does not exist in this organisation."
+msgstr ""
+
+msgid "The document is no longer in a state that allows that. Reload the page."
+msgstr ""
+
+msgid "Not enough stock, and the negative-stock policy forbids going below zero. Nothing was posted."
+msgstr ""
+
+msgid "An item is stocked in a different unit at that location. Nothing was posted."
+msgstr ""
+
+msgid "A stock location is inactive. Reactivate it before posting."
+msgstr ""
+
+msgid "The document is waiting for approval and cannot be finalised yet."
+msgstr ""
+
+msgid "The approval workflow rejected this document. Cancel it instead."
+msgstr ""
+
+msgid "This document needs approval, but no workflow named procurement.document_approval is published. Nothing was submitted."
+msgstr ""
+
+msgid "A live document already uses that external reference for this supplier."
+msgstr ""
+
+msgid "This action must be performed by a tenant user."
+msgstr ""
+
+msgid "Procurement sections"
+msgstr ""
+
+msgid "That document does not exist, or you cannot read it."
+msgstr ""
+
+msgid "That supplier does not exist or has been deleted."
+msgstr ""
+
+msgid "Back to the list"
+msgstr ""
+
+msgid "Show deleted suppliers"
+msgstr ""
+
+msgid "Register a supplier"
+msgstr ""
+
+msgid "Vendor code"
+msgstr ""
+
+msgid "Letters, digits, dots, underscores and hyphens. Unique per organisation, ignoring case."
+msgstr ""
+
+msgid "Tags"
+msgstr ""
+
+msgid "Separate categories and tags with commas. Lower-case letters, digits, dots, underscores and hyphens."
+msgstr ""
+
+msgid "Register supplier"
+msgstr ""
+
+msgid "No supplier matches. Register one to start."
+msgstr ""
+
+msgid "Open {code}"
+msgstr ""
+
+msgid "Back to the suppliers"
+msgstr ""
+
+msgid "Save supplier"
+msgstr ""
+
+msgid "Delete {code}? Its documents keep referencing it, and it can be restored later."
+msgstr ""
+
+msgid "Delete supplier"
+msgstr ""
+
+msgid "Identifiers and references"
+msgstr ""
+
+msgid "Tax and business identifiers and payment or contact references are shown masked. Revealing one is a separate permission and is recorded in the audit log."
+msgstr ""
+
+msgid "This supplier has no identifier or reference yet."
+msgstr ""
+
+msgid "Label"
+msgstr ""
+
+msgid "Value (masked)"
+msgstr ""
+
+msgid "Reveal this value in clear text? The disclosure is recorded in the audit log."
+msgstr ""
+
+msgid "Reveal"
+msgstr ""
+
+msgid "Remove this identifier or reference?"
+msgstr ""
+
+msgid "Revealed value"
+msgstr ""
+
+msgid "Shown once. It is not stored, and it disappears when you hide it, after a minute, or when you leave the page."
+msgstr ""
+
+msgid "Hide"
+msgstr ""
+
+msgid "Add an identifier or reference"
+msgstr ""
+
+msgid "Add identifier"
+msgstr ""
+
+msgid "New draft document"
+msgstr ""
+
+msgid "A draft moves no stock. Submit it to freeze its lines, then finalise it to post the movements through the stock ledger."
+msgstr ""
+
+msgid "Supplier"
+msgstr ""
+
+msgid "Supplier id"
+msgstr ""
+
+msgid "Destination location"
+msgstr ""
+
+msgid "Source location"
+msgstr ""
+
+msgid "Source location id"
+msgstr ""
+
+msgid "External reference"
+msgstr ""
+
+msgid "Document date"
+msgstr ""
+
+msgid "Remove line {n}"
+msgstr ""
+
+msgid "Line {n}"
+msgstr ""
+
+msgid "Quantity and cost are exact decimals (up to 6 decimals). A receipt and a supplier return need a unit cost; an item appears once per document."
+msgstr ""
+
+msgid "Add a line"
+msgstr ""
+
+msgid "Item name"
+msgstr ""
+
+msgid "Unit cost"
+msgstr ""
+
+msgid "No document matches. Create a draft to start."
+msgstr ""
+
+msgid "Number"
+msgstr ""
+
+msgid "Total cost"
+msgstr ""
+
+msgid "Back to the documents"
+msgstr ""
+
+msgid "{count} ledger movements are linked to this document."
+msgstr ""
+
+msgid "Submit this document? Its lines are frozen, and an approval may be started."
+msgstr ""
+
+msgid "Finalise this document? Its stock movements are posted to the ledger, all lines or none, and the document can no longer be edited."
+msgstr ""
+
+msgid "Finalise"
+msgstr ""
+
+msgid "Cancel this document"
+msgstr ""
+
+msgid "No stock was moved, so nothing is compensated. The document is kept, marked cancelled."
+msgstr ""
+
+msgid "Cancel document"
+msgstr ""
+
+msgid "Reverse this document"
+msgstr ""
+
+msgid "Posts compensating stock movements. The original movements stay in the ledger, and a document can be reversed only once."
+msgstr ""
+
+msgid "Reverse document"
+msgstr ""
+
+msgid "When a submitted document's total cost reaches the threshold, it needs approval before it can be finalised, through the workflow named {key}. With no threshold, approval is off. The threshold is cost-based, so a document without a cost, a requisition and a transfer never need it. A change applies only to documents submitted afterwards."
+msgstr ""
+
+msgid "Approval is off."
+msgstr ""
+
+msgid "Documents with a total cost of {threshold} or more need approval."
+msgstr ""
+
+msgid "Approval threshold"
+msgstr ""
+
+msgid "An exact decimal with up to 6 decimals. Leave empty to turn approval off."
+msgstr ""
+
+msgid "Document date range"
+msgstr ""
+
+msgid "The date range is not valid. Use real dates, with From not after To."
+msgstr ""
+
+msgid "Documents by kind and status"
+msgstr ""
+
+msgid "No document falls in this range."
+msgstr ""
+
+msgid "Activity per supplier"
+msgstr ""
+
+msgid "No supplier activity falls in this range."
+msgstr ""
+
+msgid "Receipts finalised"
+msgstr ""
+
+msgid "Returns finalised"
+msgstr ""
+
+msgid "Open documents"
+msgstr ""
+
+msgid "Received cost"
+msgstr ""
+
+msgid "Returned cost"
+msgstr ""
+
+msgid "Read-only proof that every finalised or reversed document agrees with the stock ledger: the right movements, of the right type, at the right location, in the right quantity. It changes nothing."
+msgstr ""
+
+msgid "Reconciled: {documents} documents and {lines} lines were checked and all agree with the ledger."
+msgstr ""
+
+msgid "Discrepancies found. {documents} documents and {lines} lines were checked."
+msgstr ""
+
+msgid "{count} ledger movements carry a procurement identity with no document line behind them."
+msgstr ""
+
+msgid "The list is truncated; more discrepancies may exist."
+msgstr ""
+
+msgid "Expected movements"
+msgstr ""
+
+msgid "Linked movements"
+msgstr ""
+
+msgid "Matching movements"
+msgstr ""
+
+msgid "Post"
+msgstr ""
+
+msgid "Recorded on the document and in the audit log."
+msgstr ""
+
+msgid "Destination location id"
+msgstr ""
+
+msgid "Stock movements"
+msgstr ""
+
+msgid "Partner access grants"
+msgstr ""
+
+msgid "Waiting to retry"
+msgstr ""
+
+msgid "Transactional"
+msgstr ""
+
+msgid "Security"
+msgstr ""
+
+msgid "Marketing"
+msgstr ""
+
+msgid "Number cannot receive WhatsApp"
+msgstr ""
+
+msgid "Asked to stop"
+msgstr ""
+
+msgid "WhatsApp delivery"
+msgstr ""
+
+msgid "The tenant's WhatsApp queue, who may be messaged, and what modules are allowed to send. Phone numbers are masked everywhere on this page."
+msgstr ""
+
+msgid "You do not have permission to view WhatsApp delivery."
+msgstr ""
+
+msgid "Could not load WhatsApp delivery. Please try again."
+msgstr ""
+
+msgid "WhatsApp is switched off on this deployment, so nothing is being sent. Messages are refused at enqueue and the dispatcher claims nothing."
+msgstr ""
+
+msgid "WhatsApp is switched on but no provider is configured, so every queued message will fail."
+msgstr ""
+
+msgid "Provider:"
+msgstr ""
+
+msgid "Purpose"
+msgstr ""
+
+msgid "Recipient"
+msgstr ""
+
+msgid "No WhatsApp messages recorded."
+msgstr ""
+
+msgid "Newest 50 shown; older messages are removed by retention, not browsed."
+msgstr ""
+
+msgid "Marketing consent"
+msgstr ""
+
+msgid "A marketing message is sent only to a recipient with a recorded opt-in. Being in a segment, list or campaign audience never counts as consent."
+msgstr ""
+
+msgid "Phone number"
+msgstr ""
+
+msgid "Where the opt-in came from"
+msgstr ""
+
+msgid "Record opt-in"
+msgstr ""
+
+msgid "Opted in"
+msgstr ""
+
+msgid "Opted out"
+msgstr ""
+
+msgid "No consents recorded."
+msgstr ""
+
+msgid "Record opt-out"
+msgstr ""
+
+msgid "Suppressed numbers"
+msgstr ""
+
+msgid "The list shows masked numbers only, so it cannot be searched. Submitting a number that is already suppressed does not add a second entry — it tells you it is already there."
+msgstr ""
+
+msgid "Suppress number"
+msgstr ""
+
+msgid "Nothing is suppressed."
+msgstr ""
+
+msgid "A number removed here can receive messages from the next send onwards; messages already cancelled are not resent."
+msgstr ""
+
+msgid "Registered templates"
+msgstr ""
+
+msgid "Modules register their templates in code. Each has exactly one purpose, and a variable that is not on its list is dropped before sending."
+msgstr ""
+
+msgid "Allowed variables"
+msgstr ""
+
+msgid "Provider approval"
+msgstr ""
+
+msgid "Approved template set"
+msgstr ""
+
+msgid "WhatsApp Delivery"
+msgstr ""
+
+msgid "Reverse a recorded opt-out"
+msgstr ""
+
+msgid "Only when this person opted out and has since given new, documented consent. The opt-out stays on the record."
+msgstr ""
+
+msgid "Reinstate over an opt-out"
+msgstr ""
+
+msgid "Evidence reference"
+msgstr ""
+
+msgid "Waiting for confirmation"
+msgstr ""
+
+msgid "Unlinked by the person"
+msgstr ""
+
+msgid "Stopped from Telegram"
+msgstr ""
+
+msgid "Revoked by an administrator"
+msgstr ""
+
+msgid "Staff member deactivated"
+msgstr ""
+
+msgid "Module switched off"
+msgstr ""
+
+msgid "Telegram switched off for the tenant"
+msgstr ""
+
+msgid "Telegram could not reach the chat"
+msgstr ""
+
+msgid "Rejected as not theirs"
+msgstr ""
+
+msgid "Confirmation expired"
+msgstr ""
+
+msgid "Replaced by a newer chat"
+msgstr ""
+
+msgid "Replaced by a newer request"
+msgstr ""
+
+msgid "Erased"
+msgstr ""
+
+msgid "Telegram delivery"
+msgstr ""
+
+msgid "Operational alerts for staff on Telegram: link your own chat, see whose chats are linked, and check the queue. Chat ids are never shown."
+msgstr ""
+
+msgid "You do not have permission to view Telegram delivery."
+msgstr ""
+
+msgid "Could not load Telegram delivery. Please try again."
+msgstr ""
+
+msgid "Telegram carries operational and staff alerts only. It is off unless the deployment, this tenant and the person have each turned it on."
+msgstr ""
+
+msgid "Telegram is switched off on this deployment, so nothing is being sent. Messages are refused at enqueue and the dispatcher claims nothing."
+msgstr ""
+
+msgid "Telegram is switched on but the deployment is missing part of its configuration, so no chat can be linked and nothing will be sent."
+msgstr ""
+
+msgid "The Telegram delivery module is switched off for this tenant in module management."
+msgstr ""
+
+msgid "Tenant setting:"
+msgstr ""
+
+msgid "On"
+msgstr ""
+
+msgid "Off"
+msgstr ""
+
+msgid "Turn Telegram off for this tenant"
+msgstr ""
+
+msgid "Turn Telegram on for this tenant"
+msgstr ""
+
+msgid "Turning it off unlinks every staff member's chat and erases the stored chat ids. Staff must link again if it is turned back on."
+msgstr ""
+
+msgid "My Telegram chat"
+msgstr ""
+
+msgid "You have no Telegram chat linked. Request a link, open it in Telegram on your phone, and press Start. You will then confirm here that the chat is yours."
+msgstr ""
+
+msgid "Link my Telegram"
+msgstr ""
+
+msgid "Open this link in Telegram within 10 minutes. It works once and is shown only now."
+msgstr ""
+
+msgid "A Telegram chat used your link code. Is this you? Only confirm if you recognise it."
+msgstr ""
+
+msgid "(no name)"
+msgstr ""
+
+msgid "Verification PIN"
+msgstr ""
+
+msgid "Enter the 6-digit PIN the bot sent to that Telegram chat. If you did not receive one, this is not your chat: press No."
+msgstr ""
+
+msgid "Yes, this is me"
+msgstr ""
+
+msgid "No, this is not me"
+msgstr ""
+
+msgid "Your Telegram chat is linked and receives your alerts:"
+msgstr ""
+
+msgid "Confirmed:"
+msgstr ""
+
+msgid "Unlink my Telegram"
+msgstr ""
+
+msgid "Linked chats"
+msgstr ""
+
+msgid "Each staff member can link one private chat. The chat is shown masked only; groups and channels cannot be linked."
+msgstr ""
+
+msgid "Staff member"
+msgstr ""
+
+msgid "Chat"
+msgstr ""
+
+msgid "Linked"
+msgstr ""
+
+msgid "No Telegram chats linked."
+msgstr ""
+
+msgid "No Telegram messages recorded."
+msgstr ""
+
+msgid "Modules register their templates in code. Every template is an operational alert for staff; variables are typed and cannot carry names, contact details or free text, and anything not on the list is dropped before sending."
+msgstr ""
+
+msgid "Telegram Delivery"
+msgstr ""
+
+msgid "Tenant suspended"
+msgstr ""
+
+#. Booking admin screens (Issue #942)
+msgid "A pool groups interchangeable resources, such as three treatment rooms. A resource joins a pool in its own form."
+msgstr ""
+
+msgid "A unit is never removed. Deactivating it stops new bookings on it; bookings already made stay."
+msgstr ""
+
+msgid "Add a closure or special hours"
+msgstr ""
+
+msgid "Add a resource booked by night before blocking nights."
+msgstr ""
+
+msgid "Add opening hours"
+msgstr ""
+
+msgid "Add weekly opening hours"
+msgstr ""
+
+msgid "Add weekly opening hours so slot resources can be booked."
+msgstr ""
+
+msgid "An active schedule already covers part of that period. Shorten or deactivate it first."
+msgstr ""
+
+msgid "Back on sale"
+msgstr ""
+
+msgid "Back on sale on"
+msgstr ""
+
+msgid "Back to normal on"
+msgstr ""
+
+msgid "Block nights"
+msgstr ""
+
+msgid "Block status"
+msgstr ""
+
+msgid "Blocked nights"
+msgstr ""
+
+msgid "Blocked nights apply to stay resources only."
+msgstr ""
+
+msgid "Blocked nights could not be loaded right now. Please try again later."
+msgstr ""
+
+msgid "Bookable up to (days ahead)"
+msgstr ""
+
+msgid "Booked"
+msgstr ""
+
+msgid "Booking policy"
+msgstr ""
+
+msgid "By night"
+msgstr ""
+
+msgid "By time"
+msgstr ""
+
+msgid "Cancel reservation"
+msgstr ""
+
+msgid "Cancel reservation {number}? Its resource is released."
+msgstr ""
+
+msgid "Capacity can only grow. Deactivate a unit instead of removing it."
+msgstr ""
+
+msgid "Check in"
+msgstr ""
+
+msgid "Check-in time"
+msgstr ""
+
+msgid "Check-out time"
+msgstr ""
+
+msgid "Checked in"
+msgstr ""
+
+msgid "Cleanup after (minutes)"
+msgstr ""
+
+msgid "Closes at"
+msgstr ""
+
+msgid "Closures and special hours"
+msgstr ""
+
+msgid "Complete"
+msgstr ""
+
+msgid "Confirmation"
+msgstr ""
+
+msgid "Confirmed"
+msgstr ""
+
+msgid "Create a pool"
+msgstr ""
+
+msgid "Create a resource"
+msgstr ""
+
+msgid "Create an offering"
+msgstr ""
+
+msgid "Create offering"
+msgstr ""
+
+msgid "Create pool"
+msgstr ""
+
+msgid "Create resource"
+msgstr ""
+
+msgid "Create your first offering using the form above."
+msgstr ""
+
+msgid "Create your first resource using the form above."
+msgstr ""
+
+msgid "Dates"
+msgstr ""
+
+msgid "Deactivate this schedule? Existing bookings are not changed."
+msgstr ""
+
+msgid "Default: {value}"
+msgstr ""
+
+msgid "Default: {value} days"
+msgstr ""
+
+msgid "Default: {value} minutes"
+msgstr ""
+
+msgid "Defaults offered for new stay resources"
+msgstr ""
+
+msgid "Delete the pool {code}? It can be restored later."
+msgstr ""
+
+msgid "Delete {code}? It can be restored later."
+msgstr ""
+
+msgid "Deleted offerings"
+msgstr ""
+
+msgid "Deleted pools"
+msgstr ""
+
+msgid "Deleted resources"
+msgstr ""
+
+msgid "Duration (minutes)"
+msgstr ""
+
+msgid "Edit offering {code}"
+msgstr ""
+
+msgid "Edit resource {code}"
+msgstr ""
+
+msgid "Edit {code}"
+msgstr ""
+
+msgid "Effective until (optional, exclusive)"
+msgstr ""
+
+msgid "End on"
+msgstr ""
+
+msgid "Every booking and hold, newest first. A hold is a reservation waiting for confirmation until its expiry."
+msgstr ""
+
+msgid "Every resource without its own hours"
+msgstr ""
+
+msgid "Every unit"
+msgstr ""
+
+msgid "First blocked night"
+msgstr ""
+
+msgid "First day"
+msgstr ""
+
+msgid "Free cancellation until (minutes before start)"
+msgstr ""
+
+msgid "Fri"
+msgstr ""
+
+msgid "Guests"
+msgstr ""
+
+msgid "Hold expired"
+msgstr ""
+
+msgid "Hold expires"
+msgstr ""
+
+msgid "Hold lasts (minutes)"
+msgstr ""
+
+msgid "Hold placed"
+msgstr ""
+
+msgid "Hold, then confirm"
+msgstr ""
+
+msgid "Holds"
+msgstr ""
+
+msgid "Holiday"
+msgstr ""
+
+msgid "Hours"
+msgstr ""
+
+msgid "Immediately"
+msgstr ""
+
+msgid "Kind (for example room, chair, court)"
+msgstr ""
+
+msgid "Label of unit {number}"
+msgstr ""
+
+msgid "Leave notice, cancellation and horizon blank to use the booking policy."
+msgstr ""
+
+msgid "Length"
+msgstr ""
+
+msgid "Live holds in total"
+msgstr ""
+
+msgid "Live holds per customer"
+msgstr ""
+
+msgid "Longest hold (minutes)"
+msgstr ""
+
+msgid "Mark as no-show"
+msgstr ""
+
+msgid "Mark reservation {number} as a no-show?"
+msgstr ""
+
+msgid "Marked as no-show"
+msgstr ""
+
+msgid "Maximum guests"
+msgstr ""
+
+msgid "Maximum nights"
+msgstr ""
+
+msgid "Minimum guests"
+msgstr ""
+
+msgid "Minimum nights"
+msgstr ""
+
+msgid "Minimum notice (minutes)"
+msgstr ""
+
+msgid "Mon"
+msgstr ""
+
+msgid "Name of pool {code}"
+msgstr ""
+
+msgid "New end date, exclusive"
+msgstr ""
+
+msgid "Nights"
+msgstr ""
+
+msgid "Nights you block will appear here."
+msgstr ""
+
+msgid "No blocked nights"
+msgstr ""
+
+msgid "No closures"
+msgstr ""
+
+msgid "No offerings yet"
+msgstr ""
+
+msgid "No pool"
+msgstr ""
+
+msgid "No pools yet"
+msgstr ""
+
+msgid "No reason"
+msgstr ""
+
+msgid "No reservations"
+msgstr ""
+
+msgid "No resources yet"
+msgstr ""
+
+msgid "No schedules yet"
+msgstr ""
+
+msgid "No-show"
+msgstr ""
+
+msgid "No-show grace (minutes)"
+msgstr ""
+
+msgid "Offering"
+msgstr ""
+
+msgid "Offerings"
+msgstr ""
+
+msgid "Offerings could not be loaded right now. Please try again later."
+msgstr ""
+
+msgid "Offerings created for this tenant will appear here."
+msgstr ""
+
+msgid "Open on"
+msgstr ""
+
+msgid "Opens at"
+msgstr ""
+
+msgid "Overdue"
+msgstr ""
+
+msgid "Owner use"
+msgstr ""
+
+msgid "Please wait…"
+msgstr ""
+
+msgid "Pool"
+msgstr ""
+
+msgid "Private event"
+msgstr ""
+
+msgid "Release this block and put its nights back on sale?"
+msgstr ""
+
+msgid "Remove this closure or special-hours entry?"
+msgstr ""
+
+msgid "Replaced by"
+msgstr ""
+
+msgid "Rescheduled"
+msgstr ""
+
+msgid "Rescheduled from"
+msgstr ""
+
+msgid "Reservation"
+msgstr ""
+
+msgid "Reservation status"
+msgstr ""
+
+msgid "Reservation {number}"
+msgstr ""
+
+msgid "Reservations"
+msgstr ""
+
+msgid "Reservations and holds appear here as they are made."
+msgstr ""
+
+msgid "Reservations could not be loaded right now. Please try again later."
+msgstr ""
+
+msgid "Resource pools"
+msgstr ""
+
+msgid "Resources"
+msgstr ""
+
+msgid "Resources could not be loaded right now. Please try again later."
+msgstr ""
+
+msgid "Resources created for this tenant will appear here."
+msgstr ""
+
+msgid "Sat"
+msgstr ""
+
+msgid "Save offering"
+msgstr ""
+
+msgid "Save policy"
+msgstr ""
+
+msgid "Save resource"
+msgstr ""
+
+msgid "Schedules and closures"
+msgstr ""
+
+msgid "Schedules could not be loaded right now. Please try again later."
+msgstr ""
+
+msgid "Setup before (minutes)"
+msgstr ""
+
+msgid "Some fields are not valid. Check them and try again."
+msgstr ""
+
+msgid "Some of those nights are already booked or blocked. Nothing was changed."
+msgstr ""
+
+msgid "Special hours"
+msgstr ""
+
+msgid "Start times every (minutes)"
+msgstr ""
+
+msgid "Status of unit {number}"
+msgstr ""
+
+msgid "Sun"
+msgstr ""
+
+msgid "Take nights of a stay resource out of sale for maintenance or owner use. A block never cancels a booking: nights that are already booked cannot be blocked."
+msgstr ""
+
+msgid "That block no longer exists."
+msgstr ""
+
+msgid "That code is already in use, including by a deleted record."
+msgstr ""
+
+msgid "That offering no longer exists."
+msgstr ""
+
+msgid "That pool no longer exists."
+msgstr ""
+
+msgid "That reservation no longer exists."
+msgstr ""
+
+msgid "That reservation was not found."
+msgstr ""
+
+msgid "That resource no longer exists."
+msgstr ""
+
+msgid "That time zone is not known."
+msgstr ""
+
+msgid "That unit does not belong to this resource."
+msgstr ""
+
+msgid "The booking is no longer in a state that allows that. Reload the page."
+msgstr ""
+
+msgid "The booking mode cannot change while the resource has live bookings or blocks."
+msgstr ""
+
+msgid "The booking policy could not be loaded right now. Please try again later."
+msgstr ""
+
+msgid "The booking, what it holds and every step it has been through."
+msgstr ""
+
+msgid "The change could not be saved. Please try again."
+msgstr ""
+
+msgid "The database refused this change."
+msgstr ""
+
+msgid "The dates are not valid: check-out must be after check-in."
+msgstr ""
+
+msgid "The hold has expired."
+msgstr ""
+
+msgid "The new reservation"
+msgstr ""
+
+msgid "The pool is deleted. Restore the pool first."
+msgstr ""
+
+msgid "The pool still has resources. Move them out first."
+msgstr ""
+
+msgid "The previous reservation"
+msgstr ""
+
+msgid "The reservation could not be loaded right now. Please try again later."
+msgstr ""
+
+msgid "The resource has an active schedule in its current time zone. Deactivate the schedule first."
+msgstr ""
+
+msgid "The resource has live bookings or blocks. Cancel or release them, or set it to inactive."
+msgstr ""
+
+msgid "The rooms, chairs, courts or vehicles that can be booked, the units each one has, and the pools that group interchangeable resources."
+msgstr ""
+
+msgid "The rules every booking follows. A blank field uses the built-in default shown beside it, which is not the same as unlimited."
+msgstr ""
+
+msgid "The server could not be reached. Please try again."
+msgstr ""
+
+msgid "The services and stays that can be booked: how long they last, how many guests they take and how a booking is confirmed. An offering holds no price."
+msgstr ""
+
+msgid "The time zone cannot change while the resource has live bookings or blocks."
+msgstr ""
+
+msgid "The values break a rule of the booking setup."
+msgstr ""
+
+msgid "These are suggestions for the resource form; the server does not apply them by itself."
+msgstr ""
+
+msgid "This offering is deleted. Restore it first."
+msgstr ""
+
+msgid "This request was already used for a different change. Reload the page and try again."
+msgstr ""
+
+msgid "This resource is deleted. Restore it first."
+msgstr ""
+
+msgid "This schedule can no longer be changed."
+msgstr ""
+
+msgid "Through a schedule"
+msgstr ""
+
+msgid "Thu"
+msgstr ""
+
+msgid "Times are shown in UTC."
+msgstr ""
+
+msgid "Tue"
+msgstr ""
+
+msgid "Unit labels (optional, one per line)"
+msgstr ""
+
+msgid "Units"
+msgstr ""
+
+msgid "Units (can only grow)"
+msgstr ""
+
+msgid "Wed"
+msgstr ""
+
+msgid "What is booked"
+msgstr ""
+
+msgid "When bookings can be made"
+msgstr ""
+
+msgid "When each resource can be booked, and the days it is closed or opens at different hours. Changes affect future availability only; no existing booking is touched."
+msgstr ""
+
+msgid "You can read the policy but not change it."
+msgstr ""
+
+msgid "You do not have permission to view blocked nights."
+msgstr ""
+
+msgid "You do not have permission to view booking offerings."
+msgstr ""
+
+msgid "You do not have permission to view booking resources."
+msgstr ""
+
+msgid "You do not have permission to view reservations."
+msgstr ""
+
+msgid "You do not have permission to view schedules."
+msgstr ""
+
+msgid "You do not have permission to view the booking policy."
+msgstr ""
+
+msgid "{active} of {total} active"
+msgstr ""
+
+
+msgid "{minutes} min"
+msgstr ""
+
+
+msgid "{count} block"
+msgid_plural "{count} blocks"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "{count} deleted offering"
+msgid_plural "{count} deleted offerings"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "{count} deleted resource"
+msgid_plural "{count} deleted resources"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "{count} entry"
+msgid_plural "{count} entries"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "{count} item"
+msgid_plural "{count} items"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "{count} offering"
+msgid_plural "{count} offerings"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "{count} pool"
+msgid_plural "{count} pools"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "{count} reservation"
+msgid_plural "{count} reservations"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "{count} resource"
+msgid_plural "{count} resources"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "{count} schedule"
+msgid_plural "{count} schedules"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Booking resources"
+msgstr ""
+
+msgid "Booking offerings"
+msgstr ""
+
+msgid "Booking schedules"
+msgstr ""
+
+msgid "Back to reservations"
+msgstr ""
+
+msgid "Stored as {seconds} seconds."
+msgstr ""
+
+msgid "There is nothing to change."
+msgstr ""
+
+msgid "{checkIn} to {checkOut} ({nights} night)"
+msgid_plural "{checkIn} to {checkOut} ({nights} nights)"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "{min}–{max} night"
+msgid_plural "{min}–{max} nights"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Continue"
+msgstr ""
+
+msgid "My work"
+msgstr ""
+
+msgid "Your upcoming shifts, your attendance record and your correction requests."
+msgstr ""
+
+msgid "You do not have permission to view this page."
+msgstr ""
+
+msgid "Your schedule could not be loaded right now. Please try again later."
+msgstr ""
+
+msgid "No employment is linked to your login"
+msgstr ""
+
+msgid "Ask your administrator to link your login to your employment record."
+msgstr ""
+
+msgid "Upcoming shifts"
+msgstr ""
+
+msgid "Starts"
+msgstr ""
+
+msgid "No upcoming shifts"
+msgstr ""
+
+msgid "Published shifts for the next 14 days appear here."
+msgstr ""
+
+msgid "My attendance"
+msgstr ""
+
+msgid "Time (UTC)"
+msgstr ""
+
+msgid "No attendance recorded"
+msgstr ""
+
+msgid "Your clock-ins, clock-outs and breaks of the last 14 days appear here."
+msgstr ""
+
+msgid "My correction requests"
+msgstr ""
+
+msgid "Request a correction"
+msgstr ""
+
+msgid "A correction never edits the original record. If it is approved, a new event replaces it. Your reason is seen only by you and the people who decide."
+msgstr ""
+
+msgid "What do you want to do?"
+msgstr ""
+
+msgid "Event to replace"
+msgstr ""
+
+msgid "Not applicable"
+msgstr ""
+
+msgid "Correct event"
+msgstr ""
+
+msgid "Correct time"
+msgstr ""
+
+msgid "No correction requests"
+msgstr ""
+
+msgid "Requests you make appear here with their status."
+msgstr ""
+
+msgid "My workforce metrics"
+msgstr ""
+
+msgid "The attendance, hours and shift facts recorded about you, and how each one is counted."
+msgstr ""
+
+msgid "Your metrics could not be loaded right now. Please try again later."
+msgstr ""
+
+msgid "These are business facts about recorded attendance and published shifts, not an assessment of you. Nothing here is used for a decision about you without a governance review."
+msgstr ""
+
+msgid "Period"
+msgstr ""
+
+msgid "Employee no. {employeeNo}"
+msgstr ""
+
+msgid "If a figure looks wrong, ask for the underlying record to be corrected."
+msgstr ""
+
+msgid "My commission"
+msgstr ""
+
+msgid "The commission you have earned and where each one stands. This page is read-only."
+msgstr ""
+
+msgid "Your commission could not be loaded right now. Please try again later."
+msgstr ""
+
+msgid "Commission status"
+msgstr ""
+
+msgid "No commission yet"
+msgstr ""
+
+msgid "Commission you earn will appear here."
+msgstr ""
+
+msgid "My team"
+msgstr ""
+
+msgid "The attendance and shift facts of the people who report to you, and the corrections they have asked for."
+msgstr ""
+
+msgid "Your team could not be loaded right now. Please try again later."
+msgstr ""
+
+msgid "These are business facts about recorded attendance and published shifts, not an assessment of a person. Do not use them for a decision about pay, discipline, promotion or termination without the governance review."
+msgstr ""
+
+msgid "Direct reports"
+msgstr ""
+
+msgid "Employee no."
+msgstr ""
+
+msgid "Scheduled shifts"
+msgstr ""
+
+msgid "Attended shifts"
+msgstr ""
+
+msgid "Missed shifts"
+msgstr ""
+
+msgid "Late arrivals"
+msgstr ""
+
+msgid "Worked time"
+msgstr ""
+
+msgid "Worked against scheduled"
+msgstr ""
+
+msgid "No direct reports"
+msgstr ""
+
+msgid "People who report to you appear here."
+msgstr ""
+
+msgid "Recent attendance"
+msgstr ""
+
+msgid "Events of your direct reports in this period appear here."
+msgstr ""
+
+msgid "Corrections waiting for a decision"
+msgstr ""
+
+msgid "Requests from your direct reports that are waiting appear here."
+msgstr ""
+
+msgid "Terminated"
+msgstr ""
+
+msgid "Workforce"
+msgstr ""
+
+msgid "Employments, attendance and the correction requests waiting for a decision."
+msgstr ""
+
+msgid "The workforce could not be loaded right now. Please try again later."
+msgstr ""
+
+msgid "Employment state"
+msgstr ""
+
+msgid "Employments"
+msgstr ""
+
+msgid "Job title"
+msgstr ""
+
+msgid "Hired on"
+msgstr ""
+
+msgid "Login linked"
+msgstr ""
+
+msgid "No employments"
+msgstr ""
+
+msgid "Employments created through the API appear here."
+msgstr ""
+
+msgid "Requests that are waiting for a decision appear here."
+msgstr ""
+
+msgid "Events of the last 7 days appear here."
+msgstr ""
+
+msgid "Published work shifts that started in this period."
+msgstr ""
+
+msgid "Of those, the ones with a clock-in."
+msgstr ""
+
+msgid "Shifts that ended with no clock-in."
+msgstr ""
+
+msgid "Clock-ins after the grace period."
+msgstr ""
+
+msgid "From clock-in to clock-out, less breaks taken."
+msgstr ""
+
+msgid "Scheduled time"
+msgstr ""
+
+msgid "Planned length of shifts that ended, less planned breaks."
+msgstr ""
+
+msgid "Break time"
+msgstr ""
+
+msgid "Breaks taken inside completed sessions."
+msgstr ""
+
+msgid "Incomplete sessions"
+msgstr ""
+
+msgid "Clock-ins that never got a clock-out."
+msgstr ""
+
+msgid "Shift coverage"
+msgstr ""
+
+msgid "Attended shifts out of attended plus missed."
+msgstr ""
+
+msgid "Worked time out of scheduled time; can exceed 100%."
+msgstr ""
+
+msgid "Last 7 days"
+msgstr ""
+
+msgid "Last 14 days"
+msgstr ""
+
+msgid "Last 30 days"
+msgstr ""
+
+msgid "Clock in"
+msgstr ""
+
+msgid "Clock out"
+msgstr ""
+
+msgid "Break start"
+msgstr ""
+
+msgid "Break end"
+msgstr ""
+
+msgid "Add a missing event"
+msgstr ""
+
+msgid "Replace an event"
+msgstr ""
+
+msgid "Withdrawn"
+msgstr ""
+
+msgid "Work"
+msgstr ""
+
+msgid "Time off"
+msgstr ""
+
+msgid "Leave"
+msgstr ""
+
+msgid "Permanent"
+msgstr ""
+
+msgid "Fixed term"
+msgstr ""
+
+msgid "Part time"
+msgstr ""
+
+msgid "Casual"
+msgstr ""
+
+msgid "On leave"
+msgstr ""
+
+msgid "Payable"
+msgstr ""
+
+msgid "Voided"
+msgstr ""
+
+msgid "{hours} h {minutes} min"
+msgstr ""
+
+msgid "The request could not be sent. Please try again."
+msgstr ""
+
+msgid "Corrections need an approval workflow and none is set up yet. Ask your administrator."
+msgstr ""
+
+msgid "A correction for that event is already waiting for a decision."
+msgstr ""
+
+msgid "That event could not be found."
+msgstr ""
+
+msgid "That event was already replaced by an approved correction."
+msgstr ""
+
+msgid "The proposed time cannot be in the future."
+msgstr ""
+
+msgid "Your employment could not be found."
+msgstr ""
+
+msgid "{count} shift in the next 14 days"
+msgid_plural "{count} shifts in the next 14 days"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "{count} event in the last 14 days (UTC)"
+msgid_plural "{count} events in the last 14 days (UTC)"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "{count} request"
+msgid_plural "{count} requests"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "{count} direct report"
+msgid_plural "{count} direct reports"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "{count} event in this period (UTC)"
+msgid_plural "{count} events in this period (UTC)"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "{count} employment"
+msgid_plural "{count} employments"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "{count} event in the last 7 days (UTC)"
+msgid_plural "{count} events in the last 7 days (UTC)"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Some sections are not available to you."
+msgstr ""
+
+# awcms-one (25 October 2026 sync): commerce admin screens adopt the upstream a11y/i18n conventions.
+
+msgid "WhatsApp queue"
+msgstr ""
+
+msgid "Cart lines"
+msgstr ""
+
+msgid "POS orders"
+msgstr ""
+
+msgid "Promo popups"
+msgstr ""
+
+msgid "Rate"
+msgstr ""
+
+msgid "Affiliate commissions"
+msgstr ""
+
+msgid "Affiliate"
+msgstr ""
+
+msgid "Conversations"
 msgstr ""

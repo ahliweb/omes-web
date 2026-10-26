@@ -95,8 +95,8 @@ async function directoryKeyMap(): Promise<Map<string, string>> {
  * Modules every other module may call directly without declaring it.
  *
  * `logging` only. Audit logging is cross-cutting infrastructure: five modules
- * call `recordAuditEvent` directly today, and `consumer-registry.ts` documents
- * that as "the same cross-module call other modules already make directly".
+ * call `recordAuditEvent` directly today, and the domain-event runtime's
+ * reference audit projector is one of them.
  * Requiring a declaration would add a dependency edge from nearly every module
  * to one leaf and say nothing a reader did not already know.
  *
@@ -114,20 +114,6 @@ const DOCUMENTED_EXCEPTIONS: {
   to: string;
   reason: string;
 }[] = [
-  {
-    from: "domain_event_runtime",
-    to: "reporting",
-    reason:
-      "`infrastructure/consumer-registry.ts` is designated THE cross-module " +
-      "wiring point by `module-contract.ts`'s ProjectionEventSource docs, and " +
-      "registers a consumer that increments a `reporting` projection. It cannot " +
-      "be a `dependencies` edge: `reporting` already declares " +
-      "`domain_event_runtime`, so declaring the reverse is a cycle. It is not a " +
-      "capability either — that would require a port in `_shared/ports/`, and " +
-      "the registry is a static array read at publish time from inside " +
-      "`appendDomainEvent`, so a port would relocate the concrete import rather " +
-      "than remove it. Revisit if consumer registration ever becomes lazy."
-  },
   {
     from: "tenant_admin",
     to: "identity_access",
@@ -196,6 +182,53 @@ const DOCUMENTED_EXCEPTIONS: {
       "a tenant with no published destructive-operation workflow " +
       "definition already gets — nothing is persisted either way. Revisit " +
       "if workflow-approval ever grows a swappable-adapter port."
+  },
+  {
+    from: "procurement",
+    to: "workflow",
+    reason:
+      "Issue #888 / ADR-0128. `application/procurement-document-directory.ts` " +
+      "calls `startWorkflowInstance` / `cancelWorkflowInstance` directly so a " +
+      "document above the tenant's approval threshold routes through the " +
+      "canonical workflow-approval engine instead of a second approval " +
+      "authority. Approval is OPTIONAL (threshold unset = off), so it cannot be " +
+      "a `dependencies` edge — that would make `workflow` un-disablable for " +
+      "every tenant that enables procurement, same as omes_control -> workflow " +
+      "above. The submit path checks `resolveModuleEnabled(tx, tenantId, " +
+      '"workflow")` and degrades to the fail-closed ' +
+      "`APPROVAL_WORKFLOW_NOT_CONFIGURED` refusal; nothing is persisted either " +
+      "way. Revisit if workflow-approval ever grows a swappable-adapter port."
+  },
+  {
+    from: "hr_workforce",
+    to: "workflow",
+    reason:
+      "Issue #947 / ADR-0132. `application/hr-attendance-directory.ts` calls " +
+      "`startWorkflowInstance` / `cancelWorkflowInstance` directly so an " +
+      "attendance correction routes through the canonical workflow-approval " +
+      "engine instead of a second approval authority, and reads the engine's " +
+      "instance and decision rows to apply its verdict. Clocking in and out " +
+      "does not need it, so it cannot be a `dependencies` edge — that would " +
+      "make `workflow` un-disablable for every tenant that enables " +
+      "hr_workforce, same as procurement -> workflow above. The request path " +
+      'checks `resolveModuleEnabled(tx, tenantId, "workflow")` and degrades to ' +
+      "the fail-closed `APPROVAL_WORKFLOW_NOT_CONFIGURED` refusal; nothing is " +
+      "persisted either way. Revisit if workflow-approval ever grows a " +
+      "swappable-adapter port."
+  },
+  {
+    from: "hr_workforce",
+    to: "identity_access",
+    reason:
+      "Issue #947 / ADR-0132. `application/hr-attendance-directory.ts` calls " +
+      '`resolveModuleEnabled` (the one question "is module X enabled for this ' +
+      "tenant\") before starting a correction's approval instance, so a tenant " +
+      "with `workflow` off gets the fail-closed refusal instead of an instance " +
+      "its approvers cannot reach. It is an application-level read, not a " +
+      "lifecycle ordering: `identity_access` is already enabled for any tenant " +
+      "that has a login, and procurement makes the same call from the same " +
+      "module-graph position. The route files reach the authorization " +
+      "chokepoint through the route-foundation allowance."
   }
 ];
 

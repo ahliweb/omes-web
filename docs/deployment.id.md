@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](deployment.md)
 
-<!-- i18n-source-hash: sha256:a31d06a145cb65a65aabb2ebe7955d125377869083cc5b5c17294665d878a0aa -->
+<!-- i18n-source-hash: sha256:fb50ef21dbeec7b56c199c96a908e0ea31628963aa1aac63c7818a5aefb3629f -->
 
 # Deployment
 
@@ -92,6 +92,46 @@ Subtree `apps/cms` pindah dari `ahliweb/awcms` `8e9bce0c` ke `8ceb80ea` (164 com
 Variabel opsional baru (semuanya didokumentasikan di `apps/cms/.env.example`; tidak ada yang mengubah perilaku kecuali diset): `PUSH_AUTH_SECRET_ENCRYPTION_KEYS` (**wajib sebelum** menyalakan `PUSH_PROVIDER=web_push` — set *sebelum* men-deploy rilis ini bila Web Push sudah aktif, lalu jalankan `bun run push:auth-secret:backfill`), `PUSH_PAYLOAD_FORMAT`, `PWA_APP_NAME`/`PWA_APP_SHORT_NAME`/`PWA_THEME_COLOR`/`PWA_BACKGROUND_COLOR` (admin yang dapat dipasang), `WHATSAPP_*` dan `TELEGRAM_*` (modul pengiriman generik — keluarga yang *terpisah* dari `COMMERCE_WHATSAPP_*` produk ini, mati secara default), `DATABASE_POOL_MAX_WORKER`/`_SETUP`, `DATABASE_CAPACITY_*`, `DATABASE_WORK_CLASS_QUEUE_MULTIPLIER`, `TAX_TAXDATE_*`, `INVENTORY_BACKDATE_WINDOW_DAYS`, `PAYROLL_EXPECTED_OWNERS`.
 
 **Perubahan perilaku yang dapat dilihat operator `commerce`.** Image runtime adalah Bun 1.4.4 (`apps/cms/Dockerfile.production`); CI repositori ini masih mengunci 1.4.2, sehingga regresi `commerce` yang hanya muncul di 1.4.3+ tidak akan terlihat di sana — 47 titik catch-and-continue yang ditemukan gerbang baru `db:transaction-swallow:check` di `commerce` ditangani justru karena itu (20 statement yang diharapkan gagal kini berjalan dalam savepoint; 27 blok catch di route dan skrip di atasnya ditinjau). Catatan idempotency kini dibatasi per aktor: endpoint POS tidak lagi menjawab `409` kepada *kasir lain* yang memakai ulang sebuah kunci, melainkan membuat penjualan kasir itu sendiri; checkout storefront dan apa pun tanpa identitas staf berbagi satu namespace anonim per scope, seperti sebelumnya. `Idempotency-Key` harus 1–255 karakter ASCII terlihat (nilai lain adalah `400 IDEMPOTENCY_KEY_INVALID` di edge). Ekspor CSV pesanan kini menetralkan `=`, `+`, `-` atau `@` di awal sel (formula injection).
+
+## Manifes kompatibilitas rilis (issue #20)
+
+`ops/compat/release-manifest.json` mencatat satu-satunya kombinasi empat pihak yang diverifikasi bersama, dan `bun run compat:preflight` (`tools/compat-preflight.mjs`, evaluator di `packages/gerbang/lib/compat-policy.mjs`) menolak selain itu. Ia offline dan deterministik — tanpa jaringan, basis data, atau rahasia — dan `bun run deploy:preflight` juga menjalankannya, sehingga preflight produksi gagal tertutup pada kombinasi yang tidak didukung. Kode keluar: `0` kompatibel, `1` tidak kompatibel, `3` berkas masukan tidak terbaca atau cacat.
+
+| Pihak | Dibaca dari | Yang harus cocok |
+| --- | --- | --- |
+| Produk | `version` di `package.json` akar | sama dengan `product.version` di manifes |
+| Upstream AWCMS | `cms.syncCommit` di manifes (dan `lastSyncCommit` di `ops/awcms-subtree.json`, begitu berkas itu ada) | upstream adalah `ahliweb/awcms` — tidak pernah `awcms-one` — dan kedua commit sinkronisasi sama |
+| Rilis OMES native | `omesRilis` di manifes | tag dan commit sama dengan `apps/storefront/src/config/omes-rilis.json` (rilis yang dipasarkan halaman landing) |
+| Kontrak Control Center yang di-vendor | `apps/cms/src/modules/omes-control/contracts/v1/PIN.json` dan delapan berkas `worker-*.schema.json` di sampingnya | `sourceRepo`/`area`/`version`/`sourceCommit` sama dengan manifes; sha256 setiap skema worker **di disk** sama dengan `PIN.json` dan manifes; mayornya dikenal preflight (`v1`) |
+
+Protokol worker adalah milik repositori `ahliweb/omes` ([ADR-0027](https://github.com/ahliweb/omes/tree/v0.6.0/docs/adr)): enroll / poll / result / heartbeat HTTPS yang ditandatangani dan hanya keluar (`apps/cms/src/pages/api/v1/omes/worker/{enroll,poll,result,heartbeat}.ts`). Preflight juga memeriksa bahwa keempat berkas route ada dan tidak ada konstruk WebSocket / upgrade masuk (komentar diabaikan) di bawah `apps/cms/src/pages/api/v1/omes/`.
+
+**Keadaan saat ini: `release-plus-additive`.** Pin kontrak yang di-vendor adalah `a4026e63`, yaitu `v0.6.0` ditambah dua commit (`git describe` `v0.6.0-2-ga4026e6`). Di antaranya hanya skema mission-control yang ditambahkan; delapan skema worker identik byte demi byte dengan `v0.6.0`, sehingga protokol worker adalah protokol `v0.6.0`. Karena pin bukan rilis terbit yang persis, preflight mencetak — dan dokumen ini menyatakan — bahwa kontrak **tidak diklaim teruji terhadap rilis OMES terbit yang persis**. `exact-release` diterima hanya bila `pinSourceCommit` sama dengan commit rilis; `release-plus-additive` hanya selama digest worker masih sama dengan digest yang dicatat untuk `baseReleaseTag`.
+
+### Matriks uji berversi
+
+| Kasus | Hasil yang diharapkan | Dicakup oleh |
+| --- | --- | --- |
+| Kontrak worker OMES `v1`, pin di depan rilis, digest worker tak berubah | lulus, dengan catatan "bukan rilis terbit yang persis" | `tests/compat-preflight.test.mjs` (fixture) dan tes pohon nyata |
+| Mayor kontrak masa depan yang tak dikenal (mis. `v2`) | gagal (`contract-major`) | `tests/compat-preflight.test.mjs` |
+| Sebuah skema worker hilang dari kontrak yang di-vendor | gagal (`worker-schema`) | `tests/compat-preflight.test.mjs` |
+| Hash skema worker berbeda dari `PIN.json` / manifes | gagal (`worker-schema`) | `tests/compat-preflight.test.mjs` |
+| `verifiedAt` manifes lebih tua dari 90 hari | gagal (`stale`) | `tests/compat-preflight.test.mjs` (tes unit pohon nyata mengevaluasi pada tanggal verifikasi; jam asli berlaku di `compat:preflight` / `deploy:preflight`) |
+| `release-plus-additive` saat digest worker berubah; `exact-release` saat pin bukan commit rilis | gagal | `tests/compat-preflight.test.mjs` |
+| Replay nonce dan ingesti hasil idempoten di bawah race nyata (DB) | perilaku upstream terbukti | `apps/cms/tests/integration/omes-control-worker.integration.test.ts`, dijalankan terhadap `postgres:18.4` oleh job CI `check-cms`; preflight hanya memverifikasi berkas tes itu masih ada dan masih mencakupnya |
+| Cakupan tenant dan tanda tangan (tenant salah, kunci salah) (DB) | sama | berkas dan job yang sama |
+
+### Menaikkan setiap pihak
+
+- **Rilis OMES** (storefront dan manifes bersama): ikuti prosedur kenaikan rilis di `docs/alur-kerja-pengembangan.md` untuk `omes-rilis.json` (`bun run verify:omes-release`), lalu setel `omesRilis` di manifes ke tag dan commit yang sama.
+- **Kontrak yang di-vendor** (datang bersama sinkronisasi subtree `apps/cms`): setelah sinkronisasi, perbarui `omesContract.pinSourceCommit` dan, bila skema worker berubah, `workerProtocol.files`/`digest` (digest = sha256 dari baris `<nama> <sha256>\n` yang diurutkan). Bila pin kini sama dengan rilis terbit, ubah `relation` menjadi `exact-release`; bila protokol worker berubah, itu keputusan kompatibilitas baru — tinjau terhadap catatan rilis OMES, jangan sekadar menulis ulang hash.
+- **Titik sinkronisasi AWCMS**: setel `cms.syncCommit` ke commit upstream baru dalam PR yang sama dengan sinkronisasi subtree.
+- **Versi produk**: naikkan `product.version` bersama rilis (`bun run release`).
+- Selalu akhiri dengan menyetel `verifiedAt` ke hari Anda menjalankan ulang `bun run compat:preflight`.
+
+### Promosi bertahap dan rollback
+
+Bangun image `apps/cms` yang dipin dan image storefront, deploy ke **staging**, jalankan `bun run deploy:preflight --live --production` dan pemeriksaan smoke di sana, baru promosikan image yang sama ke produksi. Migrasi hanya maju, sehingga rollback adalah "deploy ulang image sebelumnya **dan** pulihkan backup pra-migrasi" (lihat daftar periksa sinkronisasi upstream di atas dan "Jaminan backup"). Nama proyek compose `awcms-one-production` dan volume-nya tidak diganti oleh semua ini.
 
 ## Apa yang boleh menjangkau `apps/cms`: proses build, dan — sejak issue #30 — browser pembaca
 

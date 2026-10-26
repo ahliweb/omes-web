@@ -91,6 +91,46 @@ New optional variables (all documented in `apps/cms/.env.example`; none changes 
 
 **Behaviour changes a `commerce` operator can see.** The runtime image is Bun 1.4.4 (`apps/cms/Dockerfile.production`); this repository's CI still pins 1.4.2, so a `commerce` regression that only appears on 1.4.3+ would not show there — the 47 catch-and-continue sites the new `db:transaction-swallow:check` gate found in `commerce` were handled for exactly that reason (20 expected-to-fail statements now run in savepoints; the 27 route and script catch blocks above them were reviewed). Idempotency records are now scoped per actor: the POS endpoint no longer answers `409` to a *different cashier* reusing a key, it creates that cashier's own sale; the storefront checkout and anything else without a staff identity share one anonymous namespace per scope, as before. `Idempotency-Key` must be 1–255 visible ASCII characters (any other value is `400 IDEMPOTENCY_KEY_INVALID` at the edge). The orders CSV export now neutralises a leading `=`, `+`, `-` or `@` in a cell (formula injection).
 
+## Release compatibility manifest (issue #20)
+
+`ops/compat/release-manifest.json` records the one combination of four parties that was verified together, and `bun run compat:preflight` (`tools/compat-preflight.mjs`, evaluator in `packages/gerbang/lib/compat-policy.mjs`) refuses anything else. It is offline and deterministic — no network, no database, no secrets — and `bun run deploy:preflight` runs it too, so a production preflight fails closed on an unsupported combination. Exit codes: `0` compatible, `1` incompatible, `3` an input file is unreadable or malformed.
+
+| Party | Where it is read | What must agree |
+| --- | --- | --- |
+| Product | root `package.json` `version` | equals the manifest's `product.version` |
+| AWCMS upstream | manifest `cms.syncCommit` (and `ops/awcms-subtree.json` `lastSyncCommit`, once that file exists) | upstream is `ahliweb/awcms` — never `awcms-one` — and both sync commits are equal |
+| Native OMES release | manifest `omesRelease` | tag and commit equal `apps/storefront/src/config/omes-rilis.json` (the release the landing page markets) |
+| Vendored Control Center contract | `apps/cms/src/modules/omes-control/contracts/v1/PIN.json` and the eight `worker-*.schema.json` files beside it | `sourceRepo`/`area`/`version`/`sourceCommit` equal the manifest; the sha256 of every worker schema **on disk** equals `PIN.json` and the manifest; the major is one the preflight knows (`v1`) |
+
+The worker protocol is the `ahliweb/omes` repository's ([ADR-0027](https://github.com/ahliweb/omes/tree/v0.6.0/docs/adr)): signed, outbound-only HTTPS enroll / poll / result / heartbeat (`apps/cms/src/pages/api/v1/omes/worker/{enroll,poll,result,heartbeat}.ts`). The preflight also checks that the four route files exist and that no inbound WebSocket / upgrade construct appears (comments ignored) under `apps/cms/src/pages/api/v1/omes/`.
+
+**Current state: `release-plus-additive`.** The vendored contract pin is `a4026e63`, which is `v0.6.0` plus two commits (`git describe` `v0.6.0-2-ga4026e6`). Between them only mission-control schemas were added; the eight worker schemas are byte-identical to `v0.6.0`, so the worker protocol is the `v0.6.0` one. Because the pin is not an exact published release, the preflight prints — and this document states — that the contract is **not claimed tested against an exact published OMES release**. `exact-release` is accepted only when `pinSourceCommit` equals the release commit; `release-plus-additive` only while the worker digest still equals the digest recorded for `baseReleaseTag`.
+
+### Versioned test matrix
+
+| Case | Expected | Covered by |
+| --- | --- | --- |
+| OMES worker contract `v1`, pin ahead of release, worker digest unchanged | pass, with the "not an exact published release" note | `tests/compat-preflight.test.mjs` (fixture) and the real-tree test |
+| Unknown future contract major (e.g. `v2`) | fail (`contract-major`) | `tests/compat-preflight.test.mjs` |
+| A worker schema missing from the vendored contract | fail (`worker-schema`) | `tests/compat-preflight.test.mjs` |
+| Worker schema hash differs from `PIN.json` / manifest | fail (`worker-schema`) | `tests/compat-preflight.test.mjs` |
+| Manifest `verifiedAt` older than 90 days | fail (`stale`) | `tests/compat-preflight.test.mjs` (the real-tree unit test evaluates as of the verification date; the live clock applies in `compat:preflight` / `deploy:preflight`) |
+| `release-plus-additive` while the worker digest changed; `exact-release` while the pin is not the release commit | fail | `tests/compat-preflight.test.mjs` |
+| Nonce replay and idempotent result ingestion under a real race (DB) | upstream behaviour proven | `apps/cms/tests/integration/omes-control-worker.integration.test.ts`, run against `postgres:18.4` by the `check-cms` CI job; the preflight only verifies the test file still exists and still covers it |
+| Tenant scope and signature (wrong tenant, wrong key) (DB) | same | same file, same job |
+
+### Bumping each party
+
+- **OMES release** (storefront and manifest together): follow `docs/alur-kerja-pengembangan.md`'s release-bump procedure for `omes-rilis.json` (`bun run verify:omes-release`), then set `omesRelease` in the manifest to the same tag and commit.
+- **Vendored contract** (arrives with an `apps/cms` subtree sync): after the sync, update `omesContract.pinSourceCommit` and, if a worker schema changed, `workerProtocol.files`/`digest` (digest = sha256 of the sorted `<name> <sha256>\n` lines). If the pin now equals a published release, change `relation` to `exact-release`; if the worker protocol changed, it is a new compatibility decision — review it against the OMES release notes, do not just rewrite the hashes.
+- **AWCMS sync point**: set `cms.syncCommit` to the new upstream commit in the same PR as the subtree sync.
+- **Product version**: bump `product.version` with the release (`bun run release`).
+- Always finish by setting `verifiedAt` to the day you re-ran `bun run compat:preflight`.
+
+### Staged promotion and rollback
+
+Build the pinned `apps/cms` images and the storefront image, deploy to **staging**, run `bun run deploy:preflight --live --production` and the smoke checks there, and only then promote the same images to production. Migrations are forward-only, so rollback is "redeploy the previous images **and** restore the pre-migration backup" (see the upstream-sync checklist above and "Backup assurance"). The `awcms-one-production` compose project name and its volumes are not renamed by any of this.
+
 ## What may reach `apps/cms`: the build process, and — since issue #30 — the reader's browser
 
 | | May reach |

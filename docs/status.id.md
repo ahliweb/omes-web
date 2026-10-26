@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](status.md)
 
-<!-- i18n-source-hash: sha256:fc6a44d0aa8c3a3e8abb0eacd229dbae0d868fb96324e530e7dd967334745a69 -->
+<!-- i18n-source-hash: sha256:6e84a67d3a84554c0b3abded298dfd9cd67d2baf72212f0606677c2589a99145 -->
 
 # Status
 
@@ -34,6 +34,7 @@ Masing-masing adalah port penyedia + adapter + outbox milik `commerce`, mengikut
 - **`berita`** — portal berita saja, mencerminkan IA dan chrome milik seputarborneo.com/beritasampit.co.id sendiri: navigasi 8-item, panel "Daerah", ticker "Terkini", direktori institusi Mitra, leaderboard footer, opt-in ganda newsletter, baris share, pemutar baca-keras, popup iklan, pengalihan legacy berbasis aturan ([ADR-0013](adr/0013-rule-based-legacy-redirects-beside-the-row-based-map.md)), dan analitik pengunjung first-party dengan saklar opt-in GA4 ([ADR-0012](adr/0012-first-party-visitor-analytics-with-an-opt-in-ga4-switch.md)).
 - **`landing`** — situs profil perusahaan/landing: halaman, kontak, chrome SEO; tanpa commerce, tanpa berita.
   Rilis OMES yang ditampilkannya (chip versi, tautan rilis dan panduan instalasi, serta perintah instalasi yang dipin) dibaca dari satu berkas build-time, `apps/storefront/src/config/omes-rilis.json`, tidak pernah di-hardcode di komponen; `bun run verify:omes-release` membuktikan berkas itu terhadap rilis `ahliweb/omes` yang sebenarnya (issue #16) — lihat [`docs/alur-kerja-pengembangan.md`](alur-kerja-pengembangan.md#bumping-the-omes-release-the-landing-page-presents).
+  Kompatibilitas rilis (issue #20): `ops/compat/release-manifest.json` mencatat kombinasi terverifikasi dari versi produk, commit sinkronisasi AWCMS, rilis OMES native, dan kontrak Control Center yang di-vendor; `bun run compat:preflight` (juga dilipat ke `deploy:preflight`) menolak kombinasi lain. Pin kontrak saat ini adalah `v0.6.0` ditambah dua commit (`release-plus-additive`, protokol worker identik dengan `v0.6.0`) dan tidak diklaim teruji terhadap rilis terbit yang persis — lihat [`docs/deployment.md`](deployment.id.md#manifes-kompatibilitas-rilis-issue-20).
 
 Media (fotografi produk, hero artikel, kreatif iklan) diresolusi lewat `GET /api/v1/media/objects`, dan CSP diturunkan saat build dari apa yang sungguh terresolusi ([ADR-0011](adr/0011-storefront-media-resolves-through-the-media-objects-endpoint.md)). Lihat [`docs/template.md`](template.id.md) untuk mekanisme dan matriks profil lengkap, [`docs/routing.md`](routing.id.md) untuk setiap rute, dan [`docs/ui-ux.md`](ui-ux.id.md) untuk sistem desain (token, gambar produk, kontras lencana terhitung, presentasi harga/stok) — termasuk redesign 2026-09 yang mencakup chrome admin dan publik (issue #166–#171).
 

@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](AGENTS.md)
 
-<!-- i18n-source-hash: sha256:1f9fef54c2d186ad29d6cffd84ad355a104cf121221e9d9f24792d7af2e6e032 -->
+<!-- i18n-source-hash: sha256:bef7e58d0ff3b8ce551df9fabd18d51c55228b1b4b3e76ba5c5d79d7e97267d1 -->
 
 # AGENTS.md — kontrak kerja awcms-one
 
@@ -97,7 +97,7 @@ Ini adalah workspace Bun (`workspaces: ["apps/*", "packages/*"]`); setiap direkt
 
 ## Alur pengembangan produk (v2.0.0)
 
-Pekerjaan produk di repo ini — UI, model data, API, atau deployment — mengikuti [alur pengembangan produk 18 langkah v2.0.0](https://github.com/ahliweb/personal-coding/blob/main/docs/alur-pengembangan-produk.md) milik portofolio (dokumen pusat; `ahliweb/awcms` mengadopsinya di [ADR-0156](https://github.com/ahliweb/awcms/blob/main/docs/adr/)). Tempatkan pekerjaan pada sebuah langkah sebelum memulai; pekerjaan yang tidak bisa ditempatkan tidak dimulai. Ringkasnya: UX/UI divalidasi di langkah 4, sebelum ERD (langkah 4–7 lama kini 5–8, dan langkah 8 adalah kontrak API beserta mock yang dihasilkan darinya); langkah 11 berjalan **per slice** sebagai 11.1 frontend terhadap mock, 11.2 backend, 11.3 integrasi; gerbang 9 (Definition of Ready) dan 15 (Go/No-Go) tidak berubah.
+Pekerjaan produk di repo ini — UI, model data, API, atau deployment — mengikuti [alur pengembangan produk 18 langkah v2.0.0](https://github.com/ahliweb/personal-coding/blob/main/docs/alur-pengembangan-produk.md) milik portofolio (dokumen pusat; `ahliweb/awcms` mengadopsinya di [ADR-0156](https://github.com/ahliweb/awcms/blob/main/docs/adr/0156-adopt-development-flow-v2-validated-ux-before-data-model-frontend-backend-integration-per-slice.id.md)). Tempatkan pekerjaan pada sebuah langkah sebelum memulai; pekerjaan yang tidak bisa ditempatkan tidak dimulai. Ringkasnya: UX/UI divalidasi di langkah 4, sebelum ERD (langkah 4–7 lama kini 5–8, dan langkah 8 adalah kontrak API beserta mock yang dihasilkan darinya); langkah 11 berjalan **per slice** sebagai 11.1 frontend terhadap mock, 11.2 backend, 11.3 integrasi; gerbang 9 (Definition of Ready) dan 15 (Go/No-Go) tidak berubah.
 
 - **Arti 11.1 / 11.2 / 11.3 di sini.** Repo ini memiliki backend-nya sendiri, seperti `awcms-one`, sehingga **11.2 adalah pekerjaan modul `apps/cms` lokal** (bersifat penambahan, sesuai "Apa yang boleh, dan tidak boleh, disunting repo ini" di atas) dan **situs/storefront (`apps/storefront`) adalah 11.1**. 11.3 mengarahkan storefront ke API `apps/cms` yang nyata dan menjalankan contract test di kedua sisi.
 - **Layar tanpa sumber data di kontrak belum siap.** Setiap layar harus punya field yang dapat ditelusuri ke operasi dalam kontrak API; bila tidak, ia gagal di gerbang 9 dan kembali ke langkah 5 atau 8.

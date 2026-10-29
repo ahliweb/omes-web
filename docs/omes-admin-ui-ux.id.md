@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](omes-admin-ui-ux.md)
 
-<!-- i18n-source-hash: sha256:e6aaf3cc3eb6ae6aed6e216abc2b3aea8d821444037301a5ad7dee59757363b1 -->
+<!-- i18n-source-hash: sha256:5b6920e84195c90ba1f5b04a6bde5fb0a41317f6b4e2dceb8b16496da1e38e2e -->
 
 # Spesifikasi UI/UX Admin OMES-Web / Control Center v1.0
 
@@ -13,7 +13,7 @@
 - **Runtime native:** OMES mengelola host, signed HTTPS pull worker keluar dan kontrak `control-center/v1`; Hermes mengelola runtime agent. `ui/control-center/index.html` di OMES adalah **prototipe desain non-fungsional**, sedangkan mockup Control Center pada website publik OMES-Web adalah **ilustrasi sintetis**, bukan screenshot armada.
 - **Sistem desain:** gunakan `AdminLayout.astro` AWCMS, `tokens.css`, `admin.css`, `admin-screens.css`, `omes-control-center.css`, tenant badge, sidebar modular, language/theme switch dan API permission yang sudah ada. ADR-0023 OMES merupakan acuan, bukan implementasi admin pesaing.
 
-Bedakan status **diimplementasikan upstream**, **sudah ada pada subtree produk**, **diaktifkan sesuai role/flag**, dan **terverifikasi pada deployment**. Bukti keberadaan route upstream **tidak otomatis membuktikan halaman sudah live** di OMES-Web.
+Bedakan status **diimplementasikan upstream**, **sudah ada pada subtree produk**, **diaktifkan sesuai role/flag**, dan **terverifikasi pada deployment**. Bukti keberadaan route upstream **tidak otomatis membuktikan halaman sudah live** di OMES-Web. **Langkah 4 [alur pengembangan produk v2.0.0](https://github.com/ahliweb/personal-coding/blob/main/docs/alur-pengembangan-produk.md) berlaku untuk spesifikasi ini** — UX/UI divalidasi sebelum model data dan kontrak: prototipe yang lolos uji usabilitas, seluruh state layar didesain (kosong, memuat, error, sebagian, tanpa izin, konfirmasi destruktif), WCAG 2.2 AA sejak desain, dan inventaris kebutuhan data per layar yang menjadi masukan kontrak API. Lihat "Alur pengembangan produk" di `AGENTS.md` akar.
 
 ## 1. Navigasi, matriks layar dan batas rilis
 

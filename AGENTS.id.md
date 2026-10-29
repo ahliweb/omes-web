@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](AGENTS.md)
 
-<!-- i18n-source-hash: sha256:57a62b58e23be1eaa6e60afa3e98bc91067976a164219ade506a30e29cae66fe -->
+<!-- i18n-source-hash: sha256:1f9fef54c2d186ad29d6cffd84ad355a104cf121221e9d9f24792d7af2e6e032 -->
 
 # AGENTS.md — kontrak kerja awcms-one
 
@@ -94,6 +94,15 @@ Ini adalah workspace Bun (`workspaces: ["apps/*", "packages/*"]`); setiap direkt
 **`bun run template:init`** (`tools/template-init.ts` + `tools/template-init/**`) adalah CLI idempoten yang dijalankan sekali oleh repo turunan untuk menulis ulang permukaan mereknya — nama, domain, warna, kontak, profil pilihan — lihat [ADR-0018 D4/D5](docs/adr/0018-awcms-one-is-a-template-with-build-profiles-and-an-idempotent-init.id.md) dan referensi CLI `docs/template.md` untuk daftar flag dan exit code persisnya. **Ia tidak pernah menyentuh `apps/cms/**` di bawah flag mana pun** — pohon itu milik upstream sendiri, disematkan lewat subtree (lihat "Penyematan subtree" di atas), dan data merek deployment turunan hidup di apa yang disajikan `apps/cms` atau di fallback `site.ts` saat-build milik `apps/storefront` sendiri, tidak pernah di source `apps/cms`. Yang ditulis-ulangnya adalah daftar pendek bernama di bagian "What it rewrites" `docs/template.md` (`site.ts`, `package.json` akar, `compose.yaml`, `README*.md`/`SUPPORT*.md`, kedua berkas `.env.example`, default `tools/seed-cms.ts`, `CHANGELOG.md`, `.changesets/*.md`) — tidak ada yang di luar daftar itu, dan tidak pernah menebak pemilik/nama GitHub repo turunan sendiri (`repository.url` di `package.json` menjadi placeholder mencolok `GANTI-ORG`). `.github/workflows/template-init-smoke.yml` menjalankan matriks `template:init` atas ketiga profil ke checkout sementara di setiap push.
 
 **Tata letak seed (issue #139):** `tools/seed-cms.ts --profil <toko|berita|landing|contoh:borneojek-mart>` (`bun run db:seed:cms:profil <name>`) membaca konten netral dan fiktif per profil dari `tools/seed-data/profil/{toko,berita,landing}/**` (tidak ada orang sungguhan/nomor telepon/e-mail/nama merek) plus SVG placeholder dari `tools/seed-assets/profil/<profile>/`. Konten referensi BjekMart sendiri hidup di tools/seed-data/contoh/borneojek-mart/**; `bun run db:seed:cms` tanpa `--profil` masih menargetkannya secara default, sehingga deployment hidup repo ini sendiri tidak terpengaruh. `tools/lib/seed-profil.mjs` menyimpan validator schema/no-PII/aset bersama yang dipakai `--dry-run` maupun `tests/seed-profil.test.mjs`. Jangan pernah men-seed profil netral ke basis data dev lokal bersama repo ini sendiri (lihat "Seeding a profile locally" di `docs/alur-kerja-pengembangan.md`).
+
+## Alur pengembangan produk (v2.0.0)
+
+Pekerjaan produk di repo ini — UI, model data, API, atau deployment — mengikuti [alur pengembangan produk 18 langkah v2.0.0](https://github.com/ahliweb/personal-coding/blob/main/docs/alur-pengembangan-produk.md) milik portofolio (dokumen pusat; `ahliweb/awcms` mengadopsinya di [ADR-0156](https://github.com/ahliweb/awcms/blob/main/docs/adr/)). Tempatkan pekerjaan pada sebuah langkah sebelum memulai; pekerjaan yang tidak bisa ditempatkan tidak dimulai. Ringkasnya: UX/UI divalidasi di langkah 4, sebelum ERD (langkah 4–7 lama kini 5–8, dan langkah 8 adalah kontrak API beserta mock yang dihasilkan darinya); langkah 11 berjalan **per slice** sebagai 11.1 frontend terhadap mock, 11.2 backend, 11.3 integrasi; gerbang 9 (Definition of Ready) dan 15 (Go/No-Go) tidak berubah.
+
+- **Arti 11.1 / 11.2 / 11.3 di sini.** Repo ini memiliki backend-nya sendiri, seperti `awcms-one`, sehingga **11.2 adalah pekerjaan modul `apps/cms` lokal** (bersifat penambahan, sesuai "Apa yang boleh, dan tidak boleh, disunting repo ini" di atas) dan **situs/storefront (`apps/storefront`) adalah 11.1**. 11.3 mengarahkan storefront ke API `apps/cms` yang nyata dan menjalankan contract test di kedua sisi.
+- **Layar tanpa sumber data di kontrak belum siap.** Setiap layar harus punya field yang dapat ditelusuri ke operasi dalam kontrak API; bila tidak, ia gagal di gerbang 9 dan kembali ke langkah 5 atau 8.
+- **Otorisasi tidak pernah hanya di frontend.** UI boleh menyembunyikan aksi dan menampilkan state tanpa izin, tetapi penegakan tetap di backend dan database (RLS). `docs/omes-admin-ui-ux.md` UI-01 sudah mewajibkan penolakan di tingkat API.
+- **Dokumen alur di dalam `apps/cms` adalah salinan upstream.** Ia baru diganti oleh sinkronisasi subtree berikutnya dan tetap menampilkan v1 sampai saat itu; jangan disunting di sini (lihat "Penyematan subtree"). Tautan di atas adalah otoritasnya untuk sementara.
 
 ## Gerbang
 

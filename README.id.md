@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](README.md)
 
-<!-- i18n-source-hash: sha256:5f140aacd2afa01fc5645a99437f82d61d47f82d81dcd9b63c1ef3f42815bcab -->
+<!-- i18n-source-hash: sha256:18f858a6a933f1da280dbad05f34faaed51d2f89800be362e43b0147d4fe5bd3 -->
 
 [![CI](https://github.com/ahliweb/awcms-one/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ahliweb/awcms-one/actions/workflows/ci.yml) [![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE) [![runtime](https://img.shields.io/badge/runtime-Bun-blue?logo=bun&logoColor=white)](https://bun.sh)
 
@@ -56,7 +56,7 @@ Repo ini **hanya-Bun**: Bun adalah runtime sekaligus package manager, versinya d
 | `bun test` | Rangkaian gerbang akar. `bunfig.toml` mengecualikan `apps/cms/**` — rangkaian itu ~500 berkas dan butuh PostgreSQL hidup; ia berjalan di bawah gerbangnya sendiri, `bun run check:cms` |
 | `bun run check:lockfile` | Membuktikan `bun.lock` benar-benar milik `package.json` repo ini, untuk akar dan setiap anggota workspace |
 | `bun run check:cms` | Rangkaian gerbang penuh `apps/cms` sendiri (53 langkah — lint, docs, inventaris, spec, gerbang, typecheck, tesnya sendiri, build-nya sendiri) |
-| `bun run db:up` / `db:down` / `db:reset` | Menyalakan/mematikan/mereset `postgres:18.4` lokal sekali-pakai (`compose.yaml`) |
+| `bun run db:up` / `db:down` / `db:reset` | Menyalakan/mematikan/mereset `postgres:18.6` lokal sekali-pakai (`compose.yaml`) |
 | `bun run db:migrate:cms` | Menjalankan migrasi `apps/cms` terhadap `DATABASE_URL` — lihat `apps/cms/.env.example` |
 | `bun run db:seed:cms` | Men-seed tenant `borneojek-mart`, katalog, permukaan marketing, dan contoh pesanan lewat API publik `apps/cms` sendiri — lihat [`docs/deployment.md`](docs/deployment.id.md) |
 | `bun run deploy:preflight` | Preflight produksi fail-closed — bentuk env build storefront, lalu mendelegasikan ke `commerce:deploy:preflight` milik `apps/cms` sendiri — lihat [`docs/deployment.md`](docs/deployment.id.md) dan ADR-0019 |

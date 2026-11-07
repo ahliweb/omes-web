@@ -118,13 +118,13 @@ The anonymous storefront API resolves its tenant from the calling browser's `Ori
 
 ## Local database (issue #25)
 
-`compose.yaml` at the repo root provisions a disposable `postgres:18.4` for local development and CI — not production (see "Production PostgreSQL provisioning is not done" below). It creates ONLY what `apps/cms`'s own SQL migrations do not: the server itself, and the `LOGIN` half of the three roles the migrations create `NOLOGIN` and passwordless on purpose (`apps/cms/sql/019_awcms_db_role_separation.sql` creates `awcms_app`, `apps/cms/sql/022_awcms_db_worker_setup_roles.sql` creates `awcms_worker`/`awcms_setup` — a password is a secret and never belongs in a committed migration; see each file's own header). Every table, index, RLS policy and `GRANT` stays the migrations' job. `docker/postgres-init/01-create-least-privilege-roles.sh` does the one thing the migrations deliberately leave out, and nothing else — its own header explains why duplicating a `GRANT` here would drift the moment a migration narrows or widens one.
+`compose.yaml` at the repo root provisions a disposable `postgres:18.6` for local development and CI — not production (see "Production PostgreSQL provisioning is not done" below). It creates ONLY what `apps/cms`'s own SQL migrations do not: the server itself, and the `LOGIN` half of the three roles the migrations create `NOLOGIN` and passwordless on purpose (`apps/cms/sql/019_awcms_db_role_separation.sql` creates `awcms_app`, `apps/cms/sql/022_awcms_db_worker_setup_roles.sql` creates `awcms_worker`/`awcms_setup` — a password is a secret and never belongs in a committed migration; see each file's own header). Every table, index, RLS policy and `GRANT` stays the migrations' job. `docker/postgres-init/01-create-least-privilege-roles.sh` does the one thing the migrations deliberately leave out, and nothing else — its own header explains why duplicating a `GRANT` here would drift the moment a migration narrows or widens one.
 
 The full sequence, in order, with real values (`cp .env.example .env` at the root, `cp apps/cms/.env.example apps/cms/.env` first — see each file for what to edit):
 
 ```bash
 cp .env.example .env                    # root — POSTGRES_*, AWCMS_*_PASSWORD, SEED_*
-bun run db:up                           # postgres:18.4, project "awcms-one", host port 5433
+bun run db:up                           # postgres:18.6, project "awcms-one", host port 5433
 
 # apps/cms/.env's own DATABASE_URL defaults to the OWNER/superuser shape on
 # port 5432 — override it for THIS one command to point at the compose
@@ -331,7 +331,7 @@ Two shape decisions in `redirects.json` exist only because of how the CMS and th
 
 ## Production topology (issue #150, ADR-0019)
 
-`apps/cms` is PostgreSQL-only, and until this section was written, borneojek's own production infrastructure ran MySQL with no PostgreSQL provisioned anywhere on it — the delivery gap [issue #150](https://github.com/ahliweb/awcms-one/issues/150) named directly. What follows is the real, tested production path this repository now ships; [ADR-0019](adr/0019-production-topology-two-images-a-jobs-sidecar-and-a-fail-closed-preflight.md) records the decisions behind it. `compose.yaml`'s own `postgres:18.4` container remains a LOCAL/CI convenience — `compose.production.yaml` (below) is the production shape, and the two are never meant to share a database.
+`apps/cms` is PostgreSQL-only, and until this section was written, borneojek's own production infrastructure ran MySQL with no PostgreSQL provisioned anywhere on it — the delivery gap [issue #150](https://github.com/ahliweb/awcms-one/issues/150) named directly. What follows is the real, tested production path this repository now ships; [ADR-0019](adr/0019-production-topology-two-images-a-jobs-sidecar-and-a-fail-closed-preflight.md) records the decisions behind it. `compose.yaml`'s own `postgres:18.6` container remains a LOCAL/CI convenience — `compose.production.yaml` (below) is the production shape, and the two are never meant to share a database.
 
 ### The two-role database model
 
@@ -434,7 +434,7 @@ Every check prints one `PASS|FAIL|SKIP` line and a reason, never a secret value.
 
 ## Backup assurance (issue #213)
 
-`apps/cms/deploy/backup/*.sh` (synced in by issue #210, upstream's own tooling — see [ADR-0123](https://github.com/ahliweb/awcms/blob/main/docs/adr/0123-backup-encryption-manifest-authentication.md) and that directory's own `README.md` for what each script does and why) are used here through THIS repository's own production topology, not reimplemented. `compose.production.yaml` adds three profile-gated services — `backup`, `restore-drill`, `offsite-copy` — each a thin wrapper: a container built from `docker/backup/Dockerfile` (the SAME `postgres:18.4` the `postgres` service runs, plus `age`/`rsync`/`openssh-client` — exactly what `apps/cms/deploy/backup/README.md`'s own "Base images ship neither `age` nor a database client by default" note asks for) with `apps/cms/deploy/backup/` bind-mounted read-only at `/scripts` and the actual script invoked unmodified.
+`apps/cms/deploy/backup/*.sh` (synced in by issue #210, upstream's own tooling — see [ADR-0123](https://github.com/ahliweb/awcms/blob/main/docs/adr/0123-backup-encryption-manifest-authentication.md) and that directory's own `README.md` for what each script does and why) are used here through THIS repository's own production topology, not reimplemented. `compose.production.yaml` adds three profile-gated services — `backup`, `restore-drill`, `offsite-copy` — each a thin wrapper: a container built from `docker/backup/Dockerfile` (the SAME `postgres:18.6` the `postgres` service runs, plus `age`/`rsync`/`openssh-client` — exactly what `apps/cms/deploy/backup/README.md`'s own "Base images ship neither `age` nor a database client by default" note asks for) with `apps/cms/deploy/backup/` bind-mounted read-only at `/scripts` and the actual script invoked unmodified.
 
 ### Database identity (scope item 1)
 
@@ -490,7 +490,7 @@ docker run --rm --network container:<the postgres container> \
   -e DATABASE_URL="<owner/setup DSN>" \
   -e RESTORE_AGE_IDENTITY_FILE=/secrets/restore-age-identity.key \
   -e BACKUP_HMAC_KEY_FILE=/secrets/backup-hmac.key \
-  postgres:18.4 \
+  postgres:18.6 \
   bash /scripts/restore-postgres.sh /backup/<artifact>.dump.age --target=<db> --yes
 ```
 

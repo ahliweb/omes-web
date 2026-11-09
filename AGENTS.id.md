@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](AGENTS.md)
 
-<!-- i18n-source-hash: sha256:1f9fef54c2d186ad29d6cffd84ad355a104cf121221e9d9f24792d7af2e6e032 -->
+<!-- i18n-source-hash: sha256:c731219693852775b0432815c9be7e3e3724950b01a12f704d2bfda00aa12a2c -->
 
 # AGENTS.md — kontrak kerja awcms-one
 
@@ -178,3 +178,16 @@ Mendorong (push) tag itu (`git push origin vX.Y.Z`) mempublikasikan rilisnya sen
 Bahasa Inggris di jalur telanjang adalah sumber otoritatif; Bahasa Indonesia di `<nama>.id.md` adalah cerminnya, mencatat hash dari bahasa Inggris yang diterjemahkannya. Cermin dokumen ini adalah [`AGENTS.id.md`](AGENTS.id.md).
 
 Kode repo ini sendiri — `packages/gerbang/`, `tools/`, `tests/`, beserta identifier, komentar, dan pesan gerbang/tesnya — ditulis dalam **Bahasa Inggris** sepenuhnya. Ini pilihan yang disengaja untuk kode baru repo ini sendiri, dibuat karena tidak ada konvensi yang sudah ada di sini untuk diikuti dan Bahasa Inggris adalah bawaan yang lebih aman untuk perkakas yang dibaca langsung oleh CI, Dependabot, dan editor kontributor mana pun di masa depan. `apps/cms` membawa konvensinya sendiri yang terpisah sebagai kode `ahliweb/awcms` yang disematkan; repo ini tidak mengatur atau mengubahnya.
+
+<!-- BEGIN:pengetahuan-ringkas -->
+<!-- pengetahuan-ringkas:v1 -->
+## Knowledge Graph (graphify)
+
+Repo ini punya knowledge graph di `graphify-out/`. Prosedur lengkap: skill `.claude/skills/pengetahuan-ringkas/SKILL.md`.
+
+1. **Untuk pertanyaan arsitektur atau hubungan antarberkas, baca graf lebih dulu.** Buka `graphify-out/GRAPH_REPORT.md`, lalu `graphify query "<pertanyaan>"`, sebelum membuka banyak berkas satu per satu. Hemat token.
+2. **Graf adalah peta, bukan sumber kebenaran.** Verifikasi setiap klaim ke `source_file` yang dikutip; edge `INFERRED`/`AMBIGUOUS` bukan fakta.
+3. **Bila `graphify-out/STATUS.md` ada, graf baru berisi kode saja.** Jalankan `/graphify . --update` sebelum mengandalkannya untuk pertanyaan dokumen, hapus `STATUS.md`, lalu commit hasilnya.
+4. **Perbarui graf setelah menambah, menghapus, atau mengubah substansial berkas**, dalam commit yang sama (`graphify update .` untuk kode, `/graphify . --update` untuk dokumen).
+5. **Jangan edit `graphify-out/` dengan tangan** dan jangan memasang `graphify hook install`.
+<!-- END:pengetahuan-ringkas -->

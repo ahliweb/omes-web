@@ -35,3 +35,7 @@ English at the bare path is the authoritative source; Indonesian at `<name>.id.m
 
 - [OMES-Web Admin / Control Center — detailed UI/UX v1.0](omes-admin-ui-ux.md): 15 audited upstream OMES route files, 3 planned workspaces, permission/status, responsive wireframes, workflow approvals and QA tests. Upstream route existence does **not** prove product deployment availability.
 - [ADR-0021: OMES-Web remains a separate product with strict OMES/AWCMS integration](adr/0021-separate-omes-product-site-from-native-host-runtime.md): Option A, contracts, ownership, release compatibility, subtree MERGE COMMIT only; proposals pending review.
+
+## CarikBot conversation architecture reference (research only)
+
+[CarikBot concept evaluation](carikbot-conversation-reference.md) and [Bahasa Indonesia](carikbot-conversation-reference.id.md) document flow/menu/form ideas, current-versus-proposed status, provider boundaries, privacy risks, tests and cross-repository ownership. No chatbot engine or production API is added by this documentation.

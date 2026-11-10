@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](README.md)
 
-<!-- i18n-source-hash: sha256:2316165cb384dc93622cb09d7c9122d28a6e43f692da7e68f859ce6f82eb14af -->
+<!-- i18n-source-hash: sha256:5ed46db66a5a7785b7c1b08f4d6b19fc712e03acc8450c90f63162294acc92ea -->
 
 # Dokumentasi
 
@@ -37,3 +37,7 @@ Bahasa Inggris di jalur telanjang adalah sumber yang otoritatif; Bahasa Indonesi
 
 - [Spesifikasi UI/UX Admin OMES-Web / Control Center v1.0](omes-admin-ui-ux.id.md): 15 berkas route OMES upstream yang diaudit, 3 workspace rencana, hak akses/status, wireframe responsif, approval dan uji keamanan. Adanya route di upstream **bukan** bukti sudah tersedia di deployment produk.
 - [ADR-0021: OMES-Web tetap menjadi produk terpisah dengan integrasi OMES/AWCMS yang ketat](adr/0021-separate-omes-product-site-from-native-host-runtime.id.md): Opsi A, kontrak, tanggung jawab, kompatibilitas rilis dan subtree hanya MERGE COMMIT; rancangan masih menunggu review.
+
+## Referensi arsitektur percakapan CarikBot (riset saja)
+
+[Kajian konsep CarikBot](carikbot-conversation-reference.id.md) dan [English source](carikbot-conversation-reference.md) menjelaskan desain flow/menu/form, batas fitur yang sudah ada dengan usulan, keamanan, pengujian, dan kepemilikan. Belum ada engine chatbot atau API produksi baru yang diimplementasikan.

@@ -95,13 +95,3 @@ jobs:
           bun tools/ci/sast/opengrep-scan.ts --keluaran "$RUNNER_TEMP/sast" \
             --exclude apps/cms/data \
             --exclude 'apps/cms/src/lib/i18n/catalogs/*.generated.ts'
-
-      - name: SEMENTARA buat baseline
-        if: always()
-        run: |
-          bun tools/ci/sast/opengrep-scan.ts baseline --buat --baseline "$RUNNER_TEMP/baseline.json" \
-            --exclude apps/cms/data \
-            --exclude 'apps/cms/src/lib/i18n/catalogs/*.generated.ts' || true
-          echo "=====BASELINE-BEGIN====="
-          cat "$RUNNER_TEMP/baseline.json"
-          echo "=====BASELINE-END====="

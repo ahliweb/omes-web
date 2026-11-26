@@ -1,0 +1,138 @@
+{
+  "versi": 1,
+  "entri": [
+    {
+      "rule": "javascript.browser.security.insecure-document-method",
+      "path": "apps/cms/public/js/blog-preview-overlay.js",
+      "fingerprint": "0df91b3077278ebddb5f7fc1e239a3d7850b724c8f9b364c8530e7f84b2b70a7",
+      "alasan": "temuan lama saat adopsi 2026-11-26",
+      "baris": 6
+    },
+    {
+      "rule": "javascript.browser.security.insecure-document-method",
+      "path": "apps/cms/public/js/blog-preview-overlay.js",
+      "fingerprint": "bad9afe27e4ddfa2ec0d4a201eee32c7e21e52736e47095e8cdfbe8f716460c5",
+      "alasan": "temuan lama saat adopsi 2026-11-26",
+      "baris": 6
+    },
+    {
+      "rule": "javascript.browser.security.insecure-innerhtml",
+      "path": "apps/cms/public/js/blog-preview-overlay.js",
+      "fingerprint": "5f9f7d249f7d746d9a473e170d33f25e9e89aa09f56b7cf4a24ac680b8a6bbdf",
+      "alasan": "temuan lama saat adopsi 2026-11-26",
+      "baris": 6
+    },
+    {
+      "rule": "javascript.browser.security.insecure-innerhtml",
+      "path": "apps/cms/public/js/blog-preview-overlay.js",
+      "fingerprint": "78e72fc53ee4f6908c186f9e36c25bfceacfb39102bff682aeeb596f475dfb31",
+      "alasan": "temuan lama saat adopsi 2026-11-26",
+      "baris": 6
+    },
+    {
+      "rule": "javascript.node-crypto.security.gcm-no-tag-length",
+      "path": "apps/cms/src/lib/auth/mfa-secret-crypto.ts",
+      "fingerprint": "1212668e2b1aa4a3e6237cfe307686c9b28182176a0794827d263c758045a455",
+      "alasan": "temuan lama saat adopsi 2026-11-26",
+      "baris": 79
+    },
+    {
+      "rule": "javascript.node-crypto.security.gcm-no-tag-length",
+      "path": "apps/cms/src/lib/auth/sso-credential-crypto.ts",
+      "fingerprint": "22cce9f64d728f089f8eb1bd907a5da3a91aafc3913989f5181eb556d382b47b",
+      "alasan": "temuan lama saat adopsi 2026-11-26",
+      "baris": 80
+    },
+    {
+      "rule": "javascript.node-crypto.security.gcm-no-tag-length",
+      "path": "apps/cms/src/lib/security/secure-url-params.ts",
+      "fingerprint": "12ceb9d660d9d9a6c5d1e85b9942405e7882a7fff8437389bbb268e6129c853d",
+      "alasan": "temuan lama saat adopsi 2026-11-26",
+      "baris": 113
+    },
+    {
+      "rule": "javascript.browser.security.insecure-document-method",
+      "path": "apps/cms/src/lib/ui/blog-preview-overlay.ts",
+      "fingerprint": "745e91f8fc5ff398c72f722dab034570d144675151dcbdf96f447d4ebe9bb60d",
+      "alasan": "temuan lama saat adopsi 2026-11-26",
+      "baris": 242
+    },
+    {
+      "rule": "javascript.browser.security.insecure-document-method",
+      "path": "apps/cms/src/lib/ui/blog-preview-overlay.ts",
+      "fingerprint": "f89a8b67eddd5a266760a1f3f87c331b0e8754a9b8a747a44b69a729e718273f",
+      "alasan": "temuan lama saat adopsi 2026-11-26",
+      "baris": 319
+    },
+    {
+      "rule": "javascript.browser.security.insecure-innerhtml",
+      "path": "apps/cms/src/lib/ui/blog-preview-overlay.ts",
+      "fingerprint": "2679265b8269991ca8bee011f218555d889134cd451bab1716452638039bb410",
+      "alasan": "temuan lama saat adopsi 2026-11-26",
+      "baris": 319
+    },
+    {
+      "rule": "javascript.browser.security.insecure-innerhtml",
+      "path": "apps/cms/src/lib/ui/blog-preview-overlay.ts",
+      "fingerprint": "daabc6e4f1ca18bcfa8587bd50a1b7bc062587a396b2a6ae633bf52b648407fa",
+      "alasan": "temuan lama saat adopsi 2026-11-26",
+      "baris": 242
+    },
+    {
+      "rule": "javascript.node-crypto.security.gcm-no-tag-length",
+      "path": "apps/cms/src/modules/comments/domain/subscriber-crypto.ts",
+      "fingerprint": "a6aecff59437a1ffbe05392acb5287ecf631763cb2f4ecd5e0261a87a7d292ad",
+      "alasan": "temuan lama saat adopsi 2026-11-26",
+      "baris": 110
+    },
+    {
+      "rule": "typescript.lang.correctness.useless-ternary",
+      "path": "apps/cms/tests/omes-control-repository-progress-poller.test.ts",
+      "fingerprint": "2ab5d231545ebaf09a5ccfb87780083e98924ec09a85312ffe176dd86a32d1d8",
+      "alasan": "temuan lama saat adopsi 2026-11-26",
+      "baris": 342
+    },
+    {
+      "rule": "javascript.browser.security.insecure-document-method",
+      "path": "apps/storefront/src/scripts/produk-index-klien.ts",
+      "fingerprint": "c3b28b2742e33ae97d12ea1420ee12c9efc8ce075d093e5e31bdf4a6121e0562",
+      "alasan": "temuan lama saat adopsi 2026-11-26",
+      "baris": 103
+    },
+    {
+      "rule": "javascript.browser.security.insecure-document-method",
+      "path": "apps/storefront/src/scripts/produk-index-klien.ts",
+      "fingerprint": "c8d007e30a3001dd4bb8c833209c3eb599006beda5f41f37c5b929ff7418d97c",
+      "alasan": "temuan lama saat adopsi 2026-11-26",
+      "baris": 78
+    },
+    {
+      "rule": "javascript.browser.security.insecure-innerhtml",
+      "path": "apps/storefront/src/scripts/produk-index-klien.ts",
+      "fingerprint": "104f68ffac8f1cfdd1815a526fa8fa6958d3fafb83c44c5dfa4f6e26976ddec7",
+      "alasan": "temuan lama saat adopsi 2026-11-26",
+      "baris": 78
+    },
+    {
+      "rule": "javascript.browser.security.insecure-innerhtml",
+      "path": "apps/storefront/src/scripts/produk-index-klien.ts",
+      "fingerprint": "776e0e2417f7ba708616f5a5c14dd078b69e68fc6119d255e96497e4f8fa246c",
+      "alasan": "temuan lama saat adopsi 2026-11-26",
+      "baris": 103
+    },
+    {
+      "rule": "javascript.browser.security.insecure-document-method",
+      "path": "design/redesain-ui-ux-2026-10/support.js",
+      "fingerprint": "b9d831b9f71943b13fd09d51397123671a1af680197575949e55ea322a7d215f",
+      "alasan": "temuan lama saat adopsi 2026-11-26",
+      "baris": 470
+    },
+    {
+      "rule": "javascript.browser.security.insecure-innerhtml",
+      "path": "design/redesain-ui-ux-2026-10/support.js",
+      "fingerprint": "a9cf8a4d83a3332cb569e2675eccafe72092a53989d4b23d01658f50f577bf78",
+      "alasan": "temuan lama saat adopsi 2026-11-26",
+      "baris": 470
+    }
+  ]
+}

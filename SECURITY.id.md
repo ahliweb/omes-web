@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](SECURITY.md)
 
-<!-- i18n-source-hash: sha256:5902f1363ddbbc5a7133d46a0be6ac1c3e1ae9259e4a8b230b1a044cdfcadb29 -->
+<!-- i18n-source-hash: sha256:95a9fc1095c0a6afc5c8caf724f4bd4cd2f648090e20eb4a731b268ea586cb71 -->
 
 # Kebijakan Keamanan
 
@@ -60,7 +60,7 @@ Sejak increment 5 ([ADR-0017](docs/adr/0017-external-providers-are-commerce-owne
 ## Kontrol yang berlaku hari ini
 
 - **Tidak ada rahasia, token, atau kredensial** di kode, commit, issue, atau dokumentasi.
-- **Pemindaian otomatis yang berlaku**: gitleaks atas rentang commit setiap PR dan push, plus SAST OpenGrep untuk JavaScript/TypeScript (`.github/workflows/keamanan.yml`, standar lintas-portofolio internal DL-098; menggantikan CodeQL yang tidak lagi dijalankan di sini karena alasan lisensi); GitHub secret scanning dan secret-scanning push protection; Dependabot security updates — dua yang terakhir diverifikasi aktif lewat `gh api repos/ahliweb/awcms-one --jq '.security_and_analysis'` (lihat "Branch protection on `main`" di `docs/alur-kerja-pengembangan.md`). Cakupan SAST mempertahankan SOURCE `apps/cms/**`, dengan sengaja — lihat "Lima permukaan" di atas; temuan di sana ditriase seperti pada "Triase SAST" di bawah. `keamanan / sast-rahasia-dependensi` baru menjadi status check wajib saat pemilik menambahkannya ke branch protection — lihat "CI: the `keamanan` workflow" di `docs/alur-kerja-pengembangan.md`.
+- **Pemindaian otomatis yang berlaku**: gitleaks atas rentang commit setiap PR dan push, plus SAST OpenGrep (212 aturan: 203 JavaScript/TypeScript dan 9 workflow GitHub Actions) (`.github/workflows/keamanan.yml`, standar lintas-portofolio internal DL-098; menggantikan CodeQL yang tidak lagi dijalankan di sini karena alasan lisensi); GitHub secret scanning dan secret-scanning push protection; Dependabot security updates — dua yang terakhir diverifikasi aktif lewat `gh api repos/ahliweb/awcms-one --jq '.security_and_analysis'` (lihat "Branch protection on `main`" di `docs/alur-kerja-pengembangan.md`). Cakupan SAST mempertahankan SOURCE `apps/cms/**`, dengan sengaja — lihat "Lima permukaan" di atas; temuan di sana ditriase seperti pada "Triase SAST" di bawah. `keamanan / sast-rahasia-dependensi` baru menjadi status check wajib saat pemilik menambahkannya ke branch protection — lihat "CI: the `keamanan` workflow" di `docs/alur-kerja-pengembangan.md`.
 - **`bun audit` harus melaporkan nol kerentanan** sebelum rilis (`tools/rilis.mjs` menjalankannya sebelum menerapkan); `bun audit --audit-level=low` juga berjalan di setiap push CI.
 - **GitHub Actions dipin ke SHA commit**, bukan tag — lihat bagian "Configuration and toolchain" di `AGENTS.md`.
 - **PR `git subtree pull` di-merge dengan merge commit, tidak pernah di-squash atau di-rebase** — bukan kontrol keamanan terhadap penyerang eksternal, melainkan kontrol terhadap rusaknya kemampuan repo ini sendiri untuk menarik patch keamanan upstream ke `apps/cms` di masa depan. Sejak issue #149 ini ditegakkan secara mekanis di seluruh repositori (`allow_squash_merge=false`, `allow_rebase_merge=false`), bukan hanya diingat reviewer. Lihat "The subtree embed" di `AGENTS.md`.

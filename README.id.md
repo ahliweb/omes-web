@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](README.md)
 
-<!-- i18n-source-hash: sha256:9c283363dec89a66d47ae07ca0b85c7b00c5631baf4d9caaa1fe323aabf6fe4e -->
+<!-- i18n-source-hash: sha256:b852e79a5c6b17d7929e4766d23c94737b8fbdadffa714c09221e0e0fc04a889 -->
 
 [![CI](https://github.com/ahliweb/awcms-one/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ahliweb/awcms-one/actions/workflows/ci.yml) [![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE) [![runtime](https://img.shields.io/badge/runtime-Bun-blue?logo=bun&logoColor=white)](https://bun.sh)
 
@@ -112,7 +112,7 @@ PostgreSQL hidup dan tersedia ada untuk pengembangan lokal dan CI (`compose.yaml
 | `bun test` | Rangkaian tes gerbang akar — `tests/*.test.mjs` — plus tes unit/build-smoke/route milik `apps/storefront` sendiri |
 | `check-cms` (job CI) | Rangkaian `bun run check` ~53 langkah `apps/cms` sendiri, lalu rangkaian `tests/integration/`-nya terhadap PostgreSQL hidup yang termigrasi sungguhan |
 
-`.github/workflows/keamanan.yml` (gitleaks atas rentang commit yang di-push ditambah SAST OpenGrep, job `keamanan / sast-rahasia-dependensi`) berjalan di setiap push dan PR; ia menggantikan CodeQL berdasarkan standar lintas-portofolio internal (DL-098), dan contextnya baru menjadi check wajib setelah pemilik menambahkannya ke branch protection — lihat "CI: the `keamanan` workflow" di `docs/alur-kerja-pengembangan.md`. Dua workflow lagi berjalan di setiap push tapi **bukan** status check wajib: `.github/workflows/images.yml` (mempublikasikan image `runtime`/`jobs` milik `apps/cms` ke GHCR dengan SBOM dan provenance, pada tag versi atau dispatch), dan `.github/workflows/release.yml` (mempublikasikan GitHub Release dari bagian `CHANGELOG.md` sebuah tag versi yang di-push). Lihat komentar `template-init-smoke.yml` sendiri untuk jalur promosi yang diikuti sebuah workflow begitu ia sudah berjalan hijau untuk sementara waktu, dan [`docs/README.md`](docs/README.id.md) untuk indeks dokumentasi lengkap.
+`.github/workflows/keamanan.yml` (gitleaks atas rentang commit yang di-push ditambah SAST OpenGrep dengan 212 aturan (203 JavaScript/TypeScript dan 9 workflow GitHub Actions), job `keamanan / sast-rahasia-dependensi`) berjalan di setiap push dan PR; ia menggantikan CodeQL berdasarkan standar lintas-portofolio internal (DL-098), dan contextnya baru menjadi check wajib setelah pemilik menambahkannya ke branch protection — lihat "CI: the `keamanan` workflow" di `docs/alur-kerja-pengembangan.md`. Dua workflow lagi berjalan di setiap push tapi **bukan** status check wajib: `.github/workflows/images.yml` (mempublikasikan image `runtime`/`jobs` milik `apps/cms` ke GHCR dengan SBOM dan provenance, pada tag versi atau dispatch), dan `.github/workflows/release.yml` (mempublikasikan GitHub Release dari bagian `CHANGELOG.md` sebuah tag versi yang di-push). Lihat komentar `template-init-smoke.yml` sendiri untuk jalur promosi yang diikuti sebuah workflow begitu ia sudah berjalan hijau untuk sementara waktu, dan [`docs/README.md`](docs/README.id.md) untuk indeks dokumentasi lengkap.
 
 ## Bahasa
 

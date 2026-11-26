@@ -1,6 +1,6 @@
 🇮🇩 Bahasa Indonesia · 🇬🇧 [English (source)](alur-kerja-pengembangan.md)
 
-<!-- i18n-source-hash: sha256:71ef2e71a6274a9fc83644226ca2234c628c44ba5bd62700313b02a7c4284dd7 -->
+<!-- i18n-source-hash: sha256:14feece275c13bfbc46d778dc1fbb2d5081ae9cac33be1e1ea071d2d72f7894e -->
 
 # Alur kerja pengembangan
 
@@ -91,14 +91,14 @@ Dua detail menjaga rantai gate workflow ini sendiri tidak gagal terhadap dirinya
 Job tunggalnya, `keamanan / sast-rahasia-dependensi`, berjalan di runner GitHub-hosted, dengan `permissions: contents: read`, action dipin ke SHA commit, tanpa filter `paths` (check wajib yang tidak pernah dilaporkan menahan merge selamanya), dan tanpa unggah SARIF (tidak ada yang sampai ke tab Code scanning):
 
 1. **gitleaks** (versi dipin, checksum diverifikasi, `--redact`) hanya atas rentang commit: `base..head` untuk PR, rentang yang di-push untuk push. Seluruh riwayat dipindai sekali, di luar workflow, saat adopsi; hasilnya sengaja tidak ditulis di mana pun di repo publik ini.
-2. **OpenGrep** SAST (`v2.1.0`, binary dipin dengan SHA256) lewat `tools/ci/sast/opengrep-scan.ts`, dengan salinan `opengrep/opengrep-rules` (semua `.yaml`/`.yml` di `javascript/` dan `typescript/`, plus `LICENSE`-nya, tercatat di `tools/ci/sast/rules/SUMBER.md`) dan aturan milik repo di `tools/ci/sast/rules/lokal/`. Aturan Semgrep Registry tidak dipakai. Kode keluar `1` hanya untuk temuan `ERROR` yang fingerprint-nya tidak ada di `tools/ci/sast/baseline.json`; `WARNING` dan `INFO` hanya dilaporkan; `2` adalah kegagalan alat dan gagal tertutup. Dikecualikan dari pemindaian, selain bawaan skrip (keluaran dependensi, build, graf, dan laporan): `apps/cms/data` (dataset tersalin) dan katalog i18n hasil generate.
+2. **OpenGrep** SAST (`v2.1.0`, binary dipin dengan SHA256) lewat `tools/ci/sast/opengrep-scan.ts`, dengan salinan `opengrep/opengrep-rules` (212 aturan: semua `.yaml`/`.yml` aturan di `javascript/` dan `typescript/` (203) serta `yaml/github-actions/` (9), tanpa fixture `*.test.yaml`, plus `LICENSE`-nya, tercatat di `tools/ci/sast/rules/SUMBER.md`) dan aturan milik repo di `tools/ci/sast/rules/lokal/`. Aturan Semgrep Registry tidak dipakai. Kode keluar `1` hanya untuk temuan `ERROR` yang fingerprint-nya tidak ada di `tools/ci/sast/baseline.json`; `WARNING` dan `INFO` hanya dilaporkan; `2` adalah kegagalan alat dan gagal tertutup. Dikecualikan dari pemindaian, selain bawaan skrip (keluaran dependensi, build, graf, dan laporan): `apps/cms/data` (dataset tersalin) dan katalog i18n hasil generate.
 3. **Audit dependensi** tidak diulang: `bun audit --audit-level=low` berjalan di `ci.yml` ("Dependency audit"). Job memasang Bun (`1.4.2`, sama dengan `packageManager`) hanya untuk menjalankan pemindai.
 
 **Baseline hanya boleh menyusut.** Ia dibuat sekali saat adopsi dari temuan sebuah run GitHub-hosted (tiap entri berisi aturan, path, dan fingerprint baris temuan, sehingga tahan pergeseran baris) dan setiap entri punya alasan. Skrip tidak pernah menambah entri; menambah entri adalah edit tangan yang ditinjau dan beralasan, dan `bun tools/ci/sast/opengrep-scan.ts baseline --rapikan` membuang entri yang sudah tidak cocok. Baseline adalah daftar untuk triase, bukan persetujuan: temuan di dalamnya tidak dinilai aman.
 
 **Triase temuan di bawah `apps/cms/**`** mengikuti "Triase SAST" milik `SECURITY.md`: pohon itu adalah sumber upstream yang dibawa lewat subtree, sehingga dilaporkan ke upstream, bukan ditambal dengan cara yang membuat `git subtree pull` berikutnya konflik, kecuali masuk divergensi lokal terdokumentasi di AGENTS.md atau modul `commerce` milik repo ini.
 
-**Cakupan yang dimiliki CodeQL tetapi tidak oleh ini.** Aturan OpenGrep berbasis pola dan tidak melakukan analisis aliran data seluruh-program seperti CodeQL, sehingga jalur taint yang melintasi fungsi atau berkas bisa tidak terlaporkan; berkas `.astro` sudah di luar CodeQL dan tetap di luar. Tidak ada riwayat alert atau tab Code scanning yang dipertahankan.
+**Cakupan yang dimiliki CodeQL tetapi tidak oleh ini.** Analisis CodeQL atas berkas workflow digantikan sembilan aturan `yaml/github-actions` berbasis pencocokan pola, yang kedalamannya tidak setara analisis aliran data CodeQL. Aturan OpenGrep berbasis pola dan tidak melakukan analisis aliran data seluruh-program seperti CodeQL, sehingga jalur taint yang melintasi fungsi atau berkas bisa tidak terlaporkan; berkas `.astro` sudah di luar CodeQL dan tetap di luar. Tidak ada riwayat alert atau tab Code scanning yang dipertahankan.
 
 **Tindakan pemilik, tidak dikerjakan oleh perubahan ini:** cabut context `Analyze (javascript-typescript)` dari branch protection `main`, dan putuskan apakah `keamanan / sast-rahasia-dependensi` menjadi context wajib (`gh api repos/ahliweb/awcms-one/branches/main/protection` menampilkan daftar saat ini). Merge perubahan ini menghentikan CodeQL; sampai pemilik mencabut context lama, sebuah PR menunggu check yang tidak lagi dilaporkan workflow mana pun.
 
